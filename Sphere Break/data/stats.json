@@ -1,0 +1,20 @@
+{
+  "playerName": "Scarleg",
+  "wins": 2,
+  "losses": 0,
+  "gamesPlayed": 2,
+  "bestQuota": 23,
+  "currentStreak": 1,
+  "bestStreak": 1,
+  "gils": 1115,
+  "history": [
+    {
+      "date": "2026-08-28T14:52:53.200Z",
+      "outcome": "win",
+      "quotaReached": 23,
+      "quotaTarget": 20,
+      "dealerId": 1,
+      "gilsEarned": 65
+    }
+  ]
+}

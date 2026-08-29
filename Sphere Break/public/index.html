@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sphere Break</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="void-bg">
+  <div class="nebula nebula-a"></div>
+  <div class="nebula nebula-b"></div>
+  <div class="starfield"></div>
+  <div class="hex-grid"></div>
+</div>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◈</span>
+      <div class="brand-text">
+        <h1>SPHERE&nbsp;BREAK</h1>
+        <p id="brand-subtitle">Compose un multiple du Core Sphere avant la fin du temps imparti.</p>
+      </div>
+    </div>
+
+    <div class="stat-strip" id="stat-strip">
+      <div class="stat"><span class="stat-label">Joueur</span><span class="stat-value" id="stat-name">Joueur</span></div>
+      <div class="stat"><span class="stat-label">Victoires</span><span class="stat-value" id="stat-wins">0</span></div>
+      <div class="stat"><span class="stat-label">Défaites</span><span class="stat-value" id="stat-losses">0</span></div>
+      <div class="stat"><span class="stat-label">Ratio</span><span class="stat-value" id="stat-ratio">0%</span></div>
+      <div class="stat"><span class="stat-label">Meilleur quota</span><span class="stat-value" id="stat-best">0</span></div>
+      <div class="stat stat-gils"><span class="stat-label">Gils</span><span class="stat-value" id="stat-gils">1000</span></div>
+      <button class="btn btn-secondary btn-small" id="btn-profile">Profil / Sauvegarde</button>
+    </div>
+  </header>
+
+  <!-- ===================== SCREEN 1 : DEALER SELECT ===================== -->
+  <main class="screen" id="screen-dealer">
+    <h2 class="screen-title">Choisis ton croupier</h2>
+    <p class="screen-hint">Bats un croupier pour progresser dans tes statistiques et débloquer les suivants.</p>
+
+    <div class="combo-toggle-row">
+      <span class="combo-toggle-caption">Règle(s) de Combo pour ta prochaine manche :</span>
+      <div class="combo-toggle-buttons">
+        <button class="combo-toggle" id="toggle-combo-multiple" type="button">Combo Multiple</button>
+        <button class="combo-toggle" id="toggle-combo-jetons" type="button">Combo Jetons</button>
+      </div>
+      <p class="combo-toggle-hint">Tu peux désactiver les deux règles (aucun bonus de combo). Certains croupiers imposent leur propre règle (non modifiable, indiqué sur leur carte).</p>
+    </div>
+
+    <div class="dealer-grid" id="dealer-grid"></div>
+  </main>
+
+  <!-- ===================== SCREEN 2 : ENTRY COIN PICK ===================== -->
+  <main class="screen" id="screen-entry" hidden>
+    <h2 class="screen-title">Choisis tes 4 jetons d'entrée</h2>
+    <p class="screen-hint">4 valeurs distinctes parmi 1 à 9. Ils resteront disponibles toute la manche, jamais consommés.</p>
+    <div class="entry-picker" id="entry-picker"></div>
+    <div class="controls">
+      <button class="btn btn-secondary" id="btn-back-to-dealer">Retour</button>
+      <button class="btn btn-primary" id="btn-start-match" disabled>Commencer la manche</button>
+    </div>
+  </main>
+
+  <!-- ===================== SCREEN 3 : GAME ===================== -->
+  <main class="screen game-screen" id="screen-game" hidden>
+
+    <div class="hud-row">
+      <div class="panel hud-box hud-left">
+        <button class="btn btn-secondary btn-small hud-back-btn" id="btn-abandon">← Retour</button>
+        <div class="hud-line"><span class="hud-label">Tour</span><span class="hud-value" id="hud-turn">1/10</span></div>
+        <div class="hud-line"><span class="hud-label">Temps</span><span class="hud-value" id="hud-time">0:60</span></div>
+        <div class="hud-line"><span class="hud-label">Quota</span><span class="hud-value" id="hud-quota">0/15</span></div>
+        <div class="metric-bar"><div class="metric-fill" id="hud-quota-fill"></div></div>
+      </div>
+
+      <div class="panel hud-box hud-center">
+        <div class="sum-hero">
+          <span class="sum-hero-label">Somme</span>
+          <span class="sum-hero-value" id="hud-sum-value">0</span>
+        </div>
+        <div class="pending-status" id="hud-sum-status"></div>
+        <div class="core-mini">
+          <span class="core-mini-label">Core Sphere</span>
+          <span class="core-mini-value" id="hud-core-number">-</span>
+        </div>
+      </div>
+
+      <div class="panel hud-box hud-right">
+        <div class="hud-multiples-label">Multiples à venir</div>
+        <div class="hud-multiples-list" id="hud-multiples-list">—</div>
+        <div class="hud-divider"></div>
+        <div class="hud-prev-multiple" id="hud-prev-multiple">Multiple —</div>
+        <div class="hud-combo-line combo-color-multiple" id="hud-combo-multiple-line">Combo Multiple ×<span id="hud-combo-multiple-value">1</span><span class="combo-target" id="hud-combo-multiple-target"></span></div>
+        <div class="hud-combo-line combo-color-jetons" id="hud-combo-jetons-line">Combo Jetons ×<span id="hud-combo-jetons-value">1</span><span class="combo-target" id="hud-combo-jetons-target"></span></div>
+      </div>
+    </div>
+
+    <div class="turn-toast" id="turn-toast"></div>
+
+    <div class="coin-grid-wrap">
+      <div class="coin-grid" id="coin-grid"></div>
+      <div class="combo-flash" id="combo-flash"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-secondary" id="btn-hint">Indice</button>
+    </div>
+  </main>
+
+  <footer class="rules-footer">
+    <details>
+      <summary>Règles rapides</summary>
+      <p>Chaque tour, le <strong>Core Sphere</strong> tire un nombre de 1 à 9. Sélectionne au moins un <strong>jeton orange</strong> (jetons d'entrée, jamais consommés) et des <strong>jetons bleus</strong> (jetons de bord) jusqu'à obtenir une somme multiple exact du nombre tiré : le tour se valide automatiquement. Enchaîner le <strong>même nombre de Core Sphere</strong> sur plusieurs tours consécutifs augmente ton <strong>Combo</strong>, qui multiplie les points de quota gagnés. Les jetons bleus utilisés disparaissent (quota), les autres vieillissent de +1 (retirés à 10) ; un jeton vidé depuis au moins 2 tours a 55% de chance de réapparaître à chaque tour suivant. Atteins le quota avant d'épuiser tes tours pour gagner — si le temps d'un tour s'écoule sans validation, la manche est perdue.</p>
+    </details>
+  </footer>
+
+</div>
+
+<!-- ===================== MODAL: END OF MATCH ===================== -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-box">
+    <div class="modal-icon" id="modal-icon"></div>
+    <h2 id="modal-title">Fin de partie</h2>
+    <p id="modal-body"></p>
+    <button class="btn btn-primary" id="modal-close">Retour aux croupiers</button>
+  </div>
+</div>
+
+<!-- ===================== MODAL: PROFILE / SAVE ===================== -->
+<div class="modal-overlay" id="profile-overlay">
+  <div class="modal modal-wide">
+    <h2>Profil &amp; sauvegarde</h2>
+
+    <div class="profile-section">
+      <label class="profile-label" for="input-playername">Nom du joueur</label>
+      <div class="profile-row">
+        <input type="text" id="input-playername" maxlength="40" placeholder="Joueur">
+        <button class="btn btn-secondary" id="btn-save-name">Renommer</button>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <label class="profile-label">Charger une sauvegarde (.txt)</label>
+      <p class="profile-hint">Format attendu, une valeur par ligne : <code>nom=...</code>, <code>victoires=...</code>, <code>defaites=...</code>, <code>gils=...</code></p>
+      <div class="profile-row">
+        <input type="file" id="input-import-file" accept=".txt">
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <label class="profile-label">Exporter la sauvegarde actuelle</label>
+      <button class="btn btn-secondary" id="btn-export">Télécharger le .txt</button>
+    </div>
+
+    <div class="profile-section">
+      <label class="profile-label" for="input-adjust">Réduire victoires ET défaites du même nombre</label>
+      <p class="profile-hint">Coûte 200 Gils par point. Le nombre ne peut pas dépasser tes défaites actuelles. Ex. 25V/10D avec "10" → 15V/0D (coûte 2000 G).</p>
+      <div class="profile-row">
+        <input type="number" id="input-adjust" min="0" placeholder="0">
+        <button class="btn btn-secondary" id="btn-adjust">Appliquer</button>
+      </div>
+      <p class="profile-hint" id="adjust-cost-preview"></p>
+      <p class="profile-hint" id="adjust-error" style="color: var(--crimson);"></p>
+    </div>
+
+    <div class="profile-section">
+      <button class="btn btn-danger" id="btn-full-reset">Réinitialisation complète</button>
+    </div>
+
+    <button class="btn btn-primary btn-block" id="btn-close-profile">Fermer</button>
+  </div>
+</div>
+
+<script src="/js/dealers.js"></script>
+<script src="/js/solver.js"></script>
+<script src="/js/game.js"></script>
+</body>
+</html>
