@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qui est-ce ? — Dossier de la partie</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ v }}">
+</head>
+<body>
+<div class="setup-wrap">
+  <div style="text-align:center; margin-bottom:-1px;">
+    <span class="folder-tab">DOSSIER N°01 — NOUVELLE ENQUÊTE</span>
+  </div>
+  <div class="dossier">
+    <div class="title-block">
+      <span class="eyebrow">Préparation de la partie</span>
+      <h1>Qui est-ce ?</h1>
+      <p>Choisis la taille du plateau et fournis les portraits des suspects.</p>
+    </div>
+
+    <fieldset>
+      <p class="section-label">01 — LES JOUEURS</p>
+      <div class="players-grid">
+        <div class="player-field p1">
+          <label for="name1">Joueur 1</label>
+          <input type="text" id="name1" maxlength="40" placeholder="Joueur 1">
+        </div>
+        <div class="player-field p2">
+          <label for="name2">Joueur 2</label>
+          <input type="text" id="name2" maxlength="40" placeholder="Joueur 2">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <p class="section-label">02 — TAILLE DU PLATEAU</p>
+      <div class="size-grid" id="size-grid">
+        <div class="size-option">
+          <input type="radio" name="size" id="s46" value="4x6">
+          <label for="s46">4 × 6<br><small>24 suspects</small></label>
+        </div>
+        <div class="size-option">
+          <input type="radio" name="size" id="s56" value="5x6">
+          <label for="s56">5 × 6<br><small>30 suspects</small></label>
+        </div>
+        <div class="size-option">
+          <input type="radio" name="size" id="s66" value="6x6" checked>
+          <label for="s66">6 × 6<br><small>36 suspects</small></label>
+        </div>
+        <div class="size-option">
+          <input type="radio" name="size" id="s76" value="7x6">
+          <label for="s76">7 × 6<br><small>42 suspects</small></label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <p class="section-label">03 — PORTRAITS DES SUSPECTS</p>
+      <div class="source-tabs">
+        <div class="source-tab active" data-source="folder">Dossier d'images</div>
+        <div class="source-tab" data-source="archive">Archive .zip</div>
+      </div>
+
+      <div class="drop-zone" id="folder-zone">
+        Sélectionne un dossier contenant les portraits (un fichier = un suspect, le nom du fichier devient son nom).
+        <br>
+        <input type="file" id="folder-input" webkitdirectory directory multiple>
+      </div>
+
+      <div class="drop-zone" id="archive-zone" style="display:none;">
+        Sélectionne une archive .zip contenant les portraits.
+        <br>
+        <input type="file" id="archive-input" accept=".zip">
+      </div>
+
+      <div class="status-line" id="status-line"></div>
+    </fieldset>
+
+    <div class="actions">
+      <button class="btn-brass" id="validate-btn">Constituer le dossier</button>
+      <button class="btn-green" id="launch-btn" style="display:none; margin-left:0.8rem;">Lancer la partie ▸</button>
+    </div>
+  </div>
+
+  <div id="post-launch" style="display:none; text-align:center; margin-top:1.6rem;">
+    <p class="eyebrow">Partie créée — ouvre un onglet par joueur</p>
+    <div style="display:flex; gap:0.8rem; justify-content:center; margin-top:0.8rem;">
+      <a href="/joueur1" target="_blank"><button class="btn-outline">Ouvrir le plateau — Joueur 1</button></a>
+      <a href="/joueur2" target="_blank"><button class="btn-outline">Ouvrir le plateau — Joueur 2</button></a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/setup.js') }}?v={{ v }}"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+[
+  {
+    "id": "ffviii",
+    "label": "Final Fantasy VIII",
+    "includes": [
+      "ffviii"
+    ]
+  }
+]

@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu des Enchères</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Nécessaire uniquement pour le Mode A "Temps réel" : disponible seulement si cette page est
+         ouverte via le serveur Node.js du mode A (ex: http://localhost:5500/). Si la page est ouverte
+         en local (double-clic), ce script ne se charge pas et le Mode A affichera un message d'aide. -->
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            background: linear-gradient(135deg, #2b5876, #4e4376); 
+            min-height: 100vh; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            color: white; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Arrière-plan transparent reprenant l'image du marteau d'adjudication */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('Marteau.png'); 
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 45% auto;
+            opacity: 0.35; /* Ajusté à 0.35 pour être plus visible et présent */
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header { text-align: center; margin-bottom: 20px; position: relative; z-index: 2; }
+        h1 { font-size: 2.2rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px; letter-spacing: 1px; }
+        
+        /* Zone de configuration initiale */
+        #setupArea { background: rgba(0, 0, 0, 0.3); padding: 25px; border-radius: 15px; max-width: 650px; margin: 0 auto 20px auto; border: 1px solid rgba(255,255,255,0.1); position: relative; z-index: 2; }
+        .setup-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .setup-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.95rem; }
+        select, input[type="file"], input[type="text"], input[type="number"] { padding: 10px; border-radius: 8px; border: none; width: 100%; background: rgba(255,255,255,0.2); color: white; font-size: 1rem; }
+        select option { color: black; }
+        
+        #playerNamesSetup { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .player-input-group { display: flex; flex-direction: column; }
+
+        /* Sélecteur de mode A / B */
+        .mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .mode-option { position: relative; display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+        .mode-option input[type="radio"] { position: absolute; top: 12px; right: 12px; width: auto; }
+        .mode-option .mode-title { font-weight: bold; font-size: 1rem; }
+        .mode-option .mode-desc { font-size: 0.78rem; opacity: 0.8; font-weight: normal; }
+        .mode-option:has(input:checked) { border-color: #00c6ff; background: rgba(0,198,255,0.15); }
+
+        .lobby-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+        .lobby-slot { padding: 6px 12px; border-radius: 16px; background: rgba(255,255,255,0.1); border: 2px solid #888; font-size: 0.85rem; display: inline-block; }
+        .lobby-slot.on { border-color: #38ef7d; }
+        a.lobby-slot { color: #fff; text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+        a.lobby-slot:hover { background: rgba(0,198,255,0.25); border-color: #00c6ff; }
+
+        /* Écran de jeu "Temps réel" (mode A) */
+        #liveGameArea { display: none; flex-direction: column; align-items: center; gap: 15px; flex-grow: 1; position: relative; z-index: 2; }
+        .timer-badge { font-size: 2rem; font-weight: bold; text-align: center; padding: 8px 20px; border-radius: 16px; width: fit-content; min-width: 140px; }
+        .timer-waiting { background: rgba(255,159,67,0.25); border: 2px solid #ff9f43; color: #ffcf9f; }
+        .timer-overbid { background: rgba(255,75,43,0.25); border: 2px solid #ff4b2b; color: #ffb3a3; }
+        .bid-info { text-align: center; font-size: 1.2rem; }
+        .bid-amount { color: #00ffcc; font-weight: bold; font-size: 1.6rem; }
+        .result-banner { text-align: center; font-size: 1.2rem; font-weight: bold; padding: 12px; border-radius: 12px; max-width: 550px; }
+        .result-won { background: rgba(56,239,125,0.2); border: 2px solid #38ef7d; }
+        .result-nobid { background: rgba(248,87,166,0.2); border: 2px solid #f857a6; }
+        .result-skipped { background: rgba(255,255,255,0.08); border: 2px solid #888; }
+        .live-player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; max-width: 1000px; width: 100%; }
+        .player-card.highest { border-color: #00ffcc; box-shadow: 0 0 15px rgba(0,255,204,0.4); }
+        .player-card.disconnected { opacity: 0.45; }
+        .player-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .dot-on { background: #38ef7d; box-shadow: 0 0 6px #38ef7d; }
+        .dot-off { background: #888; }
+        #gameOverAreaA { display: none; text-align: center; background: rgba(0,0,0,0.35); padding: 30px; border-radius: 15px; max-width: 650px; margin: 0 auto; position: relative; z-index: 2; }
+        
+        #gameArea { display: none; grid-template-columns: 280px 1fr 280px; gap: 20px; flex-grow: 1; align-items: stretch; position: relative; z-index: 2; }
+        .player-sidebar { display: flex; flex-direction: column; gap: 15px; justify-content: flex-start; }
+        .player-card { background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: opacity 0.3s ease; }
+        .player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; gap: 10px; }
+        .player-name { font-weight: bold; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-money { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 3px 8px; font-size: 1.1rem; font-weight: bold; color: #00ffcc; }
+        .player-stats { font-size: 0.8rem; opacity: 0.7; margin-bottom: 8px; text-align: right; }
+        .player-collection { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; max-height: 260px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; }
+        
+        .collection-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
+        .thumb-img { width: 100%; height: 72px; object-fit: cover; object-position: center; border-radius: 5px; }
+        .thumb-info { font-size: 0.72rem; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .thumb-price { color: #00ffcc; font-weight: bold; font-size: 0.78rem; }
+
+        /* Système d'élimination finale (Mode A et Mode B) */
+        .player-card.eliminated { opacity: 0.35; filter: grayscale(1); }
+        .btn-eliminate { margin-top: 8px; width: 100%; padding: 7px; font-size: 0.8rem; font-weight: bold; border-radius: 8px; border: none; background: linear-gradient(to right, #c0392b, #e74c3c); color: white; cursor: pointer; }
+        .btn-eliminate:hover { opacity: 0.85; }
+        .elim-tag { margin-top: 8px; text-align: center; font-weight: bold; font-size: 0.85rem; padding: 5px; border-radius: 6px; background: rgba(0,0,0,0.25); }
+        .elim-tag.winner { color: #ffd700; background: rgba(255,215,0,0.18); font-size: 0.95rem; }
+        .player-card.winner-card { border-color: #ffd700 !important; box-shadow: 0 0 20px rgba(255,215,0,0.55); }
+        .winner-banner-big { font-size: 1.6rem !important; padding: 20px !important; background: rgba(255,215,0,0.18) !important; border: 3px solid #ffd700 !important; animation: winnerPulse 1.6s ease-in-out infinite; }
+        @keyframes winnerPulse { 0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.3); } 50% { box-shadow: 0 0 28px rgba(255,215,0,0.7); } }
+        
+        .main-content { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .image-container { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .image-frame { width: 100%; height: 50vh; background: rgba(0, 0, 0, 0.3); border-radius: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
+        #displayImage { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+        
+        #imageNameLabel { font-size: 1.8rem; font-weight: bold; letter-spacing: 0.5px; background: rgba(0,0,0,0.5); padding: 10px 30px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.15); text-align: center; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; }
+        .controls { display: flex; gap: 15px; width: 100%; justify-content: center; }
+        
+        .btn { border: none; color: white; padding: 12px 30px; font-size: 1rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s, opacity 0.2s; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: translateY(1px); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .btn-primary { background: linear-gradient(to right, #ff4b2b, #ff416c); }
+        .btn-warning-pass { background: linear-gradient(to right, #f857a6, #ff5858); }
+        .btn-neutral { background: #555; }
+        .btn-success { background: linear-gradient(to right, #11998e, #38ef7d); }
+        .btn-start { background: linear-gradient(to right, #00c6ff, #0072ff); width: 100%; margin-top: 15px;}
+        
+        /* Modals & Dialogs overlays */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: #2b5876; padding: 25px; border-radius: 15px; width: 90%; max-width: 420px; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .modal-content h3 { margin-bottom: 15px; text-align: center; }
+        .modal-content .form-group { margin-bottom: 15px; }
+        .modal-content input[type="number"] { width: 100%; padding: 10px; border-radius: 6px; border: none; font-size: 1rem; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .info-text { font-size: 1rem; opacity: 0.9; height: 24px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Jeu des Enchères</h1>
+    </header>
+
+    <!-- ÉTAPE 1 : Configuration -->
+    <div id="setupArea">
+        <div class="setup-group" id="modeSelectGroup">
+            <label>Mode de jeu :</label>
+            <div class="mode-toggle">
+                <label class="mode-option" id="modeOptionA" title="Chaque joueur enchérit en direct depuis son propre téléphone/tablette/ordinateur, connecté au même réseau Wi-Fi. Nécessite de lancer le petit serveur Node.js inclus dans ce dossier (voir README ou Lancer_Encheres.bat).">
+                    <input type="radio" name="gameMode" value="A">
+                    <span class="mode-title">🅰️ Temps réel</span>
+                    <span class="mode-desc">En réseau, chaque joueur enchérit en direct sur son appareil.</span>
+                </label>
+                <label class="mode-option" id="modeOptionB" title="Un seul écran, utilisé par un maître qui pilote toute la partie : il montre chaque image, recueille les enchères à l'oral et enregistre lui-même les achats. Aucun serveur nécessaire, fonctionne entièrement en local.">
+                    <input type="radio" name="gameMode" value="B" checked>
+                    <span class="mode-title">🅱️ Enchères décalées</span>
+                    <span class="mode-desc">Local, sur cet écran, un maître qui enregistre les achats.</span>
+                </label>
+            </div>
+            <div id="modeAInfo" style="display:none;">
+                <p class="info-text" id="modeAConnectionStatus" style="margin:10px 0 6px 0;">Non connecté au serveur.</p>
+                <div id="modeAAddresses" style="margin-bottom:12px;"></div>
+                <label style="font-size:0.85rem;">Connexions joueurs :</label>
+                <div class="lobby-list" id="lobbyList"></div>
+            </div>
+        </div>
+
+        <div class="setup-row">
+            <div class="setup-group">
+                <label for="playerCount">Joueurs (2 à 8) :</label>
+                <select id="playerCount">
+                    <option value="2" selected>2 Joueurs</option>
+                    <option value="3">3 Joueurs</option>
+                    <option value="4">4 Joueurs</option>
+                    <option value="5">5 Joueurs</option>
+                    <option value="6">6 Joueurs</option>
+                    <option value="7">7 Joueurs</option>
+                    <option value="8">8 Joueurs</option>
+                </select>
+            </div>
+            
+            <div class="setup-group">
+                <label for="startingMoney">Argent de départ (M) :</label>
+                <input type="number" id="startingMoney" min="10" step="10" value="500" placeholder="Ex: 500">
+            </div>
+
+            <div class="setup-group">
+                <label for="maxPurchases">Achats max / joueur :</label>
+                <select id="maxPurchases">
+                    <option value="1">1 achat max</option>
+                    <option value="2">2 achats max</option>
+                    <option value="3">3 achats max</option>
+                    <option value="4">4 achats max</option>
+                    <option value="5" selected>5 achats max</option>
+                    <option value="6">6 achats max</option>
+                    <option value="7">7 achats max</option>
+                    <option value="8">8 achats max</option>
+                    <option value="9">9 achats max</option>
+                    <option value="10">10 achats max</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="playerNamesSetup"></div>
+
+        <div class="setup-group" style="margin-top: 20px;">
+            <label for="filePicker">Sélectionner des images OU un fichier .ZIP :</label>
+            <input type="file" id="filePicker" multiple accept="image/*,.zip">
+        </div>
+        <button class="btn btn-start" id="startBtn" disabled>Lancer la partie</button>
+    </div>
+
+    <!-- ÉTAPE 2 : Zone de jeu principale -->
+    <div id="gameArea">
+        <!-- Colonne Gauche -->
+        <div class="player-sidebar" id="leftSidebar"></div>
+
+        <!-- Zone Centrale -->
+        <div class="main-content">
+            <p class="info-text" id="infoText">Cliquez sur "Nouveau" pour tirer une image.</p>
+            <div class="image-container">
+                <div class="image-frame">
+                    <img id="displayImage" src="" alt="Image à vendre">
+                </div>
+                <div id="imageNameLabel">Nom de l'image</div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-primary" id="nextBtn">Nouveau</button>
+                <button class="btn btn-success" id="buyBtn" disabled>Acheter</button>
+            </div>
+            <div id="eliminationBanner" class="result-banner result-won" style="display:none; max-width:600px; margin:10px auto 0 auto;"></div>
+            <button class="btn btn-start" id="modeBResetBtn" style="display:none; max-width:320px; margin:20px auto 0 auto;">Nouvelle partie</button>
+        </div>
+
+        <!-- Colonne Droite -->
+        <div class="player-sidebar" id="rightSidebar"></div>
+    </div>
+
+    <!-- ÉTAPE 2 (MODE A) : Zone de jeu "Temps réel" -->
+    <div id="liveGameArea">
+        <details id="liveAddressesDetails" style="width:100%; max-width:700px; margin:0 auto 10px auto; background:rgba(0,0,0,0.25); border-radius:10px; padding:8px 14px;">
+            <summary style="cursor:pointer; font-size:0.85rem; opacity:0.9;">Adresses des pages joueurs</summary>
+            <div id="liveAddressesBox" style="margin-top:8px;"></div>
+        </details>
+        <p class="info-text" id="liveImagesRemainingText"></p>
+        <div class="image-container">
+            <div class="image-frame">
+                <img id="liveDisplayImage" src="" alt="Image en cours d'enchère" style="display:none; max-width:100%; max-height:100%; object-fit:contain;">
+            </div>
+            <div id="liveImageNameLabel" style="display:none; font-size:1.8rem; font-weight:bold; background:rgba(0,0,0,0.5); padding:10px 30px; border-radius:30px; border:2px solid rgba(255,255,255,0.15); text-align:center; max-width:90%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+        </div>
+        <p class="info-text" id="liveWaitingText" style="display:none;">Cliquez sur le bouton ci-dessous pour tirer l'image et démarrer l'enchère.</p>
+        <div class="controls" style="display:flex; gap:15px; justify-content:center;">
+            <button class="btn btn-primary" id="liveStartRoundBtn">Lancer l'enchère</button>
+            <button class="btn btn-neutral" id="liveSkipRoundBtn" style="display:none;">Passer sans pénalité</button>
+        </div>
+        <div id="liveTimerBadge" class="timer-badge"></div>
+        <div class="bid-info">Enchère actuelle : <span class="bid-amount" id="liveCurrentBidText">0 M</span><br>
+            <span id="liveHighestBidderText" style="opacity:0.85;"></span>
+        </div>
+        <div id="liveResultBanner" class="result-banner" style="display:none;"></div>
+        <div class="live-player-grid" id="livePlayerGrid"></div>
+    </div>
+
+    <!-- ÉTAPE 3 (MODE A) : Fin de partie -->
+    <div id="gameOverAreaA">
+        <h3 id="gameOverATitle" style="margin-bottom: 12px;">Partie terminée</h3>
+        <p id="gameOverAReason" style="margin-bottom: 20px;"></p>
+        <div id="gameOverAWinnerBanner" class="result-banner result-won" style="display:none; max-width:600px; margin:0 auto 20px auto;"></div>
+        <p class="info-text" style="margin-bottom:10px;">Éliminez les joueurs un par un jusqu'à ce qu'il n'en reste plus qu'un.</p>
+        <div class="live-player-grid" id="gameOverAPlayerGrid"></div>
+        <button class="btn btn-start" id="modeAResetBtn" style="max-width: 320px; margin: 25px auto 0 auto;">Nouvelle partie</button>
+    </div>
+
+    <!-- MODAL D'ACHAT -->
+    <div id="purchaseModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Enregistrer l'achat</h3>
+            <div class="form-group">
+                <label for="buyerSelect">Qui achète ?</label>
+                <select id="buyerSelect"></select>
+            </div>
+            <div class="form-group">
+                <label for="priceInput" id="priceInputLabel">Prix payé :</label>
+                <input type="number" id="priceInput" min="0" step="10" value="50">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" style="background:#555" id="cancelBuyBtn">Annuler</button>
+                <button class="btn btn-success" id="confirmBuyBtn">Valider l'achat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYSTEM MODAL : ALERT -->
+    <div id="systemAlertModal" class="modal-overlay" style="z-index: 110;">
+        <div class="modal-content text-center" style="text-align: center;">
+            <h3 style="color: #ff4b2b; margin-bottom: 12px;">Attention</h3>
+            <p id="systemAlertText" style="margin-bottom: 20px; font-size: 1.05rem;"></p>
+            <button class="btn btn-primary" id="systemAlertCloseBtn">OK</button>
+        </div>
+    </div>
+
+    <!-- SYSTEM MODAL : CONFIRM -->
+    <div id="systemConfirmModal" class="modal-overlay" style="z-index: 110;">
+        <div class="modal-content text-center" style="text-align: center;">
+            <h3 style="color: #ff9f43; margin-bottom: 12px;">Confirmation</h3>
+            <p id="systemConfirmText" style="margin-bottom: 20px; font-size: 1.05rem;"></p>
+            <div class="modal-buttons" style="justify-content: center;">
+                <button class="btn" style="background:#555" id="systemConfirmCancelBtn">Annuler</button>
+                <button class="btn btn-primary" id="systemConfirmOkBtn">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const filePicker = document.getElementById('filePicker');
+        const playerCountSelect = document.getElementById('playerCount');
+        const startingMoneyInput = document.getElementById('startingMoney');
+        const maxPurchasesSelect = document.getElementById('maxPurchases');
+        const playerNamesSetup = document.getElementById('playerNamesSetup');
+        const startBtn = document.getElementById('startBtn');
+        const setupArea = document.getElementById('setupArea');
+        const gameArea = document.getElementById('gameArea');
+
+        // --- Éléments du sélecteur de mode et du Mode A ---
+        const modeAInfo = document.getElementById('modeAInfo');
+        const modeAConnectionStatus = document.getElementById('modeAConnectionStatus');
+        const modeAAddresses = document.getElementById('modeAAddresses');
+        const lobbyList = document.getElementById('lobbyList');
+        const liveGameArea = document.getElementById('liveGameArea');
+        const liveDisplayImage = document.getElementById('liveDisplayImage');
+        const liveImageNameLabel = document.getElementById('liveImageNameLabel');
+        const liveImagesRemainingText = document.getElementById('liveImagesRemainingText');
+        const liveAddressesBox = document.getElementById('liveAddressesBox');
+        const liveWaitingText = document.getElementById('liveWaitingText');
+        const liveStartRoundBtn = document.getElementById('liveStartRoundBtn');
+        const liveSkipRoundBtn = document.getElementById('liveSkipRoundBtn');
+        const liveTimerBadge = document.getElementById('liveTimerBadge');
+        const liveCurrentBidText = document.getElementById('liveCurrentBidText');
+        const liveHighestBidderText = document.getElementById('liveHighestBidderText');
+        const liveResultBanner = document.getElementById('liveResultBanner');
+        const livePlayerGrid = document.getElementById('livePlayerGrid');
+        const gameOverAreaA = document.getElementById('gameOverAreaA');
+        const gameOverAReason = document.getElementById('gameOverAReason');
+        const gameOverAPlayerGrid = document.getElementById('gameOverAPlayerGrid');
+        const modeAResetBtn = document.getElementById('modeAResetBtn');
+
+        let gameMode = 'B';
+        let modeASocket = null;
+        let modeALiveCountdown = null;
+        let modeALastState = null;
+        let modeACollections = {}; // slot -> [{name, price, dataURL}]
+
+        function getSelectedMode() {
+            return document.querySelector('input[name="gameMode"]:checked').value;
+        }
+
+        function ensureModeASocket() {
+            if (modeASocket) return modeASocket;
+            if (typeof io !== 'function') {
+                modeAConnectionStatus.innerText = "⚠ Serveur introuvable. Ouvrez cette page via http://localhost:5500/ (voir README du Mode A) après avoir lancé \"npm start\".";
+                return null;
+            }
+            modeASocket = io();
+            modeASocket.on('connect', () => {
+                modeAConnectionStatus.innerText = "✅ Connecté au serveur. Configurez la partie ci-dessous puis lancez-la.";
+                modeASocket.emit('register', { role: 'maitre' });
+            });
+            modeASocket.on('disconnect', () => {
+                modeAConnectionStatus.innerText = "⚠ Connexion au serveur perdue.";
+            });
+            modeASocket.on('connect_error', () => {
+                modeAConnectionStatus.innerText = "⚠ Impossible de joindre le serveur. Vérifiez qu'il tourne (\"npm start\") et que la page est bien ouverte via http://localhost:5500/.";
+            });
+            modeASocket.on('setupError', (msg) => {
+                showCustomAlert(msg);
+                startBtn.disabled = false;
+            });
+            modeASocket.on('bidError', () => {}); // géré côté joueur uniquement
+            modeASocket.on('collectionsSync', (payload) => {
+                modeACollections = {};
+                payload.forEach(p => { modeACollections[p.slot] = p.collection; });
+                if (modeALastState) renderModeAPlayers(livePlayerGrid, modeALastState, false);
+            });
+            modeASocket.on('itemWon', (data) => {
+                if (!modeACollections[data.slot]) modeACollections[data.slot] = [];
+                modeACollections[data.slot].push({ name: data.name, price: data.price, dataURL: data.dataURL });
+                if (modeALastState) renderModeAPlayers(livePlayerGrid, modeALastState, false);
+            });
+            modeASocket.on('newImage', (data) => {
+                liveDisplayImage.src = data.dataURL;
+                liveDisplayImage.style.display = 'block';
+                liveImageNameLabel.innerText = data.name;
+                liveImageNameLabel.style.display = 'block';
+                liveWaitingText.style.display = 'none';
+                liveImagesRemainingText.innerText = `Images restantes : ${data.imagesRemaining} / ${data.totalImages}`;
+                liveResultBanner.style.display = 'none';
+            });
+            modeASocket.on('gameState', (state) => renderModeAState(state));
+            return modeASocket;
+        }
+
+        function buildAddressesHtml(count) {
+            const port = 5500;
+            let html = `<p class="info-text" style="text-align:left; margin-bottom:6px;">Adresses des pages joueurs (à ouvrir sur chaque appareil, même réseau) :</p>`;
+            html += '<div class="lobby-list">';
+            for (let i = 1; i <= count; i++) {
+                html += `<a class="lobby-slot" href="http://localhost:${port}/joueur${i}" target="_blank" rel="noopener">Joueur ${i} : localhost:${port}/joueur${i}</a>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderModeAAddresses(countOverride) {
+            const count = countOverride || parseInt(playerCountSelect.value);
+            const html = buildAddressesHtml(count);
+            modeAAddresses.innerHTML = html;
+            if (liveAddressesBox) liveAddressesBox.innerHTML = html;
+        }
+
+        function renderLobby(connectedSlots) {
+            const count = parseInt(playerCountSelect.value);
+            lobbyList.innerHTML = '';
+            for (let i = 1; i <= count; i++) {
+                const on = connectedSlots.includes(i);
+                lobbyList.innerHTML += `<div class="lobby-slot ${on ? 'on' : ''}">Joueur ${i} ${on ? '✓ connecté' : '— en attente'}</div>`;
+            }
+        }
+
+        function modeATimerLabel(state) {
+            if (state.phase === 'waiting') return { text: 'En attente de la 1ère enchère', cls: 'timer-waiting' };
+            if (state.phase === 'overbid') return { text: 'Surenchère possible', cls: 'timer-overbid' };
+            return null;
+        }
+
+        function startModeACountdown(state) {
+            if (modeALiveCountdown) clearInterval(modeALiveCountdown);
+            const info = modeATimerLabel(state);
+            if (!info) return;
+            function tick() {
+                const remainingMs = state.timerEnd - Date.now();
+                const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+                liveTimerBadge.className = `timer-badge ${info.cls}`;
+                liveTimerBadge.innerText = `${info.text} — ${seconds}s`;
+                if (remainingMs <= 0 && modeALiveCountdown) {
+                    clearInterval(modeALiveCountdown);
+                    modeALiveCountdown = null;
+                }
+            }
+            tick();
+            modeALiveCountdown = setInterval(tick, 250);
+        }
+
+        let modeAEliminated = new Set();  // slots éliminés par le maître, en fin de partie
+        let modeAWasFinished = false;
+
+        function renderModeAPlayers(container, state, isFinal) {
+            container.innerHTML = '';
+            const aliveCount = isFinal ? state.players.filter(p => !modeAEliminated.has(p.slot)).length : null;
+
+            state.players.forEach(p => {
+                const isHighest = state.highestBidderSlot === p.slot && state.phase !== 'result';
+                const isDead = isFinal && modeAEliminated.has(p.slot);
+                const isWinnerPlayer = isFinal && !isDead && aliveCount <= 1;
+                const classes = ['player-card'];
+                if (isHighest) classes.push('highest');
+                if (!isFinal && !p.connected) classes.push('disconnected');
+                if (isDead) classes.push('eliminated');
+                if (isWinnerPlayer) classes.push('winner-card');
+
+                const thumbs = modeACollections[p.slot];
+                let itemsHtml = '';
+                if (thumbs && thumbs.length) {
+                    itemsHtml = '<div class="player-collection">' + thumbs.map(it => `
+                        <div class="collection-item">
+                            <img class="thumb-img" src="${it.dataURL}" alt="${it.name}">
+                            <span class="thumb-info" title="${it.name}">${it.name}</span>
+                            <span class="thumb-price">${it.price}M</span>
+                        </div>`).join('') + '</div>';
+                } else if (p.collection.length) {
+                    // Secours tant que les miniatures ne sont pas encore synchronisées
+                    itemsHtml = '<div style="margin-top:6px; font-size:0.75rem; opacity:0.8;">' +
+                        p.collection.map(it => `${it.name} (${it.price}M)`).join('<br>') + '</div>';
+                }
+
+                let elimHtml = '';
+                if (isFinal) {
+                    if (isDead) {
+                        elimHtml = `<div class="elim-tag">❌ Éliminé</div>`;
+                    } else if (aliveCount <= 1) {
+                        elimHtml = `<div class="elim-tag winner">🏆 Vainqueur</div>`;
+                    } else {
+                        elimHtml = `<button class="btn-eliminate" data-slot="${p.slot}">Éliminer</button>`;
+                    }
+                }
+
+                container.innerHTML += `
+                    <div class="${classes.join(' ')}">
+                        <div class="player-header">
+                            <div class="player-name">
+                                ${isFinal ? '' : `<span class="player-status-dot ${p.connected ? 'dot-on' : 'dot-off'}"></span>`}${p.name}
+                            </div>
+                            <div class="player-money">${p.money} M</div>
+                        </div>
+                        <div class="player-stats">Achats : ${p.itemCount} / ${state.maxPurchases}</div>
+                        ${itemsHtml}
+                        ${elimHtml}
+                    </div>`;
+            });
+
+            if (isFinal) {
+                const banner = document.getElementById('gameOverAWinnerBanner');
+                const alive = state.players.filter(p => !modeAEliminated.has(p.slot));
+                if (alive.length === 1) {
+                    const wasHidden = banner.style.display === 'none' || !banner.style.display;
+                    banner.style.display = 'block';
+                    banner.className = 'result-banner result-won winner-banner-big';
+                    banner.innerText = `🏆 ${alive[0].name} remporte la partie !`;
+                    if (wasHidden) banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    banner.style.display = 'none';
+                }
+            }
+        }
+
+        function renderModeAState(state) {
+            modeALastState = state;
+            if (state.status === 'lobby') {
+                modeAWasFinished = false;
+                setupArea.style.display = 'block';
+                gameArea.style.display = 'none';
+                liveGameArea.style.display = 'none';
+                gameOverAreaA.style.display = 'none';
+                if (state.lobbySlots) renderLobby(state.lobbySlots);
+                return;
+            }
+            if (state.status === 'running') {
+                modeAWasFinished = false;
+                setupArea.style.display = 'none';
+                gameArea.style.display = 'none';
+                liveGameArea.style.display = 'flex';
+                gameOverAreaA.style.display = 'none';
+                renderModeAAddresses(state.players.length);
+
+                const roundActive = (state.phase === 'waiting' || state.phase === 'overbid');
+
+                if (!state.currentImageName) {
+                    // Aucune image tirée pour l'instant (avant la 1ère manche)
+                    liveDisplayImage.style.display = 'none';
+                    liveImageNameLabel.style.display = 'none';
+                    liveWaitingText.style.display = 'block';
+                    liveImagesRemainingText.innerText = `Images restantes : ${state.imagesRemaining} / ${state.totalImages}`;
+                }
+
+                liveCurrentBidText.innerText = `${state.currentBid} M`;
+                liveHighestBidderText.innerText = state.highestBidderName ? `Plus offrant : ${state.highestBidderName}` : "Aucune enchère pour l'instant";
+
+                if (state.phase === 'result' && state.roundResult) {
+                    liveResultBanner.style.display = 'block';
+                    if (state.roundResult.type === 'won') {
+                        liveResultBanner.className = 'result-banner result-won';
+                        liveResultBanner.innerText = `🎉 "${state.roundResult.imageName}" remportée par ${state.roundResult.winnerName} pour ${state.roundResult.price} M !`;
+                    } else if (state.roundResult.type === 'skipped') {
+                        liveResultBanner.className = 'result-banner result-skipped';
+                        liveResultBanner.innerText = `⏭ "${state.roundResult.imageName}" passée sans pénalité par le maître.`;
+                    } else {
+                        liveResultBanner.className = 'result-banner result-nobid';
+                        liveResultBanner.innerText = `Personne n'a enchéri sur "${state.roundResult.imageName}" — chaque joueur perd ${state.roundResult.penalty} M.`;
+                    }
+                    liveTimerBadge.style.display = 'none';
+                } else if (roundActive) {
+                    liveResultBanner.style.display = 'none';
+                    liveTimerBadge.style.display = 'block';
+                } else {
+                    liveResultBanner.style.display = 'none';
+                    liveTimerBadge.style.display = 'none';
+                }
+
+                // Bouton manuel : caché pendant une manche en cours, visible sinon
+                liveStartRoundBtn.style.display = roundActive ? 'none' : 'inline-block';
+                liveStartRoundBtn.innerText = (state.phase === 'result') ? 'Image suivante' : "Lancer l'enchère";
+                liveStartRoundBtn.disabled = false;
+
+                // "Passer sans pénalité" : visible uniquement pendant une manche active
+                liveSkipRoundBtn.style.display = roundActive ? 'inline-block' : 'none';
+                liveSkipRoundBtn.disabled = false;
+
+                startModeACountdown(state);
+                renderModeAPlayers(livePlayerGrid, state, false);
+                return;
+            }
+            if (state.status === 'finished') {
+                if (!modeAWasFinished) {
+                    modeAEliminated = new Set();
+                    modeAWasFinished = true;
+                }
+                setupArea.style.display = 'none';
+                gameArea.style.display = 'none';
+                liveGameArea.style.display = 'none';
+                gameOverAreaA.style.display = 'block';
+                if (modeALiveCountdown) { clearInterval(modeALiveCountdown); modeALiveCountdown = null; }
+                const reasons = {
+                    noImages: "Toutes les images ont été vendues ou passées.",
+                    maxPurchases: "Tous les joueurs ont atteint leur nombre d'achats maximum.",
+                    noMoney: "Plus aucun joueur n'a les moyens d'enchérir.",
+                };
+                gameOverAReason.innerText = reasons[state.finishReason] || '';
+                renderModeAPlayers(gameOverAPlayerGrid, state, true);
+            }
+        }
+
+        modeAResetBtn.addEventListener('click', () => {
+            if (modeASocket) modeASocket.emit('resetGame');
+            parsedFilesArray = [];
+            filePicker.value = '';
+            startBtn.disabled = true;
+            setupArea.style.display = 'block';
+            gameOverAreaA.style.display = 'none';
+            modeACollections = {};
+            modeAEliminated = new Set();
+            modeAWasFinished = false;
+        });
+
+        liveStartRoundBtn.addEventListener('click', () => {
+            if (!modeASocket) return;
+            liveStartRoundBtn.disabled = true;
+            modeASocket.emit('startRound');
+        });
+
+        liveSkipRoundBtn.addEventListener('click', () => {
+            if (!modeASocket) return;
+            liveSkipRoundBtn.disabled = true;
+            modeASocket.emit('skipRound');
+        });
+
+        document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                gameMode = getSelectedMode();
+                if (gameMode === 'A') {
+                    modeAInfo.style.display = 'block';
+                    ensureModeASocket();
+                    renderModeAAddresses();
+                } else {
+                    modeAInfo.style.display = 'none';
+                }
+            });
+        });
+        
+        const leftSidebar = document.getElementById('leftSidebar');
+        const rightSidebar = document.getElementById('rightSidebar');
+        const nextBtn = document.getElementById('nextBtn');
+        const buyBtn = document.getElementById('buyBtn');
+        const displayImage = document.getElementById('displayImage');
+        const imageNameLabel = document.getElementById('imageNameLabel');
+        const infoText = document.getElementById('infoText');
+
+        const purchaseModal = document.getElementById('purchaseModal');
+        const buyerSelect = document.getElementById('buyerSelect');
+        const priceInput = document.getElementById('priceInput');
+        const priceInputLabel = document.getElementById('priceInputLabel');
+        const cancelBuyBtn = document.getElementById('cancelBuyBtn');
+        const confirmBuyBtn = document.getElementById('confirmBuyBtn');
+
+        const systemAlertModal = document.getElementById('systemAlertModal');
+        const systemAlertText = document.getElementById('systemAlertText');
+        const systemAlertCloseBtn = document.getElementById('systemAlertCloseBtn');
+
+        const systemConfirmModal = document.getElementById('systemConfirmModal');
+        const systemConfirmText = document.getElementById('systemConfirmText');
+        const systemConfirmCancelBtn = document.getElementById('systemConfirmCancelBtn');
+        const systemConfirmOkBtn = document.getElementById('systemConfirmOkBtn');
+
+        let parsedFilesArray = []; 
+        let remainingFiles = [];
+        let players = [];
+        let currentFileUrl = null;
+        let currentCleanName = "";
+        let globalStartMoney = 500;
+        let globalMaxPurchases = 5;
+        let isFirstDraw = true; 
+
+        let confirmPromiseResolve = null;
+
+        function showCustomAlert(message) {
+            systemAlertText.innerText = message;
+            systemAlertModal.style.display = 'flex';
+        }
+
+        systemAlertCloseBtn.addEventListener('click', () => {
+            systemAlertModal.style.display = 'none';
+        });
+
+        function showCustomConfirm(message) {
+            systemConfirmText.innerText = message;
+            systemConfirmModal.style.display = 'flex';
+            return new Promise((resolve) => {
+                confirmPromiseResolve = resolve;
+            });
+        }
+
+        systemConfirmCancelBtn.addEventListener('click', () => {
+            systemConfirmModal.style.display = 'none';
+            if (confirmPromiseResolve) confirmPromiseResolve(false);
+        });
+
+        systemConfirmOkBtn.addEventListener('click', () => {
+            systemConfirmModal.style.display = 'none';
+            if (confirmPromiseResolve) confirmPromiseResolve(true);
+        });
+
+        function updatePlayerInputs() {
+            const count = parseInt(playerCountSelect.value);
+            playerNamesSetup.innerHTML = '';
+            for (let i = 1; i <= count; i++) {
+                playerNamesSetup.innerHTML += `
+                    <div class="player-input-group">
+                        <label>Nom Joueur ${i} :</label>
+                        <input type="text" id="inputPlayerName-${i}" value="Joueur ${i}">
+                    </div>
+                `;
+            }
+            if (gameMode === 'A') {
+                renderModeAAddresses();
+            }
+        }
+        playerCountSelect.addEventListener('change', updatePlayerInputs);
+        updatePlayerInputs();
+
+        filePicker.addEventListener('change', async (e) => {
+            startBtn.disabled = true;
+            parsedFilesArray = [];
+            const files = Array.from(e.target.files);
+            
+            if (files.length === 0) return;
+
+            if (files.length === 1 && files[0].name.endsWith('.zip')) {
+                infoText.innerText = "Déchiffrement du fichier ZIP...";
+                try {
+                    const zip = await JSZip.loadAsync(files[0]);
+                    const promises = [];
+                    
+                    zip.forEach((relativePath, zipEntry) => {
+                        if (!zipEntry.dir && !relativePath.includes('__MACOSX') && /\.(jfif|pjpeg|jpeg|pjpg|png|jpg|gif|webp|bmp)$/i.test(zipEntry.name)) {
+                            const promise = zipEntry.async("blob").then(blob => {
+                                parsedFilesArray.push({
+                                    name: zipEntry.name.split('/').pop(),
+                                    url: URL.createObjectURL(blob),
+                                    blob: blob
+                                });
+                            });
+                            promises.push(promise);
+                        }
+                    });
+                    
+                    await Promise.all(promises);
+                    infoText.innerText = `${parsedFilesArray.length} images chargées depuis le ZIP avec succès !`;
+                } catch (err) {
+                    showCustomAlert("Erreur lors de la lecture du fichier ZIP.");
+                    return;
+                }
+            } else {
+                files.forEach(file => {
+                    parsedFilesArray.push({
+                        name: file.name,
+                        url: URL.createObjectURL(file),
+                        blob: file
+                    });
+                });
+            }
+            startBtn.disabled = parsedFilesArray.length === 0;
+        });
+
+        startBtn.addEventListener('click', async () => {
+            const count = parseInt(playerCountSelect.value);
+            let moneyValue = parseInt(startingMoneyInput.value);
+            
+            if (isNaN(moneyValue) || moneyValue < 10) {
+                showCustomAlert("Veuillez indiquer une somme de départ d'au moins 10 M.");
+                return;
+            }
+            if (moneyValue % 10 !== 0) {
+                showCustomAlert("La somme de départ doit être un multiple de 10.");
+                return;
+            }
+            if (parsedFilesArray.length === 0) {
+                showCustomAlert("Veuillez charger au moins une image.");
+                return;
+            }
+
+            globalStartMoney = moneyValue;
+            globalMaxPurchases = parseInt(maxPurchasesSelect.value);
+
+            const playerNames = [];
+            for (let i = 1; i <= count; i++) {
+                const nameInput = document.getElementById(`inputPlayerName-${i}`);
+                playerNames.push(nameInput.value.trim() !== "" ? nameInput.value.trim() : `Joueur ${i}`);
+            }
+
+            if (getSelectedMode() === 'A') {
+                startModeAGame(count, moneyValue, globalMaxPurchases, playerNames);
+                return;
+            }
+
+            // --- Mode B (inchangé) ---
+            priceInput.max = globalStartMoney;
+            priceInputLabel.innerText = `Prix (Multiple de 10, max ${globalStartMoney} M) :`;
+            priceInput.value = Math.max(10, Math.floor((globalStartMoney / 10) / 2) * 10);
+
+            remainingFiles = [...parsedFilesArray]; 
+            players = [];
+            isFirstDraw = true; 
+            eliminatedPlayerIds = new Set();
+            document.getElementById('eliminationBanner').style.display = 'none';
+            document.getElementById('modeBResetBtn').style.display = 'none';
+            buyBtn.disabled = true;
+            nextBtn.disabled = false;
+            
+            nextBtn.innerText = "Nouveau";
+            nextBtn.className = "btn btn-primary";
+            nextBtn.disabled = false;
+
+            for(let i = 1; i <= count; i++) {
+                players.push({
+                    id: i,
+                    name: playerNames[i - 1],
+                    money: globalStartMoney,
+                    itemCount: 0
+                });
+            }
+
+            buildPlayerSidebars();
+            setupArea.style.display = 'none';
+            gameArea.style.display = 'grid';
+            infoText.innerText = `Images prêtes : ${remainingFiles.length}`;
+        });
+
+        function blobToDataURL(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function startModeAGame(playerCount, startingMoney, maxPurchases, playerNames) {
+            const socket = ensureModeASocket();
+            if (!socket) {
+                showCustomAlert("Le Mode Temps réel nécessite le serveur Node.js. Lancez-le (\"npm start\" dans ce dossier, ou double-cliquez sur Lancer_Encheres.bat) puis ouvrez cette page via http://localhost:5500/.");
+                return;
+            }
+            startBtn.disabled = true;
+            modeAConnectionStatus.innerText = "Préparation des images pour l'envoi au serveur...";
+
+            const images = [];
+            for (const f of parsedFilesArray) {
+                images.push({ name: getCleanFileName(f.name), dataURL: await blobToDataURL(f.blob) });
+            }
+
+            modeAConnectionStatus.innerText = "Lancement de la partie...";
+            socket.emit('setupGame', {
+                playerCount: playerCount,
+                startingMoney: startingMoney,
+                maxPurchases: maxPurchases,
+                playerNames: playerNames,
+                images: images,
+            });
+        }
+
+        function buildPlayerSidebars() {
+            leftSidebar.innerHTML = '';
+            rightSidebar.innerHTML = '';
+            const total = players.length;
+            const leftCount = Math.ceil(total / 2); 
+
+            players.forEach((player, index) => {
+                const cardHtml = `
+                    <div class="player-card" id="player-card-${player.id}">
+                        <div class="player-header">
+                            <div class="player-name" title="${player.name}">${player.name}</div>
+                            <div class="player-money" id="player-money-${player.id}">${player.money} M</div>
+                        </div>
+                        <div class="player-stats" id="player-stats-${player.id}">Achats : 0 / ${globalMaxPurchases}</div>
+                        <div class="player-collection" id="player-collection-${player.id}"></div>
+                        <div class="elim-controls" id="elim-controls-${player.id}"></div>
+                    </div>
+                `;
+                if (index < leftCount) {
+                    leftSidebar.insertAdjacentHTML('beforeend', cardHtml);
+                } else {
+                    rightSidebar.insertAdjacentHTML('beforeend', cardHtml);
+                }
+            });
+        }
+
+        function getCleanFileName(filename) {
+            return filename.substring(0, filename.lastIndexOf('.')) || filename;
+        }
+
+        let eliminatedPlayerIds = new Set(); // Mode B : joueurs éliminés par le maître, en fin de partie
+
+        function drawNextImage() {
+            if (remainingFiles.length === 0) {
+                infoText.innerText = "Fin des fichiers ! Toutes les images ont été tirées.";
+                displayImage.style.display = 'none';
+                imageNameLabel.style.display = 'none';
+                buyBtn.disabled = true;
+                nextBtn.disabled = true;
+                enterEliminationPhaseB();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * remainingFiles.length);
+            const chosenFile = remainingFiles.splice(randomIndex, 1)[0];
+            
+            currentFileUrl = chosenFile.url;
+            currentCleanName = getCleanFileName(chosenFile.name);
+            
+            imageNameLabel.innerText = currentCleanName;
+            imageNameLabel.style.display = 'block';
+
+            displayImage.src = currentFileUrl;
+            displayImage.style.display = 'block';
+            buyBtn.disabled = false;
+
+            infoText.innerText = `Images restantes dans le paquet : ${remainingFiles.length}`;
+            
+            if (isFirstDraw) {
+                isFirstDraw = false;
+                nextBtn.innerText = "Passer (Coût : 20M / joueur)";
+                nextBtn.className = "btn btn-warning-pass";
+            }
+        }
+
+        function enterEliminationPhaseB() {
+            eliminatedPlayerIds = new Set();
+            document.getElementById('modeBResetBtn').style.display = 'inline-block';
+            renderEliminationUIB();
+        }
+
+        function renderEliminationUIB() {
+            const alive = players.filter(p => !eliminatedPlayerIds.has(p.id));
+            players.forEach(p => {
+                const card = document.getElementById(`player-card-${p.id}`);
+                const controls = document.getElementById(`elim-controls-${p.id}`);
+                if (!card || !controls) return;
+                const isDead = eliminatedPlayerIds.has(p.id);
+                const isWinnerPlayer = !isDead && alive.length <= 1;
+                card.classList.toggle('eliminated', isDead);
+                card.classList.toggle('winner-card', isWinnerPlayer);
+                if (isDead) {
+                    controls.innerHTML = `<div class="elim-tag">❌ Éliminé</div>`;
+                } else if (alive.length <= 1) {
+                    controls.innerHTML = `<div class="elim-tag winner">🏆 Vainqueur</div>`;
+                } else {
+                    controls.innerHTML = `<button class="btn-eliminate" data-id="${p.id}">Éliminer</button>`;
+                }
+            });
+
+            const banner = document.getElementById('eliminationBanner');
+            if (alive.length === 1) {
+                const wasHidden = banner.style.display === 'none' || !banner.style.display;
+                banner.style.display = 'block';
+                banner.className = 'result-banner result-won winner-banner-big';
+                banner.innerText = `🏆 ${alive[0].name} remporte la partie !`;
+                if (wasHidden) banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        // Délégation unique pour les boutons "Éliminer" (Mode A et Mode B)
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-eliminate');
+            if (!btn) return;
+            if (btn.dataset.id !== undefined) {
+                eliminatedPlayerIds.add(parseInt(btn.dataset.id));
+                renderEliminationUIB();
+            } else if (btn.dataset.slot !== undefined) {
+                modeAEliminated.add(parseInt(btn.dataset.slot));
+                if (modeALastState) renderModeAPlayers(gameOverAPlayerGrid, modeALastState, true);
+            }
+        });
+
+        document.getElementById('modeBResetBtn').addEventListener('click', () => {
+            players = [];
+            remainingFiles = [];
+            parsedFilesArray = [];
+            eliminatedPlayerIds = new Set();
+            filePicker.value = '';
+            startBtn.disabled = true;
+            leftSidebar.innerHTML = '';
+            rightSidebar.innerHTML = '';
+            document.getElementById('eliminationBanner').style.display = 'none';
+            document.getElementById('modeBResetBtn').style.display = 'none';
+            gameArea.style.display = 'none';
+            setupArea.style.display = 'block';
+        });
+
+        nextBtn.addEventListener('click', async () => {
+            if (isFirstDraw) {
+                drawNextImage();
+            } else {
+                const confirmPass = await showCustomConfirm("Voulez-vous vraiment passer cette image ? Cela coûtera 20 M à CHAQUE joueur.");
+                if (confirmPass) {
+                    players.forEach(player => {
+                        player.money = Math.max(0, player.money - 20); 
+                        document.getElementById(`player-money-${player.id}`).innerText = `${player.money} M`;
+                    });
+                    
+                    drawNextImage();
+                }
+            }
+        });
+
+        buyBtn.addEventListener('click', () => {
+            buyerSelect.innerHTML = '';
+            const eligiblePlayers = players.filter(p => p.itemCount < globalMaxPurchases);
+            
+            if(eligiblePlayers.length === 0) {
+                showCustomAlert(`Tous les joueurs ont atteint la limite maximale de ${globalMaxPurchases} achats !`);
+                return;
+            }
+
+            eligiblePlayers.forEach(p => {
+                buyerSelect.innerHTML += `<option value="${p.id}">${p.name} (${p.money} M - ${p.itemCount}/${globalMaxPurchases})</option>`;
+            });
+            purchaseModal.style.display = 'flex';
+        });
+
+        cancelBuyBtn.addEventListener('click', () => {
+            purchaseModal.style.display = 'none';
+        });
+
+        confirmBuyBtn.addEventListener('click', () => {
+            const playerId = parseInt(buyerSelect.value);
+            const price = parseInt(priceInput.value);
+            const player = players.find(p => p.id === playerId);
+
+            if (isNaN(price) || price < 0) {
+                showCustomAlert("Veuillez entrer une somme valide.");
+                return;
+            }
+            if (price % 10 !== 0) {
+                showCustomAlert("Le montant doit obligatoirement être un multiple de 10.");
+                return;
+            }
+            if (player.itemCount >= globalMaxPurchases) {
+                showCustomAlert(`Action impossible ! ${player.name} a déjà atteint la limite.`);
+                return;
+            }
+            if (player.money < price) {
+                showCustomAlert(`Action impossible ! ${player.name} n'a pas assez d'argent.`);
+                return;
+            }
+
+            player.money -= price;
+            player.itemCount += 1;
+            
+            document.getElementById(`player-money-${player.id}`).innerText = `${player.money} M`;
+            document.getElementById(`player-stats-${player.id}`).innerText = `Achats : ${player.itemCount} / ${globalMaxPurchases}`;
+
+            if (player.itemCount === globalMaxPurchases) {
+                document.getElementById(`player-card-${player.id}`).style.opacity = '0.5';
+            }
+
+            const collectionDiv = document.getElementById(`player-collection-${player.id}`);
+            const itemContainer = document.createElement('div');
+            itemContainer.className = 'collection-item';
+
+            const thumb = document.createElement('img');
+            thumb.src = currentFileUrl;
+            thumb.className = 'thumb-img';
+
+            const infoSpan = document.createElement('span');
+            infoSpan.className = 'thumb-info';
+            infoSpan.innerText = currentCleanName;
+            infoSpan.title = currentCleanName;
+
+            const priceSpan = document.createElement('span');
+            priceSpan.className = 'thumb-price';
+            priceSpan.innerText = `${price}M`;
+
+            itemContainer.appendChild(thumb);
+            itemContainer.appendChild(infoSpan);
+            itemContainer.appendChild(priceSpan);
+            collectionDiv.appendChild(itemContainer);
+
+            buyBtn.disabled = true;
+            purchaseModal.style.display = 'none';
+
+            drawNextImage();
+        });
+    </script>
+</body>
+</html>

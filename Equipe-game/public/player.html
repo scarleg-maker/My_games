@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mon équipe</title>
+<link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/master.css">
+</head>
+<body>
+
+<div id="wait-screen" class="screen">
+  <div class="card" style="max-width:520px;margin:60px auto;text-align:center;">
+    <h1 id="my-name"></h1>
+    <p id="wait-message">En attente du lancement de la partie par le maître du jeu...</p>
+  </div>
+</div>
+
+<div id="game-screen" class="screen hidden">
+  <div class="game-header">
+    <div>
+      <h2 id="theme-display"></h2>
+      <span id="mode-display"></span>
+    </div>
+    <h2 id="my-name-2"></h2>
+  </div>
+  <div id="columns" class="columns"></div>
+  <div id="controls" class="controls card"></div>
+</div>
+
+<div id="elimination-screen" class="screen hidden">
+  <h2>Phase d'élimination</h2>
+  <div id="elim-columns" class="columns"></div>
+</div>
+
+<div id="winner-screen" class="screen hidden">
+  <div class="winner-box">
+    <h1 id="winner-title"></h1>
+    <div id="winner-team" class="columns"></div>
+  </div>
+</div>
+
+<div id="flicker-overlay" class="hidden">
+  <img id="flicker-img" class="center-flicker">
+</div>
+
+<div id="modal-root"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/player.js"></script>
+</body>
+</html>

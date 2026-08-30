@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Composez votre équipe — Table du maître</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===================== SETUP VIEW ===================== -->
+  <div id="setup-view">
+    <div class="eyebrow">Table du maître</div>
+    <h1>Composez votre équipe</h1>
+    <p>Réglez la partie, puis lancez-la : chaque joueur ouvrira sa propre page sur son écran.</p>
+
+    <div id="setup-error" class="error-box hidden"></div>
+
+    <form id="setup-form">
+      <div class="panel">
+        <h2>Mode de jeu</h2>
+        <div class="mode-choice">
+          <div class="mode-card" data-mode="A">
+            <div class="letter">A</div>
+            <div class="mode-title">Cartes standardes</div>
+            <div class="mode-desc">Un jeu de 52 cartes classique (du 2 à l'As). Nécessite 4 à 6 joueurs.</div>
+          </div>
+          <div class="mode-card" data-mode="B">
+            <div class="letter">B</div>
+            <div class="mode-title">Carte au choix</div>
+            <div class="mode-desc">Vos propres photos servent de cartes, avec un niveau caché de 1 à 10. Minimum 42 images.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Joueurs</h2>
+        <div class="field">
+          <label>Nombre de joueurs</label>
+          <div class="stepper">
+            <button type="button" id="players-minus">−</button>
+            <div class="value" id="players-count">4</div>
+            <button type="button" id="players-plus">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Noms</label>
+          <div class="player-rows" id="player-rows"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Thème de la partie</h2>
+        <div class="field">
+          <label for="theme">Ex. : Équipage de pirate</label>
+          <textarea id="theme" placeholder="Décrivez le thème de votre partie..."></textarea>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Règles de la partie</h2>
+        <div class="field">
+          <label>Nombre de tours (3 à 20)</label>
+          <div class="stepper">
+            <button type="button" id="rounds-minus">−</button>
+            <div class="value" id="rounds-count">10</div>
+            <button type="button" id="rounds-plus">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Points pour gagner (50 à 100, palier de 10)</label>
+          <div class="stepper">
+            <button type="button" id="points-minus">−</button>
+            <div class="value" id="points-count">70</div>
+            <button type="button" id="points-plus">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Cartes distribuées par joueur</label>
+          <div class="stepper">
+            <button type="button" id="handsize-minus">−</button>
+            <div class="value" id="handsize-count">Toutes</div>
+            <button type="button" id="handsize-plus">+</button>
+          </div>
+          <p id="handsize-hint" class="hidden" style="font-size:0.85rem; color: var(--gold-bright); margin-top:6px;">
+            Verrouillé sur "Toutes" en mode A (52 cartes réparties équitablement).
+          </p>
+          <p style="font-size:0.85rem; opacity:0.75; margin-top:6px;">
+            "Toutes" répartit équitablement l'ensemble des cartes/images disponibles.
+            Sinon, choisissez un nombre fixe entre 6 et 20 par joueur (le maximum
+            possible dépend du nombre de joueurs et, en mode B, du nombre d'images
+            importées).
+          </p>
+        </div>
+      </div>
+
+      <div class="panel" id="photos-panel">
+        <h2>Archive de photos (mode B)</h2>
+        <div class="field">
+          <label>Fichier ZIP — noms attendus : "Nom (niveau).jpg", niveau sur deux chiffres de 01 à 20 (le zéro devant est obligatoire pour 01 à 09)</label>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="photos-input" accept=".zip">
+            <div id="dropzone-label">Cliquez pour choisir une archive .zip (minimum 42 images, niveaux 01 à 20)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn btn-gold" id="launch-btn">Lancer la partie</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===================== GAME CONTROL VIEW ===================== -->
+  <div id="game-view" class="hidden">
+    <div class="eyebrow">Table du maître</div>
+    <h1 id="game-title">Partie en cours</h1>
+    <div id="game-status" class="status-pill"></div>
+
+    <div class="panel">
+      <h2>Liens des joueurs</h2>
+      <div id="player-links"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Carte sur la table <span id="master-only-tag" class="status-pill">vous seul voyez le niveau</span></h2>
+      <div class="table-zone" id="table-zone"></div>
+      <div class="btn-row" id="round-controls"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Scores</h2>
+      <table class="scores" id="scores-table"></table>
+    </div>
+
+    <div class="panel">
+      <h2>Journal de la partie</h2>
+      <div class="log-feed" id="log-feed"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-danger" id="new-game-btn" type="button">Nouvelle partie</button>
+    </div>
+  </div>
+
+  <footer class="hint">Serveur local — partagez les liens joueurs sur le réseau de la table.</footer>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/master.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "triple-triad-ff8",
+  "version": "1.0.0",
+  "description": "Triple Triad (style FF8) - Solo vs IA avec sauvegarde .txt, et PvP en ligne via Socket.io",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

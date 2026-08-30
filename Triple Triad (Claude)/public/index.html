@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triple Triad</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header>
+    <button id="audioToggleBtn" title="Couper/activer la musique">🔊</button>
+    <img src="images/logo.png" alt="Triple Triad" id="mainLogo">
+    <div id="setBar" class="hidden">
+      Univers : <strong id="activeSetLabel"></strong>
+      <button id="changeSetBtn">Changer d'univers</button>
+    </div>
+    <div id="sessionBar" class="hidden">
+      Connecté : <strong id="sessionPlayerName"></strong> — <span id="sessionPoints"></span> points
+      <button id="downloadSaveBtn">⬇️ Télécharger ma sauvegarde</button>
+      <button id="logoutBtn" class="danger-btn">Déconnecter</button>
+    </div>
+    <nav id="mainMenu">
+      <button id="navHowTo">Comment jouer ?</button>
+      <button id="navSolo">Mode Solo</button>
+      <button id="navPvp">Mode Duel (PvP)</button>
+      <button id="navEncyclopedia">Encyclopédie</button>
+      <button id="navShop">Commerce / Échange</button>
+      <button id="navTournament">Tournoi</button>
+    </nav>
+  </header>
+
+  <!-- ================= SÉLECTION D'UNIVERS (premier écran, avant tout le reste) ================= -->
+  <section id="view-setSelect" class="view hidden">
+    <h2>Choisissez votre univers</h2>
+    <p>Chaque univers a sa propre collection de cartes et ses propres sauvegardes.</p>
+    <div id="setSelectGrid" class="pill-list"></div>
+  </section>
+
+  <!-- ================= COMMENT JOUER ? ================= -->
+  <section id="view-howto" class="view hidden">
+    <h2>Comment jouer ?</h2>
+
+    <div class="setup-block">
+      <h3>Déroulement d'une partie</h3>
+      <p>Le Triple Triad se joue sur un plateau de 3×3 cases. Chaque joueur a 5 cartes en main, avec 4
+      valeurs (Haut, Droite, Bas, Gauche) de 1 à 10 ("As"). À tour de rôle, posez une carte sur une case
+      libre : si la valeur du côté qui touche une carte adverse est <strong>supérieure</strong> à la
+      valeur du côté adverse en face, vous la capturez (elle passe de votre couleur — bleu pour vous,
+      rouge pour l'adversaire). La partie se termine quand les 9 cases sont remplies : celui qui contrôle
+      le plus de cartes sur le plateau gagne.</p>
+    </div>
+
+    <div class="setup-block">
+      <h3>Règles spéciales</h3>
+      <p>Survolez chaque bouton de règle (dans les écrans Solo / PvP / Tournoi) pour une explication
+      détaillée. En résumé :</p>
+      <ul>
+        <li><strong>Identique</strong> — capture si 2 côtés touchés ou plus ont la même valeur.</li>
+        <li><strong>Plus</strong> — capture si 2 sommes de côtés touchés ou plus sont égales entre elles.</li>
+        <li><strong>Combo</strong> — les captures Identique/Plus se propagent aux cartes adjacentes.</li>
+        <li><strong>Élémental</strong> — bonus/malus selon l'élément de la case sur laquelle vous jouez.</li>
+        <li><strong>Mur en As</strong> — les bords du plateau comptent comme une carte de valeur 10.</li>
+        <li><strong>Open</strong> — les cartes en main de l'adversaire sont visibles avant d'être posées.</li>
+        <li><strong>Aléatoire</strong> — vos 5 cartes sont tirées au hasard dans votre collection.</li>
+        <li><strong>Mort subite</strong> — en cas d'égalité, on rejoue avec les cartes déjà posées.</li>
+      </ul>
+    </div>
+
+    <div class="setup-block">
+      <h3>Condition de victoire (règle de mise)</h3>
+      <ul>
+        <li><strong>One</strong> — le gagnant choisit 1 carte à prendre à l'adversaire.</li>
+        <li><strong>Diff</strong> — le gagnant choisit un nombre de cartes égal à l'écart de score.</li>
+        <li><strong>Direct</strong> — chacun garde les cartes qu'il a effectivement capturées sur le plateau.</li>
+        <li><strong>All</strong> — le gagnant récupère les 5 cartes de l'adversaire.</li>
+        <li><strong>Aucune</strong> — aucun échange de carte (et aucun point gagné en mode Solo).</li>
+      </ul>
+      <p>⚠️ Certains adversaires imposent leurs propres règles et leur propre condition de victoire pour
+      le duel — un message vous prévient si c'est le cas, avant de lancer le combat.</p>
+    </div>
+
+    <div class="setup-block">
+      <h3>Les autres écrans</h3>
+      <ul>
+        <li><strong>Encyclopédie</strong> — toutes les cartes du jeu, obtenues ou non, page par niveau.</li>
+        <li><strong>Commerce / Échange</strong> — achetez/vendez des cartes contre des points, ou
+        échangez en direct avec un autre joueur connecté.</li>
+        <li><strong>Tournoi</strong> — affrontez 5 adversaires de plus en plus forts (paliers Facile,
+        Medium, Expert) pour un classement final.</li>
+        <li><strong>Mode Duel (PvP)</strong> — affrontez un autre joueur réel en temps réel.</li>
+      </ul>
+    </div>
+
+    <div class="setup-block">
+      <h3>Cartes légendaires</h3>
+      <p>Certaines cartes rares ne sont détenues, à un instant donné, que par <strong>un seul</strong>
+      adversaire IA. Dans l'Encyclopédie, une carte légendaire non obtenue indique qui la détient
+      actuellement (et son palier). Une fois gagnée, elle ne vous sera <strong>plus jamais reproposée</strong>.
+      Si vous la perdez ensuite face à une IA, elle migre chez cet adversaire — un autre joueur pourrait
+      alors la lui reprendre.</p>
+    </div>
+
+    <button class="back" data-view="home">Retour</button>
+  </section>
+
+  <!-- ================= CONNEXION (commune à Solo / PvP / Encyclopédie / Tournoi) ================= -->
+  <section id="view-login" class="view hidden">
+    <h2>Connexion</h2>
+    <p>Entrez votre nom pour charger votre sauvegarde (ou en créer une nouvelle).</p>
+    <input id="loginNameInput" type="text" placeholder="Votre nom" maxlength="40">
+    <button id="loginLoadBtn">Charger / Créer</button>
+
+    <div class="setup-block">
+      <h3>Ou importez un fichier de sauvegarde existant</h3>
+      <p>Sélectionnez un fichier <code>.txt</code> de sauvegarde précédemment téléchargé/exporté (bouton
+      "⬇️ Télécharger ma sauvegarde", visible en haut de l'écran une fois connecté).</p>
+      <input id="importSaveFileInput" type="file" accept=".txt,application/json">
+    </div>
+
+    <button class="back" data-view="home">Retour</button>
+  </section>
+
+  <!-- ================= SOLO : configuration ================= -->
+  <section id="view-soloSetup" class="view hidden">
+    <h2>Nouveau duel — <span id="soloPlayerName"></span></h2>
+
+    <div id="lowCardsPanel" class="setup-block warning-block hidden">
+      <h3>⚠️ Il ne vous reste que <span id="lowCardsCount"></span> carte(s)</h3>
+      <p>Vous pouvez recommencer avec le deck de départ, ou abandonner définitivement cette sauvegarde.</p>
+      <button id="resetSaveBtn" class="warning-btn">Remise à zéro</button>
+      <button id="abandonSaveBtn" class="danger-btn">Abandonner</button>
+    </div>
+
+    <div class="setup-block">
+      <h3>1. Choisissez un palier d'adversaires</h3>
+      <div id="tierList" class="pill-list"></div>
+    </div>
+
+    <div class="setup-block">
+      <h3>2. Choisissez un adversaire</h3>
+      <div id="opponentList" class="pill-list"></div>
+    </div>
+
+    <div class="setup-block">
+      <h3>3. Règles de jeu</h3>
+      <p id="imposedRulesNote" class="hidden">⚠️ Cet adversaire impose ses propres règles et sa propre
+      condition de victoire pour ce duel — votre sélection ci-dessous est ignorée.</p>
+      <div id="ruleToggles">
+        <div class="pill-list rule-row-open">
+          <button type="button" class="rule-toggle rule-toggle-open" data-rule="open" title="Voir les cartes de l'adversaire avant qu'il les pose">Open</button>
+          <button type="button" class="rule-toggle rule-toggle-open" data-rule="random" title="Vos 5 cartes sont tirées au hasard dans votre collection (le choix ci-dessous est alors ignoré)">Aléatoire</button>
+        </div>
+        <div class="pill-list">
+          <button type="button" class="rule-toggle" data-rule="same" title="Chiffre opposé de même valeur">Identique</button>
+          <button type="button" class="rule-toggle" data-rule="plus" title="Somme des chiffres opposés égale sur 2 côtés ou plus">Plus</button>
+          <button type="button" class="rule-toggle" data-rule="combo" title="Les captures Identique/Plus se propagent en chaîne aux cartes adjacentes">Combo</button>
+          <button type="button" class="rule-toggle" data-rule="elemental" title="+1 si l'élément de la carte correspond à la case, -1 sinon (capture directe uniquement)">Élémental</button>
+          <button type="button" class="rule-toggle" data-rule="wallAce" title="Les bords du plateau valent 10 (As) pour Identique et Plus">Mur en As</button>
+          <button type="button" class="rule-toggle" data-rule="suddenDeath" title="En cas d'égalité, on rejoue avec les cartes déjà posées">Mort subite</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-block">
+      <h3>4. Règle de mise (condition de victoire)</h3>
+      <select id="tradeRuleSelect">
+        <option value="one">Une carte (One)</option>
+        <option value="direct">Direct</option>
+        <option value="diff">Différence (Diff)</option>
+        <option value="all">Toutes (All)</option>
+        <option value="none">Aucune (None)</option>
+      </select>
+    </div>
+
+    <div class="setup-block">
+      <h3>5. Choisissez vos 5 cartes</h3>
+      <div id="deckPicker" class="card-grid"></div>
+      <p>Sélectionnées: <span id="deckCount">0</span> / 5</p>
+    </div>
+
+    <button id="startSoloBtn" disabled>Lancer le duel</button>
+    <button class="back" data-view="home">Retour</button>
+  </section>
+
+  <!-- ================= PVP : menu ================= -->
+  <section id="view-pvpMenu" class="view hidden">
+    <h2>Mode Duel (PvP) — <span id="pvpPlayerName"></span></h2>
+
+    <div class="setup-block">
+      <h3>Règles de jeu</h3>
+      <div id="pvpRuleToggles">
+        <div class="pill-list rule-row-open">
+          <button type="button" class="rule-toggle rule-toggle-open" data-rule="open" title="Voir les cartes de l'adversaire avant qu'il les pose">Open</button>
+          <button type="button" class="rule-toggle rule-toggle-open" data-rule="random" title="Vos 5 cartes sont tirées au hasard dans votre collection (le choix ci-dessous est alors ignoré)">Aléatoire</button>
+        </div>
+        <div class="pill-list">
+          <button type="button" class="rule-toggle" data-rule="same" title="Chiffre opposé de même valeur">Identique</button>
+          <button type="button" class="rule-toggle" data-rule="plus" title="Somme des chiffres opposés égale sur 2 côtés ou plus">Plus</button>
+          <button type="button" class="rule-toggle" data-rule="combo" title="Les captures Identique/Plus se propagent en chaîne aux cartes adjacentes">Combo</button>
+          <button type="button" class="rule-toggle" data-rule="elemental" title="+1 si l'élément de la carte correspond à la case, -1 sinon (capture directe uniquement)">Élémental</button>
+          <button type="button" class="rule-toggle" data-rule="wallAce" title="Les bords du plateau valent 10 (As) pour Identique et Plus">Mur en As</button>
+          <button type="button" class="rule-toggle" data-rule="suddenDeath" title="En cas d'égalité, on rejoue avec les cartes déjà posées">Mort subite</button>
+        </div>
+      </div>
+    </div>
+    <div class="setup-block">
+      <h3>Règle de mise</h3>
+      <select id="pvpTradeRuleSelect">
+        <option value="one">Une carte (One)</option>
+        <option value="direct">Direct</option>
+        <option value="diff">Différence (Diff)</option>
+        <option value="all">Toutes (All)</option>
+        <option value="none">Aucune (None)</option>
+      </select>
+    </div>
+
+    <div class="setup-block">
+      <h3>Choisissez vos 5 cartes (issues de votre collection)</h3>
+      <div id="pvpDeckPicker" class="card-grid"></div>
+      <p>Sélectionnées: <span id="pvpDeckCount">0</span> / 5</p>
+    </div>
+
+    <div class="pvp-actions">
+      <button id="pvpCreateBtn">Créer un salon</button>
+      <div>
+        <input id="pvpRoomCodeInput" type="text" placeholder="Code du salon" maxlength="6">
+        <button id="pvpJoinBtn">Rejoindre</button>
+      </div>
+    </div>
+    <p id="pvpRoomInfo"></p>
+    <button class="back" data-view="home">Retour</button>
+  </section>
+
+  <!-- ================= JEU ================= -->
+  <section id="view-game" class="view hidden">
+    <div id="gameHeader">
+      <div id="scoreIndicator"></div>
+    </div>
+    <div id="rulesSummary"></div>
+
+    <div id="gameArea">
+      <div id="handPlayer" class="hand-column">
+        <div class="hand-label">Vous (J1)</div>
+        <div id="handPlayerCards" class="hand-cards"></div>
+      </div>
+
+      <div id="board-frame">
+        <div id="board"></div>
+      </div>
+
+      <div id="handOpponent" class="hand-column">
+        <div class="hand-label" id="opponentLabel">Adversaire (J2)</div>
+        <div id="handOpponentCards" class="hand-cards"></div>
+      </div>
+    </div>
+
+    <div id="turnIndicator"></div>
+
+    <div id="gameMessage"></div>
+    <div id="capturedCardsPanel" class="hidden">
+      <div class="captured-col">
+        <h4>Cartes gagnées</h4>
+        <div id="gainedCardsList" class="hand-cards"></div>
+      </div>
+      <div class="captured-col">
+        <h4>Cartes perdues</h4>
+        <div id="lostCardsList" class="hand-cards"></div>
+      </div>
+    </div>
+    <div id="postGameActions" class="pvp-actions hidden">
+      <button id="rematchBtn">Rejouer</button>
+      <button id="otherOpponentBtn">Autre adversaire</button>
+    </div>
+    <div id="tournamentMatchActions" class="pvp-actions hidden">
+      <button id="tournamentBackBtn">Voir le tournoi</button>
+    </div>
+  </section>
+
+  <!-- ================= CHOIX DE LA CARTE GAGNÉE ================= -->
+  <section id="view-chooseCard" class="view hidden">
+    <h2>Choisissez votre butin</h2>
+    <p id="chooseCardInstructions"></p>
+    <div id="chooseCardGrid" class="card-grid"></div>
+    <button id="confirmChooseCardBtn" disabled>Confirmer</button>
+  </section>
+
+  <!-- ================= ENCYCLOPÉDIE ================= -->
+  <section id="view-encyclopedia" class="view hidden">
+    <h2>Encyclopédie — <span id="encyclopediaPlayerName"></span></h2>
+    <div id="encyclopediaTabs" class="pill-list"></div>
+    <div id="encyclopediaGrid" class="card-grid"></div>
+    <button class="back" data-view="home">Retour</button>
+  </section>
+
+  <!-- ================= COMMERCE ================= -->
+  <section id="view-shop" class="view hidden">
+    <h2>Commerce / Échange — <span id="shopPlayerName"></span> (<span id="shopPoints"></span> points)</h2>
+
+    <div id="shopTabs" class="pill-list">
+      <button id="shopTabBuySell" type="button" class="selected">Boutique</button>
+      <button id="shopTabTrade" type="button">Échange entre joueurs</button>
+    </div>
+
+    <!-- ---- Onglet Boutique ---- -->
+    <div id="shopBuySellPanel">
+      <div class="setup-block">
+        <h3>Acheter une carte aléatoire</h3>
+        <div id="shopBuyGrid" class="shop-buy-grid"></div>
+      </div>
+
+      <div class="setup-block">
+        <h3>Vendre une carte de votre collection</h3>
+        <p>Niveaux 8 à 10 : invendables.</p>
+        <div id="shopSellGrid" class="card-grid"></div>
+      </div>
+    </div>
+
+    <!-- ---- Onglet Échange ---- -->
+    <div id="shopTradePanel" class="hidden">
+      <div id="tradeLobby" class="setup-block">
+        <h3>Échanger avec un autre joueur</h3>
+        <p>L'autre joueur doit charger sa propre sauvegarde dans un autre onglet/navigateur, dans le
+        même univers, puis rejoindre avec le code du salon.</p>
+        <button id="tradeCreateBtn">Créer un salon d'échange</button>
+        <div>
+          <input id="tradeRoomCodeInput" type="text" placeholder="Code du salon" maxlength="6">
+          <button id="tradeJoinBtn">Rejoindre</button>
+        </div>
+        <p id="tradeRoomInfo"></p>
+      </div>
+
+      <div id="tradeRoomView" class="hidden">
+        <div id="tradeArea">
+          <div class="trade-side">
+            <h3>Vous</h3>
+            <div id="tradeMySlot" class="trade-slot empty"></div>
+            <div id="tradeMyStatus" class="trade-status">En attente...</div>
+          </div>
+          <div class="trade-vs">⇄</div>
+          <div class="trade-side">
+            <h3 id="tradePartnerName">En attente d'un adversaire...</h3>
+            <div id="tradeTheirSlot" class="trade-slot empty"></div>
+            <div id="tradeTheirStatus" class="trade-status">En attente...</div>
+          </div>
+        </div>
+
+        <div class="setup-block">
+          <h3>Votre offre</h3>
+          <p>Choisissez au maximum une carte à offrir, et/ou un montant de points.</p>
+          <div id="tradeCardPicker" class="card-grid"></div>
+          <label>Points à offrir : <input id="tradePointsInput" type="number" min="0" step="10" value="0"></label>
+        </div>
+
+        <button id="tradeReadyBtn">Valider mon offre</button>
+        <button id="tradeUnreadyBtn" class="hidden">Annuler ma validation</button>
+        <button id="tradeLeaveBtn" class="danger-btn">Quitter l'échange</button>
+      </div>
+    </div>
+
+    <button class="back" data-view="home">Retour</button>
+  </section>
+
+  <!-- ================= TOURNOI ================= -->
+  <section id="view-tournamentEntry" class="view hidden">
+    <h2>Tournoi — <span id="tournamentPlayerName"></span></h2>
+
+    <div id="tournamentLastResult" class="setup-block hidden">
+      <h3>Dernier tournoi</h3>
+      <p id="tournamentLastResultText"></p>
+      <div id="tournamentLastResultBracket"></div>
+    </div>
+
+    <div id="tournamentResumePanel" class="setup-block hidden">
+      <h3>Tournoi en cours</h3>
+      <div id="tournamentBracket"></div>
+      <button id="tournamentContinueBtn">Jouer la manche suivante</button>
+      <button id="tournamentAbandonBtn" class="danger-btn">Abandonner le tournoi</button>
+    </div>
+
+    <div id="tournamentNewPanel" class="setup-block">
+      <h3>Nouveau tournoi</h3>
+      <p>5 adversaires de plus en plus forts vous attendent. Aucune carte n'est en jeu pendant le
+      tournoi — seules les récompenses finales comptent.</p>
+
+      <h4>1. Choisissez un niveau de tournoi</h4>
+      <div id="tournamentTierPicker" class="pill-list"></div>
+
+      <h4>2. Règles de jeu</h4>
+      <div id="tournamentRuleToggles">
+        <div class="pill-list rule-row-open">
+          <button type="button" class="rule-toggle rule-toggle-open" data-rule="open" title="Voir les cartes de l'adversaire avant qu'il les pose">Open</button>
+          <button type="button" class="rule-toggle rule-toggle-open" data-rule="random" title="Vos 5 cartes sont tirées au hasard dans votre collection (le choix ci-dessous est alors ignoré)">Aléatoire</button>
+        </div>
+        <div class="pill-list">
+          <button type="button" class="rule-toggle" data-rule="same" title="Chiffre opposé de même valeur">Identique</button>
+          <button type="button" class="rule-toggle" data-rule="plus" title="Somme des chiffres opposés égale sur 2 côtés ou plus">Plus</button>
+          <button type="button" class="rule-toggle" data-rule="combo" title="Les captures Identique/Plus se propagent en chaîne aux cartes adjacentes">Combo</button>
+          <button type="button" class="rule-toggle" data-rule="elemental" title="+1 si l'élément de la carte correspond à la case, -1 sinon (capture directe uniquement)">Élémental</button>
+          <button type="button" class="rule-toggle" data-rule="wallAce" title="Les bords du plateau valent 10 (As) pour Identique et Plus">Mur en As</button>
+          <button type="button" class="rule-toggle" data-rule="suddenDeath" title="En cas d'égalité, on rejoue avec les cartes déjà posées">Mort subite</button>
+        </div>
+      </div>
+
+      <h4>3. Vos 5 cartes (utilisées pour tout le tournoi)</h4>
+      <div id="tournamentDeckPicker" class="card-grid"></div>
+      <p>Sélectionnées: <span id="tournamentDeckCount">0</span> / 5</p>
+
+      <button id="tournamentStartBtn" disabled>Payer et commencer</button>
+
+    </div>
+
+    <button class="back" data-view="home">Retour</button>
+  </section>
+
+</div>
+
+<!-- Overlay de révélation d'un achat -->
+<div id="shopRevealOverlay" class="hidden">
+  <div id="shopRevealContent">
+    <div id="shopRevealCard"></div>
+    <div id="shopRevealInfo"></div>
+    <div id="shopRevealHint">Cliquez pour continuer</div>
+  </div>
+</div>
+
+<!-- Overlay générique de zoom sur une carte (Encyclopédie...) -->
+<div id="cardZoomOverlay" class="hidden">
+  <div id="cardZoomContent"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Jeu de la Bombe — Maître du jeu</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="container">
+  <h1>💣 Jeu de la Bombe — Poste Arbitre</h1>
+
+  <div id="setupPanel" class="panel">
+    <h2>Configuration de la partie</h2>
+    <div id="setupError" class="error-msg"></div>
+
+    <label>Nombre de joueurs (2 à 8)</label>
+    <input type="number" id="numPlayers" min="2" max="8" value="2">
+
+    <div id="namesContainer" class="grid-players-names"></div>
+
+    <label>Archive ZIP d'images</label>
+    <input type="file" id="zipFile" accept=".zip">
+    <button id="uploadBtn" type="button">Charger l'archive</button>
+    <div id="uploadStatus" class="status-line"></div>
+
+    <label>Nombre d'images en jeu (25 à 75)</label>
+    <input type="number" id="numImages" min="25" max="75" value="25">
+
+    <label>Nombre max de cartes par joueur pour gagner (5 à 10)</label>
+    <input type="number" id="maxCards" min="5" max="10" value="5">
+
+    <label>Nombre de bombes par joueur (1 à 5)</label>
+    <input type="number" id="numBombs" min="1" max="5" value="3">
+
+    <div style="margin-top:14px;">
+      <label style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="ruleIntouchable" style="width:auto;">
+        <span>Règle "Intouchable" — le premier joueur à compléter son équipe gagne immédiatement toute la partie</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+        <input type="checkbox" id="ruleMultiboom" style="width:auto;">
+        <span>Règle "Multi-boom" — une image piégée par 2 bombes ou plus fait perdre autant d'images ; à 0 image restante, le joueur est éliminé de la partie</span>
+      </label>
+    </div>
+
+    <br>
+    <button id="startBtn" type="button">🚀 Lancer la partie</button>
+  </div>
+
+  <div id="gamePanel" class="panel" style="display:none;">
+    <h2>Manche <span id="roundNum"></span> — Phase : <span id="phaseLabel"></span></h2>
+    <div id="activeRules" class="status-line"></div>
+
+    <div class="panel">
+      <h3>Liens des joueurs</h3>
+      <div class="links-list" id="playerLinks"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Plateau (vue arbitre — bombes visibles)</h3>
+      <div id="masterBoard" class="board"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Équipes des joueurs</h3>
+      <div id="columns" class="columns"></div>
+    </div>
+
+    <div class="panel" id="roundEndPanel" style="display:none;">
+      <h3>Fin de manche — éliminer des joueurs / relancer</h3>
+      <div id="eliminationControls"></div>
+      <br>
+      <button id="newRoundBtn" type="button">🔁 Nouvelle manche (mêmes images)</button>
+    </div>
+
+    <div class="panel" id="winnerPanel" style="display:none;">
+      <div class="winner-banner" id="winnerText"></div>
+    </div>
+
+    <button class="secondary" id="resetBtn" type="button">↩ Nouvelle partie complète</button>
+  </div>
+</div>
+
+<div id="revealOverlay" class="reveal-overlay" style="display:none;">
+  <div class="reveal-box" id="revealBox"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/js/maitre.js"></script>
+</body>
+</html>

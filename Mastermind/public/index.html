@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mastermind — Configuration</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="top">
+  <div class="eyebrow">Mastermind</div>
+  <h1>Trouvez le nombre secret</h1>
+  <p>Choisissez le nombre de joueurs, la longueur du nombre et la difficulté, puis lancez la partie.</p>
+</div>
+
+<div class="carte">
+  <div class="groupe" id="groupe-nom-solo">
+    <span class="label">Votre nom</span>
+    <input type="text" id="champ-nom-solo" class="champ-nom" placeholder="Votre nom" maxlength="24">
+  </div>
+
+  <div class="groupe" id="groupe-noms-duo" style="display:none;">
+    <span class="label">Noms des joueurs (facultatif — chacun peut aussi le faire sur sa page)</span>
+    <input type="text" id="champ-nom1" class="champ-nom" placeholder="Nom du joueur 1" maxlength="24" style="margin-bottom:8px;">
+    <input type="text" id="champ-nom2" class="champ-nom" placeholder="Nom du joueur 2" maxlength="24">
+  </div>
+
+  <div class="groupe">
+    <span class="label">Nombre de joueurs</span>
+    <div class="choix-boutons" id="grp-joueurs">
+      <button class="choix-btn actif" data-valeur="1">1 — Solo</button>
+      <button class="choix-btn" data-valeur="2">2 — Duel</button>
+    </div>
+  </div>
+
+  <div class="groupe">
+    <span class="label">Nombre de chiffres</span>
+    <div class="choix-boutons" id="grp-chiffres">
+      <button class="choix-btn" data-valeur="3">3</button>
+      <button class="choix-btn actif" data-valeur="4">4</button>
+      <button class="choix-btn" data-valeur="5">5</button>
+      <button class="choix-btn" data-valeur="6">6</button>
+    </div>
+  </div>
+
+  <div class="groupe">
+    <span class="label">Chiffres</span>
+    <div class="choix-boutons" id="grp-repetition">
+      <button class="choix-btn actif" data-valeur="unique">Chiffre unique</button>
+      <button class="choix-btn" data-valeur="repete">Chiffre répété</button>
+    </div>
+    <p class="info" id="info-repetition">Chaque chiffre n'apparaît qu'une seule fois dans le nombre.</p>
+  </div>
+
+  <div class="groupe">
+    <span class="label">Difficulté</span>
+    <div class="choix-boutons" id="grp-difficulte">
+      <button class="choix-btn actif" data-valeur="facile">Facile — position indiquée</button>
+      <button class="choix-btn" data-valeur="difficile">Difficile — présence seule</button>
+    </div>
+    <p class="info" id="info-difficulte">Facile : vert = bon chiffre bon endroit, orange = bon chiffre mauvais endroit, rouge = absent.</p>
+  </div>
+
+  <button class="btn-principal" id="btn-lancer">Lancer la partie</button>
+</div>
+
+<div class="carte" id="carte-liens" style="display:none;">
+  <h3>Partie à 2 joueurs prête</h3>
+  <p class="info">Ouvrez ces deux adresses (par exemple dans deux onglets ou deux navigateurs) :</p>
+  <div class="liens" id="liens-joueurs"></div>
+</div>
+
+<script src="/index.js"></script>
+</body>
+</html>

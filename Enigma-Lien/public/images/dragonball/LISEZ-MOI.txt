@@ -1,0 +1,2 @@
+Dépose ici les images des personnages Dragon Ball (voir data/dragonball/dragonballex.json,
+champ "image" de chaque entrée). Même convention que le dossier images/pokemon/.

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeu d'estimation — Maître du jeu</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1 class="title-main">🎯 Jeu d'estimation — Console Maître</h1>
+
+  <!-- ===================== ECRAN DE CONFIGURATION ===================== -->
+  <div id="config-screen">
+    <div class="card">
+      <h2>1. Nombre de joueurs</h2>
+      <div class="btn-row" id="num-players-buttons"></div>
+
+      <h2>2. Noms des joueurs</h2>
+      <div class="names-grid" id="names-container"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. Thème de la partie</h2>
+      <label for="theme-input">Ex : Personnages de Dragon Ball</label>
+      <textarea id="theme-input" rows="2" placeholder="Décrivez le thème sur lequel porteront les estimations..."></textarea>
+    </div>
+
+    <div class="card">
+      <h2>4. Nombre de points pour gagner</h2>
+      <div class="btn-row" id="points-buttons"></div>
+    </div>
+
+    <div class="card">
+      <button class="big-btn" id="start-btn">🚀 Lancer la partie</button>
+    </div>
+  </div>
+
+  <!-- ===================== ECRAN EN JEU ===================== -->
+  <div id="live-screen" class="hidden">
+    <div class="card">
+      <h2>Liens des joueurs</h2>
+      <div class="player-links" id="player-links"></div>
+    </div>
+
+    <div class="card">
+      <h2>Statut de la manche</h2>
+      <div id="round-status">En attente du début de la partie...</div>
+    </div>
+
+    <div class="card">
+      <h2>🏆 Tableau des scores</h2>
+      <div><strong>Thème :</strong> <span id="theme-display"></span> — <strong>Objectif :</strong> <span id="target-display"></span> pts</div>
+      <table class="scoreboard">
+        <thead><tr><th></th><th>Joueur</th><th>Score</th></tr></thead>
+        <tbody id="scoreboard-body"></tbody>
+      </table>
+    </div>
+
+    <div class="card hidden" id="last-results-card">
+      <h3>Dernière manche</h3>
+      <div id="last-results"></div>
+    </div>
+
+    <div class="card hidden" id="game-over-card">
+      <div class="winner-banner" id="winner-banner"></div>
+      <button class="big-btn" id="new-game-btn">🔄 Nouvelle partie</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/master.js"></script>
+</body>
+</html>

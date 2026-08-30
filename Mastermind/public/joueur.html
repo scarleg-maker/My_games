@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mastermind — Duel</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="top">
+  <div class="eyebrow">Mode duel</div>
+  <div class="badge-joueur" id="badge-joueur">Joueur</div>
+  <div class="mon-code" id="mon-code" style="display:none;">
+    Mon code : <span id="mon-code-valeur"></span>
+  </div>
+  <h1>Défiez votre adversaire</h1>
+</div>
+
+<div class="carte" id="carte-choix">
+  <div class="groupe">
+    <span class="label">Votre nom</span>
+    <input type="text" id="champ-nom" class="champ-nom" placeholder="Votre nom" maxlength="24">
+  </div>
+  <h3>Choisissez votre nombre secret</h3>
+  <p class="info" id="info-choix"></p>
+  <div class="saisie">
+    <input type="text" id="champ-secret" inputmode="numeric" placeholder="????">
+    <button class="btn-secondaire" id="btn-alea">Aléatoire</button>
+  </div>
+  <div class="erreur" id="erreur-choix"></div>
+  <button class="btn-principal" id="btn-valider-secret" style="margin-top:14px;">Valider mon nombre</button>
+  <p class="info" id="etat-attente" style="display:none;">En attente que l'autre joueur choisisse son nombre...</p>
+</div>
+
+<div class="carte" id="carte-jeu" style="display:none;">
+  <div class="statut" id="statut"></div>
+  <div class="saisie">
+    <input type="text" id="champ-guess" inputmode="numeric" placeholder="????">
+    <button class="btn-principal" style="width:auto;" id="btn-guess">Proposer</button>
+  </div>
+  <div class="erreur" id="erreur-jeu"></div>
+  <div class="legende" id="legende"></div>
+</div>
+
+<div class="carte" id="carte-fin" style="display:none;">
+  <h2 id="titre-fin"></h2>
+  <a class="retour" href="/">← Nouvelle partie</a>
+</div>
+
+<div class="carte">
+  <h3>Mon historique de propositions</h3>
+  <div class="historique" id="historique"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/joueur.js"></script>
+</body>
+</html>

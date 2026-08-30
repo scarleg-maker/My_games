@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 Familles - Joueur</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1 id="playerTitle">🎴 Joueur</h1>
+
+  <div id="waitingBox" class="card-panel">
+    <p>En attente du lancement de la partie par le maître du jeu...</p>
+  </div>
+
+  <div id="dealBox" class="card-panel hidden">
+    <button id="dealBtn">🃏 Recevoir mes cartes</button>
+  </div>
+
+  <div id="readyBox" class="card-panel hidden">
+    <p>Vérifiez vos cartes ci-dessous, puis cliquez sur "Je suis prêt" quand vous êtes prêt à jouer.</p>
+    <button id="readyBtn">✅ Je suis prêt</button>
+    <p id="readyStatus"></p>
+  </div>
+
+  <div id="gameArea" class="hidden">
+    <div id="turnBanner" class="turn-banner">En attente...</div>
+
+    <div id="requestedBanner" class="turn-banner requested hidden">
+      Cliquez sur la carte demandée à l'oral si vous l'avez, sinon ne faites rien.
+    </div>
+
+    <div id="myTurnControls" class="card-panel hidden">
+      <h3>Choisissez un adversaire à interroger</h3>
+      <div class="opponent-grid" id="opponentGrid"></div>
+      <div class="action-row">
+        <button class="pioche-btn" id="piocheBtn">🎲 Pioche</button>
+        <div class="families-panel" id="handFamiliesSummary"></div>
+      </div>
+    </div>
+
+    <div class="card-panel" id="familyClaimBox" style="display:none;">
+      <h3>Familles complètes disponibles</h3>
+      <div class="family-btn-row" id="familyBtnRow"></div>
+    </div>
+
+    <div class="card-panel">
+      <h3>Mes cartes (<span id="handCount">0</span>)</h3>
+      <div class="hand-grid" id="handGrid"></div>
+    </div>
+
+    <div class="card-panel">
+      <h3>Familles complétées dans la partie</h3>
+      <div class="families-panel" id="completedFamiliesPlayer"></div>
+    </div>
+  </div>
+
+  <div id="drawModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>Carte piochée</h3>
+      <div id="drawnCardBox"></div>
+      <p>Est-ce la carte que vous aviez demandée à l'oral ?</p>
+      <div class="action-row" style="justify-content:center;">
+        <button id="drawCorrectBtn">✅ Oui, je rejoue</button>
+        <button id="drawWrongBtn">❌ Non, joueur suivant</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameOverModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2>🏆 Partie terminée</h2>
+      <p id="gameOverText"></p>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/joueur.js"></script>
+</body>
+</html>

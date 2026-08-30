@@ -1,0 +1,52 @@
+.screen { padding: 30px; max-width: 1400px; margin: 0 auto; }
+.setup-card { max-width: 640px; margin: 20px auto; }
+.setup-card h3 { margin-top: 22px; margin-bottom: 8px; }
+
+.mode-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.mode-btn { flex: 1; min-width: 150px; background: #cfd1d4; color: #1c1d1f; }
+.mode-btn.selected { background: #2f3237; color: #fff; }
+
+#player-names { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+#player-names input { width: 100%; }
+
+#player-links { margin-top: 16px; }
+#player-links a { display: block; margin-bottom: 4px; color: #1c1d1f; font-weight: 600; }
+
+.game-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+
+.columns {
+  display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 20px;
+}
+
+.player-col {
+  background: #ffffffd9; border-radius: 12px; padding: 14px; min-width: 150px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column; align-items: center;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.player-col.active { box-shadow: 0 0 0 3px #2f3237, 0 6px 18px rgba(0,0,0,0.25); transform: translateY(-4px); }
+.player-col.eliminated { opacity: 0.4; }
+.player-col h3 { margin: 0 0 10px 0; font-size: 16px; text-align: center; }
+
+.team-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+.controls { text-align: center; }
+.controls .row { display: flex; gap: 12px; justify-content: center; align-items: center; margin: 8px 0; }
+
+#flicker-overlay {
+  position: fixed; inset: 0; background: rgba(15,15,17,0.75);
+  display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+
+.candidate-grid { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.candidate-item { cursor: pointer; border-radius: 10px; padding: 6px; transition: transform 0.15s ease; }
+.candidate-item:hover { transform: scale(1.05); }
+.candidate-item.chosen { outline: 3px solid #2f3237; }
+.candidate-item img { width: 150px; height: 200px; object-fit: contain; object-position: center bottom; background: #eeeeee; border-radius: 8px; }
+
+.winner-box { text-align: center; padding-top: 40px; }
+.winner-box .thumb { width: 130px; height: 173px; }

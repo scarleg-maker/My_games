@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Votre main</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow" id="theme-line">Table de jeu</div>
+  <h1 id="player-name">—</h1>
+  <div id="status-pill" class="status-pill"></div>
+
+  <div id="waiting-panel" class="panel hidden">
+    <p>La partie n'a pas encore démarré, ou le maître du jeu prépare le prochain tour. Cette page se mettra à jour automatiquement.</p>
+  </div>
+
+  <div id="play-panel" class="hidden">
+    <div class="panel">
+      <div class="turn-banner" id="turn-banner"></div>
+      <div class="table-zone" id="table-zone"></div>
+      <div class="btn-row" id="action-row" style="justify-content:center; margin-top: 10px;"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Votre main</h2>
+      <div class="hand" id="hand"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Scores</h2>
+      <table class="scores" id="scores-table"></table>
+    </div>
+  </div>
+
+  <div id="gameover-panel" class="panel hidden">
+    <h2>Partie terminée</h2>
+    <div id="final-scores"></div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/player.js"></script>
+</body>
+</html>

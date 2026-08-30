@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Ombre - Joueur</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="player-page">
+
+  <!-- CHOIX DU JOUEUR -->
+  <div id="select-screen" style="width:100%;max-width:420px">
+    <h2 style="text-align:center">Qui es-tu ?</h2>
+    <div class="slot-list" id="slotList"></div>
+    <p class="waiting" id="noGame">En attente de la création de la partie par le maître...</p>
+  </div>
+
+  <!-- ATTENTE -->
+  <div id="waiting-screen" class="waiting" style="display:none">
+    <h2 id="waitingName"></h2>
+    <p>En attente du lancement de la partie...</p>
+  </div>
+
+  <!-- JEU -->
+  <div id="play-screen" style="display:none;width:100%;align-items:center;flex-direction:column;display:flex">
+    <div class="player-timer" id="timer">--</div>
+    <div class="progress-pill" id="progress">Image 1</div>
+
+    <div class="image-frame">
+      <img id="gameImage" src="" alt="silhouette" />
+      <div class="overlay-result" id="overlay" style="display:none"></div>
+    </div>
+
+    <form class="answer-form" id="answerForm">
+      <input type="text" id="answerInput" placeholder="Ta réponse..." autocomplete="off" />
+      <button type="submit">Valider</button>
+    </form>
+    <p id="attemptsLeft" style="color:#888;font-size:13px;margin-top:8px"></p>
+
+    <div class="history-player" id="historyList"></div>
+  </div>
+
+  <!-- FIN DE PARTIE -->
+  <div id="end-screen" class="waiting" style="display:none">
+    <h2>Partie terminée</h2>
+    <p id="endText" style="font-size:20px;color:#fff"></p>
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/player.js"></script>
+</body>
+</html>

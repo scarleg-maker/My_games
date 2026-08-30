@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu des Enchères — Mode A</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+    <header>
+        <h1>Jeu des Enchères</h1>
+        <h2>Mode A — Temps réel</h2>
+    </header>
+    <div class="panel" style="text-align:center;">
+        <p style="margin-bottom:20px; line-height:1.6;">
+            Ce serveur héberge le mode <strong>Temps réel</strong> du Jeu des Enchères.<br>
+            Le maître configure et suit la partie, les joueurs enchérissent en direct depuis leur propre appareil.
+        </p>
+        <a href="/maitre" class="btn btn-start" style="display:block; text-decoration:none; margin-bottom:15px;">Ouvrir l'espace Maître</a>
+        <p style="opacity:0.85; font-size:0.95rem;">
+            Sur chaque appareil joueur, ouvrir :<br>
+            <code>http://&lt;IP-de-ce-PC&gt;:5500/joueur1</code> ... <code>/joueur8</code>
+            <br>selon le numéro attribué par le maître.
+        </p>
+    </div>
+</body>
+</html>

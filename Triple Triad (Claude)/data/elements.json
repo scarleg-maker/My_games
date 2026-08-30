@@ -1,0 +1,10 @@
+[
+  { "name": "Feu",     "icon": "🔥", "image": "images/elements/Feu.png" },
+  { "name": "Glace",   "icon": "❄️", "image": "images/elements/Glace.png" },
+  { "name": "Foudre",  "icon": "⚡", "image": "images/elements/Foudre.png" },
+  { "name": "Terre",   "icon": "🪨", "image": "images/elements/Terre.png" },
+  { "name": "Poison",  "icon": "☠️", "image": "images/elements/Poison.png" },
+  { "name": "Vent",    "icon": "🌪️", "image": "images/elements/Vent.png" },
+  { "name": "Eau",     "icon": "💧", "image": "images/elements/Eau.png" },
+  { "name": "Sacré",   "icon": "✨", "image": "images/elements/Sacre.png" }
+]

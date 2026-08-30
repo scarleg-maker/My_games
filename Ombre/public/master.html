@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Ombre - Maître du jeu</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="container">
+  <h1>🕶️ Ombre — Maître du jeu</h1>
+
+  <!-- ECRAN CONFIGURATION -->
+  <div id="setup-screen" class="card">
+    <h2>Configuration de la partie</h2>
+
+    <label>Nombre de joueurs (1 à 10)</label>
+    <input type="number" id="numPlayers" min="1" max="10" value="2" />
+
+    <div id="playerNames"></div>
+
+    <label>Archive ZIP d'images</label>
+    <input type="file" id="archiveZip" accept=".zip" />
+    <p id="zipInfo" style="color:#888;font-size:13px;margin-top:6px"></p>
+
+    <div class="row">
+      <div>
+        <label id="essaisLabel">Nombre d'essais par image (3 à 8)</label>
+        <input type="number" id="essais" min="3" max="8" value="4" />
+      </div>
+      <div>
+        <label>Temps par manche</label>
+        <select id="temps">
+          <option value="30">30 secondes</option>
+          <option value="60" selected>1 minute</option>
+          <option value="90">1 minute 30</option>
+          <option value="120">2 minutes</option>
+          <option value="0">Illimité</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Mode de jeu</label>
+        <select id="mode">
+          <option value="survie">Survie</option>
+          <option value="elimination">Élimination</option>
+        </select>
+      </div>
+      <div id="viesBlock" style="display:none">
+        <label>Nombre de vies par joueur (2 à 5)</label>
+        <input type="number" id="vies" min="2" max="5" value="3" />
+      </div>
+    </div>
+
+    <p style="margin-top:20px">
+      <button id="btnCreate">Créer la partie</button>
+      <span id="createError" style="color:#ff6b6b;margin-left:10px"></span>
+    </p>
+  </div>
+
+  <!-- ECRAN LOBBY -->
+  <div id="lobby-screen" class="card" style="display:none">
+    <h2>Salon d'attente</h2>
+    <p>Donnez cette adresse aux joueurs : <strong id="joueurUrl"></strong></p>
+    <p>Chaque joueur choisit son nom sur la page joueur pour rejoindre la partie.</p>
+    <ul id="lobbyList"></ul>
+    <button id="btnStartRound">Démarrer la partie</button>
+    <button class="secondary" id="btnResetFromLobby">Annuler</button>
+  </div>
+
+  <!-- ECRAN JEU -->
+  <div id="play-screen" style="display:none">
+    <div class="top-bar">
+      <div class="pill" id="roundInfo">Manche 1</div>
+      <div class="timer-display" id="timerDisplay">--</div>
+      <div>
+        <button id="btnNextRound">Manche suivante ▶</button>
+        <button class="secondary" id="btnReset">Réinitialiser</button>
+      </div>
+    </div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- ECRAN FIN -->
+  <div id="end-screen" class="card" style="display:none">
+    <h2>Partie terminée</h2>
+    <p id="winnerText" style="font-size:20px"></p>
+    <div id="finalRanking"></div>
+    <button id="btnNewGame">Nouvelle partie</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/master.js"></script>
+</body>
+</html>

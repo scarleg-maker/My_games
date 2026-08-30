@@ -1,0 +1,189 @@
+{
+  "savedAt": "2026-08-25T14:46:16.044Z",
+  "label": "Partie 1",
+  "gameHistory": [
+    {
+      "number": 6,
+      "color": "black"
+    },
+    {
+      "number": 23,
+      "color": "red"
+    },
+    {
+      "number": 19,
+      "color": "red"
+    },
+    {
+      "number": 28,
+      "color": "black"
+    },
+    {
+      "number": 27,
+      "color": "red"
+    },
+    {
+      "number": 8,
+      "color": "black"
+    },
+    {
+      "number": 9,
+      "color": "red"
+    },
+    {
+      "number": 14,
+      "color": "red"
+    },
+    {
+      "number": 13,
+      "color": "black"
+    },
+    {
+      "number": 29,
+      "color": "black"
+    }
+  ],
+  "players": [
+    {
+      "name": "Renaud",
+      "balance": 58,
+      "roundHistory": [
+        {
+          "date": "2026-08-25T14:44:58.297Z",
+          "numero": 6,
+          "couleur": "black",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 0,
+          "net": -4,
+          "solde": 58
+        },
+        {
+          "date": "2026-08-25T14:44:25.296Z",
+          "numero": 23,
+          "couleur": "red",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 18,
+          "net": 14,
+          "solde": 62
+        },
+        {
+          "date": "2026-08-25T14:43:52.294Z",
+          "numero": 19,
+          "couleur": "red",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 18,
+          "net": 14,
+          "solde": 48
+        },
+        {
+          "date": "2026-08-25T14:43:19.290Z",
+          "numero": 28,
+          "couleur": "black",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 0,
+          "net": -4,
+          "solde": 34
+        },
+        {
+          "date": "2026-08-25T14:42:46.287Z",
+          "numero": 27,
+          "couleur": "red",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 0,
+          "net": -4,
+          "solde": 38
+        },
+        {
+          "date": "2026-08-25T14:42:13.284Z",
+          "numero": 8,
+          "couleur": "black",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 0,
+          "net": -4,
+          "solde": 42
+        },
+        {
+          "date": "2026-08-25T14:41:40.279Z",
+          "numero": 9,
+          "couleur": "red",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 0,
+          "net": -4,
+          "solde": 46
+        },
+        {
+          "date": "2026-08-25T14:41:07.275Z",
+          "numero": 14,
+          "couleur": "red",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 6,
+          "net": 2,
+          "solde": 50
+        },
+        {
+          "date": "2026-08-25T14:32:59.017Z",
+          "numero": 13,
+          "couleur": "black",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 6,
+          "net": 2,
+          "solde": 48
+        },
+        {
+          "date": "2026-08-25T14:32:26.014Z",
+          "numero": 29,
+          "couleur": "black",
+          "mises": {
+            "dozen-2": 2,
+            "doublestreet-7": 2
+          },
+          "miseTotale": 4,
+          "gain": 0,
+          "net": -4,
+          "solde": 46
+        }
+      ]
+    },
+    {
+      "name": "Virginie",
+      "balance": 50,
+      "roundHistory": []
+    }
+  ]
+}

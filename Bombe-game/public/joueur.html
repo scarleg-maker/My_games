@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Jeu de la Bombe — Joueur</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="container">
+  <h1 id="playerTitle">💣 Jeu de la Bombe</h1>
+  <div id="waiting" class="panel">La partie n'a pas encore démarré, patientez...</div>
+
+  <div id="playArea" style="display:none;">
+    <div class="panel" id="statusPanel">
+      <div id="phaseText" class="status-line"></div>
+      <div id="turnIndicator"></div>
+    </div>
+
+    <div class="panel">
+      <div id="instructions" class="status-line"></div>
+      <div id="board" class="board"></div>
+    </div>
+
+    <div class="panel player-actions" id="actionsPanel"></div>
+
+    <div class="panel">
+      <h3>Mon équipe</h3>
+      <div id="myTeam" class="columns"></div>
+    </div>
+
+    <div class="panel" id="endPanel" style="display:none;">
+      <div class="winner-banner" id="endText"></div>
+    </div>
+  </div>
+</div>
+
+<div id="revealOverlay" class="reveal-overlay" style="display:none;">
+  <div class="reveal-box" id="revealBox"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/js/joueur.js"></script>
+</body>
+</html>

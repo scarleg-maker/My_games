@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tarot — Le Grand Chelem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div class="vignette"></div>
+
+<!-- ======= MENU ======= -->
+<section id="screen-menu" class="screen active">
+  <div class="menu-card">
+    <div class="brand">
+      <span class="brand-mark">✦</span>
+      <h1>Le Grand Chelem</h1>
+      <p class="brand-sub">Tarot français à l'ancienne, en ligne</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="create">Créer une table</button>
+      <button class="tab-btn" data-tab="join">Rejoindre</button>
+    </div>
+
+    <div class="tab-panel" id="tab-create">
+      <label>Votre nom
+        <input id="create-name" maxlength="20" placeholder="Ex. Éléonore" />
+      </label>
+      <label>Nombre de joueurs
+        <div class="seg" id="joueur-count-seg">
+          <button data-val="3">3</button>
+          <button data-val="4" class="active">4</button>
+          <button data-val="5">5</button>
+        </div>
+      </label>
+      <button id="btn-create" class="btn-primary">Créer la table</button>
+    </div>
+
+    <div class="tab-panel hidden" id="tab-join">
+      <label>Votre nom
+        <input id="join-name" maxlength="20" placeholder="Ex. Éléonore" />
+      </label>
+      <label>Code du salon
+        <input id="join-code" maxlength="4" placeholder="Ex. K3PZ" style="text-transform:uppercase" />
+      </label>
+      <button id="btn-join" class="btn-primary">Rejoindre la table</button>
+    </div>
+
+    <p class="menu-error" id="menu-error"></p>
+  </div>
+</section>
+
+<!-- ======= LOBBY ======= -->
+<section id="screen-lobby" class="screen">
+  <div class="lobby-card">
+    <p class="eyebrow">Salon</p>
+    <h2 id="lobby-code">----</h2>
+    <p class="lobby-hint">Partagez ce code pour inviter les autres joueurs.</p>
+    <ul id="lobby-joueurs" class="lobby-joueurs"></ul>
+
+    <div class="ai-diff-block">
+      <p class="eyebrow">Niveau des IA</p>
+      <div class="seg" id="ai-diff-seg">
+        <button data-val="debutant">Débutant</button>
+        <button data-val="confirme" class="active">Confirmé</button>
+        <button data-val="expert">Expert</button>
+      </div>
+    </div>
+
+    <button id="btn-start" class="btn-primary" disabled>En attente de joueurs…</button>
+  </div>
+</section>
+
+<!-- ======= GAME ======= -->
+<section id="screen-game" class="screen">
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="room-tag" id="game-room-tag">----</span>
+      <span class="phase-tag" id="phase-tag">—</span>
+    </div>
+    <button id="btn-scoreboard" class="ghost-btn">Scores</button>
+  </header>
+
+  <div class="table-wrap">
+    <div class="table-oval" id="table-oval">
+      <div class="table-emblem">♠ ♥ ♣ ♦</div>
+      <div class="trick-zone" id="trick-zone"></div>
+      <div class="seats" id="seats"></div>
+    </div>
+  </div>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="action-panel" id="action-panel"></div>
+
+  <div class="hand-wrap">
+    <div class="hand" id="hand"></div>
+  </div>
+</section>
+
+<!-- Scoreboard drawer -->
+<div id="scoreboard-drawer" class="drawer">
+  <div class="drawer-inner">
+    <h3>Tableau des scores</h3>
+    <div id="scoreboard-content"></div>
+    <button class="ghost-btn" id="close-scoreboard">Fermer</button>
+  </div>
+</div>
+
+<!-- Hand result modal -->
+<div id="result-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h3 id="result-title">Résultat de la manche</h3>
+    <div id="result-body"></div>
+    <button id="btn-next-hand" class="btn-primary">Manche suivante</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/client.js"></script>
+</body>
+</html>

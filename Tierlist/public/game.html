@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tier List</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <div id="loading" class="panel">Chargement de la partie...</div>
+  <div id="app" style="display:none;">
+    <h1 id="titleText"></h1>
+    <div class="subtitle" id="subText"></div>
+
+    <div id="turnBanner" class="turn-banner" style="display:none;"></div>
+
+    <div class="rows-wrapper">
+      <div class="rows-toolbar">
+        <button id="saveBtn" class="secondary" title="Enregistre la partie (titre, lignes, placements, tour en cours) dans un fichier .txt">💾 Sauvegarder</button>
+        <button id="screenshotBtn" class="secondary" style="display:none;" title="Télécharge une image PNG du tableau tel qu'il est actuellement">📸 Capture d'écran</button>
+      </div>
+      <div id="rowsContainer" style="flex:1;"></div>
+    </div>
+
+    <div id="actionBar" style="display:none; text-align:center; margin:14px 0;">
+      <button id="endTurnBtn">✅ Valider mon tour</button>
+    </div>
+
+    <div class="panel" id="poolPanel">
+      <h3 id="poolTitle">Cases restantes</h3>
+      <div class="pool" id="pool"></div>
+    </div>
+
+    <div class="panel" id="recapPanel" style="display:none;">
+      <h3>Récapitulatif final</h3>
+      <div id="recapContent"></div>
+      <button id="newGameBtn" style="margin-top:16px;">Nouvelle partie</button>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/game.js"></script>
+</body>
+</html>

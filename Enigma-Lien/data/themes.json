@@ -1,0 +1,35 @@
+[
+  {
+    "id": "pokemon",
+    "name": "Pokémon",
+    "icon": "⬡",
+    "dataFile": "pokemon/pokedex.json",
+    "battleFile": "pokemon/bat.json",
+    "imageFolder": "pokemon",
+    "charCount": 6,
+    "note": "Roster maison converti depuis le générateur d'énigmes d'origine (types, génération, stade d'évolution, couleur).",
+    "criteria": [
+      { "id": "GEN", "label": "GÉN", "icon": "🧬", "kind": "numeric", "field": "gen" },
+      { "id": "STADE", "label": "STADE", "icon": "⤴", "kind": "numeric", "field": "stage" },
+      { "id": "TYPE", "label": "TYPE", "icon": "◆", "kind": "shared-array", "field": "types" },
+      { "id": "COULEUR", "label": "COULEUR", "icon": "●", "kind": "equality", "field": "color" },
+      { "id": "BAT", "label": "BAT", "icon": "⚔", "kind": "battle", "field": "types" }
+    ]
+  },
+  {
+    "id": "dragonball",
+    "name": "Dragon Ball (exemple)",
+    "icon": "🐉",
+    "dataFile": "dragonball/dragonballex.json",
+    "battleFile": "dragonball/bat.json",
+    "imageFolder": "dragonball",
+    "charCount": 6,
+    "note": "Petit jeu d'exemple (peu de personnages) à enrichir toi-même dans data/dragonball/dragonballex.json — voir README.",
+    "criteria": [
+      { "id": "ARC", "label": "ARC", "icon": "📖", "kind": "equality", "field": "arc" },
+      { "id": "PUISSANCE", "label": "PUISSANCE", "icon": "💥", "kind": "numeric", "field": "power" },
+      { "id": "FORME", "label": "FORME", "icon": "🔄", "kind": "numeric", "field": "form" },
+      { "id": "COULEUR", "label": "COULEUR", "icon": "●", "kind": "equality", "field": "color" }
+    ]
+  }
+]

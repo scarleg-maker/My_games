@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory — Jeu des paires</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --blue:#2f5cf0;
+    --violet:#c9b6f5;
+    --ink:#0d0f1a;
+    --card-back:#14141c;
+    --card-back-2:#1f2030;
+    --paper:rgba(255,255,255,0.14);
+    --paper-strong:rgba(255,255,255,0.22);
+    --paper-border:rgba(255,255,255,0.35);
+    --text:#101226;
+    --text-soft:rgba(16,18,38,0.66);
+    --p1:#2f6bff;
+    --p2:#ef4444;
+    --p3:#16a34a;
+    --p4:#eab308;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    font-family:'Inter',sans-serif;
+    color:var(--text);
+    background:linear-gradient(160deg,var(--blue) 0%, #7d8bf2 42%, var(--violet) 100%);
+    background-attachment:fixed;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:
+      radial-gradient(circle at 12% 10%, rgba(255,255,255,0.25), transparent 40%),
+      radial-gradient(circle at 90% 85%, rgba(255,255,255,0.18), transparent 45%);
+    pointer-events:none;
+    z-index:0;
+  }
+  h1.brand{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:clamp(2rem,4vw,3rem);
+    color:#fff;
+    text-shadow:0 4px 18px rgba(13,15,26,0.25);
+    margin:0 0 6px;
+    letter-spacing:0.5px;
+    z-index:1;
+  }
+  p.tagline{
+    color:rgba(255,255,255,0.85);
+    margin:0 0 28px;
+    font-weight:500;
+    z-index:1;
+    text-align:center;
+  }
+  .panel{
+    width:100%;
+    max-width:760px;
+    background:var(--paper);
+    border:1px solid var(--paper-border);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border-radius:24px;
+    padding:28px clamp(18px,4vw,36px);
+    box-shadow:0 20px 60px rgba(13,15,26,0.25);
+    z-index:1;
+    color:#fff;
+  }
+  .panel + .panel{margin-top:18px;}
+  .section-title{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:1.15rem;
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-title .num{
+    width:26px;height:26px;border-radius:50%;
+    background:rgba(255,255,255,0.25);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.8rem;
+  }
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    border:none;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-ghost{
+    background:rgba(255,255,255,0.18);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.4);
+    padding:12px 20px;
+    border-radius:14px;
+    font-size:0.95rem;
+  }
+  .btn-ghost:hover{background:rgba(255,255,255,0.28);}
+  .btn-main{
+    background:#fff;
+    color:var(--blue);
+    padding:14px 32px;
+    border-radius:16px;
+    font-size:1.05rem;
+    font-weight:700;
+    box-shadow:0 10px 24px rgba(13,15,26,0.25);
+  }
+  .btn-main:hover{box-shadow:0 14px 30px rgba(13,15,26,0.32);}
+  .btn-main:disabled{opacity:0.45;cursor:not-allowed;box-shadow:none;}
+  input[type=file]{display:none;}
+  .file-status{font-size:0.88rem;color:rgba(255,255,255,0.85);}
+  .thumbs{
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;max-height:140px;overflow-y:auto;
+  }
+  .thumbs img{
+    width:52px;height:52px;object-fit:cover;border-radius:8px;border:2px solid rgba(255,255,255,0.5);
+  }
+  .mode-choice{display:flex;gap:12px;flex-wrap:wrap;}
+  .mode-card{
+    flex:1;min-width:150px;
+    background:rgba(255,255,255,0.12);
+    border:2px solid rgba(255,255,255,0.3);
+    border-radius:16px;
+    padding:16px;
+    cursor:pointer;
+    text-align:center;
+    font-weight:600;
+  }
+  .mode-card.active{
+    background:rgba(255,255,255,0.35);
+    border-color:#fff;
+  }
+  .mode-card .icon{font-size:1.6rem;display:block;margin-bottom:6px;}
+  .players-setup{margin-top:16px;display:none;}
+  .players-setup.show{display:block;}
+  .player-count-picker{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .count-btn{
+    width:38px;height:38px;border-radius:11px;
+    background:rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.35);
+    color:#fff;font-weight:700;
+  }
+  .count-btn.active{background:#fff;color:var(--blue);}
+  .name-field{
+    display:flex;align-items:center;gap:10px;margin-bottom:10px;
+  }
+  .swatch{width:18px;height:18px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,0.25);}
+  .name-field input{
+    flex:1;
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.4);
+    background:rgba(255,255,255,0.15);
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+  }
+  .name-field input::placeholder{color:rgba(255,255,255,0.6);}
+  .name-field input:focus{outline:2px solid #fff;background:rgba(255,255,255,0.22);}
+
+  /* GAME SCREEN */
+  #gameScreen{display:none;width:100%;max-width:1000px;flex-direction:column;align-items:center;z-index:1;}
+  #gameScreen.show{display:flex;}
+  .hud{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+  .timer-pill{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:1.5rem;
+    background:var(--ink);
+    color:#fff;
+    padding:12px 26px;
+    border-radius:999px;
+    box-shadow:0 10px 26px rgba(13,15,26,0.35);
+    letter-spacing:1px;
+  }
+  .players-hud{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .player-chip{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,0.18);
+    border:2px solid transparent;
+    padding:8px 14px;
+    border-radius:999px;
+    color:#fff;
+    font-weight:600;
+    font-size:0.9rem;
+  }
+  .player-chip.turn{
+    background:rgba(255,255,255,0.9);
+    color:var(--ink);
+    box-shadow:0 6px 18px rgba(13,15,26,0.3);
+  }
+  .player-chip .dot{width:12px;height:12px;border-radius:50%;}
+  .player-chip .score{
+    font-family:'JetBrains Mono',monospace;
+    background:rgba(0,0,0,0.15);
+    padding:1px 7px;
+    border-radius:8px;
+    font-size:0.8rem;
+  }
+  .board{
+    display:grid;
+    gap:10px;
+    width:100%;
+    justify-content:center;
+    perspective:1000px;
+  }
+  .board-wrap{
+    position:relative;
+    width:100%;
+    display:flex;
+    justify-content:center;
+  }
+  .pause-overlay{
+    position:absolute;inset:0;
+    background:rgba(13,15,26,0.6);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+    display:none;
+    align-items:center;justify-content:center;
+    border-radius:18px;
+    z-index:6;
+  }
+  .pause-overlay.show{display:flex;}
+  .pause-overlay div{
+    color:#fff;
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:1.4rem;
+    background:rgba(255,255,255,0.14);
+    border:1px solid rgba(255,255,255,0.4);
+    padding:16px 28px;
+    border-radius:16px;
+  }
+  .card{
+    aspect-ratio:1/1;
+    position:relative;
+    cursor:pointer;
+    transform-style:preserve-3d;
+    transition:transform .5s cubic-bezier(.4,.2,.2,1);
+    min-width:34px;
+  }
+  .card.flipped{transform:rotateY(180deg);}
+  .card.matched{transform:rotateY(180deg);}
+  .card-face{
+    position:absolute;inset:0;
+    border-radius:12px;
+    backface-visibility:hidden;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .card-back{
+    background:linear-gradient(145deg,var(--card-back),var(--card-back-2));
+    border:2px solid rgba(255,255,255,0.08);
+    box-shadow:inset 0 0 0 3px rgba(255,255,255,0.03), 0 6px 14px rgba(0,0,0,0.35);
+  }
+  .card-back::after{
+    content:"?";
+    color:rgba(255,255,255,0.18);
+    font-family:'Baloo 2',sans-serif;
+    font-size:1.6rem;
+    font-weight:700;
+  }
+  .card-front{
+    transform:rotateY(180deg);
+    background:#fff;
+    border:var(--card-border, 4px) solid #fff;
+  }
+  .card-front img{width:100%;height:100%;object-fit:contain;display:block;}
+  .card.matched .card-front{
+    border-color:var(--match-color, #22c55e);
+    box-shadow:0 0 0 3px var(--match-color, #22c55e), 0 8px 18px rgba(0,0,0,0.25);
+  }
+  .card.wrong .card-back{
+    animation:shake .4s ease;
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-4px);}
+    75%{transform:translateX(4px);}
+  }
+  #endOverlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(13,15,26,0.55);
+    backdrop-filter:blur(6px);
+    align-items:center;justify-content:center;
+    z-index:20;
+    padding:20px;
+  }
+  #endOverlay.show{display:flex;}
+  .end-card{
+    background:#fff;
+    border-radius:24px;
+    padding:36px;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,0.4);
+  }
+  .end-card h2{
+    font-family:'Baloo 2',sans-serif;
+    color:var(--text);
+    margin:0 0 6px;
+    font-size:1.7rem;
+  }
+  .end-card .final-time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:1.1rem;
+    color:var(--text-soft);
+    margin-bottom:18px;
+  }
+  .end-ranking{list-style:none;padding:0;margin:0 0 22px;text-align:left;}
+  .end-ranking li{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;border-radius:12px;margin-bottom:8px;
+    background:rgba(0,0,0,0.04);
+    font-weight:600;
+  }
+  .end-ranking li.winner{
+    background:linear-gradient(90deg, rgba(250,204,21,0.25), rgba(250,204,21,0.05));
+  }
+  .end-ranking .medal{margin-right:8px;}
+  .hint{font-size:0.82rem;color:rgba(255,255,255,0.75);margin-top:8px;}
+  .top-actions{
+    display:flex;justify-content:flex-end;width:100%;max-width:1000px;margin-bottom:6px;
+  }
+  .link-btn{
+    background:none;color:rgba(255,255,255,0.85);text-decoration:underline;font-size:0.85rem;padding:4px 8px;
+  }
+  @media (max-width:600px){
+    .panel{padding:20px 16px;}
+    .timer-pill{font-size:1.2rem;padding:10px 18px;}
+  }
+</style>
+</head>
+<body>
+
+<h1 class="brand">🧠 Memory</h1>
+<p class="tagline">Retrouvez toutes les paires avant la fin du chrono</p>
+
+<!-- SETUP -->
+<div id="setupScreen" style="width:100%;max-width:760px;">
+
+  <div class="panel">
+    <div class="section-title"><span class="num">1</span> Images du jeu</div>
+    <div class="row">
+      <button class="btn-ghost" id="btnLoadImages">📁 Charger des images</button>
+      <button class="btn-ghost" id="btnLoadZip">🗜️ Charger une archive .zip</button>
+      <input type="file" id="fileImages" accept="image/*" multiple>
+      <input type="file" id="fileZip" accept=".zip">
+    </div>
+    <div class="file-status" id="fileStatus">Aucune image chargée pour l'instant.</div>
+    <div class="thumbs" id="thumbs"></div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title"><span class="num">2</span> Mode de jeu</div>
+    <div class="mode-choice">
+      <div class="mode-card active" data-mode="1" id="modeSolo">
+        <span class="icon">🧍</span>1 joueur
+      </div>
+      <div class="mode-card" data-mode="multi" id="modeMulti">
+        <span class="icon">👥</span>2 à 8 joueurs
+      </div>
+    </div>
+
+    <div class="players-setup" id="playersSetup">
+      <div class="player-count-picker" id="countPicker">
+        <button class="count-btn active" data-count="2">2</button>
+        <button class="count-btn" data-count="3">3</button>
+        <button class="count-btn" data-count="4">4</button>
+        <button class="count-btn" data-count="5">5</button>
+        <button class="count-btn" data-count="6">6</button>
+        <button class="count-btn" data-count="7">7</button>
+        <button class="count-btn" data-count="8">8</button>
+      </div>
+      <div id="nameFields"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="text-align:center;">
+    <div class="section-title" style="justify-content:center;"><span class="num">3</span> C'est parti</div>
+    <button class="btn-main" id="btnStart" disabled>Démarrer</button>
+    <div class="hint" id="startHint">Chargez au moins 2 images pour commencer.</div>
+    <div class="hint"><button class="link-btn" id="btnClearMemory" style="padding:0;">Effacer les images et noms enregistrés</button></div>
+  </div>
+
+</div>
+
+<!-- GAME -->
+<div id="gameScreen">
+  <div class="top-actions">
+    <button class="link-btn" id="btnBackToSetup">↩ Nouvelle partie</button>
+  </div>
+  <div class="hud">
+    <div class="timer-pill" id="timerDisplay">00:00</div>
+    <button class="btn-ghost" id="btnPause">⏸ Pause</button>
+    <div class="players-hud" id="playersHud"></div>
+  </div>
+  <div class="board-wrap" id="boardWrap">
+    <div class="board" id="board"></div>
+    <div class="pause-overlay" id="pauseOverlay"><div>⏸ Partie en pause</div></div>
+  </div>
+</div>
+
+<div id="endOverlay">
+  <div class="end-card">
+    <h2 id="endTitle">Bravo !</h2>
+    <div class="final-time" id="endTime"></div>
+    <ul class="end-ranking" id="endRanking"></ul>
+    <button class="btn-main" id="btnReplay">Rejouer</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const PLAYER_COLORS = ["#2f6bff","#ef4444","#16a34a","#eab308","#9333ea","#f97316","#ec4899","#06b6d4"];
+  const PLAYER_NAMES_DEFAULT = ["Joueur 1","Joueur 2","Joueur 3","Joueur 4","Joueur 5","Joueur 6","Joueur 7","Joueur 8"];
+  const STORAGE_IMAGES_KEY = "memory-saved-images";
+  const STORAGE_NAMES_KEY = "memory-saved-player-names";
+
+  let images = [];           // {url, name}
+  let mode = "1";             // "1" or "multi"
+  let playerCount = 2;
+  let players = [];           // {name, color, score}
+  let savedPlayerNames = [];  // names remembered from last session
+
+  let cards = [];             // {id, imgIndex, url, flipped, matched, el}
+  let flippedCards = [];
+  let boardLocked = false;
+  let currentPlayer = 0;
+  let matchesFound = 0;
+  let totalPairs = 0;
+  let timerInterval = null;
+  let elapsedSeconds = 0;
+
+  // ---------- DOM refs ----------
+  const btnLoadImages = document.getElementById('btnLoadImages');
+  const btnLoadZip = document.getElementById('btnLoadZip');
+  const fileImages = document.getElementById('fileImages');
+  const fileZip = document.getElementById('fileZip');
+  const fileStatus = document.getElementById('fileStatus');
+  const thumbs = document.getElementById('thumbs');
+  const modeSolo = document.getElementById('modeSolo');
+  const modeMulti = document.getElementById('modeMulti');
+  const playersSetup = document.getElementById('playersSetup');
+  const countPicker = document.getElementById('countPicker');
+  const nameFields = document.getElementById('nameFields');
+  const btnStart = document.getElementById('btnStart');
+  const startHint = document.getElementById('startHint');
+  const btnClearMemory = document.getElementById('btnClearMemory');
+
+  const setupScreen = document.getElementById('setupScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const playersHud = document.getElementById('playersHud');
+  const board = document.getElementById('board');
+  const boardWrap = document.getElementById('boardWrap');
+  const pauseOverlay = document.getElementById('pauseOverlay');
+  const btnPause = document.getElementById('btnPause');
+  const btnBackToSetup = document.getElementById('btnBackToSetup');
+
+  const endOverlay = document.getElementById('endOverlay');
+  const endTitle = document.getElementById('endTitle');
+  const endTime = document.getElementById('endTime');
+  const endRanking = document.getElementById('endRanking');
+  const btnReplay = document.getElementById('btnReplay');
+
+  // ---------- Image loading ----------
+  btnLoadImages.addEventListener('click', () => fileImages.click());
+  btnLoadZip.addEventListener('click', () => fileZip.click());
+
+  fileImages.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('image/'));
+    addImagesFromFiles(files);
+  });
+
+  fileZip.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    fileStatus.textContent = "Lecture de l'archive...";
+    try {
+      const zip = await JSZip.loadAsync(file);
+      const entries = Object.values(zip.files).filter(f =>
+        !f.dir && /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(f.name)
+      );
+      const newFiles = [];
+      for (const entry of entries) {
+        const blob = await entry.async('blob');
+        newFiles.push(new File([blob], entry.name.split('/').pop()));
+      }
+      addImagesFromFiles(newFiles);
+    } catch (err) {
+      fileStatus.textContent = "Erreur : impossible de lire ce fichier zip.";
+    }
+  });
+
+  function fileToDataURL(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function addImagesFromFiles(files){
+    if (!files.length) return;
+    fileStatus.textContent = "Chargement des images...";
+    for (const f of files) {
+      try {
+        const url = await fileToDataURL(f);
+        images.push({url, name: f.name});
+      } catch (e) { /* ignore unreadable file */ }
+    }
+    refreshImageUI();
+    saveImagesToStorage();
+  }
+
+  async function saveImagesToStorage(){
+    try {
+      await window.storage.set(STORAGE_IMAGES_KEY, JSON.stringify(images), false);
+    } catch (e) {
+      console.error('Sauvegarde des images impossible :', e);
+    }
+  }
+
+  async function loadImagesFromStorage(){
+    try {
+      const res = await window.storage.get(STORAGE_IMAGES_KEY, false);
+      if (res && res.value) {
+        const parsed = JSON.parse(res.value);
+        if (Array.isArray(parsed) && parsed.length) {
+          images = parsed;
+          refreshImageUI();
+        }
+      }
+    } catch (e) { /* nothing saved yet */ }
+  }
+
+  async function saveNamesToStorage(names){
+    try {
+      await window.storage.set(STORAGE_NAMES_KEY, JSON.stringify(names), false);
+    } catch (e) {
+      console.error('Sauvegarde des noms impossible :', e);
+    }
+  }
+
+  async function loadNamesFromStorage(){
+    try {
+      const res = await window.storage.get(STORAGE_NAMES_KEY, false);
+      if (res && res.value) {
+        const parsed = JSON.parse(res.value);
+        if (Array.isArray(parsed)) savedPlayerNames = parsed;
+      }
+    } catch (e) { /* nothing saved yet */ }
+  }
+
+  btnClearMemory.addEventListener('click', async () => {
+    try { await window.storage.delete(STORAGE_IMAGES_KEY, false); } catch(e){}
+    try { await window.storage.delete(STORAGE_NAMES_KEY, false); } catch(e){}
+    images = [];
+    savedPlayerNames = [];
+    refreshImageUI();
+    renderNameFields();
+    fileStatus.textContent = "Mémoire effacée. Aucune image chargée pour l'instant.";
+  });
+
+  function refreshImageUI(){
+    fileStatus.textContent = images.length
+      ? `${images.length} image(s) chargée(s) — ${images.length * 2} cartes au total.`
+      : "Aucune image chargée pour l'instant.";
+    thumbs.innerHTML = images.map(img => `<img src="${img.url}" alt="${img.name}">`).join('');
+    updateStartButton();
+  }
+
+  // ---------- Mode selection ----------
+  modeSolo.addEventListener('click', () => setMode('1'));
+  modeMulti.addEventListener('click', () => setMode('multi'));
+
+  function setMode(m){
+    mode = m;
+    modeSolo.classList.toggle('active', m === '1');
+    modeMulti.classList.toggle('active', m === 'multi');
+    playersSetup.classList.toggle('show', m === 'multi');
+    updateStartButton();
+  }
+
+  countPicker.addEventListener('click', (e) => {
+    const btn = e.target.closest('.count-btn');
+    if (!btn) return;
+    playerCount = parseInt(btn.dataset.count, 10);
+    [...countPicker.children].forEach(c => c.classList.toggle('active', c === btn));
+    renderNameFields();
+  });
+
+  function renderNameFields(){
+    let html = '';
+    for (let i = 0; i < playerCount; i++){
+      const savedVal = savedPlayerNames[i] ? escapeHtml(savedPlayerNames[i]) : '';
+      html += `
+        <div class="name-field">
+          <span class="swatch" style="background:${PLAYER_COLORS[i]}"></span>
+          <input type="text" data-idx="${i}" value="${savedVal}" placeholder="${PLAYER_NAMES_DEFAULT[i]}" maxlength="18">
+        </div>`;
+    }
+    nameFields.innerHTML = html;
+  }
+
+  async function init(){
+    renderNameFields();
+    await loadImagesFromStorage();
+    await loadNamesFromStorage();
+    renderNameFields();
+  }
+  init();
+
+  function updateStartButton(){
+    const enoughImages = images.length >= 2;
+    btnStart.disabled = !enoughImages;
+    startHint.textContent = enoughImages
+      ? "Prêt à jouer !"
+      : "Chargez au moins 2 images pour commencer.";
+  }
+
+  // ---------- Grid layout (equitable rows/cols) ----------
+  function computeGrid(totalCards){
+    let best = {rows: 1, cols: totalCards};
+    let bestDiff = Infinity;
+    for (let rows = 1; rows <= totalCards; rows++){
+      if (totalCards % rows !== 0) continue;
+      const cols = totalCards / rows;
+      const diff = Math.abs(cols - rows);
+      if (diff < bestDiff){
+        bestDiff = diff;
+        best = {rows, cols};
+      }
+    }
+    // prefer wider-than-tall orientation (cols >= rows)
+    if (best.rows > best.cols){
+      best = {rows: best.cols, cols: best.rows};
+    }
+    return best;
+  }
+
+  // ---------- Start game ----------
+  btnStart.addEventListener('click', startGame);
+  btnBackToSetup.addEventListener('click', () => location.reload());
+  btnReplay.addEventListener('click', () => location.reload());
+
+  function startGame(){
+    // build players
+    if (mode === 'multi'){
+      players = [];
+      const namesToSave = [];
+      for (let i = 0; i < playerCount; i++){
+        const input = nameFields.querySelector(`input[data-idx="${i}"]`);
+        const name = (input.value.trim() || PLAYER_NAMES_DEFAULT[i]);
+        players.push({name, color: PLAYER_COLORS[i], score: 0});
+        namesToSave.push(input.value.trim());
+      }
+      savedPlayerNames = namesToSave;
+      saveNamesToStorage(namesToSave);
+      currentPlayer = Math.floor(Math.random() * players.length);
+    } else {
+      players = [{name: "Vous", color: "#2f6bff", score: 0}];
+      currentPlayer = 0;
+    }
+
+    // build & shuffle cards
+    totalPairs = images.length;
+    let deck = [];
+    images.forEach((img, idx) => {
+      deck.push({imgIndex: idx, url: img.url});
+      deck.push({imgIndex: idx, url: img.url});
+    });
+    deck = shuffle(deck);
+    cards = deck.map((c, i) => ({id: i, ...c, flipped:false, matched:false}));
+
+    const grid = computeGrid(cards.length);
+
+    setupScreen.style.display = 'none';
+    gameScreen.classList.add('show');
+
+    renderBoard(grid);
+    renderPlayersHud();
+
+    matchesFound = 0;
+    flippedCards = [];
+    boardLocked = false;
+    elapsedSeconds = 0;
+    startTimer();
+  }
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function renderBoard(grid){
+    const totalCards = cards.length;
+    // scale target card size, gap and border down as the board gets denser
+    let target, gap, borderPx;
+    if (totalCards <= 12){ target = 110; gap = 10; borderPx = 4; }
+    else if (totalCards <= 24){ target = 95; gap = 8; borderPx = 3; }
+    else if (totalCards <= 40){ target = 80; gap = 6; borderPx = 2; }
+    else if (totalCards <= 60){ target = 68; gap = 5; borderPx = 2; }
+    else { target = 56; gap = 4; borderPx = 1; }
+
+    board.style.setProperty('--card-border', borderPx + 'px');
+    board.style.gap = gap + 'px';
+    board.style.gridTemplateColumns = `repeat(${grid.cols}, minmax(0,1fr))`;
+    board.style.gridTemplateRows = `repeat(${grid.rows}, minmax(0,1fr))`;
+    board.style.maxWidth = `${grid.cols * target}px`;
+    board.innerHTML = '';
+    cards.forEach(card => {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.innerHTML = `
+        <div class="card-face card-back"></div>
+        <div class="card-face card-front"><img src="${card.url}" alt=""></div>
+      `;
+      el.addEventListener('click', () => onCardClick(card, el));
+      card.el = el;
+      board.appendChild(el);
+    });
+  }
+
+  function renderPlayersHud(){
+    if (mode !== 'multi'){
+      playersHud.innerHTML = '';
+      return;
+    }
+    playersHud.innerHTML = players.map((p, i) => `
+      <div class="player-chip ${i === currentPlayer ? 'turn' : ''}" data-idx="${i}">
+        <span class="dot" style="background:${p.color}"></span>
+        ${escapeHtml(p.name)} <span class="score">${p.score}</span>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // ---------- Timer ----------
+  let pausedManually = false;
+  let pausedForMismatch = false;
+
+  function tick(){
+    elapsedSeconds++;
+    timerDisplay.textContent = formatTime(elapsedSeconds);
+  }
+  function startTimer(){
+    elapsedSeconds = 0;
+    timerDisplay.textContent = formatTime(0);
+    pausedManually = false;
+    pausedForMismatch = false;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(tick, 1000);
+    btnPause.textContent = '⏸ Pause';
+    btnPause.disabled = false;
+    pauseOverlay.classList.remove('show');
+  }
+  function stopTimer(){
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  function updateTimerRunning(){
+    const shouldRun = !pausedManually && !pausedForMismatch;
+    if (shouldRun && !timerInterval){
+      timerInterval = setInterval(tick, 1000);
+    } else if (!shouldRun && timerInterval){
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+  function formatTime(s){
+    const m = Math.floor(s / 60).toString().padStart(2,'0');
+    const sec = (s % 60).toString().padStart(2,'0');
+    return `${m}:${sec}`;
+  }
+
+  btnPause.addEventListener('click', () => {
+    if (matchesFound >= totalPairs) return;
+    pausedManually = !pausedManually;
+    updateTimerRunning();
+    pauseOverlay.classList.toggle('show', pausedManually);
+    btnPause.textContent = pausedManually ? '▶ Reprendre' : '⏸ Pause';
+  });
+
+  // ---------- Game logic ----------
+  function onCardClick(card, el){
+    if (pausedManually) return;
+    if (boardLocked) return;
+    if (card.flipped || card.matched) return;
+    if (flippedCards.length >= 2) return;
+
+    card.flipped = true;
+    el.classList.add('flipped');
+    flippedCards.push(card);
+
+    if (flippedCards.length === 2){
+      boardLocked = true;
+      const [a, b] = flippedCards;
+      if (a.imgIndex === b.imgIndex){
+        setTimeout(() => resolveMatch(a, b), 350);
+      } else {
+        pausedForMismatch = true;
+        updateTimerRunning();
+        setTimeout(() => resolveMismatch(a, b), 3000);
+      }
+    }
+  }
+
+  function resolveMatch(a, b){
+    a.matched = true; b.matched = true;
+    const color = players[currentPlayer].color;
+    [a, b].forEach(c => {
+      c.el.classList.add('matched');
+      c.el.style.setProperty('--match-color', color);
+    });
+    players[currentPlayer].score++;
+    matchesFound++;
+    flippedCards = [];
+    boardLocked = false;
+    renderPlayersHud();
+
+    if (matchesFound === totalPairs){
+      endGame();
+    }
+    // player continues on a match (multiplayer) — no turn change
+  }
+
+  function resolveMismatch(a, b){
+    pausedForMismatch = false;
+    updateTimerRunning();
+    a.el.classList.add('wrong'); b.el.classList.add('wrong');
+    setTimeout(() => {
+      a.flipped = false; b.flipped = false;
+      a.el.classList.remove('flipped','wrong');
+      b.el.classList.remove('flipped','wrong');
+      flippedCards = [];
+      boardLocked = false;
+      if (mode === 'multi'){
+        currentPlayer = (currentPlayer + 1) % players.length;
+        renderPlayersHud();
+      }
+    }, 50);
+  }
+
+  function endGame(){
+    stopTimer();
+    btnPause.disabled = true;
+    pausedManually = false;
+    pauseOverlay.classList.remove('show');
+    setTimeout(() => showEndScreen(), 500);
+  }
+
+  function showEndScreen(){
+    const sorted = players.slice().sort((a,b) => b.score - a.score);
+    if (mode === 'multi'){
+      const winner = sorted[0];
+      const tie = sorted.filter(p => p.score === winner.score).length > 1;
+      endTitle.textContent = tie ? "Égalité !" : `${winner.name} gagne 🎉`;
+    } else {
+      endTitle.textContent = "Partie terminée !";
+    }
+    endTime.textContent = `Temps : ${formatTime(elapsedSeconds)}`;
+
+    endRanking.innerHTML = sorted.map((p, i) => `
+      <li class="${i === 0 && mode === 'multi' ? 'winner' : ''}">
+        <span><span class="medal">${mode === 'multi' ? medal(i) : '⏱️'}</span>
+        <span class="swatch" style="background:${p.color};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;"></span>
+        ${escapeHtml(p.name)}</span>
+        <span>${p.score} paire${p.score>1?'s':''}</span>
+      </li>
+    `).join('');
+
+    endOverlay.classList.add('show');
+  }
+
+  function medal(i){
+    return ["🥇","🥈","🥉","🏅"][i] || "🏅";
+  }
+
+})();
+</script>
+</body>
+</html>

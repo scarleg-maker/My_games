@@ -1,0 +1,35 @@
+[
+  { "name": "Songoku (base)", "arc": "Saiyan", "power": 3, "form": 1, "color": "Orange", "image": "Songoku_base.png" },
+  { "name": "Songoku (SSJ)", "arc": "Freezer", "power": 6, "form": 2, "color": "Doré", "image": "Songoku_ssj.png" },
+  { "name": "Songoku (SSJ3)", "arc": "Buu", "power": 8, "form": 3, "color": "Doré", "image": "Songoku_ssj3.png" },
+  { "name": "Songoku (Ultra Instinct)", "arc": "Tournoi du Pouvoir", "power": 10, "form": 4, "color": "Gris", "image": "Songoku_ui.png" },
+
+  { "name": "Vegeta (base)", "arc": "Saiyan", "power": 4, "form": 1, "color": "Noir", "image": "Vegeta_base.png" },
+  { "name": "Vegeta (SSJ)", "arc": "Cell", "power": 6, "form": 2, "color": "Doré", "image": "Vegeta_ssj.png" },
+  { "name": "Vegeta (SSJ Blue)", "arc": "Tournoi du Pouvoir", "power": 9, "form": 3, "color": "Bleu", "image": "Vegeta_blue.png" },
+
+  { "name": "Piccolo", "arc": "Saiyan", "power": 3, "form": 1, "color": "Vert", "image": "Piccolo.png" },
+  { "name": "Piccolo (fusionné)", "arc": "Freezer", "power": 5, "form": 2, "color": "Vert", "image": "Piccolo_fusion.png" },
+  { "name": "Piccolo (Puissance Orange)", "arc": "Tournoi du Pouvoir", "power": 7, "form": 3, "color": "Orange", "image": "Piccolo_orange.png" },
+
+  { "name": "Gohan (enfant)", "arc": "Saiyan", "power": 2, "form": 1, "color": "Violet", "image": "Gohan_enfant.png" },
+  { "name": "Gohan (Mystique)", "arc": "Buu", "power": 7, "form": 2, "color": "Noir", "image": "Gohan_mystique.png" },
+  { "name": "Gohan (Beast)", "arc": "Super Hero", "power": 8, "form": 3, "color": "Orange", "image": "Gohan_beast.png" },
+
+  { "name": "Freezer (1ère forme)", "arc": "Freezer", "power": 5, "form": 1, "color": "Blanc", "image": "Freezer_1.png" },
+  { "name": "Freezer (forme finale)", "arc": "Freezer", "power": 6, "form": 2, "color": "Blanc", "image": "Freezer_finale.png" },
+  { "name": "Freezer (Golden)", "arc": "Résurrection F", "power": 8, "form": 3, "color": "Doré", "image": "Freezer_golden.png" },
+
+  { "name": "Cell (imparfait)", "arc": "Cell", "power": 5, "form": 1, "color": "Vert", "image": "Cell_imparfait.png" },
+  { "name": "Cell (semi-parfait)", "arc": "Cell", "power": 6, "form": 2, "color": "Vert", "image": "Cell_semi.png" },
+  { "name": "Cell (parfait)", "arc": "Cell", "power": 8, "form": 3, "color": "Vert", "image": "Cell_parfait.png" },
+
+  { "name": "Buu (gras)", "arc": "Buu", "power": 6, "form": 1, "color": "Rose", "image": "Buu_gras.png" },
+  { "name": "Kid Buu", "arc": "Buu", "power": 9, "form": 2, "color": "Rose", "image": "Kid_buu.png" },
+
+  { "name": "Broly (base)", "arc": "Broly", "power": 6, "form": 1, "color": "Noir", "image": "Broly_base.png" },
+  { "name": "Broly (SSJ Légendaire)", "arc": "Broly", "power": 9, "form": 2, "color": "Vert", "image": "Broly_ssj.png" },
+
+  { "name": "Jiren", "arc": "Tournoi du Pouvoir", "power": 9, "form": 1, "color": "Gris", "image": "Jiren.png" },
+  { "name": "Beerus", "arc": "Dieu de la Destruction", "power": 8, "form": 1, "color": "Violet", "image": "Beerus.png" }
+]

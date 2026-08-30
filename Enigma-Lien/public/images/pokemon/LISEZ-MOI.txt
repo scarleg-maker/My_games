@@ -1,0 +1,13 @@
+Dépose ici les images des Pokémon.
+
+Convention de nom : le nom du fichier doit correspondre exactement au champ
+"image" de l'entrée correspondante dans data/pokemon/pokedex.json,
+par exemple "Bulbizarre.png" pour l'entrée dont "name": "Bulbizarre".
+
+Formats acceptés : .png, .jpg, .jpeg, .webp, .gif (adapte simplement
+l'extension dans le champ "image" du pokedex si besoin).
+
+Si une image est absente, le jeu affiche automatiquement un médaillon de
+repli avec les initiales du nom — aucune image n'est obligatoire pour jouer.
+Les images sont simplement redimensionnées en miniature côté affichage
+(CSS), aucun traitement n'est fait côté serveur.

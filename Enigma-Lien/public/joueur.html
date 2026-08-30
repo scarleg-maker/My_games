@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enigma-Lien — Joueur</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>⬡ Enigma-Lien <span id="slotLabel"></span></h1>
+  <div class="sub" id="connStatus">Connexion…</div>
+
+  <div id="nameView" style="display:none;">
+    <div class="field">
+      <label>Ton nom</label>
+      <input type="text" id="nameInput" maxlength="24" placeholder="Ton pseudo">
+    </div>
+    <button class="primary" id="joinBtn">✅ Rejoindre le tournoi</button>
+    <div class="status" id="nameError"></div>
+  </div>
+
+  <div id="waitView" style="display:none;">
+    <div class="note" id="waitNote"></div>
+  </div>
+
+  <div id="gameView" style="display:none;">
+    <div class="sub" id="gameSub"></div>
+    <div class="board">
+      <div class="row" id="cardsRow"></div>
+      <div class="links" id="linksRow"></div>
+    </div>
+    <div class="status" id="statusText"></div>
+    <div class="lives" id="livesRow"></div>
+    <div class="toolbar center" style="justify-content:center;">
+      <button id="validateBtn" class="primary">✅ Valider</button>
+    </div>
+  </div>
+
+  <div id="doneView" style="display:none;" class="center mt">
+    <div class="status big" id="doneText"></div>
+  </div>
+
+  <div id="finalView" style="display:none;" class="mt">
+    <h2>🏁 Résultat du tournoi</h2>
+    <div class="status big" id="finalText"></div>
+  </div>
+
+  <h2>Classement en direct</h2>
+  <div id="standingsBox"></div>
+
+  <footer>Attends que le maître lance le tournoi. Garde cette page ouverte.</footer>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/common.js"></script>
+<script>
+const m = location.pathname.match(/joueur(\d+)\.html/i);
+const slot = m ? parseInt(m[1], 10) : null;
+document.getElementById('slotLabel').textContent = slot ? `— Joueur ${slot}` : '';
+
+if (!slot) {
+  document.getElementById('connStatus').textContent = "URL invalide. Utilise /joueur1.html à /joueur10.html.";
+} else {
+  runPlayer(slot);
+}
+
+function runPlayer(slot) {
+  const socket = io();
+  let display = [];
+  let currentState = null;
+
+  socket.on('connect', () => {
+    document.getElementById('connStatus').textContent = 'Connecté au serveur.';
+    socket.emit('player:hello', { slot });
+  });
+  socket.on('disconnect', () => {
+    document.getElementById('connStatus').textContent = '⚠️ Déconnecté — nouvelle tentative…';
+  });
+
+  document.getElementById('joinBtn').addEventListener('click', () => {
+    const name = document.getElementById('nameInput').value.trim();
+    if (!name) { document.getElementById('nameError').textContent = 'Entre un nom.'; return; }
+    socket.emit('player:setName', { slot, name }, (res) => {
+      if (!res.ok) document.getElementById('nameError').textContent = res.error;
+    });
+  });
+
+  document.getElementById('validateBtn').addEventListener('click', () => {
+    socket.emit('player:validate', { slot, order: display.map(p => p.name) }, (res) => {
+      if (!res.ok) { document.getElementById('statusText').textContent = res.error; }
+    });
+  });
+
+  socket.on('player:state', (state) => {
+    currentState = state;
+    render(state);
+  });
+
+  function show(id) {
+    ['nameView','waitView','gameView','doneView','finalView'].forEach(v => {
+      document.getElementById(v).style.display = (v === id) ? 'block' : 'none';
+    });
+  }
+
+  function render(state) {
+    renderStandings(state.standings, state.winnerSlots);
+
+    if (!state.me || !state.me.name) {
+      show('nameView');
+      return;
+    }
+
+    if (state.status === 'finished') {
+      show('finalView');
+      const iWon = state.winnerSlots.includes(slot);
+      const names = state.winnerSlots.map(s => (state.standings.find(p=>p.slot===s)||{}).name).filter(Boolean);
+      document.getElementById('finalText').textContent = iWon
+        ? '🎉 Tu as gagné le tournoi !'
+        : (names.length ? `Vainqueur : ${names.join(', ')}` : 'Tournoi terminé.');
+      return;
+    }
+
+    if (state.status === 'lobby') {
+      show('waitView');
+      document.getElementById('waitNote').innerHTML = `Bienvenue <b>${state.me.name}</b> ! En attente que le maître configure et lance le tournoi…`;
+      return;
+    }
+
+    // status === 'playing'
+    if (state.me.status === 'playing' && state.round) {
+      display = state.round.display.slice();
+      show('gameView');
+      document.getElementById('gameSub').textContent = `Manche ${state.round.number} — ${state.me.name}`;
+      document.getElementById('statusText').textContent = '';
+      document.getElementById('validateBtn').disabled = false;
+      renderBoard(document.getElementById('cardsRow'), display, state.round.imageFolder, move, false);
+      renderLinks(document.getElementById('linksRow'), state.round.links, state.round.criteria, null);
+      renderLives(document.getElementById('livesRow'), state.me.livesLeft, (state.config && state.config.livesPerRound) || state.me.livesLeft);
+    } else if (state.me.status === 'spectateur') {
+      show('waitView');
+      document.getElementById('waitNote').innerHTML = `Le tournoi est déjà en cours : tu es spectateur jusqu'au prochain tournoi.`;
+    } else {
+      show('doneView');
+      const labels = { solved: '✅ Manche résolue, en attente des autres joueurs…', 'solved-late': '✅ Résolu (mais un autre joueur a été plus rapide)', out: '❌ Manche perdue (plus de vies), en attente de la suite…', eliminated: '💀 Éliminé — merci d\'avoir joué !', idle: 'En attente du début de la manche…' };
+      document.getElementById('doneText').textContent = labels[state.me.status] || state.me.status;
+    }
+  }
+
+  function move(idx, dir) {
+    const j = idx + dir;
+    if (j < 0 || j >= display.length) return;
+    [display[idx], display[j]] = [display[j], display[idx]];
+    renderBoard(document.getElementById('cardsRow'), display, currentState.round.imageFolder, move, false);
+  }
+
+  function renderStandings(standings, winnerSlots) {
+    const box = document.getElementById('standingsBox');
+    if (!standings.length) { box.innerHTML = '<div class="note">Personne n\'est encore inscrit.</div>'; return; }
+    let html = '<table class="stats"><thead><tr><th>Joueur</th><th>Score</th><th>Statut</th></tr></thead><tbody>';
+    for (const p of standings) {
+      const isMe = p.slot === slot;
+      const isWinner = winnerSlots && winnerSlots.includes(p.slot);
+      html += `<tr class="${isMe ? 'me' : ''}"><td>${p.name}${isMe ? ' (toi)' : ''}${!p.connected ? ' 🔌' : ''}</td><td>${p.score}</td><td><span class="pill ${isWinner ? 'winner' : p.status}">${isWinner ? '🏆 vainqueur' : p.status}</span></td></tr>`;
+    }
+    html += '</tbody></table>';
+    box.innerHTML = html;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Composez votre équipe — Maître du jeu</title>
+<link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/master.css">
+</head>
+<body>
+
+<div id="setup-screen" class="screen">
+  <div class="card setup-card">
+    <h1>Composez votre équipe</h1>
+
+    <h3>1. Mode de jeu</h3>
+    <div class="mode-buttons">
+      <button class="mode-btn" data-mode="A">A — Équipe au hasard</button>
+      <button class="mode-btn" data-mode="B">B — Équipe de choix</button>
+      <button class="mode-btn" data-mode="C">C — Duel d'équipe</button>
+      <button class="mode-btn" data-mode="D">D — Défi</button>
+    </div>
+
+    <h3>2. Joueurs</h3>
+    <label>Nombre de joueurs :
+      <input type="number" id="player-count" min="2" max="12" value="4">
+    </label>
+    <div id="player-names"></div>
+
+    <h3>3. Thème de la partie</h3>
+    <textarea id="theme" rows="2" placeholder="Exemple : Equipage de pirate" style="width:100%"></textarea>
+
+    <h3>4. Nombre de tirages par joueur (taille max d'équipe)</h3>
+    <select id="num-draws">
+      <option>3</option><option>4</option><option selected>5</option><option>6</option>
+      <option>7</option><option>8</option><option>9</option><option>10</option>
+    </select>
+
+    <div id="num-rounds-block" class="hidden">
+      <h3>4bis. Nombre de tours à jouer (mode Défi)</h3>
+      <input type="number" id="num-rounds" min="1" max="30" value="5" style="width:100px">
+      <p style="font-size:13px;color:#555;margin-top:4px;">
+        Chaque tour, tous les joueurs tirent une image en même temps. Comme les joueurs peuvent se donner des images,
+        ce nombre peut être différent du nombre de tirages max par équipe ci-dessus.
+      </p>
+
+      <h3>4ter. Nombre de dons possible (mode Défi)</h3>
+      <input type="number" id="num-gifts" min="1" max="5" value="2" style="width:100px">
+      <p style="font-size:13px;color:#555;margin-top:4px;">
+        Nombre de fois où chaque joueur peut donner son image tirée à un autre joueur, sur toute la partie.
+      </p>
+    </div>
+
+    <h3>5. Photos</h3>
+    <input type="file" id="zip-input" accept=".zip">
+    <button id="upload-btn" class="secondary">Charger l'archive ZIP</button>
+    <span id="upload-status"></span>
+
+    <div style="margin-top:24px;">
+      <button id="start-btn" disabled>Lancer la partie</button>
+    </div>
+    <p id="setup-error" style="color:#a83a3a;font-weight:600;"></p>
+    <div id="player-links"></div>
+  </div>
+</div>
+
+<div id="game-screen" class="screen hidden">
+  <div class="game-header">
+    <div>
+      <h2 id="theme-display"></h2>
+      <span id="mode-display"></span>
+    </div>
+    <button id="reset-btn" class="danger">Réinitialiser</button>
+  </div>
+
+  <div id="columns" class="columns"></div>
+
+  <div id="controls" class="controls card"></div>
+</div>
+
+<div id="elimination-screen" class="screen hidden">
+  <h2>Phase d'élimination — validez les joueurs à éliminer</h2>
+  <div id="elim-columns" class="columns"></div>
+</div>
+
+<div id="winner-screen" class="screen hidden">
+  <div class="winner-box">
+    <h1 id="winner-title"></h1>
+    <div id="winner-team" class="columns"></div>
+    <button id="new-game-btn">Nouvelle partie</button>
+  </div>
+</div>
+
+<div id="flicker-overlay" class="hidden">
+  <img id="flicker-img" class="center-flicker">
+</div>
+
+<div id="modal-root"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/master.js"></script>
+</body>
+</html>

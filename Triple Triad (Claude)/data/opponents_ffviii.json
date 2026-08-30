@@ -1,0 +1,266 @@
+[
+  {
+    "tier": 1,
+    "label": "Palier 1 - Débutant",
+    "opponents": [
+      {
+        "name": "Étudiant du Jardin",
+        "ai": "random",
+        "deck": [
+          "bogomile",
+          "fungus",
+          "elmidea",
+          "nocturnus",
+          "incube"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Garde de Balamb",
+        "ai": "random",
+        "deck": [
+          "aphide",
+          "elastos",
+          "diodon",
+          "carnidea",
+          "larva"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Marchand ambulant",
+        "ai": "random",
+        "deck": [
+          "gallus",
+          "incube",
+          "aphide",
+          "elastos",
+          "diodon"
+        ],
+        "set": "ffviii"
+      }
+    ]
+  },
+  {
+    "tier": 2,
+    "label": "Palier 2 - Amateur",
+    "opponents": [
+      {
+        "name": "Cadet SeeD",
+        "ai": "greedy",
+        "deck": [
+          "orchida",
+          "schizoid",
+          "licorne",
+          "xylopode",
+          "koatl"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Voyageur de Timber",
+        "ai": "greedy",
+        "deck": [
+          "xylopode",
+          "koatl",
+          "malaku",
+          "anaconda",
+          "formicide"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Chasseur de Winhill",
+        "ai": "greedy",
+        "deck": [
+          "anaconda",
+          "formicide",
+          "feng",
+          "hera",
+          "selek"
+        ],
+        "set": "ffviii"
+      }
+    ]
+  },
+  {
+    "tier": 3,
+    "label": "Palier 3 - Confirmé",
+    "opponents": [
+      {
+        "name": "Soldat de Galbadia",
+        "ai": "greedy",
+        "deck": [
+          "weevil",
+          "scavenger",
+          "adephage",
+          "phantom",
+          "satyrux"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Marin de la FH",
+        "ai": "greedy",
+        "deck": [
+          "phantom",
+          "satyrux",
+          "trogiidae",
+          "barbarian",
+          "berserker"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Duelliste de Deling",
+        "ai": "greedy",
+        "deck": [
+          "barbarian",
+          "berserker",
+          "pampa",
+          "tomberry",
+          "celebis"
+        ],
+        "set": "ffviii"
+      }
+    ]
+  },
+  {
+    "tier": 4,
+    "label": "Palier 4 - Expert",
+    "opponents": [
+      {
+        "name": "Officier d'Esthar",
+        "ai": "greedy",
+        "deck": [
+          "eiffel",
+          "cariatide",
+          "t_rex",
+          "bombo",
+          "tikal"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Chercheur de Trabia",
+        "ai": "greedy",
+        "deck": [
+          "bombo",
+          "tikal",
+          "wendigo",
+          "coeurl",
+          "draconus"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Mercenaire errant",
+        "ai": "greedy",
+        "deck": [
+          "coeurl",
+          "draconus",
+          "moloch",
+          "ao",
+          "polyphage"
+        ],
+        "set": "ffviii"
+      }
+    ]
+  },
+  {
+    "tier": 5,
+    "label": "Palier 5 - Maître",
+    "opponents": [
+      {
+        "name": "Chevalier d'Edea",
+        "ai": "smart",
+        "deck": [
+          "ekarissor",
+          "behemoth",
+          "chimaira",
+          "koyo_k",
+          "protesis"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Sorcière itinérante",
+        "ai": "smart",
+        "deck": [
+          "koyo_k",
+          "protesis",
+          "pikasso",
+          "xylomid",
+          "griffon"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Général de Galbadia",
+        "ai": "smart",
+        "deck": [
+          "xylomid",
+          "griffon",
+          "sulfor",
+          "tomberry_senior",
+          "wedge_biggs"
+        ],
+        "set": "ffviii"
+      }
+    ]
+  },
+  {
+    "tier": 6,
+    "label": "Palier 6 - Légende",
+    "opponents": [
+      {
+        "name": "Champion de Balamb",
+        "ai": "smart",
+        "deck": [
+          "fujin_raijin",
+          "sulfura",
+          "goliath",
+          "lygus",
+          "ecorche"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Reine du Tournoi",
+        "ai": "smart",
+        "deck": [
+          "lygus",
+          "ecorche",
+          "iguanor",
+          "hornet",
+          "flotix"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "Gardien d'Ultimecia",
+        "ai": "smart",
+        "deck": [
+          "hornet",
+          "flotix",
+          "cyanide",
+          "shumi",
+          "krystal"
+        ],
+        "set": "ffviii"
+      },
+      {
+        "name": "L'Arme Ultime",
+        "ai": "smart",
+        "deck": [
+          "shumi",
+          "krystal",
+          "alienator",
+          "pampa_senior",
+          "acron"
+        ],
+        "set": "ffviii"
+      }
+    ]
+  }
+]

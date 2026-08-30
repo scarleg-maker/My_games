@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeu d'estimation — Joueur</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="player-page">
+  <div class="theme-banner" id="theme-banner">Connexion...</div>
+
+  <div id="clue-box" class="clue-box hidden"></div>
+
+  <div class="gauge-container" id="gauge-container"></div>
+
+  <!-- Zone Book-maker : indice -->
+  <div id="bm-controls" class="hidden" style="width:100%;max-width:420px;">
+    <label for="clue-input">Écrivez un indice pour les autres joueurs</label>
+    <textarea id="clue-input" rows="2" placeholder="Ex : C'est le personnage le plus fort de l'univers..."></textarea>
+    <button class="big-btn" id="send-clue-btn">Envoyer l'indice</button>
+  </div>
+
+  <!-- Zone joueur : estimation -->
+  <div id="guess-controls" class="guess-input-row hidden">
+    <input type="number" id="guess-input" min="0" max="100" value="50">
+    <button class="big-btn" id="validate-btn" style="width:auto;padding:14px 22px;">Valider</button>
+  </div>
+
+  <div class="waiting-msg hidden" id="waiting-msg"></div>
+
+  <!-- Résultats de la manche -->
+  <div class="card hidden" id="results-card" style="width:100%;max-width:500px;margin-top:20px;">
+    <h3>Résultats de la manche</h3>
+    <div>Valeur exacte : <strong id="result-target"></strong>%</div>
+    <div class="results-list" id="results-list"></div>
+    <button class="big-btn hidden" id="next-round-btn" style="margin-top:14px;">Manche suivante ▶</button>
+  </div>
+
+  <div class="card hidden" id="game-over-card" style="width:100%;max-width:500px;margin-top:20px;">
+    <div class="winner-banner" id="winner-banner"></div>
+  </div>
+
+  <div class="overlay hidden" id="bm-overlay">
+    <div class="overlay-box" id="bm-overlay-text"></div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/gauge.js"></script>
+<script src="/js/player.js"></script>
+</body>
+</html>

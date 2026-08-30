@@ -1,0 +1,85 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: linear-gradient(135deg, #2b5876, #4e4376);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+header { text-align: center; margin-bottom: 20px; }
+h1 { font-size: 2rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 1px; }
+h2 { font-size: 1.2rem; opacity: 0.85; font-weight: normal; margin-top: 6px; }
+
+.panel { background: rgba(0,0,0,0.3); padding: 25px; border-radius: 15px; max-width: 650px; margin: 0 auto 20px auto; border: 1px solid rgba(255,255,255,0.1); }
+
+label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.95rem; }
+select, input[type="text"], input[type="number"], input[type="file"] { padding: 10px; border-radius: 8px; border: none; width: 100%; background: rgba(255,255,255,0.2); color: white; font-size: 1rem; }
+select option { color: black; }
+
+.setup-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+.setup-group { margin-bottom: 15px; }
+#playerNamesSetup { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.player-input-group { display: flex; flex-direction: column; }
+
+.btn { border: none; color: white; padding: 12px 30px; font-size: 1rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s, opacity 0.2s; }
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-primary { background: linear-gradient(to right, #ff4b2b, #ff416c); }
+.btn-success { background: linear-gradient(to right, #11998e, #38ef7d); }
+.btn-start { background: linear-gradient(to right, #00c6ff, #0072ff); width: 100%; margin-top: 15px; }
+.btn-neutral { background: #555; }
+
+.image-frame { width: 100%; max-width: 700px; height: 42vh; background: rgba(0,0,0,0.3); border-radius: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); margin: 0 auto; }
+.image-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+#imageNameLabel { font-size: 1.6rem; font-weight: bold; letter-spacing: 0.5px; background: rgba(0,0,0,0.5); padding: 10px 30px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.15); text-align: center; max-width: 90%; margin: 15px auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.timer-badge { font-size: 2.2rem; font-weight: bold; text-align: center; padding: 10px 20px; border-radius: 16px; margin: 10px auto; width: fit-content; min-width: 140px; }
+.timer-waiting { background: rgba(255,159,67,0.25); border: 2px solid #ff9f43; color: #ffcf9f; }
+.timer-overbid { background: rgba(255,75,43,0.25); border: 2px solid #ff4b2b; color: #ffb3a3; }
+
+.bid-info { text-align: center; font-size: 1.3rem; margin: 10px 0; }
+.bid-amount { color: #00ffcc; font-weight: bold; font-size: 1.8rem; }
+
+.player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; max-width: 1100px; margin: 20px auto 0 auto; width: 100%; }
+.player-card { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: opacity 0.3s ease, border-color 0.3s ease; }
+.player-card.highest { border-color: #00ffcc; box-shadow: 0 0 15px rgba(0,255,204,0.4); }
+.player-card.disconnected { opacity: 0.4; }
+.player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; gap: 10px; }
+.player-name { font-weight: bold; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-money { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 3px 8px; font-size: 1rem; font-weight: bold; color: #00ffcc; }
+.player-stats { font-size: 0.78rem; opacity: 0.75; margin-top: 4px; }
+.player-status-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.dot-on { background: #38ef7d; box-shadow: 0 0 6px #38ef7d; }
+.dot-off { background: #888; }
+
+.center-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.info-text { text-align: center; opacity: 0.9; font-size: 1rem; margin-bottom: 4px; }
+
+.result-banner { text-align: center; font-size: 1.3rem; font-weight: bold; padding: 14px; border-radius: 12px; margin: 10px auto; max-width: 500px; }
+.result-won { background: rgba(56,239,125,0.2); border: 2px solid #38ef7d; }
+.result-nobid { background: rgba(248,87,166,0.2); border: 2px solid #f857a6; }
+
+.big-bid-btn { display: block; margin: 25px auto; font-size: 1.6rem; padding: 22px 50px; border-radius: 70px; }
+
+.error-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ff4b2b; padding: 12px 22px; border-radius: 10px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: none; z-index: 200; }
+
+.game-over-box { text-align: center; background: rgba(0,0,0,0.35); padding: 30px; border-radius: 15px; max-width: 600px; margin: 20px auto; }
+.game-over-box h2 { color: #ffcf9f; margin-bottom: 15px; }
+
+.lobby-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
+.lobby-slot { padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.1); border: 2px solid #888; }
+.lobby-slot.on { border-color: #38ef7d; }
+
+.player-collection { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; margin-top: 10px; }
+.collection-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
+.thumb-img { width: 100%; height: 72px; object-fit: cover; object-position: center; border-radius: 5px; }
+.thumb-info { font-size: 0.72rem; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thumb-price { color: #00ffcc; font-weight: bold; font-size: 0.78rem; }
+

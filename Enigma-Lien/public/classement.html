@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enigma-Lien — Classement solo</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>⬡ Classement solo</h1>
+  <div class="sub"><a href="/">← Menu</a> · <a href="/solo.html">Jouer en solo</a></div>
+  <div id="content" class="mt">Chargement…</div>
+  <footer>Statistiques cumulées sur ce serveur (data/players.json).</footer>
+</div>
+<script>
+async function load() {
+  const res = await fetch('/api/leaderboard');
+  const rows = await res.json();
+  const box = document.getElementById('content');
+  if (!rows.length) { box.innerHTML = '<div class="note">Personne n\'a encore joué en solo sur ce serveur.</div>'; return; }
+  let html = '<table class="stats"><thead><tr><th>Joueur</th><th>Parties</th><th>Victoires</th><th>Défaites</th><th>Ratio</th><th>Meilleure série</th><th>Dernier thème</th><th>Dernière partie</th></tr></thead><tbody>';
+  for (const r of rows) {
+    const date = r.dernierJoue ? new Date(r.dernierJoue).toLocaleString('fr-FR') : '—';
+    html += `<tr><td>${r.name}</td><td>${r.parties}</td><td>${r.victoires}</td><td>${r.defaites}</td><td>${r.ratio}%</td><td>${r.meilleureSerie}</td><td>${r.dernierTheme || '—'}</td><td>${date}</td></tr>`;
+  }
+  html += '</tbody></table>';
+  box.innerHTML = html;
+}
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Time's Up – Maitre</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f4c81 0%, #1a7a6e 50%, #0d9e75 100%);
+  color: #fff;
+  padding: 1.5rem 1rem;
+}
+h1 { text-align: center; font-size: 2rem; letter-spacing: 2px; margin-bottom: 1.5rem; text-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+.card {
+  background: rgba(255,255,255,0.13);
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 1.5rem;
+  margin: 0 auto 1.5rem;
+  max-width: 800px;
+}
+h2 { font-size: 1.1rem; margin-bottom: 1rem; opacity: 0.85; }
+label { font-size: 0.85rem; opacity: 0.75; display: block; margin-bottom: 4px; }
+select, input[type=text], input[type=number] {
+  width: 100%; padding: 9px 12px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15); color: #fff;
+  font-size: 14px; margin-bottom: 12px;
+}
+select option { background: #1a7a6e; color: #fff; }
+input::placeholder { color: rgba(255,255,255,0.45); }
+.btn { padding: 11px 20px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: filter 0.15s, transform 0.1s; }
+.btn:active { transform: scale(0.97); }
+.btn:hover:not(:disabled) { filter: brightness(0.88); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-blue { background: #378ADD; color: #fff; }
+.btn-green { background: #3db36a; color: #fff; }
+.btn-red { background: #E24B4A; color: #fff; }
+.btn-amber { background: #EF9F27; color: #412402; }
+.btn-purple { background: #AFA9EC; color: #26215C; }
+.btn-gray { background: rgba(255,255,255,0.2); color: #fff; }
+.btn-full { width: 100%; margin-top: 8px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.row .col { flex: 1; min-width: 140px; }
+/* Mode toggle */
+.mode-toggle { display: flex; gap: 10px; margin-bottom: 16px; }
+.mode-btn { flex: 1; padding: 10px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.mode-btn.active { background: #378ADD; border-color: #378ADD; }
+/* Equipes */
+.team-block { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.15); }
+.team-header { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.team-header input { margin-bottom: 0; flex: 1; }
+.player-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.player-row input { margin-bottom: 0; flex: 1; }
+.remove-btn { background: rgba(226,75,74,0.6); border: none; color: #fff; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 13px; }
+.add-btn { background: rgba(255,255,255,0.12); border: none; color: #fff; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; margin-top: 4px; }
+.add-btn:hover { background: rgba(255,255,255,0.2); }
+/* Collecte */
+.player-status { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; background: rgba(255,255,255,0.07); font-size: 14px; }
+.status-icon { font-size: 18px; }
+/* Jeu */
+#game-area { text-align: center; }
+.round-badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 18px; font-size: 0.9rem; margin-bottom: 8px; }
+.proposal-box { font-size: 72px; font-weight: 700; line-height: 1.1; margin: 1rem 0; word-break: break-word; text-shadow: 0 2px 20px rgba(0,0,0,0.2); }
+.score-grid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 1rem 0; }
+.score-card { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 18px; text-align: center; min-width: 120px; }
+.score-card.active { background: rgba(61,179,106,0.35); border: 2px solid #3db36a; }
+.score-card .team-name { font-size: 0.85rem; opacity: 0.8; }
+.score-card .pts { font-size: 1.6rem; font-weight: 700; }
+.timer-display { font-size: 3rem; font-weight: 700; margin: 0.5rem 0; }
+.timer-display.urgent { color: #ff6b6b; }
+.game-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+.game-btns .btn { min-width: 140px; padding: 14px 20px; font-size: 15px; }
+.info-bar { font-size: 0.9rem; opacity: 0.75; margin-bottom: 6px; }
+.countdown-big { font-size: 6rem; font-weight: 900; animation: pulse 0.5s ease-in-out infinite alternate; }
+@keyframes pulse { from { opacity: 1; transform: scale(1); } to { opacity: 0.6; transform: scale(0.92); } }
+.winner-display { font-size: 1.6rem; font-weight: 700; margin: 1rem 0; }
+.final-scores { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.final-card { background: rgba(255,255,255,0.1); border-radius: 14px; padding: 14px 22px; text-align: center; min-width: 130px; }
+.final-card.winner { background: rgba(239,159,39,0.4); border: 2px solid #EF9F27; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<h1>🎴 Time's Up</h1>
+
+<!-- SETUP -->
+<div id="screen-setup">
+  <div class="card">
+    <h2>Mode de jeu</h2>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-mode-single" onclick="setMode('single')">🖥️ Ecran unique</button>
+      <button class="mode-btn" id="btn-mode-multi" onclick="setMode('multi')">📱 Ecrans multiples</button>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Propositions par joueur</label>
+        <select id="proposals-per-player">
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Temps par manche</label>
+        <select id="time-per-round">
+          <option value="30">30 secondes</option>
+          <option value="45">45 secondes</option>
+          <option value="60" selected>60 secondes</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Equipes et joueurs</h2>
+    <div id="teams-container"></div>
+    <div class="row" style="margin-top:10px;">
+      <button class="btn btn-gray" onclick="addTeam()">+ Ajouter une equipe</button>
+    </div>
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <button class="btn btn-green" style="font-size:16px;padding:14px 40px;" onclick="launchProposals()">🚀 Lancer les propositions</button>
+    <div id="setup-error" style="color:#ff9f9f;margin-top:10px;font-size:13px;"></div>
+  </div>
+</div>
+
+<!-- COLLECTE SINGLE -->
+<div id="screen-collecting-single" class="hidden">
+  <div class="card" style="text-align:center;">
+    <h2 id="collecting-player-name" style="font-size:1.5rem;margin-bottom:4px;"></h2>
+    <p style="opacity:0.7;font-size:0.9rem;margin-bottom:1.2rem;">Entrez vos propositions puis validez</p>
+    <div id="proposal-inputs"></div>
+    <button class="btn btn-green btn-full" style="margin-top:12px;" onclick="submitSingleProposals()">✅ Valider</button>
+    <div id="single-error" style="color:#ff9f9f;margin-top:8px;font-size:13px;"></div>
+  </div>
+</div>
+
+<!-- COLLECTE MULTI -->
+<div id="screen-collecting-multi" class="hidden">
+  <div class="card">
+    <h2>Attente des propositions</h2>
+    <p style="opacity:0.7;font-size:0.9rem;margin-bottom:1rem;">Les joueurs se connectent depuis leur appareil</p>
+    <div id="multi-status-list"></div>
+    <div id="multi-link-info" style="margin-top:12px;opacity:0.7;font-size:13px;"></div>
+  </div>
+</div>
+
+<!-- PRET -->
+<div id="screen-ready" class="hidden">
+  <div class="card" style="text-align:center;">
+    <h2>Toutes les propositions sont enregistrees !</h2>
+    <p style="opacity:0.75;margin:12px 0;font-size:0.95rem;">L'equipe qui commence a ete designee au hasard.</p>
+    <div id="starting-team" style="font-size:1.4rem;font-weight:700;margin:12px 0;"></div>
+    <button class="btn btn-green" style="font-size:16px;padding:14px 40px;" onclick="socket.emit('startGame')">▶️ Demarrer la partie</button>
+  </div>
+</div>
+
+<!-- COUNTDOWN -->
+<div id="screen-countdown" class="hidden">
+  <div class="card" id="game-area">
+    <div class="round-badge" id="cd-round"></div>
+    <div class="info-bar" id="cd-team"></div>
+    <div class="countdown-big" id="cd-number">3</div>
+    <div class="score-grid" id="cd-scores"></div>
+  </div>
+</div>
+
+<!-- JEU -->
+<div id="screen-playing" class="hidden">
+  <div class="card" id="game-area">
+    <div class="round-badge" id="play-round"></div>
+    <div class="info-bar" id="play-team"></div>
+    <div class="info-bar" id="play-count"></div>
+    <div class="timer-display" id="play-timer"></div>
+    <div class="proposal-box" id="play-proposal"></div>
+    <div class="score-grid" id="play-scores"></div>
+    <div class="game-btns">
+      <button class="btn btn-green" onclick="socket.emit('found')">✅ Trouvee !</button>
+      <button class="btn btn-amber" id="btn-pass" onclick="socket.emit('pass')">⏩ Passe -3s</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIN DE TOUR -->
+<div id="screen-roundend" class="hidden">
+  <div class="card" style="text-align:center;" id="game-area">
+    <div class="round-badge" id="re-round"></div>
+    <h2 style="margin:12px 0;">Temps ecoule !</h2>
+    <div id="re-points" style="font-size:1.3rem;margin:8px 0;"></div>
+    <div class="score-grid" id="re-scores"></div>
+    <div class="info-bar" style="margin-top:12px;" id="re-next-team"></div>
+    <button class="btn btn-blue btn-full" style="margin-top:14px;" onclick="socket.emit('nextTeam')">▶️ Tour suivant</button>
+  </div>
+</div>
+
+<!-- PLUS DE PROPOSITIONS -->
+<div id="screen-nomore" class="hidden">
+  <div class="card" style="text-align:center;">
+    <div class="round-badge" id="nm-round"></div>
+    <h2 style="margin:12px 0;">Toutes les propositions ont ete trouvees !</h2>
+    <div id="nm-points" style="font-size:1.2rem;margin:8px 0;"></div>
+    <div class="score-grid" id="nm-scores"></div>
+    <div id="nm-next-info" style="margin-top:12px;opacity:0.8;"></div>
+    <button class="btn btn-blue btn-full" style="margin-top:14px;" id="btn-next-round" onclick="goNextRound()">➡️ Manche suivante</button>
+  </div>
+</div>
+
+<!-- TERMINE -->
+<div id="screen-finished" class="hidden">
+  <div class="card" style="text-align:center;">
+    <h2 style="font-size:1.5rem;margin-bottom:1rem;">🏆 Fin de la partie !</h2>
+    <div class="winner-display" id="winner-text"></div>
+    <div class="final-scores" id="final-scores"></div>
+    <button class="btn btn-gray btn-full" style="margin-top:1.5rem;" onclick="socket.emit('reset')">🔄 Nouvelle partie</button>
+  </div>
+</div>
+
+<script>
+const socket = io();
+let currentState = null;
+let cdInterval = null;
+
+// ── EQUIPES SETUP ────────────────────────────────────────────────────────────
+let teams = [
+  { name: 'Equipe 1', players: [''] },
+  { name: 'Equipe 2', players: [''] },
+];
+let mode = 'single';
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-mode-single').classList.toggle('active', m === 'single');
+  document.getElementById('btn-mode-multi').classList.toggle('active', m === 'multi');
+}
+
+function addTeam() {
+  teams.push({ name: 'Equipe ' + (teams.length + 1), players: [''] });
+  renderTeams();
+}
+
+function removeTeam(i) {
+  if (teams.length <= 2) return;
+  teams.splice(i, 1);
+  renderTeams();
+}
+
+function addPlayer(teamIdx) {
+  teams[teamIdx].players.push('');
+  renderTeams();
+}
+
+function removePlayer(teamIdx, pIdx) {
+  if (teams[teamIdx].players.length <= 1) return;
+  teams[teamIdx].players.splice(pIdx, 1);
+  renderTeams();
+}
+
+function renderTeams() {
+  const c = document.getElementById('teams-container');
+  c.innerHTML = teams.map((t, ti) => `
+    <div class="team-block">
+      <div class="team-header">
+        <input type="text" value="${t.name}" placeholder="Nom equipe" oninput="teams[${ti}].name=this.value"/>
+        ${teams.length > 2 ? `<button class="remove-btn" onclick="removeTeam(${ti})">✕</button>` : ''}
+      </div>
+      ${t.players.map((p, pi) => `
+        <div class="player-row">
+          <input type="text" value="${p}" placeholder="Nom joueur ${pi+1}" oninput="teams[${ti}].players[${pi}]=this.value"/>
+          ${t.players.length > 1 ? `<button class="remove-btn" onclick="removePlayer(${ti},${pi})">✕</button>` : ''}
+        </div>
+      `).join('')}
+      <button class="add-btn" onclick="addPlayer(${ti})">+ Joueur</button>
+    </div>
+  `).join('');
+}
+renderTeams();
+
+function launchProposals() {
+  const err = document.getElementById('setup-error');
+  // Validation
+  for (const t of teams) {
+    if (!t.name.trim()) { err.textContent = 'Donnez un nom a chaque equipe.'; return; }
+    for (const p of t.players) {
+      if (!p.trim()) { err.textContent = 'Remplissez tous les noms de joueurs.'; return; }
+    }
+    const names = t.players.map(p => p.trim());
+    if (new Set(names).size !== names.length) { err.textContent = 'Noms de joueurs en double dans une equipe.'; return; }
+  }
+  err.textContent = '';
+  socket.emit('startSetup', {
+    mode,
+    config: {
+      proposalsPerPlayer: parseInt(document.getElementById('proposals-per-player').value),
+      numPlayers: teams.reduce((s,t) => s+t.players.length, 0),
+      timePerRound: parseInt(document.getElementById('time-per-round').value),
+    },
+    teams: teams.map(t => ({ name: t.name.trim(), players: t.players.map(p => p.trim()) })),
+  });
+}
+
+// ── COLLECTE SINGLE ──────────────────────────────────────────────────────────
+function renderSingleCollect(st) {
+  const allPlayers = st.teams.flatMap(t => t.players);
+  const player = allPlayers[st.collectingIdx] || '';
+  document.getElementById('collecting-player-name').textContent = '👤 ' + player;
+  const n = st.config.proposalsPerPlayer;
+  const c = document.getElementById('proposal-inputs');
+  c.innerHTML = Array.from({length: n}, (_,i) => `
+    <input type="text" id="prop-${i}" placeholder="Proposition ${i+1}" style="margin-bottom:8px;"/>
+  `).join('');
+}
+
+function submitSingleProposals() {
+  const err = document.getElementById('single-error');
+  const n = currentState.config.proposalsPerPlayer;
+  const props = Array.from({length: n}, (_,i) => document.getElementById('prop-'+i)?.value?.trim() || '');
+  if (props.some(p => !p)) { err.textContent = 'Tous les champs doivent etre remplis.'; return; }
+  err.textContent = '';
+  const allPlayers = currentState.teams.flatMap(t => t.players);
+  socket.emit('submitProposalsSingle', { playerName: allPlayers[currentState.collectingIdx], proposals: props });
+}
+
+// ── COLLECTE MULTI ───────────────────────────────────────────────────────────
+function renderMultiStatus(st) {
+  const list = document.getElementById('multi-status-list');
+  list.innerHTML = st.players.map(p => `
+    <div class="player-status">
+      <span>${p}</span>
+      <span class="status-icon">${st.playerValidations[p] ? '✅' : '❌'}</span>
+    </div>
+  `).join('');
+  const links = document.getElementById('multi-link-info');
+  links.innerHTML = st.players.map(p =>
+    `<div>${p} → <b>localhost:6300/joueur/${encodeURIComponent(p)}</b></div>`
+  ).join('');
+}
+
+// ── SCORES ───────────────────────────────────────────────────────────────────
+function renderScores(st, containerId) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = st.teams.map((t, i) => {
+    const total = st.scores[i] ? st.scores[i].reduce((a,b) => a+b, 0) : 0;
+    return `<div class="score-card ${i === st.currentTeamIdx ? 'active' : ''}">
+      <div class="team-name">${t.name}</div>
+      <div class="pts">${total}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── COUNTDOWN ────────────────────────────────────────────────────────────────
+function startCountdownDisplay(st) {
+  if (cdInterval) clearInterval(cdInterval);
+  let n = 3;
+  const el = document.getElementById('cd-number');
+  document.getElementById('cd-round').textContent = `Manche ${st.roundIdx+1} / 3 — ${st.rounds[st.roundIdx]}`;
+  document.getElementById('cd-team').textContent = `Equipe : ${st.currentTeamName} — Joueur : ${st.currentPlayer}`;
+  renderScores(st, 'cd-scores');
+  el.textContent = n;
+  cdInterval = setInterval(() => {
+    n--;
+    if (n <= 0) {
+      clearInterval(cdInterval);
+      socket.emit('countdownDone');
+    } else {
+      el.textContent = n;
+    }
+  }, 1000);
+}
+
+// ── GONEXTROUND ──────────────────────────────────────────────────────────────
+function goNextRound() {
+  socket.emit('nextRound', { timeLeft: currentState ? currentState.timeLeft : 0 });
+}
+
+// ── ECRANS ───────────────────────────────────────────────────────────────────
+const screens = ['setup','collecting-single','collecting-multi','ready','countdown','playing','roundend','nomore','finished'];
+function showScreen(name) {
+  screens.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.toggle('hidden', s !== name);
+  });
+}
+
+// ── SOCKET STATE ─────────────────────────────────────────────────────────────
+socket.on('state', (st) => {
+  currentState = st;
+
+  if (st.phase === 'setup') {
+    showScreen('setup');
+    return;
+  }
+
+  if (st.phase === 'collecting_single') {
+    showScreen('collecting-single');
+    renderSingleCollect(st);
+    return;
+  }
+
+  if (st.phase === 'collecting_multi') {
+    showScreen('collecting-multi');
+    renderMultiStatus(st);
+    return;
+  }
+
+  if (st.phase === 'ready') {
+    showScreen('ready');
+    const t = st.teams[st.startingTeamIdx];
+    document.getElementById('starting-team').textContent = '🎯 ' + (t ? t.name : '');
+    return;
+  }
+
+  if (st.phase === 'countdown') {
+    showScreen('countdown');
+    startCountdownDisplay(st);
+    return;
+  }
+
+  if (st.phase === 'playing') {
+    showScreen('playing');
+    document.getElementById('play-round').textContent = `Manche ${st.roundIdx+1} / 3 — ${st.rounds[st.roundIdx]}`;
+    document.getElementById('play-team').textContent = `Equipe : ${st.currentTeamName} — Joueur : ${st.currentPlayer}`;
+    document.getElementById('play-count').textContent = `Propositions : ${st.allFoundCount} / ${st.totalProposals}`;
+    const timer = document.getElementById('play-timer');
+    timer.textContent = st.timeLeft + 's';
+    timer.className = 'timer-display' + (st.timeLeft <= 10 ? ' urgent' : '');
+    document.getElementById('play-proposal').textContent = st.currentProposal || '';
+    document.getElementById('btn-pass').disabled = (st.proposalsLeftCount <= 3);
+    renderScores(st, 'play-scores');
+    return;
+  }
+
+  if (st.phase === 'roundEnd') {
+    showScreen('roundend');
+    document.getElementById('re-round').textContent = `Manche ${st.roundIdx+1} / 3 — ${st.rounds[st.roundIdx]}`;
+    document.getElementById('re-points').textContent = `Points gagnes ce tour : ${st.roundPoints}`;
+    renderScores(st, 're-scores');
+    const nextIdx = (st.currentTeamIdx + 1) % st.teams.length;
+    document.getElementById('re-next-team').textContent = `Prochain tour : ${st.teams[nextIdx]?.name}`;
+    return;
+  }
+
+  if (st.phase === 'roundEnd_noMore') {
+    showScreen('nomore');
+    document.getElementById('nm-round').textContent = `Manche ${st.roundIdx+1} / 3 — ${st.rounds[st.roundIdx]}`;
+    document.getElementById('nm-points').textContent = `Points gagnes ce tour : ${st.roundPoints}`;
+    renderScores(st, 'nm-scores');
+    if (st.roundIdx < 2) {
+      document.getElementById('nm-next-info').textContent =
+        `Il reste ${st.timeLeft}s — La manche suivante commence avec ce temps et la meme equipe.`;
+      document.getElementById('btn-next-round').classList.remove('hidden');
+    } else {
+      document.getElementById('nm-next-info').textContent = 'La partie est terminee !';
+      document.getElementById('btn-next-round').classList.add('hidden');
+      setTimeout(() => socket.emit('nextRound', { timeLeft: 0 }), 2000);
+    }
+    return;
+  }
+
+  if (st.phase === 'finished') {
+    showScreen('finished');
+    const totals = st.teams.map((t, i) => ({ name: t.name, score: st.scores[i] ? st.scores[i].reduce((a,b)=>a+b,0) : 0 }));
+    const max = Math.max(...totals.map(t => t.score));
+    const winners = totals.filter(t => t.score === max).map(t => t.name);
+    document.getElementById('winner-text').textContent = winners.length === 1
+      ? `🏆 ${winners[0]} remporte la partie !`
+      : `🏆 Egalite : ${winners.join(' & ')} !`;
+    document.getElementById('final-scores').innerHTML = totals.map(t => `
+      <div class="final-card ${t.score === max ? 'winner' : ''}">
+        <div class="team-name">${t.name}</div>
+        <div class="pts" style="font-size:2rem;font-weight:700;">${t.score}</div>
+        <div style="font-size:11px;opacity:0.7;">pt${t.score>1?'s':''}</div>
+      </div>
+    `).join('');
+    return;
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Créateur de cartes — Triple Triad</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: #0a0c1a;
+    color: #eae6ff;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { color: #ffd873; text-align: center; margin: 0 0 4px; font-size: 22px; }
+  p.subtitle { text-align: center; color: #b7bcf5; margin: 0 0 20px; font-size: 13px; }
+
+  #layout {
+    display: flex;
+    gap: 24px;
+    max-width: 1300px;
+    margin: 0 auto;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  #previewCol {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  #cardCanvas {
+    background: repeating-conic-gradient(#222 0% 25%, #2c2c2c 0% 50%) 50% / 24px 24px;
+    border: 2px solid #4a4fa8;
+    border-radius: 8px;
+    max-width: 380px;
+    width: 100%;
+    height: auto;
+  }
+  #exportRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  #errorBox {
+    width: 100%;
+    max-width: 380px;
+    background: #4a1616;
+    border: 2px solid #ff5c5c;
+    color: #ffb8b8;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #errorBox.hidden { display: none; }
+  #forceRefreshBtn { width: 100%; max-width: 380px; }
+  #exportRow input[type="text"] { width: 160px; }
+
+  #panel {
+    flex: 1;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .card-block {
+    background: #131636;
+    border: 1px solid #4a4fa8;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .card-block h2 {
+    font-size: 15px;
+    color: #ffd873;
+    margin: 0 0 10px;
+  }
+  .card-block h2 small { color: #7d82e0; font-weight: normal; font-size: 11px; display: block; margin-top: 2px; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .row label { flex: 0 0 120px; font-size: 12px; color: #b7bcf5; }
+  .row input[type="range"] { flex: 1; min-width: 100px; }
+  .row input[type="number"], .row input[type="text"], .row select {
+    padding: 4px 6px;
+    background: #1c1f3f;
+    border: 1px solid #4a4fa8;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .row input[type="number"] { width: 60px; }
+  .row select { width: 160px; }
+  .row input[type="text"].wide { flex: 1; }
+  .row .val { width: 46px; text-align: right; font-size: 11px; color: #7d82e0; flex-shrink: 0; }
+
+  input[type="file"] { font-size: 12px; color: #b7bcf5; }
+
+  .frame-slots { display: flex; gap: 10px; flex-wrap: wrap; }
+  .frame-slot {
+    flex: 1;
+    min-width: 130px;
+    background: #1c1f3f;
+    border: 3px solid #4a4fa8;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .frame-slot.active { border-color: #ffd873; background: #23264f; }
+  .frame-slot .thumb {
+    width: 100%;
+    height: 90px;
+    background: repeating-conic-gradient(#333 0% 25%, #3a3a3a 0% 50%) 50% / 12px 12px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .frame-slot .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .frame-slot .frame-label { font-size: 13px; font-weight: bold; color: #ffd873; margin-bottom: 4px; }
+  .frame-slot .frame-status { font-size: 10px; color: #7d82e0; margin-top: 4px; }
+
+  .element-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .element-preset {
+    width: 56px;
+    height: 56px;
+    background: #1c1f3f;
+    border: 2px solid #4a4fa8;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+  }
+  .element-preset.active { border-color: #ffd873; background: #23264f; }
+  .element-preset img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .element-preset .label {
+    position: absolute;
+    /* le libellé est géré via title (tooltip natif) plutôt qu'un texte visible, pour rester compact */
+  }
+
+  button {
+    background: linear-gradient(180deg, #4a4fa8, #2c2f6b);
+    color: #fff;
+    border: 1px solid #7d82e0;
+    border-radius: 6px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button.primary { background: linear-gradient(180deg, #3fae5c, #276e39); border-color: #6fe08c; font-weight: bold; }
+  button.ghost { background: transparent; border-color: #4a4fa8; }
+  button:hover { filter: brightness(1.15); }
+
+  .hint { font-size: 11px; color: #7d82e0; margin: 6px 0 0; line-height: 1.4; }
+  .checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #b7bcf5; margin-bottom: 8px; }
+  .checkbox-inline { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #b7bcf5; margin-right: 14px; }
+</style>
+</head>
+<body>
+
+<h1>Créateur de cartes — Triple Triad</h1>
+<p class="subtitle">Outil 100% local (rien n'est envoyé sur internet) — composez votre carte, ajustez, puis téléchargez le PNG final.</p>
+
+<div id="layout">
+
+  <div id="previewCol">
+    <div id="errorBox" class="hidden"></div>
+    <canvas id="cardCanvas" width="703" height="945"></canvas>
+    <button class="ghost" id="forceRefreshBtn" type="button">🔄 Forcer le rafraîchissement de l'aperçu</button>
+    <div id="exportRow">
+      <input type="text" id="exportFilename" placeholder="nom-de-la-carte" value="carte">
+      <button class="primary" id="exportBtn">⬇️ Télécharger le PNG</button>
+    </div>
+    <div class="hint" style="max-width:360px; text-align:center;">
+      Le damier gris n'apparaît pas dans l'export : il indique juste les zones transparentes. L'export
+      conserve toute la transparence (carte prête à l'emploi).
+    </div>
+  </div>
+
+  <div id="panel">
+
+    <div class="card-block">
+      <h2>1. Cadre (Normal / Rare / As) <small>cliquez sur un cadre pour l'activer ; importez une image dans chacun une seule fois</small></h2>
+      <div class="frame-slots" id="frameSlots"></div>
+    </div>
+
+    <div class="card-block">
+      <h2>2. Nom de la carte <small>cadre rouge</small></h2>
+      <div class="row"><label>Texte</label><input type="text" id="cardName" class="wide" placeholder="Ex: Bogomile"></div>
+      <div class="row"><label>Police</label><select id="nameFont"></select></div>
+      <div class="row">
+        <label>Style</label>
+        <span class="checkbox-inline"><input type="checkbox" id="nameBold"> <label for="nameBold" style="flex:none;">Gras</label></span>
+        <span class="checkbox-inline"><input type="checkbox" id="nameItalic"> <label for="nameItalic" style="flex:none;">Italique</label></span>
+      </div>
+      <div class="row"><label>Taille</label><input type="range" id="nameSize" min="10" max="70" value="40"><span class="val" id="nameSizeVal">32px</span></div>
+      <div class="row"><label>Position Y</label><input type="range" id="namePosY" min="0" max="30" value="11"><span class="val" id="namePosYVal">11%</span></div>
+      <div class="row"><label>Couleur</label>
+        <select id="nameColor">
+          <option value="#ffffff">Blanc</option>
+          <option value="#c0c0c0">Argent</option>
+          <option value="#ffd873">Doré</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card-block">
+      <h2>3. Valeurs (Haut / Droite / Bas / Gauche) <small>cadre bleu — 10 s'affiche "A"</small></h2>
+      <div class="row"><label>Haut</label><input type="number" id="statTop" min="1" max="10" value="5"></div>
+      <div class="row"><label>Droite</label><input type="number" id="statRight" min="1" max="10" value="5"></div>
+      <div class="row"><label>Bas</label><input type="number" id="statBottom" min="1" max="10" value="5"></div>
+      <div class="row"><label>Gauche</label><input type="number" id="statLeft" min="1" max="10" value="5"></div>
+      <div class="row"><label>Police</label><select id="statFont"></select></div>
+      <div class="row"><label>Taille</label><input type="range" id="statSize" min="10" max="60" value="60"><span class="val" id="statSizeVal">34px</span></div>
+      <div class="row"><label>Bloc X</label><input type="range" id="statBlockX" min="0" max="60" value="21"><span class="val" id="statBlockXVal">18%</span></div>
+      <div class="row"><label>Bloc Y</label><input type="range" id="statBlockY" min="10" max="60" value="26"><span class="val" id="statBlockYVal">26%</span></div>
+      <div class="row"><label>Couleur</label>
+        <select id="statColor">
+          <option value="#ffffff">Blanc</option>
+          <option value="#c0c0c0">Argent</option>
+          <option value="#ffd873">Doré</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card-block">
+      <h2>4. Niveau de la carte <small>cadre jaune — 1 à 10 ("A" pour 10)</small></h2>
+      <div class="row"><label>Niveau</label><input type="number" id="cardLevel" min="1" max="10" value="1"></div>
+      <div class="row"><label>Taille</label><input type="range" id="levelSize" min="10" max="50" value="39"><span class="val" id="levelSizeVal">26px</span></div>
+      <div class="row"><label>Position X</label><input type="range" id="levelX" min="0" max="100" value="50"><span class="val" id="levelXVal">50%</span></div>
+      <div class="row"><label>Position Y</label><input type="range" id="levelY" min="70" max="100" value="89"><span class="val" id="levelYVal">88%</span></div>
+      <div class="row"><label>Couleur</label>
+        <select id="levelColor">
+          <option value="#ffffff">Blanc</option>
+          <option value="#c0c0c0">Argent</option>
+          <option value="#ffd873">Doré</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card-block">
+      <h2>5. Élément <small>cadre violet — optionnel</small></h2>
+      <div class="element-presets" id="elementPresets"></div>
+      <p class="hint">Cliquez sur une icône pour l'utiliser, ou importez la vôtre ci-dessous.</p>
+      <input type="file" id="elementUpload" accept="image/*">
+      <button class="ghost" id="elementClearBtn" type="button">Retirer</button>
+      <div class="row"><label>Position X</label><input type="range" id="elX" min="0" max="100" value="81"><span class="val" id="elXVal">80%</span></div>
+      <div class="row"><label>Position Y</label><input type="range" id="elY" min="0" max="100" value="21"><span class="val" id="elYVal">14%</span></div>
+      <div class="row"><label>Taille</label><input type="range" id="elSize" min="5" max="40" value="15"><span class="val" id="elSizeVal">12%</span></div>
+      <div class="row"><label>Rotation</label><input type="range" id="elRotation" min="-180" max="180" value="0"><span class="val" id="elRotationVal">0°</span></div>
+    </div>
+
+    <div class="card-block">
+      <h2>6. Illustration</h2>
+      <input type="file" id="artworkUpload" accept="image/*">
+      <div class="row"><label>Position X</label><input type="range" id="artX" min="-50" max="150" value="50"><span class="val" id="artXVal">50%</span></div>
+      <div class="row"><label>Position Y</label><input type="range" id="artY" min="-50" max="150" value="50"><span class="val" id="artYVal">50%</span></div>
+      <div class="row"><label>Taille</label><input type="range" id="artScale" min="10" max="300" value="115"><span class="val" id="artScaleVal">115%</span></div>
+      <div class="row"><label>Rotation</label><input type="range" id="artRotation" min="-180" max="180" value="0"><span class="val" id="artRotationVal">0°</span></div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="clipEnabled" checked>
+        <label for="clipEnabled">Rogner l'illustration dans une zone (évite les débords hors du cadre)</label>
+      </div>
+      <div class="row"><label>Zone X</label><input type="range" id="clipX" min="0" max="100" value="8"><span class="val" id="clipXVal">8%</span></div>
+      <div class="row"><label>Zone Y</label><input type="range" id="clipY" min="0" max="100" value="11"><span class="val" id="clipYVal">11%</span></div>
+      <div class="row"><label>Zone largeur</label><input type="range" id="clipW" min="5" max="100" value="83"><span class="val" id="clipWVal">83%</span></div>
+      <div class="row"><label>Zone hauteur</label><input type="range" id="clipH" min="5" max="100" value="79"><span class="val" id="clipHVal">79%</span></div>
+    </div>
+
+    <div class="card-block">
+      <button class="ghost" id="resetBtn" type="button">↺ Réinitialiser tous les réglages</button>
+      <p class="hint">Toutes les valeurs numériques, polices, couleurs et positions sont mémorisées
+      automatiquement dans ce navigateur — vous ne repartez jamais de zéro. Seules les images (cadres,
+      illustration, élément) doivent être réimportées à chaque nouvelle session de travail.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const canvas = document.getElementById('cardCanvas');
+const ctx = canvas.getContext('2d');
+
+// Regroupe les appels de rafraîchissement via requestAnimationFrame : évite les ralentissements
+// quand on glisse un curseur rapidement avec de grandes images. Déclaré tout en haut du script,
+// AVANT tout code susceptible de l'appeler (les curseurs s'initialisent dès leur définition plus
+// bas et invoquent scheduleRedraw() immédiatement).
+let redrawScheduled = false;
+function scheduleRedraw() {
+  if (redrawScheduled) return;
+  redrawScheduled = true;
+  requestAnimationFrame(() => {
+    try {
+      redraw();
+    } catch (err) {
+      if (typeof reportError === 'function') reportError('redraw (auto)', err);
+      else console.error('redraw (auto)', err);
+    }
+    redrawScheduled = false;
+  });
+}
+
+// Liste des réglages mémorisés (localStorage). Déclarée ici, tout en haut, pour la même raison que
+// redrawScheduled ci-dessus : saveSettings()/loadSettings() sont appelées dès l'initialisation des
+// tout premiers curseurs, bien avant l'endroit où ces fonctions sont elles-mêmes définies plus bas.
+const SETTINGS_KEYS = [
+  'nameFont','nameSize','namePosY','nameColor','nameBold','nameItalic',
+  'statFont','statSize','statBlockX','statBlockY','statColor',
+  'levelSize','levelX','levelY','levelColor',
+  'elX','elY','elSize','elRotation',
+  'artX','artY','artScale','artRotation','clipEnabled','clipX','clipY','clipW','clipH',
+];
+
+const FONT_OPTIONS = [
+  'Medieval Scribish', 'E-BrantScript',
+  'Segoe UI', 'Arial', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Verdana',
+  'Impact', 'Comic Sans MS', 'Courier New', 'Papyrus', 'Copperplate',
+  'cursive', 'fantasy', 'serif', 'sans-serif',
+];
+function populateFontSelect(id, defaultFont) {
+  const sel = document.getElementById(id);
+  FONT_OPTIONS.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f; opt.textContent = f; opt.style.fontFamily = f;
+    sel.appendChild(opt);
+  });
+  if (defaultFont) sel.value = defaultFont;
+}
+populateFontSelect('nameFont');
+populateFontSelect('statFont', 'Arial');
+
+/** Affiche "A" pour la valeur 10, sinon le nombre tel quel (règle Triple Triad classique). */
+function displayValue(v) {
+  return Number(v) === 10 ? 'A' : String(v);
+}
+
+// ---- Les 3 cadres fixes ----
+const frameSlots = [
+  { key: 'normal', label: 'Normal', img: null, defaultSrc: 'sample-frame-normal.png' },
+  { key: 'rare', label: 'Rare', img: null, defaultSrc: 'sample-frame-rare.png' },
+  { key: 'as', label: 'As', img: null, defaultSrc: 'sample-frame-as.png' },
+];
+let activeFrameIndex = 0;
+
+/** Charge automatiquement les 3 cadres fournis avec l'outil (aucun import manuel nécessaire). */
+function loadDefaultFrames() {
+  let loadedCount = 0;
+  frameSlots.forEach((slot) => {
+    const image = new Image();
+    image.onload = () => { slot.img = image; buildFrameSlots(); scheduleRedraw(); };
+    image.onerror = () => { loadedCount++; }; // fichier d'exemple absent : l'utilisateur importera le sien
+    image.src = slot.defaultSrc;
+  });
+}
+
+const frameSlotsEl = document.getElementById('frameSlots');
+function buildFrameSlots() {
+  frameSlotsEl.innerHTML = '';
+  frameSlots.forEach((slot, idx) => {
+    const div = document.createElement('div');
+    div.className = 'frame-slot' + (idx === activeFrameIndex ? ' active' : '');
+
+    const label = document.createElement('div');
+    label.className = 'frame-label';
+    label.textContent = slot.label;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    if (slot.img) {
+      const img = document.createElement('img');
+      img.src = slot.img.src;
+      thumb.appendChild(img);
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.addEventListener('click', e => e.stopPropagation());
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const image = new Image();
+        image.onload = () => { slot.img = image; activeFrameIndex = idx; buildFrameSlots(); scheduleRedraw(); };
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const status = document.createElement('div');
+    status.className = 'frame-status';
+    status.textContent = slot.img ? 'Chargé ✓ (cliquer pour activer)' : 'Aucune image';
+
+    div.addEventListener('click', () => {
+      if (!slot.img) return;
+      activeFrameIndex = idx;
+      buildFrameSlots();
+      scheduleRedraw();
+    });
+
+    div.append(label, thumb, fileInput, status);
+    frameSlotsEl.appendChild(div);
+  });
+}
+
+let artworkImg = null;
+let elementImg = null;
+
+// ---- Éléments prédéfinis (fournis avec l'outil, chargés automatiquement) ----
+const elementPresets = [
+  { key: 'feu', label: 'Feu', defaultSrc: 'elements/Feu.png' },
+  { key: 'glace', label: 'Glace', defaultSrc: 'elements/Glace.png' },
+  { key: 'foudre', label: 'Foudre', defaultSrc: 'elements/Foudre.png' },
+  { key: 'eau', label: 'Eau', defaultSrc: 'elements/Eau.png' },
+  { key: 'vent', label: 'Vent', defaultSrc: 'elements/Vent.png' },
+  { key: 'terre', label: 'Terre', defaultSrc: 'elements/Terre.png' },
+  { key: 'poison', label: 'Poison', defaultSrc: 'elements/Poison.png' },
+  { key: 'sacre', label: 'Sacré', defaultSrc: 'elements/Sacre.png' },
+];
+let activeElementKey = null; // null = aucun préréglage actif (image personnalisée ou aucune)
+
+const elementPresetsEl = document.getElementById('elementPresets');
+function buildElementPresets() {
+  elementPresetsEl.innerHTML = '';
+  elementPresets.forEach((preset) => {
+    const div = document.createElement('div');
+    div.className = 'element-preset' + (activeElementKey === preset.key ? ' active' : '');
+    div.title = preset.label;
+    if (preset.img) {
+      const img = document.createElement('img');
+      img.src = preset.img.src;
+      div.appendChild(img);
+    }
+    div.addEventListener('click', () => {
+      if (!preset.img) return;
+      elementImg = preset.img;
+      activeElementKey = preset.key;
+      buildElementPresets();
+      scheduleRedraw();
+    });
+    elementPresetsEl.appendChild(div);
+  });
+}
+
+/** Charge automatiquement les 8 icônes d'éléments fournies avec l'outil. */
+function loadDefaultElements() {
+  elementPresets.forEach((preset) => {
+    const image = new Image();
+    image.onload = () => { preset.img = image; buildElementPresets(); };
+    image.onerror = () => { /* fichier absent : ignoré silencieusement */ };
+    image.src = preset.defaultSrc;
+  });
+}
+
+// ---- Liaison slider <-> valeur affichée ----
+function bindRange(id, suffix) {
+  const el = document.getElementById(id);
+  const valEl = document.getElementById(id + 'Val');
+  function update() {
+    valEl.textContent = el.value + suffix;
+    scheduleRedraw();
+    saveSettings();
+  }
+  el.addEventListener('input', update);
+  update();
+}
+
+['artX','artY'].forEach(id => bindRange(id, '%'));
+bindRange('artScale', '%');
+bindRange('artRotation', '°');
+bindRange('clipX', '%'); bindRange('clipY', '%'); bindRange('clipW', '%'); bindRange('clipH', '%');
+bindRange('elX', '%'); bindRange('elY', '%'); bindRange('elSize', '%'); bindRange('elRotation', '°');
+bindRange('nameSize', 'px'); bindRange('namePosY', '%');
+bindRange('statSize', 'px'); bindRange('statBlockX', '%'); bindRange('statBlockY', '%');
+bindRange('levelSize', 'px'); bindRange('levelX', '%'); bindRange('levelY', '%');
+
+['cardName','nameFont','nameColor','nameBold','nameItalic','statTop','statRight','statBottom','statLeft','statFont','statColor',
+ 'cardLevel','levelColor'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { scheduleRedraw(); saveSettings(); });
+});
+document.getElementById('clipEnabled').addEventListener('change', () => { scheduleRedraw(); saveSettings(); });
+
+// ---- Upload illustration / élément ----
+document.getElementById('artworkUpload').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const image = new Image();
+    image.onload = () => { artworkImg = image; scheduleRedraw(); };
+    image.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('elementUpload').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const image = new Image();
+    image.onload = () => { elementImg = image; activeElementKey = null; buildElementPresets(); scheduleRedraw(); };
+    image.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+document.getElementById('elementClearBtn').addEventListener('click', () => {
+  elementImg = null;
+  activeElementKey = null;
+  buildElementPresets();
+  scheduleRedraw();
+});
+
+/** Dessine une image (illustration ou élément) centrée en (cx,cy), avec taille et rotation. */
+function drawRotatedImage(image, cx, cy, drawW, drawH, rotationDeg) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rotationDeg * Math.PI / 180);
+  ctx.drawImage(image, -drawW / 2, -drawH / 2, drawW, drawH);
+  ctx.restore();
+}
+
+// Regroupe les appels de rafraîchissement via requestAnimationFrame : évite les ralentissements
+// quand on glisse un curseur rapidement avec de grandes images (plusieurs événements par frame
+// se regroupent en un seul rendu), pour un aperçu réellement fluide en temps réel.
+function redraw() {
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // 1) Illustration (dessous du cadre)
+  if (artworkImg) {
+    ctx.save();
+    const clipEnabled = document.getElementById('clipEnabled').checked;
+    let clipX = 0, clipY = 0, clipW = w, clipH = h;
+    if (clipEnabled) {
+      clipX = w * Number(document.getElementById('clipX').value) / 100;
+      clipY = h * Number(document.getElementById('clipY').value) / 100;
+      clipW = w * Number(document.getElementById('clipW').value) / 100;
+      clipH = h * Number(document.getElementById('clipH').value) / 100;
+      ctx.beginPath();
+      ctx.rect(clipX, clipY, clipW, clipH);
+      ctx.clip();
+    }
+
+    const scale = Number(document.getElementById('artScale').value) / 100;
+    const posX = Number(document.getElementById('artX').value) / 100;
+    const posY = Number(document.getElementById('artY').value) / 100;
+    const rotation = Number(document.getElementById('artRotation').value);
+
+    const baseSize = Math.min(clipW, clipH);
+    const drawW = (artworkImg.width / Math.max(artworkImg.width, artworkImg.height)) * baseSize * scale;
+    const drawH = (artworkImg.height / Math.max(artworkImg.width, artworkImg.height)) * baseSize * scale;
+
+    const centerX = clipX + clipW * posX;
+    const centerY = clipY + clipH * posY;
+
+    drawRotatedImage(artworkImg, centerX, centerY, drawW, drawH, rotation);
+    ctx.restore();
+  }
+
+  // 2) Cadre décoratif (déjà transparent au centre)
+  const frame = frameSlots[activeFrameIndex];
+  if (frame.img) {
+    ctx.drawImage(frame.img, 0, 0, w, h);
+  }
+
+  // 3) Élément (icône, premier plan)
+  if (elementImg) {
+    const size = w * Number(document.getElementById('elSize').value) / 100;
+    const x = w * Number(document.getElementById('elX').value) / 100;
+    const y = h * Number(document.getElementById('elY').value) / 100;
+    const rotation = Number(document.getElementById('elRotation').value);
+    drawRotatedImage(elementImg, x, y, size, size, rotation);
+  }
+
+  // 4) Nom de la carte (cadre rouge)
+  const name = document.getElementById('cardName').value;
+  if (name) {
+    const nameSize = Number(document.getElementById('nameSize').value);
+    const nameFont = document.getElementById('nameFont').value;
+    const nameColor = document.getElementById('nameColor').value;
+    const nameBold = document.getElementById('nameBold').checked;
+    const nameItalic = document.getElementById('nameItalic').checked;
+    const namePosY = h * Number(document.getElementById('namePosY').value) / 100;
+    const fontStyle = nameItalic ? 'italic' : 'normal';
+    const fontWeight = nameBold ? '900' : '400';
+    ctx.font = `${fontStyle} ${fontWeight} ${nameSize}px "${nameFont}"`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = nameColor;
+    ctx.strokeStyle = nameColor === '#000000' ? '#ffffff' : '#000000';
+    ctx.lineWidth = Math.max(2, nameSize * 0.08);
+    ctx.strokeText(name, w / 2, namePosY);
+    ctx.fillText(name, w / 2, namePosY);
+  }
+
+  // 5) Valeurs (cadre bleu) — disposition en croix (Nord en haut-centre, Est/Ouest au milieu,
+  // Sud en bas-centre), resserrée pour un rendu compact façon "rectangle". "A" pour 10.
+  const statSize = Number(document.getElementById('statSize').value);
+  const statFont = document.getElementById('statFont').value;
+  const statColor = document.getElementById('statColor').value;
+  const blockX = w * Number(document.getElementById('statBlockX').value) / 100;
+  const blockY = h * Number(document.getElementById('statBlockY').value) / 100;
+  const halfCol = statSize * 0.75; // écart horizontal entre Gauche/Droite et le centre
+  const halfRow = statSize * 0.65; // écart vertical entre Haut/Bas et le centre
+
+  ctx.font = `900 ${statSize}px "${statFont}"`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = statColor;
+  ctx.strokeStyle = statColor === '#000000' ? '#ffffff' : '#000000';
+  ctx.lineWidth = Math.max(2, statSize * 0.1);
+
+  const stats = [
+    { value: document.getElementById('statTop').value, dx: 0, dy: -halfRow },      // haut-centre (Nord)
+    { value: document.getElementById('statLeft').value, dx: -halfCol, dy: 0 },     // milieu-gauche (Ouest)
+    { value: document.getElementById('statRight').value, dx: halfCol, dy: 0 },     // milieu-droite (Est)
+    { value: document.getElementById('statBottom').value, dx: 0, dy: halfRow },    // bas-centre (Sud)
+  ];
+  stats.forEach(s => {
+    const text = displayValue(s.value);
+    ctx.strokeText(text, blockX + s.dx, blockY + s.dy);
+    ctx.fillText(text, blockX + s.dx, blockY + s.dy);
+  });
+
+  // 6) Niveau de la carte (cadre jaune) — "A" pour 10
+  const level = document.getElementById('cardLevel').value;
+  const levelSize = Number(document.getElementById('levelSize').value);
+  const levelColor = document.getElementById('levelColor').value;
+  const levelX = w * Number(document.getElementById('levelX').value) / 100;
+  const levelY = h * Number(document.getElementById('levelY').value) / 100;
+  ctx.font = `900 ${levelSize}px "${statFont}"`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = levelColor;
+  ctx.strokeStyle = levelColor === '#000000' ? '#ffffff' : '#000000';
+  ctx.lineWidth = Math.max(2, levelSize * 0.1);
+  const levelText = String(level); // le niveau affiche le chiffre littéral (10 reste "10", pas "A")
+  ctx.strokeText(levelText, levelX, levelY);
+  ctx.fillText(levelText, levelX, levelY);
+}
+
+// ---- Export PNG ----
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const filename = (document.getElementById('exportFilename').value || 'carte').trim();
+  const finalName = filename.endsWith('.png') ? filename : filename + '.png';
+
+  canvas.toBlob(async (blob) => {
+    // Navigateurs à base de Chromium (Chrome, Edge...) : vraie boîte de dialogue "Enregistrer sous",
+    // permettant de choisir le dossier et le nom du fichier.
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: finalName,
+          types: [{ description: 'Image PNG', accept: { 'image/png': ['.png'] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return; // annulé par l'utilisateur : rien à faire
+        console.warn('Sélecteur de fichier indisponible, repli sur le téléchargement classique.', err);
+      }
+    }
+    // Repli (Firefox, Safari, ou erreur ci-dessus) : téléchargement classique vers le dossier par
+    // défaut du navigateur (aucune boîte de dialogue de choix d'emplacement disponible côté web sur
+    // ces navigateurs).
+    const link = document.createElement('a');
+    link.download = finalName;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }, 'image/png');
+});
+
+// ---- Mémorisation des réglages (localStorage) ----
+function saveSettings() {
+  const data = {};
+  SETTINGS_KEYS.forEach(id => {
+    const el = document.getElementById(id);
+    data[id] = el.type === 'checkbox' ? el.checked : el.value;
+  });
+  localStorage.setItem('cardCreatorSettings', JSON.stringify(data));
+}
+function loadSettings() {
+  const raw = localStorage.getItem('cardCreatorSettings');
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    SETTINGS_KEYS.forEach(id => {
+      if (!(id in data)) return;
+      const el = document.getElementById(id);
+      if (el.type === 'checkbox') el.checked = data[id];
+      else el.value = data[id];
+    });
+  } catch { /* ignore */ }
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Réinitialiser tous les réglages ? Les images resteront en place.')) return;
+  localStorage.removeItem('cardCreatorSettings');
+  location.reload();
+});
+
+// ---- Rapport d'erreur visible (pas besoin d'ouvrir la console F12) ----
+function reportError(context, err) {
+  console.error(context, err);
+  const box = document.getElementById('errorBox');
+  box.classList.remove('hidden');
+  box.textContent += `[${context}] ${err && err.message ? err.message : err}\n`;
+}
+
+/** Exécute une étape de démarrage isolément : une erreur ici n'empêche pas les étapes suivantes. */
+function runStep(context, fn) {
+  try {
+    fn();
+  } catch (err) {
+    reportError(context, err);
+  }
+}
+
+// ---- Bouton "Forcer le rafraîchissement" : reconstruit les cadres et redessine, en cas de blocage ----
+document.getElementById('forceRefreshBtn').addEventListener('click', () => {
+  document.getElementById('errorBox').textContent = '';
+  document.getElementById('errorBox').classList.add('hidden');
+  runStep('buildFrameSlots (forcé)', buildFrameSlots);
+  runStep('loadDefaultFrames (forcé)', loadDefaultFrames);
+  runStep('buildElementPresets (forcé)', buildElementPresets);
+  runStep('loadDefaultElements (forcé)', loadDefaultElements);
+  runStep('redraw (forcé)', redraw);
+});
+
+// ---- Démarrage (chaque étape isolée : si l'une échoue, les autres s'exécutent quand même) ----
+runStep('loadSettings', loadSettings);
+runStep('buildFrameSlots', buildFrameSlots);
+runStep('loadDefaultFrames', loadDefaultFrames);
+runStep('buildElementPresets', buildElementPresets);
+runStep('loadDefaultElements', loadDefaultElements);
+runStep('initialisation des curseurs', () => {
+  document.querySelectorAll('input[type="range"]').forEach(el => el.dispatchEvent(new Event('input')));
+});
+runStep('redraw', redraw);
+</script>
+
+</body>
+</html>

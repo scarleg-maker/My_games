@@ -1,0 +1,14 @@
+{
+  "name": "roulette-casino",
+  "version": "1.0.0",
+  "description": "Simulation de roulette de casino multi-joueurs en reseau local",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.8.3"
+  }
+}

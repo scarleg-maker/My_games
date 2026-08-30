@@ -1,0 +1,54 @@
+{
+  "name": "Renaud",
+  "set": "ffviii",
+  "createdAt": "2026-08-17T13:16:41.583Z",
+  "collection": [
+    "bogomile",
+    "fungus",
+    "elmidea",
+    "nocturnus",
+    "incube",
+    "larva",
+    "gallus",
+    "bogomile",
+    "fungus",
+    "elmidea",
+    "nocturnus",
+    "incube",
+    "aphide",
+    "elastos",
+    "diodon",
+    "carnidea",
+    "larva",
+    "incube"
+  ],
+  "discovered": [
+    "bogomile",
+    "fungus",
+    "elmidea",
+    "nocturnus",
+    "incube",
+    "larva",
+    "gallus",
+    "aphide",
+    "elastos",
+    "diodon",
+    "carnidea"
+  ],
+  "stats": {
+    "wins": 3,
+    "losses": 0,
+    "draws": 0
+  },
+  "lastDeck": [
+    "bogomile",
+    "fungus",
+    "elmidea",
+    "nocturnus",
+    "incube",
+    "larva",
+    "gallus"
+  ],
+  "points": 1150,
+  "tournament": null
+}

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tirage au sort</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; }
+  #bg {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f4c81 0%, #1a7a6e 50%, #0d9e75 100%);
+    padding: 2rem 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .clock-deco {
+    position: absolute; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .clock-deco::before {
+    content: ''; width: 6px; height: 6px;
+    background: rgba(255,255,255,0.25); border-radius: 50%; position: absolute;
+  }
+  .clock-deco .hand-h, .clock-deco .hand-m {
+    position: absolute; bottom: 50%; left: 50%;
+    transform-origin: bottom center; width: 2px; border-radius: 2px;
+  }
+  .clock-deco .hand-h { background: rgba(255,255,255,0.2); }
+  .clock-deco .hand-m { background: rgba(255,255,255,0.15); }
+
+  #app {
+    max-width: 660px; margin: 0 auto;
+    background: rgba(255,255,255,0.13);
+    backdrop-filter: blur(12px);
+    border-radius: 20px; border: 1px solid rgba(255,255,255,0.25);
+    padding: 1.5rem; position: relative; z-index: 2;
+  }
+  textarea {
+    width: 100%; min-height: 160px; resize: vertical; font-size: 15px;
+    padding: 12px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.15);
+    color: #fff; font-family: inherit; line-height: 1.6;
+  }
+  textarea::placeholder { color: rgba(255,255,255,0.5); }
+  textarea:focus { outline: none; border-color: rgba(255,255,255,0.6); }
+  .btn { width: 100%; padding: 13px; font-size: 15px; font-weight: 500; cursor: pointer; border-radius: 10px; border: none; font-family: inherit; transition: filter 0.15s, transform 0.1s; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn:hover:not(:disabled) { filter: brightness(0.9); }
+  .btn-blue   { background: #378ADD; color: #fff; }
+  .btn-purple { background: #AFA9EC; color: #26215C; }
+  .btn-red    { background: #E24B4A; color: #fff; }
+  .btn-amber  { background: #EF9F27; color: #412402; }
+  .btn-green  { background: #639922; color: #fff; }
+  .btn-gray   { background: rgba(255,255,255,0.25); color: #fff; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+
+  #tirage-layout { display: flex; gap: 20px; align-items: flex-start; }
+  #left-col { flex: 1; min-width: 0; }
+  #right-col { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; width: 150px; padding-top: 0.5rem; }
+
+  #result-zone { text-align: center; padding: 1rem 0 0.5rem; display: none; flex-direction: column; align-items: center; gap: 6px; }
+  #result-label { font-size: 13px; color: rgba(255,255,255,0.7); }
+  #result-name {
+    font-size: 90px; font-weight: 500; color: #fff;
+    word-break: break-word; line-height: 1.15;
+    text-shadow: 0 2px 24px rgba(0,0,0,0.18);
+  }
+  #counter { font-size: 13px; color: rgba(255,255,255,0.6); }
+  .separator { width: 100%; height: 1px; background: rgba(255,255,255,0.2); margin: 1rem 0; }
+  p { color: rgba(255,255,255,0.75); }
+
+  #timer-circle { position: relative; width: 150px; height: 150px; }
+  #timer-circle svg { transform: rotate(-90deg); }
+  #timer-track { fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 8; }
+  #timer-bar { fill: none; stroke: #7dd4c0; stroke-width: 8; stroke-linecap: round; transition: stroke 0.5s; }
+  #timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 500; color: #fff; font-family: inherit; }
+</style>
+</head>
+<body>
+<div id="bg">
+  <div class="clock-deco" style="width:140px;height:140px;top:-30px;left:-20px;">
+    <div class="hand-h" style="height:28px;margin-left:-1px;transform:rotate(-60deg);"></div>
+    <div class="hand-m" style="height:38px;margin-left:-1px;transform:rotate(30deg);"></div>
+  </div>
+  <div class="clock-deco" style="width:90px;height:90px;top:40px;right:10px;">
+    <div class="hand-h" style="height:18px;margin-left:-1px;transform:rotate(80deg);"></div>
+    <div class="hand-m" style="height:25px;margin-left:-1px;transform:rotate(-120deg);"></div>
+  </div>
+  <div class="clock-deco" style="width:200px;height:200px;bottom:-60px;right:-40px;">
+    <div class="hand-h" style="height:40px;margin-left:-1px;transform:rotate(20deg);"></div>
+    <div class="hand-m" style="height:55px;margin-left:-1px;transform:rotate(150deg);"></div>
+  </div>
+  <div class="clock-deco" style="width:60px;height:60px;bottom:30px;left:20px;">
+    <div class="hand-h" style="height:12px;margin-left:-1px;transform:rotate(-40deg);"></div>
+    <div class="hand-m" style="height:17px;margin-left:-1px;transform:rotate(200deg);"></div>
+  </div>
+  <div class="clock-deco" style="width:110px;height:110px;top:50%;left:50%;margin-left:-250px;margin-top:80px;">
+    <div class="hand-h" style="height:22px;margin-left:-1px;transform:rotate(110deg);"></div>
+    <div class="hand-m" style="height:30px;margin-left:-1px;transform:rotate(-70deg);"></div>
+  </div>
+
+  <div id="app">
+    <div id="liste-zone">
+      <p style="font-size:13px;margin:0 0 8px;">Entrez une entree par ligne</p>
+      <textarea id="liste" placeholder="Alice&#10;Bob&#10;Charlie&#10;Diana&#10;..."></textarea>
+      <button class="btn btn-blue" id="btn-start" style="margin-top:12px;">Lancer le tirage</button>
+    </div>
+
+    <div id="tirage-zone" style="display:none;">
+      <div id="tirage-layout">
+        <div id="left-col">
+          <div id="result-zone">
+            <span id="result-label">Tire au sort</span>
+            <span id="result-name"></span>
+            <span id="counter"></span>
+          </div>
+          <div class="separator"></div>
+          <button class="btn btn-purple" id="btn-tirage">Nouveau tirage</button>
+          <div class="btn-row">
+            <button class="btn btn-red" id="btn-restart">Redemarrer</button>
+            <button class="btn btn-amber" id="btn-edit">Editer</button>
+          </div>
+        </div>
+        <div id="right-col">
+          <div id="timer-circle">
+            <svg width="150" height="150" viewBox="0 0 150 150">
+              <circle id="timer-track" cx="75" cy="75" r="65"/>
+              <circle id="timer-bar" cx="75" cy="75" r="65"/>
+            </svg>
+            <div id="timer-text">60</div>
+          </div>
+          <button class="btn btn-green" id="btn-passe" style="width:150px;" disabled>Passe -5s</button>
+          <button class="btn btn-gray" id="btn-pause" style="width:150px;" disabled>Petite pause</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const textarea   = document.getElementById('liste');
+  const btnStart   = document.getElementById('btn-start');
+  const btnTirage  = document.getElementById('btn-tirage');
+  const btnRestart = document.getElementById('btn-restart');
+  const btnEdit    = document.getElementById('btn-edit');
+  const btnPasse   = document.getElementById('btn-passe');
+  const btnPause   = document.getElementById('btn-pause');
+  const listeZone  = document.getElementById('liste-zone');
+  const tirageZone = document.getElementById('tirage-zone');
+  const resultZone = document.getElementById('result-zone');
+  const resultName = document.getElementById('result-name');
+  const counter    = document.getElementById('counter');
+  const timerText  = document.getElementById('timer-text');
+  const timerBar   = document.getElementById('timer-bar');
+
+  const TOTAL = 60, R = 65;
+  const CIRCUMFERENCE = 2 * Math.PI * R;
+  timerBar.style.strokeDasharray = CIRCUMFERENCE;
+  timerBar.style.strokeDashoffset = 0;
+
+  let exclus = [], all = [], currentDraw = null;
+  let timeLeft = TOTAL, timerInterval = null, paused = false, timerDone = false;
+
+  function setTimerDisplay(t) {
+    const v = Math.max(0, t);
+    timerText.textContent = v;
+    timerBar.style.strokeDashoffset = CIRCUMFERENCE * (1 - v / TOTAL);
+    if (t <= 10) timerBar.style.stroke = '#E24B4A';
+    else if (t <= 20) timerBar.style.stroke = '#EF9F27';
+    else timerBar.style.stroke = '#7dd4c0';
+  }
+
+  function onTimerEnd() {
+    clearInterval(timerInterval); timerInterval = null;
+    timerDone = true; paused = false;
+    btnPasse.disabled = true; btnPause.disabled = true;
+    btnTirage.className = 'btn btn-blue';
+    btnTirage.textContent = 'Lancer un nouveau tour';
+    btnTirage.disabled = false;
+  }
+
+  function startCountdown() {
+    clearInterval(timerInterval);
+    paused = false; timerDone = false;
+    timeLeft = TOTAL; setTimerDisplay(timeLeft);
+    btnPasse.disabled = false; btnPause.disabled = false;
+    btnPause.className = 'btn btn-gray';
+    btnPause.textContent = 'Petite pause';
+    timerInterval = setInterval(() => { timeLeft--; setTimerDisplay(timeLeft); if (timeLeft <= 0) onTimerEnd(); }, 1000);
+  }
+
+  function drawFromPool(pool) { return pool[Math.floor(Math.random() * pool.length)]; }
+
+  function doNextDraw(excludeCurrent) {
+    if (!excludeCurrent && currentDraw !== null) {
+      exclus = exclus.filter(e => e !== currentDraw);
+    }
+    const restants = all.filter(e => !exclus.includes(e));
+    if (restants.length === 0) {
+      resultName.textContent = 'Tous les elements ont ete tires !';
+      resultName.style.fontSize = '22px'; counter.textContent = '';
+      clearInterval(timerInterval); btnPasse.disabled = true; btnPause.disabled = true;
+      btnTirage.disabled = true; btnTirage.className = 'btn btn-purple';
+      btnTirage.textContent = 'Tous tires !'; return false;
+    }
+    const choix = drawFromPool(restants);
+    exclus.push(choix); currentDraw = choix;
+    resultName.textContent = choix; resultName.style.fontSize = '90px';
+    counter.textContent = exclus.length + ' / ' + all.length + ' tires';
+    return true;
+  }
+
+  btnStart.addEventListener('click', () => {
+    all = textarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (all.length === 0) return;
+    exclus = []; currentDraw = null;
+    listeZone.style.display = 'none'; tirageZone.style.display = 'block';
+    resultZone.style.display = 'flex'; resultName.textContent = ''; counter.textContent = '';
+    btnTirage.disabled = false; btnTirage.className = 'btn btn-purple';
+    btnTirage.textContent = 'Nouveau tirage';
+    doNextDraw(true); startCountdown();
+  });
+
+  btnTirage.addEventListener('click', () => {
+    if (timerDone) {
+      doNextDraw(false); startCountdown();
+      btnTirage.className = 'btn btn-purple';
+      btnTirage.textContent = 'Nouveau tirage';
+    } else {
+      doNextDraw(true);
+    }
+  });
+
+  btnRestart.addEventListener('click', () => {
+    exclus = []; currentDraw = null;
+    btnTirage.disabled = false; btnTirage.className = 'btn btn-purple';
+    btnTirage.textContent = 'Nouveau tirage';
+    resultName.textContent = ''; counter.textContent = '';
+    doNextDraw(true); startCountdown();
+  });
+
+  btnEdit.addEventListener('click', () => {
+    clearInterval(timerInterval); timerInterval = null;
+    paused = false; timerDone = false;
+    btnPasse.disabled = true; btnPause.disabled = true;
+    setTimerDisplay(TOTAL);
+    tirageZone.style.display = 'none'; listeZone.style.display = 'block';
+  });
+
+  btnPause.addEventListener('click', () => {
+    if (timerDone) return;
+    if (paused) {
+      paused = false;
+      btnPause.className = 'btn btn-gray';
+      btnPause.textContent = 'Petite pause';
+      timerInterval = setInterval(() => { timeLeft--; setTimerDisplay(timeLeft); if (timeLeft <= 0) onTimerEnd(); }, 1000);
+    } else {
+      paused = true; clearInterval(timerInterval); timerInterval = null;
+      btnPause.className = 'btn btn-blue';
+      btnPause.textContent = 'Reprendre';
+    }
+  });
+
+  btnPasse.addEventListener('click', () => {
+    if (timerDone) return;
+    timeLeft = Math.max(0, timeLeft - 5); setTimerDisplay(timeLeft);
+    if (timeLeft <= 0) { onTimerEnd(); return; }
+    const autres = all.filter(e => (!exclus.includes(e) || e === currentDraw) && e !== currentDraw);
+    if (autres.length === 0) return;
+    exclus = exclus.filter(e => e !== currentDraw);
+    const choix = drawFromPool(autres);
+    exclus.push(choix); currentDraw = choix;
+    resultName.textContent = choix;
+    counter.textContent = exclus.length + ' / ' + all.length + ' tires';
+  });
+</script>
+</body>
+</html>

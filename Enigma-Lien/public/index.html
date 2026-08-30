@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enigma-Lien — Menu</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>⬡ Enigma-Lien</h1>
+  <div class="sub">Générateur d'énigmes à liens — solo ou tournoi multijoueur, thématisable (Pokémon, Dragon Ball, ...).</div>
+
+  <h2>Jouer</h2>
+  <div class="tiles">
+    <div class="tile" onclick="location.href='/solo.html'">
+      <div class="ticon">🎮</div>
+      <div class="tname">Solo</div>
+      <div class="tmeta">Choisis un thème, un nombre de vies, et enchaîne les énigmes. Ta progression est enregistrée.</div>
+    </div>
+    <div class="tile" onclick="location.href='/maitre.html'">
+      <div class="ticon">🏆</div>
+      <div class="tname">Tournoi multijoueur</div>
+      <div class="tmeta">Écran maître : configure et pilote un tournoi Sprinteur ou Survie pour jusqu'à 10 joueurs.</div>
+    </div>
+    <div class="tile" onclick="location.href='/classement.html'">
+      <div class="ticon">📊</div>
+      <div class="tname">Classement solo</div>
+      <div class="tmeta">Victoires, défaites et ratio de tous les joueurs ayant joué en solo sur ce serveur.</div>
+    </div>
+  </div>
+
+  <h2>Liens joueurs</h2>
+  <div class="note">
+    Chaque joueur d'un tournoi ouvre <b>sa propre page</b> depuis son navigateur (téléphone, ordinateur, ...) sur le
+    même réseau que ce serveur : <b>http://&lt;adresse-du-serveur&gt;:9500/joueur1.html</b>, <b>joueur2.html</b>, etc.
+    Sur cette machine, en local, ce sont les raccourcis ci-dessous :
+  </div>
+  <div class="slotlinks" id="slotlinks"></div>
+
+  <footer>
+    Outil maison non-officiel, inspiré de Pokésort (pokelike.xyz). Pokémon © Nintendo / Game Freak / Creatures Inc.
+    Les fichiers de données (data/*.json) sont éditables à la main — voir le README du projet.
+  </footer>
+</div>
+<script>
+const slotlinks = document.getElementById('slotlinks');
+for (let n = 1; n <= 10; n++) {
+  const a = document.createElement('a');
+  a.className = 'btnlike';
+  a.href = `/joueur${n}.html`;
+  a.target = '_blank';
+  a.textContent = `Joueur ${n}`;
+  slotlinks.appendChild(a);
+}
+</script>
+</body>
+</html>

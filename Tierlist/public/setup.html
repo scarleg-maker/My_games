@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Créer une Tier List</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>Créateur de Tier List</h1>
+  <div class="subtitle">Configure ta liste, puis joue seul ou à plusieurs, tour par tour, en temps réel.</div>
+
+  <div class="panel">
+    <h3>Reprendre une partie sauvegardée</h3>
+    <label for="loadFile">Fichier de sauvegarde (.txt)</label>
+    <input type="file" id="loadFile" accept=".txt,.json">
+
+    <div class="checkbox-line" style="margin-top:14px;">
+      <input type="checkbox" id="replaceContentCb" style="width:auto;">
+      <label for="replaceContentCb" style="cursor:pointer;">Remplacer les images / noms de cette sauvegarde</label>
+    </div>
+    <div class="help" style="margin-top:-4px;">Les cases déjà placées dans les lignes seront réinitialisées, car elles ne correspondent plus au nouveau contenu.</div>
+
+    <div id="replaceContentBlock" style="display:none; margin-top:12px;">
+      <div class="row-flex">
+        <label style="display:flex;align-items:center;gap:6px;margin:0;">
+          <input type="radio" name="loadContentType" value="zip" checked style="width:auto;"> Nouvelle archive ZIP
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;margin:0;">
+          <input type="radio" name="loadContentType" value="names" style="width:auto;"> Nouvelle liste de noms
+        </label>
+      </div>
+      <div id="loadZipBlock" style="margin-top:10px;">
+        <input type="file" id="loadZipFile" accept=".zip">
+      </div>
+      <div id="loadNamesBlock" style="margin-top:10px; display:none;">
+        <textarea id="loadNamesList" placeholder="Nom 1&#10;Nom 2&#10;Nom 3"></textarea>
+      </div>
+    </div>
+
+    <button type="button" id="loadBtn" class="secondary" style="margin-top:14px;">📂 Charger la partie</button>
+    <div class="help">Restaure l'état sauvegardé : lignes, joueurs, tour en cours, et images/noms déjà placés (sauf si tu choisis de les remplacer ci-dessus).</div>
+  </div>
+
+  <h2 style="margin-top:8px;">Ou créer une nouvelle partie</h2>
+  <form id="setupForm">
+    <div class="panel">
+      <h3>1. Titre</h3>
+      <label for="title">Titre du classement</label>
+      <input type="text" id="title" placeholder="Ex : Mes personnages préférés" required>
+    </div>
+
+    <div class="panel">
+      <h3>2. Lignes du classement</h3>
+      <label for="rowCount">Nombre de lignes (4 à 25)</label>
+      <input type="number" id="rowCount" min="4" max="25" value="7">
+      <div class="help">Les noms par défaut sont S, A, B, C... et les couleurs vont du rouge (1ère ligne) au bleu (dernière), en arc-en-ciel. Tout est modifiable.</div>
+      <div id="rowsConfig" class="rows-config" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="panel">
+      <h3>3. Capacité des lignes</h3>
+      <label for="maxPerRow">Nombre maximum d'images/cases par ligne</label>
+      <select id="maxPerRow">
+        <option value="infini">Infini</option>
+      </select>
+    </div>
+
+    <div class="panel">
+      <h3>4. Contenu à classer</h3>
+      <div class="row-flex">
+        <label style="display:flex;align-items:center;gap:6px;margin:0;">
+          <input type="radio" name="contentType" value="zip" checked style="width:auto;"> Archive ZIP d'images
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;margin:0;">
+          <input type="radio" name="contentType" value="names" style="width:auto;"> Liste de noms
+        </label>
+      </div>
+
+      <div id="zipBlock" style="margin-top:12px;">
+        <label for="zipfile">Archive .zip contenant les images</label>
+        <input type="file" id="zipfile" accept=".zip">
+      </div>
+      <div id="namesBlock" style="margin-top:12px; display:none;">
+        <label for="namesList">Un nom par ligne</label>
+        <textarea id="namesList" placeholder="Nom 1&#10;Nom 2&#10;Nom 3"></textarea>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>5. Mode de jeu</h3>
+      <div class="row-flex">
+        <label style="display:flex;align-items:center;gap:6px;margin:0;">
+          <input type="radio" name="mode" value="solo" checked style="width:auto;"> Solo
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;margin:0;">
+          <input type="radio" name="mode" value="multi" style="width:auto;"> Multijoueur (2 à 8 joueurs)
+        </label>
+      </div>
+
+      <div id="multiBlock" style="display:none; margin-top:14px;">
+        <label for="playerCount">Nombre de joueurs</label>
+        <select id="playerCount">
+          <option value="2">2</option><option value="3">3</option><option value="4">4</option>
+          <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+        </select>
+        <div id="playersConfig" class="rows-config" style="margin-top:10px;"></div>
+
+        <div class="mode-toggle-group">
+          <button type="button" class="mode-toggle-btn" id="suddenDeathBtn"
+            title="Chaque joueur reçoit une image tirée au hasard à placer, sans pouvoir choisir. Aucun choix (le sien ou celui d'un autre) ne peut être modifié ensuite.">
+            <span class="mode-toggle-icon">💀</span>
+            <span class="mode-toggle-label">Mort subite</span>
+            <span class="mode-toggle-desc">Image imposée au hasard, aucune modification possible</span>
+          </button>
+          <button type="button" class="mode-toggle-btn" id="lastChanceBtn"
+            title="À son tour, en plus de placer une image de son choix, le joueur peut aussi déplacer UNE image déjà placée (la sienne ou celle d'un autre) vers une autre ligne. 2 actions possibles par tour.">
+            <span class="mode-toggle-icon">🔄</span>
+            <span class="mode-toggle-label">Dernière chance</span>
+            <span class="mode-toggle-desc">Peut modifier 1 placement précédent + placer le sien</span>
+          </button>
+        </div>
+        <div class="help">Les deux options sont incompatibles : une seule peut être active à la fois. Survole un bouton pour voir son explication, clique dessus pour l'activer/désactiver.</div>
+      </div>
+    </div>
+
+    <div id="errorBox" class="panel" style="display:none; border-color:#ff5c6c; color:#ffb3ba;"></div>
+
+    <button type="submit">Valider et créer la partie</button>
+  </form>
+
+  <div id="resultBlock" class="panel" style="display:none; margin-top:20px;">
+    <h3>Partie créée !</h3>
+    <div id="resultContent"></div>
+  </div>
+</div>
+<script src="/setup.js"></script>
+</body>
+</html>

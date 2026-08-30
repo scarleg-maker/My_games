@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enigma-Lien — Solo</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>⬡ Enigma-Lien — Solo</h1>
+  <div class="sub"><a href="/">← Menu</a></div>
+
+  <div id="configView">
+    <div class="field">
+      <label>Ton nom</label>
+      <input type="text" id="playerName" maxlength="24" placeholder="Ex: Sacha">
+    </div>
+    <div class="field">
+      <label>Thème</label>
+      <div class="tiles" id="themeTiles"></div>
+    </div>
+    <div class="field">
+      <label>Nombre de vies / essais par énigme</label>
+      <input type="number" id="livesInput" min="1" max="10" value="4">
+    </div>
+    <div class="toolbar">
+      <button class="primary" id="startBtn">🔀 Lancer une énigme</button>
+    </div>
+    <div class="status" id="configError"></div>
+  </div>
+
+  <div id="gameView" style="display:none;">
+    <div class="sub" id="gameSub"></div>
+    <div class="board">
+      <div class="row" id="cardsRow"></div>
+      <div class="links" id="linksRow"></div>
+    </div>
+    <div class="status" id="statusText"></div>
+    <div class="lives" id="livesRow"></div>
+    <div class="toolbar center" style="justify-content:center;">
+      <button id="validateBtn" class="primary">✅ Valider</button>
+      <button id="giveUpBtn">↺ Nouvelle configuration</button>
+    </div>
+  </div>
+
+  <div id="endView" style="display:none;" class="center mt">
+    <div class="status big" id="endText"></div>
+    <div class="toolbar" style="justify-content:center;">
+      <button class="primary" id="playAgainBtn">🔀 Rejouer (même réglages)</button>
+      <a class="btnlike" href="/classement.html">📊 Classement</a>
+      <button id="backConfigBtn">⚙️ Changer les réglages</button>
+    </div>
+  </div>
+
+  <footer>Outil maison non-officiel, inspiré de Pokésort (pokelike.xyz).</footer>
+</div>
+
+<script src="/js/common.js"></script>
+<script>
+let themes = [];
+let selectedTheme = null;
+let session = null; // {sessionId, links, criteria, imageFolder, livesMax}
+let display = [];
+
+const configView = document.getElementById('configView');
+const gameView = document.getElementById('gameView');
+const endView = document.getElementById('endView');
+
+async function loadThemes() {
+  const res = await fetch('/api/themes');
+  themes = await res.json();
+  const box = document.getElementById('themeTiles');
+  box.innerHTML = '';
+  themes.forEach((t) => {
+    const div = document.createElement('div');
+    div.className = 'tile';
+    div.dataset.id = t.id;
+    div.innerHTML = `<div class="ticon">${t.icon || '❔'}</div><div class="tname">${t.name}</div><div class="tmeta">${t.count} entrées — ${t.criteria.length} critères possibles</div>`;
+    div.addEventListener('click', () => selectTheme(t.id));
+    box.appendChild(div);
+  });
+  const remembered = localStorage.getItem('enigmalien_theme');
+  selectTheme(themes.some((t) => t.id === remembered) ? remembered : (themes[0] && themes[0].id));
+}
+
+function selectTheme(id) {
+  selectedTheme = id;
+  document.querySelectorAll('#themeTiles .tile').forEach((el) => {
+    el.classList.toggle('selected', el.dataset.id === id);
+  });
+}
+
+document.getElementById('playerName').value = localStorage.getItem('enigmalien_name') || '';
+document.getElementById('livesInput').value = localStorage.getItem('enigmalien_lives') || 4;
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('giveUpBtn').addEventListener('click', () => { gameView.style.display='none'; configView.style.display='block'; });
+document.getElementById('playAgainBtn').addEventListener('click', startGame);
+document.getElementById('backConfigBtn').addEventListener('click', () => { endView.style.display='none'; configView.style.display='block'; });
+document.getElementById('validateBtn').addEventListener('click', validate);
+
+async function startGame() {
+  const name = document.getElementById('playerName').value.trim();
+  const lives = parseInt(document.getElementById('livesInput').value, 10) || 4;
+  const errBox = document.getElementById('configError');
+  errBox.textContent = '';
+  if (!name) { errBox.textContent = 'Entre ton nom pour commencer.'; return; }
+  if (!selectedTheme) { errBox.textContent = 'Choisis un thème.'; return; }
+  localStorage.setItem('enigmalien_name', name);
+  localStorage.setItem('enigmalien_theme', selectedTheme);
+  localStorage.setItem('enigmalien_lives', String(lives));
+
+  try {
+    const res = await fetch('/api/solo/start', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ themeId: selectedTheme, player: name, lives })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+    session = data;
+    display = data.display;
+    configView.style.display = 'none';
+    endView.style.display = 'none';
+    gameView.style.display = 'block';
+    document.getElementById('gameSub').textContent = `${name} — thème ${themes.find(t=>t.id===selectedTheme).name} — ${data.livesMax} vies`;
+    document.getElementById('statusText').textContent = '';
+    document.getElementById('validateBtn').disabled = false;
+    render();
+  } catch (e) {
+    errBox.textContent = e.message;
+  }
+}
+
+function render() {
+  renderBoard(document.getElementById('cardsRow'), display, session.imageFolder, move, false);
+  renderLinks(document.getElementById('linksRow'), session.links, session.criteria, null);
+  renderLives(document.getElementById('livesRow'), session.livesLeft, session.livesMax);
+}
+
+function move(idx, dir) {
+  const j = idx + dir;
+  if (j < 0 || j >= display.length) return;
+  [display[idx], display[j]] = [display[j], display[idx]];
+  render();
+}
+
+async function validate() {
+  const res = await fetch(`/api/solo/${session.sessionId}/validate`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ order: display.map(p => p.name) })
+  });
+  const data = await res.json();
+  if (!res.ok) { document.getElementById('statusText').textContent = data.error || 'Erreur'; return; }
+  renderLinks(document.getElementById('linksRow'), session.links, session.criteria, data.results);
+  session.livesLeft = data.livesLeft;
+  renderLives(document.getElementById('livesRow'), session.livesLeft, session.livesMax);
+  if (data.gameOver) {
+    document.getElementById('validateBtn').disabled = true;
+    setTimeout(() => {
+      gameView.style.display = 'none';
+      endView.style.display = 'block';
+      document.getElementById('endText').textContent = data.won
+        ? '🎉 Bravo, énigme résolue !'
+        : `${data.correctCount}/${session.links.length} liens corrects — plus de vies. Réessaie !`;
+    }, 700);
+  } else {
+    document.getElementById('statusText').textContent = `${data.correctCount}/${session.links.length} liens corrects — ${data.livesLeft} vies restantes.`;
+    document.getElementById('validateBtn').disabled = false;
+  }
+}
+
+loadThemes();
+</script>
+</body>
+</html>

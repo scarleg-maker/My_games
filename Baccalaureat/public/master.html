@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccalauréat — Maître du jeu</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="toastBox" class="toast-box"></div>
+
+<div class="wrap">
+  <h1 class="title">🎓 Baccalauréat</h1>
+  <p class="subtitle">Poste Maître du jeu</p>
+
+  <div id="noGame" class="panel center">
+    <p>Aucune partie en cours.</p>
+    <a class="btn" href="/">Créer une partie</a>
+  </div>
+
+  <div id="gameArea" style="display:none;">
+
+    <div class="panel">
+      <h3>Manche <span id="roundNum">-</span></h3>
+      <p>Lettre actuelle : <span class="badge letter" id="currentLetter">?</span></p>
+      <div class="row mt">
+        <button class="btn" id="drawBtn">🎲 Tirer une lettre</button>
+        <button class="btn" id="startBtn" disabled>▶ Lancer la manche</button>
+        <button class="btn secondary" id="redrawBtn" style="display:none;">🔄 Tirer une autre lettre (-3 pts à tous)</button>
+      </div>
+      <p id="activeStatus" class="subtitle mt"></p>
+      <h4 class="mt">Lettres déjà tirées</h4>
+      <div id="usedLettersBox"></div>
+    </div>
+
+    <div class="panel" id="scorePanel">
+      <h3>Scores</h3>
+      <table id="scoreTable"></table>
+    </div>
+
+    <div class="panel" id="reviewPanel" style="display:none;">
+      <h3>Correction — Thème : <span id="reviewThemeName"></span> (<span id="reviewIdx"></span>/<span id="reviewTotal"></span>)</h3>
+      <table>
+        <thead>
+          <tr><th>Joueur</th><th>Réponse</th><th>Évaluation</th></tr>
+        </thead>
+        <tbody id="reviewBody"></tbody>
+      </table>
+      <div class="center mt">
+        <button class="btn" id="validateThemeBtn">Valider ce thème →</button>
+      </div>
+    </div>
+
+    <div class="panel center" id="summaryPanel" style="display:none;">
+      <h3>Manche terminée</h3>
+      <div class="row mt" style="justify-content:center;">
+        <button class="btn" id="nextRoundBtn">➕ Manche supplémentaire</button>
+        <button class="btn danger" id="endGameBtn">🏁 Terminer la partie</button>
+      </div>
+    </div>
+
+    <div class="panel" id="playerLinksPanel">
+      <h3>Liens des joueurs</h3>
+      <ul class="link-list" id="masterLinkList"></ul>
+    </div>
+  </div>
+</div>
+
+<div id="drawOverlay" class="overlay" style="display:none;">
+  <div class="big-letter" id="drawLetterDisplay">A</div>
+  <div class="caption">Tirage en cours...</div>
+</div>
+
+<div id="countdownOverlay" class="overlay" style="display:none;">
+  <div class="big-count" id="countdownDisplay">3</div>
+  <div class="caption">La manche commence...</div>
+</div>
+
+<div id="winnerOverlay" class="overlay" style="display:none;">
+  <div class="caption">🏆 Fin de la partie 🏆</div>
+  <div class="winner-name" id="winnerName"></div>
+  <a class="btn mt" href="/">Nouvelle partie</a>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/master.js"></script>
+</body>
+</html>

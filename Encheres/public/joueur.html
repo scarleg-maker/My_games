@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu des Enchères — Joueur</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body { align-items: center; }
+        #waitScreen, #gameScreen, #gameOverScreen { width: 100%; max-width: 500px; }
+        #gameScreen, #gameOverScreen, #waitScreen { display: none; }
+        .my-money-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.35); border-radius: 12px; padding: 12px 18px; margin-bottom: 12px; }
+        .my-money-bar .name { font-size: 1.2rem; font-weight: bold; }
+        .my-money-bar .money { font-size: 1.4rem; color: #00ffcc; font-weight: bold; }
+        .mini-players { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; }
+        .mini-player { font-size: 0.8rem; padding: 5px 10px; border-radius: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+        .mini-player.me { border-color: #00ffcc; }
+        .mini-player.highest { background: rgba(0,255,204,0.2); }
+        .status-msg { text-align:center; font-size:1.1rem; margin-top: 15px; opacity:0.85; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Jeu des Enchères</h1>
+        <h2 id="slotLabel">Joueur</h2>
+    </header>
+
+    <div id="waitScreen">
+        <div class="panel" style="text-align:center;">
+            <p style="font-size:1.2rem; margin-bottom:10px;">En attente du lancement de la partie par le maître…</p>
+            <p style="opacity:0.8;">Vous êtes connecté en tant que <strong id="waitSlotName">Joueur</strong>.</p>
+        </div>
+    </div>
+
+    <div id="gameScreen">
+        <div class="my-money-bar">
+            <div class="name" id="myName">Joueur</div>
+            <div class="money" id="myMoney">0 M</div>
+        </div>
+        <p class="info-text" id="myStats"></p>
+
+        <div class="image-frame"><img id="displayImage" src="" alt=""></div>
+        <div id="imageNameLabel"></div>
+        <div id="timerBadge" class="timer-badge"></div>
+        <div class="bid-info">Enchère actuelle : <span class="bid-amount" id="currentBidText">0 M</span><br>
+            <span id="highestBidderText" style="opacity:0.85;"></span>
+        </div>
+
+        <div id="resultBanner" class="result-banner" style="display:none;"></div>
+
+        <button class="btn btn-primary big-bid-btn" id="bidBtn">ENCHÉRIR +10 M</button>
+        <p class="status-msg" id="bidStatusMsg"></p>
+
+        <div class="mini-players" id="miniPlayers"></div>
+    </div>
+
+    <div id="gameOverScreen">
+        <div class="game-over-box">
+            <h2 id="gameOverTitle">Partie terminée</h2>
+            <p id="gameOverReason" style="margin-bottom:15px;"></p>
+            <div id="myFinalRecap"></div>
+        </div>
+    </div>
+
+    <div class="error-toast" id="errorToast"></div>
+
+    <script>
+        const pathMatch = window.location.pathname.match(/^\/joueur([1-8])$/);
+        const mySlot = pathMatch ? parseInt(pathMatch[1]) : null;
+
+        const socket = io();
+
+        const slotLabel = document.getElementById('slotLabel');
+        const waitScreen = document.getElementById('waitScreen');
+        const waitSlotName = document.getElementById('waitSlotName');
+        const gameScreen = document.getElementById('gameScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+
+        const myName = document.getElementById('myName');
+        const myMoney = document.getElementById('myMoney');
+        const myStats = document.getElementById('myStats');
+        const displayImage = document.getElementById('displayImage');
+        const imageNameLabel = document.getElementById('imageNameLabel');
+        const timerBadge = document.getElementById('timerBadge');
+        const currentBidText = document.getElementById('currentBidText');
+        const highestBidderText = document.getElementById('highestBidderText');
+        const resultBanner = document.getElementById('resultBanner');
+        const bidBtn = document.getElementById('bidBtn');
+        const bidStatusMsg = document.getElementById('bidStatusMsg');
+        const miniPlayers = document.getElementById('miniPlayers');
+
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const gameOverReason = document.getElementById('gameOverReason');
+        const myFinalRecap = document.getElementById('myFinalRecap');
+
+        const errorToast = document.getElementById('errorToast');
+        let countdownInterval = null;
+
+        if (!mySlot) {
+            document.body.innerHTML = '<div class="panel" style="text-align:center;">Adresse invalide. Utilisez /joueur1 à /joueur8.</div>';
+        } else {
+            slotLabel.innerText = `Joueur ${mySlot}`;
+            waitSlotName.innerText = `Joueur ${mySlot}`;
+            socket.on('connect', () => socket.emit('register', { role: 'joueur', slot: mySlot }));
+        }
+
+        function showError(msg) {
+            errorToast.innerText = msg;
+            errorToast.style.display = 'block';
+            setTimeout(() => errorToast.style.display = 'none', 3000);
+        }
+
+        socket.on('bidError', (msg) => showError(msg));
+
+        socket.on('newImage', (data) => {
+            displayImage.src = data.dataURL;
+            imageNameLabel.innerText = data.name;
+            resultBanner.style.display = 'none';
+        });
+
+        socket.on('gameState', (state) => {
+            if (state.status === 'lobby') {
+                waitScreen.style.display = 'block';
+                gameScreen.style.display = 'none';
+                gameOverScreen.style.display = 'none';
+                return;
+            }
+            if (state.status === 'running') {
+                waitScreen.style.display = 'none';
+                gameScreen.style.display = 'block';
+                gameOverScreen.style.display = 'none';
+                renderGame(state);
+                return;
+            }
+            if (state.status === 'finished') {
+                waitScreen.style.display = 'none';
+                gameScreen.style.display = 'none';
+                gameOverScreen.style.display = 'block';
+                renderGameOver(state);
+            }
+        });
+
+        function findMe(state) {
+            return state.players.find(p => p.slot === mySlot);
+        }
+
+        function formatTimerLabel(state) {
+            if (state.phase === 'waiting') return { text: '1ère enchère possible', cls: 'timer-waiting' };
+            if (state.phase === 'overbid') return { text: 'Surenchère', cls: 'timer-overbid' };
+            return null;
+        }
+
+        function renderGame(state) {
+            const me = findMe(state);
+            if (!me) return;
+
+            myName.innerText = me.name;
+            myMoney.innerText = `${me.money} M`;
+            myStats.innerText = `Achats : ${me.itemCount} / ${state.maxPurchases}`;
+
+            currentBidText.innerText = `${state.currentBid} M`;
+            highestBidderText.innerText = state.highestBidderName
+                ? (state.highestBidderSlot === mySlot ? "Vous êtes le plus offrant !" : `Plus offrant : ${state.highestBidderName}`)
+                : "Aucune enchère pour l'instant";
+
+            if (state.phase === 'result' && state.roundResult) {
+                resultBanner.style.display = 'block';
+                if (state.roundResult.type === 'won') {
+                    resultBanner.className = 'result-banner result-won';
+                    const won = state.roundResult.winnerName === me.name;
+                    resultBanner.innerText = won
+                        ? `🎉 Vous remportez "${state.roundResult.imageName}" pour ${state.roundResult.price} M !`
+                        : `"${state.roundResult.imageName}" remportée par ${state.roundResult.winnerName} pour ${state.roundResult.price} M.`;
+                } else {
+                    resultBanner.className = 'result-banner result-nobid';
+                    resultBanner.innerText = `Personne n'a enchéri — chaque joueur perd ${state.roundResult.penalty} M.`;
+                }
+                timerBadge.style.display = 'none';
+            } else {
+                resultBanner.style.display = 'none';
+                timerBadge.style.display = 'block';
+            }
+
+            startCountdown(state);
+
+            const nextBid = state.currentBid + 10;
+            const isEligible = me.itemCount < state.maxPurchases;
+            const isHighest = state.highestBidderSlot === mySlot;
+            const canAfford = me.money >= nextBid;
+            const roundOpen = state.phase === 'waiting' || state.phase === 'overbid';
+
+            bidBtn.disabled = !(isEligible && !isHighest && canAfford && roundOpen);
+            bidBtn.innerText = `ENCHÉRIR ${nextBid} M`;
+
+            if (!roundOpen) bidStatusMsg.innerText = '';
+            else if (isHighest) bidStatusMsg.innerText = 'Vous êtes déjà le plus offrant, attendez.';
+            else if (!isEligible) bidStatusMsg.innerText = "Vous avez atteint votre nombre d'achats maximum.";
+            else if (!canAfford) bidStatusMsg.innerText = 'Fonds insuffisants pour surenchérir.';
+            else bidStatusMsg.innerText = '';
+
+            miniPlayers.innerHTML = '';
+            state.players.forEach(p => {
+                const classes = ['mini-player'];
+                if (p.slot === mySlot) classes.push('me');
+                if (p.slot === state.highestBidderSlot && state.phase !== 'result') classes.push('highest');
+                miniPlayers.innerHTML += `<div class="${classes.join(' ')}">${p.name} · ${p.money}M</div>`;
+            });
+        }
+
+        function startCountdown(state) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            const info = formatTimerLabel(state);
+            if (!info) return;
+
+            function tick() {
+                const remainingMs = state.timerEnd - Date.now();
+                const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+                timerBadge.className = `timer-badge ${info.cls}`;
+                timerBadge.innerText = `${info.text} — ${seconds}s`;
+                if (remainingMs <= 0 && countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+            }
+            tick();
+            countdownInterval = setInterval(tick, 250);
+        }
+
+        bidBtn.addEventListener('click', () => {
+            socket.emit('placeBid');
+        });
+
+        function renderGameOver(state) {
+            if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+            const reasons = {
+                noImages: "Toutes les images ont été vendues ou passées.",
+                maxPurchases: "Tous les joueurs ont atteint leur nombre d'achats maximum.",
+                noMoney: "Plus aucun joueur n'a les moyens d'enchérir.",
+            };
+            gameOverReason.innerText = reasons[state.finishReason] || '';
+            const me = findMe(state);
+            if (!me) return;
+            let itemsHtml = me.collection.length
+                ? me.collection.map(it => `${it.name} — ${it.price} M`).join('<br>')
+                : "Aucun achat.";
+            myFinalRecap.innerHTML = `
+                <div class="player-card" style="text-align:left;">
+                    <div class="player-header">
+                        <div class="player-name">${me.name} (vous)</div>
+                        <div class="player-money">${me.money} M restants</div>
+                    </div>
+                    <div class="player-stats">Achats : ${me.itemCount} / ${state.maxPurchases}</div>
+                    <div style="margin-top:8px; font-size:0.85rem;">${itemsHtml}</div>
+                </div>`;
+        }
+    </script>
+</body>
+</html>

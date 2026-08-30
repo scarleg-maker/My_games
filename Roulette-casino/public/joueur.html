@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Table de Roulette</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  body { padding: 10px 14px 20px; overflow-x:hidden; }
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    max-width: 1720px; margin: 0 auto 10px;
+  }
+  .brand { display:flex; align-items:center; gap:14px; }
+  .brand .display { font-size: 20px; }
+  .player-name { font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); font-size: 13px;}
+  .wallet { display:flex; align-items:center; gap:22px; }
+  .wallet .amount { font-family:'Cinzel'; font-weight:700; font-size:22px; color: var(--gold-bright); }
+  .wallet .label { font-family:'Barlow Condensed'; text-transform:uppercase; font-size:11px; color:var(--muted); letter-spacing:.1em;}
+  .quit-link { color: var(--muted); font-size: 13px; text-decoration:underline; background:none; }
+  .auto-countdown-badge {
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background: rgba(0,0,0,.28); border:1.5px solid var(--felt-line); border-radius:10px;
+    padding: 8px 20px;
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .auto-countdown-badge .label { font-size:12px; }
+  .auto-countdown-badge .amount { font-family:'Cinzel'; font-weight:800; font-size:38px; line-height:1; transition: color .25s ease; }
+  .auto-countdown-badge.warning {
+    background: rgba(124,31,43,.4); border-color: #a5293a;
+    animation: countdownPulse 1s ease-in-out infinite;
+  }
+  .auto-countdown-badge.warning .amount { color: #ff6b6b; }
+  @keyframes countdownPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(165,41,58,.65); }
+    50% { box-shadow: 0 0 0 10px rgba(165,41,58,0); }
+  }
+
+  .main-layout {
+    max-width: 1720px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: 232px 1fr 190px;
+    gap: 14px;
+    align-items: start;
+  }
+
+  /* ---- left: history + hot/cold ---- */
+  .left-col { display:flex; flex-direction:column; gap:12px; padding: 14px; }
+  .history-list { display:flex; flex-direction:row; gap:7px; overflow-x:auto; overflow-y:hidden; padding-bottom:6px; max-width:100%; }
+  .history-row { display:flex; flex-direction:column; align-items:center; gap:3px; font-family:'Barlow Condensed'; font-size:13px; color: var(--muted); flex-shrink:0; }
+  .hotcold-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12px; padding:9px 8px;}
+  .hotcold-panel { display:none; margin-top: 8px; font-size: 12px; }
+  .hotcold-panel.show { display:block; }
+  .hc-row { display:flex; align-items:center; gap:9px; margin-bottom:6px; flex-wrap:wrap;}
+  .hc-tag { font-family:'Barlow Condensed'; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-size:11px; width:100%; margin-top:6px; }
+  .hc-window { font-family:'Barlow Condensed'; color:var(--muted); font-style:italic; font-size:12px; margin-bottom:4px; }
+  .freq-dial-wrap { display:flex; justify-content:center; margin: 6px 0 4px; }
+  .freq-legend {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    font-family:'Barlow Condensed'; font-size:10px; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;
+  }
+  .freq-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:3px; vertical-align:middle; }
+  .hc-item { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .hc-count { font-family:'Barlow Condensed'; font-weight:700; font-size:11px; color:var(--gold-bright); }
+  .stat-line {
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Barlow Condensed'; font-size:14px; color:var(--muted);
+    padding:4px 0; border-bottom:1px dashed rgba(255,255,255,.08);
+  }
+  .stat-line span:last-child { color:var(--gold-bright); font-weight:700; }
+
+  /* ---- right: bet summary + payout legend ---- */
+  .right-col { display:flex; flex-direction:column; gap:12px; }
+  .right-col .card { text-align:left; padding: 16px; }
+  .total-bet-amount { font-family:'Cinzel'; font-size: 24px; color: var(--gold-bright); margin: 6px 0; text-align:center; }
+  .legend-row { display:flex; justify-content:space-between; font-family:'Barlow Condensed'; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,.08); color: var(--muted); }
+  .legend-row b { color: var(--gold-bright); font-weight:700; }
+
+  /* ---- center: wheel + table ---- */
+  .center-col { display:flex; flex-direction:column; align-items:center; gap: 12px; }
+  .wheel-wrap.small { width:130px; height:130px; }
+
+  .table-felt {
+    width:100%;
+    background: radial-gradient(ellipse at 50% 0%, var(--felt-light), var(--felt) 70%);
+    border: 6px solid #3a2a10;
+    border-image: linear-gradient(180deg, var(--gold-bright), #8a6a24) 1;
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .table-grid { display:grid; grid-template-columns: 64px 1fr 78px; gap: 5px; position:relative; }
+  .zero-cell {
+    background: linear-gradient(180deg,#1fa568,#0d5c3a);
+    border-radius: 6px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel'; font-weight:700; font-size: 26px;
+    cursor:pointer; user-select:none;
+    border: 1px solid rgba(255,255,255,.15);
+    position:relative;
+  }
+  .numbers-wrap { position: relative; }
+  .numbers-grid {
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    height: 100%;
+  }
+  .num-cell {
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel'; font-weight:700; font-size: 24px;
+    border-radius: 5px; cursor:pointer; user-select:none;
+    min-height: 78px;
+    border: 1px solid rgba(255,255,255,.12);
+    position: relative;
+  }
+  .num-cell.highlighted, .zero-cell.highlighted {
+    box-shadow: 0 0 0 3px var(--gold-bright), inset 0 0 14px rgba(244,223,160,.55);
+    filter: brightness(1.35);
+    z-index: 2;
+  }
+  .win-badge {
+    position:absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+    font-family:'Barlow Condensed'; font-weight:800; font-size: 12px;
+    color: #1a1408;
+    background: var(--gold-bright);
+    padding: 1px 6px; border-radius: 8px;
+    pointer-events: none; z-index: 3;
+    box-shadow: 0 1px 3px rgba(0,0,0,.5);
+  }
+  .num-cell.red { background: linear-gradient(180deg,#b3283a,#7c1f2b); }
+  .num-cell.black { background: linear-gradient(180deg,#3a3a3a,#161310); }
+  .num-cell:hover, .zero-cell:hover { filter: brightness(1.18); }
+  .mult-badge {
+    position:absolute; top: 4px; right: 6px;
+    font-family:'Barlow Condensed'; font-weight:600; font-size: 11px;
+    color: rgba(243,234,216,.75);
+    pointer-events: none;
+  }
+  .zero-cell .mult-badge { top:6px; right:8px; font-size:12px; }
+
+  .overlay-layer { position:absolute; inset:0; pointer-events:none; }
+  .zero-overlay-layer { position:absolute; inset:0; pointer-events:none; }
+  .zero-split-btn, .zero-trio-btn {
+    position:absolute; transform: translate(-50%,-50%);
+    pointer-events:all; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Barlow Condensed'; font-weight:700; color: var(--gold-bright);
+    background: rgba(31,165,104,.22);
+    border: 1.5px solid rgba(244,223,160,.6);
+    z-index: 6;
+  }
+  .zero-split-btn { width: 20px; height: 32px; border-radius: 4px; font-size: 8px; }
+  .zero-trio-btn { width: 30px; height: 30px; border-radius: 50%; font-size: 9px; }
+  .zero-split-btn:hover, .zero-trio-btn:hover { background: rgba(31,165,104,.5); }
+  .corner-btn {
+    position:absolute; width: 36px; height:36px; border-radius:50%;
+    background: rgba(244,223,160,.2);
+    border: 1.5px solid rgba(244,223,160,.6);
+    transform: translate(-50%,-50%);
+    pointer-events:all; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Barlow Condensed'; font-size: 9px; color: var(--gold-bright); font-weight:700;
+    z-index: 6;
+  }
+  .corner-btn:hover { background: rgba(244,223,160,.55); }
+  .split-btn {
+    position:absolute;
+    background: rgba(244,223,160,.16);
+    border: 1.5px solid rgba(244,223,160,.55);
+    transform: translate(-50%,-50%);
+    pointer-events:all; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Barlow Condensed'; font-size: 8px; color: var(--gold-bright); font-weight:700;
+    border-radius: 4px;
+    z-index: 6;
+  }
+  .split-btn:hover { background: rgba(244,223,160,.5); }
+  .split-btn.h { width: 32px; height: 20px; }
+  .split-btn.v { width: 20px; height: 32px; }
+  .corner-btn .chip-token, .split-btn .chip-token { width:28px; height:28px; min-width:28px; font-size:13px; border-width:1.5px; }
+  .street-btn .chip-token, .doublestreet-btn .chip-token { width:28px; height:28px; min-width:28px; font-size:13px; border-width:1.5px; }
+  .zero-split-btn .chip-token, .zero-trio-btn .chip-token { width:24px; height:24px; min-width:24px; font-size:11px; border-width:1.5px; }
+
+  .columns-wrap { display:grid; grid-template-rows: repeat(3, 1fr); gap:5px; }
+  .bet-box {
+    background: rgba(0,0,0,.22);
+    border: 1px solid var(--felt-line);
+    border-radius: 6px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:.04em; font-size:13px;
+    cursor:pointer; position:relative; text-align:center; line-height:1.25; gap:2px;
+  }
+  .bet-box:hover { filter: brightness(1.25); }
+  .bet-box.blocked { opacity: .35; filter: grayscale(.7); cursor: not-allowed; }
+  .bet-box.blocked:hover { filter: grayscale(.7); }
+  .bet-box .bet-mult { font-size: 11px; color: var(--gold-bright); font-weight:700; }
+  .columns-wrap .bet-box { min-height: 100%; }
+
+  .streets-grid { display:grid; grid-template-columns: 64px 1fr 78px; margin-top: 6px; }
+  .streets-wrap { position:relative; height: 36px; }
+  .street-btn, .doublestreet-btn {
+    position:absolute; top:0; transform: translateX(-50%);
+    background: rgba(244,223,160,.16);
+    border: 1.5px solid rgba(244,223,160,.55);
+    border-radius: 5px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Barlow Condensed'; font-weight:700; color: var(--gold-bright);
+    cursor:pointer;
+    z-index: 6;
+  }
+  .street-btn { width: 34px; height: 30px; font-size: 10px; }
+  .doublestreet-btn { width: 26px; height: 30px; font-size: 9px; top: 4px; }
+  .street-btn:hover, .doublestreet-btn:hover { background: rgba(244,223,160,.5); }
+
+  .dozens-row, .outside-row, .range-row { display:grid; grid-template-columns: 64px repeat(12,1fr) 78px; gap:5px; margin-top: 7px; }
+  .dozens-row .bet-box { grid-column: span 4; min-height: 46px; }
+  .outside-row .bet-box { grid-column: span 3; min-height: 46px; }
+  .range-row .bet-box { grid-column: span 6; min-height: 40px; }
+  .red-box { background: linear-gradient(180deg,#b3283a,#7c1f2b) !important; }
+  .black-box { background: linear-gradient(180deg,#3a3a3a,#161310) !important; }
+
+  .chip-token {
+    position:absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    min-width: 26px; height: 26px; padding:0 5px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 75%);
+    color:#241a06; font-family:'Barlow Condensed'; font-weight:800; font-size: 13px;
+    display:flex; align-items:center; justify-content:center;
+    border: 2px solid #241a06;
+    box-shadow: 0 2px 5px rgba(0,0,0,.5);
+    z-index: 4;
+    pointer-events: none;
+  }
+  /* On number cells, sit above the digit instead of covering it (the digit
+     stays readable underneath; the aggregate win badge already sits at the
+     bottom of the cell). */
+  .chip-token.on-number { top: 20%; left: 50%; transform: translate(-50%, -50%); }
+
+  /* ---- chip picker bar ---- */
+  .chip-bar { display:flex; align-items:center; gap: 14px; justify-content:center; margin-top: 4px; flex-wrap: wrap; }
+  .clear-all-btn {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #d97a7a, #7c1f2b 70%);
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+    border: 2px solid #5a1620; box-shadow: 0 4px 8px rgba(0,0,0,.4); cursor:pointer;
+    transition: transform .1s ease;
+  }
+  .clear-all-btn:hover { transform: scale(1.06); }
+  .clear-all-btn:active { transform: scale(.95); }
+  .eraser-btn {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #e8e2d5, #b7ad98 70%);
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+    border: 2px solid #6b6252; box-shadow: 0 4px 8px rgba(0,0,0,.4); cursor:pointer;
+    transition: transform .1s ease;
+  }
+  .eraser-btn.selected { transform: translateY(-6px) scale(1.08); box-shadow: 0 0 0 3px var(--gold-bright), 0 6px 10px rgba(0,0,0,.5); }
+  .chip {
+    width: 56px; height: 56px; border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Barlow Condensed'; font-weight:700; font-size:15px;
+    border: 3px dashed rgba(255,255,255,.5); color: #fff; cursor:pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,.4); transition: transform .1s ease;
+  }
+  .chip.selected { transform: translateY(-6px) scale(1.08); box-shadow: 0 0 0 3px var(--gold-bright), 0 6px 10px rgba(0,0,0,.5); }
+  .repeat-btn {
+    padding: 12px 16px; font-size: 13px; white-space: nowrap;
+    align-self: center;
+  }
+  .repeat-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .chip[data-v="1"] { background: #2f5fb3; }
+  .chip[data-v="2"] { background: #3f8a4c; }
+  .chip[data-v="5"] { background: #a5293a; }
+  .chip[data-v="10"] { background: #7a3fa5; }
+  .chip[data-v="25"] { background: #c07a1f; }
+  .chip[data-v="50"] { background: #161310; border-color: var(--gold); }
+
+  .overlay {
+    position: fixed; inset:0; background: rgba(4,10,7,.88);
+    display:flex; align-items:center; justify-content:center; z-index: 50;
+    text-align:center; padding: 20px;
+  }
+  .overlay .card { max-width: 420px; }
+  .hidden { display:none !important; }
+
+  .result-flash {
+    position: fixed; inset:0; z-index: 60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 18px;
+    background: rgba(4,10,7,0);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .35s ease, background .35s ease;
+  }
+  .result-flash.show { opacity: 1; background: rgba(4,10,7,.72); }
+  .result-flash-number {
+    width: 190px; height: 190px; border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel'; font-weight:900; font-size: 84px; color: var(--cream);
+    border: 6px solid var(--gold-bright);
+    box-shadow: 0 0 60px rgba(244,223,160,.45), 0 20px 40px rgba(0,0,0,.6);
+    transform: scale(.7);
+    transition: transform .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  .result-flash.show .result-flash-number { transform: scale(1); }
+  .result-flash-gain {
+    font-family:'Cinzel'; font-weight:800; font-size: 34px; color: #5ee08a;
+    text-shadow: 0 2px 10px rgba(0,0,0,.6);
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .3s ease .15s, transform .3s ease .15s;
+  }
+  .result-flash.show .result-flash-gain.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 1200px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .left-col, .right-col { order:2; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="display" style="font-size:13px; letter-spacing:.3em; color:var(--gold);">CASINO ROYAL</div>
+  </div>
+  <div class="wallet">
+    <div class="auto-countdown-badge hidden" id="auto-countdown-badge">
+      <span class="label">⏱ Prochain tirage</span>
+      <span class="amount" id="auto-countdown-value">--</span>
+    </div>
+    <div><div class="label">Joueur</div><div class="player-name" id="player-name">—</div></div>
+    <div><div class="label">Solde</div><div class="amount" id="balance-amount">0,00 €</div></div>
+    <button class="quit-link" id="quit-btn">Sauvegarder &amp; quitter</button>
+  </div>
+</div>
+
+<div class="main-layout">
+  <!-- LEFT: history + hot/cold -->
+  <div class="left-col card">
+    <h3 class="display" style="font-size:14px;">25 derniers</h3>
+    <hr class="gold-rule">
+    <div class="history-list" id="history-list"></div>
+    <button class="btn-outline hotcold-btn" id="hotcold-btn">📊 Statistiques</button>
+    <div class="hotcold-panel" id="hotcold-panel">
+      <div class="hc-window" id="hc-window">Sur les 200 derniers tirages</div>
+
+      <div class="freq-dial-wrap">
+        <canvas id="freq-dial-canvas" width="200" height="200"></canvas>
+      </div>
+      <div class="freq-legend">
+        <span><i class="freq-dot" style="background:#4a90d9;"></i>Froid</span>
+        <span><i class="freq-dot" style="background:#3fae6b;"></i></span>
+        <span><i class="freq-dot" style="background:#e0902f;"></i></span>
+        <span><i class="freq-dot" style="background:#c0392b;"></i>Chaud</span>
+      </div>
+
+      <div class="hc-tag">🔥 Chauds</div>
+      <div class="hc-row" id="hot-row"></div>
+      <div class="hc-tag">❄️ Froids</div>
+      <div class="hc-row" id="cold-row"></div>
+      <div class="hc-tag">Repartition</div>
+      <div class="stat-line"><span>Rouge</span><span id="stat-red">--</span></div>
+      <div class="stat-line"><span>Noir</span><span id="stat-black">--</span></div>
+      <div class="stat-line"><span>Pair</span><span id="stat-even">--</span></div>
+      <div class="stat-line"><span>Impair</span><span id="stat-odd">--</span></div>
+      <div class="stat-line"><span>Tiers 1 (1-12)</span><span id="stat-dozen1">--</span></div>
+      <div class="stat-line"><span>Tiers 2 (13-24)</span><span id="stat-dozen2">--</span></div>
+      <div class="stat-line"><span>Tiers 3 (25-36)</span><span id="stat-dozen3">--</span></div>
+    </div>
+  </div>
+
+  <!-- CENTER: wheel + table -->
+  <div class="center-col">
+    <div class="wheel-wrap small">
+      <div class="wheel-pointer"></div>
+      <canvas id="wheel-canvas-player" class="wheel-canvas" width="130" height="130"></canvas>
+      <div class="wheel-hub"></div>
+    </div>
+
+    <div class="table-felt">
+      <div class="table-grid">
+        <div class="zero-cell" data-key="straight-0">0</div>
+        <div class="numbers-wrap">
+          <div class="numbers-grid" id="numbers-grid"></div>
+          <div class="overlay-layer" id="overlay-layer"></div>
+        </div>
+        <div class="columns-wrap" id="columns-wrap"></div>
+        <div class="zero-overlay-layer" id="zero-overlay-layer"></div>
+      </div>
+
+      <div class="streets-grid">
+        <div></div>
+        <div class="streets-wrap" id="streets-wrap"></div>
+        <div></div>
+      </div>
+
+      <div class="dozens-row">
+        <div></div>
+        <div class="bet-box" data-key="dozen-1">Tiers 1 (1-12)</div>
+        <div class="bet-box" data-key="dozen-2">Tiers 2 (13-24)</div>
+        <div class="bet-box" data-key="dozen-3">Tiers 3 (25-36)</div>
+        <div></div>
+      </div>
+
+      <div class="outside-row">
+        <div></div>
+        <div class="bet-box red-box" data-key="color-red">Rouge</div>
+        <div class="bet-box black-box" data-key="color-black">Noir</div>
+        <div class="bet-box" data-key="parity-even">Pair</div>
+        <div class="bet-box" data-key="parity-odd">Impair</div>
+        <div></div>
+      </div>
+
+      <div class="range-row">
+        <div></div>
+        <div class="bet-box" data-key="range-low">Manque (1-18)</div>
+        <div class="bet-box" data-key="range-high">Passe (19-36)</div>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="chip-bar">
+      <div class="clear-all-btn" id="clear-all-btn" title="Retirer toutes mes mises">🗑️</div>
+      <div class="eraser-btn" id="eraser-btn" title="Effacer mes mises">🧹</div>
+      <div class="chip" data-v="1">1€</div>
+      <div class="chip" data-v="2">2€</div>
+      <div class="chip" data-v="5">5€</div>
+      <div class="chip" data-v="10">10€</div>
+      <div class="chip" data-v="25">25€</div>
+      <div class="chip" data-v="50">50€</div>
+      <button class="btn-outline repeat-btn" id="repeat-btn" disabled>🔁 Mise similaire</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: bet summary + payout legend -->
+  <div class="right-col">
+    <div class="card">
+      <h3 class="display" style="font-size:14px; text-align:center;">Mise totale</h3>
+      <hr class="gold-rule">
+      <div class="total-bet-amount" id="total-bet">0,00 €</div>
+      <div style="font-size:11px; color:var(--muted); font-family:'Barlow Condensed'; letter-spacing:.04em; text-align:center;">
+        Choisissez un jeton puis cliquez sur la table.
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="display" style="font-size:14px;">Bareme des gains</h3>
+      <hr class="gold-rule">
+      <div class="legend-row"><span>Numero plein</span><b>x36</b></div>
+      <div class="legend-row"><span>Cheval (2 nombres)</span><b>x18</b></div>
+      <div class="legend-row"><span>Transversale simple (3)</span><b>x12</b></div>
+      <div class="legend-row"><span>Carre (4 nombres)</span><b>x9</b></div>
+      <div class="legend-row"><span>Transversale double (6)</span><b>x6</b></div>
+      <div class="legend-row"><span>Colonne / Tiers (12)</span><b>x3</b></div>
+      <div class="legend-row"><span>Chance simple</span><b>x2</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="result-flash" id="result-flash">
+  <div class="result-flash-number" id="result-flash-number">0</div>
+  <div class="result-flash-gain" id="result-flash-gain"></div>
+</div>
+
+<div class="overlay" id="waiting-overlay">
+  <div class="card">
+    <h2 class="display">En attente...</h2>
+    <p style="color:var(--muted); margin-top:10px;">La partie n'a pas encore commence. Demandez au maitre du jeu de la lancer depuis sa table.</p>
+  </div>
+</div>
+
+<div class="overlay hidden" id="bankrupt-overlay">
+  <div class="card">
+    <h2 class="display">Solde epuise</h2>
+    <p style="color:var(--muted); margin: 10px 0 18px;">Vous n'avez plus d'argent a miser. Vous pouvez sauvegarder votre solde pour la prochaine partie.</p>
+    <button class="btn" id="bankrupt-save-btn">Sauvegarder &amp; quitter</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="goodbye-overlay">
+  <div class="card">
+    <h2 class="display">A bientot !</h2>
+    <p style="color:var(--muted); margin-top:10px;">Votre solde a ete sauvegarde. Vous pouvez fermer cet ecran.</p>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/wheel.js"></script>
+<script src="/js/joueur.js"></script>
+</body>
+</html>

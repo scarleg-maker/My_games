@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccalauréat — Configuration</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1 class="title">🎓 Baccalauréat</h1>
+  <p class="subtitle">Configuration de la partie</p>
+
+  <div class="panel">
+    <h3>Joueurs</h3>
+    <div class="row">
+      <div>
+        <label for="numPlayers">Nombre de joueurs (2 à 25)</label>
+        <input type="number" id="numPlayers" min="2" max="25" value="4">
+      </div>
+    </div>
+    <div id="playerNames" class="player-names"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Thèmes</h3>
+    <div class="row">
+      <div>
+        <label for="numThemes">Nombre de thèmes (2 à 10)</label>
+        <input type="number" id="numThemes" min="2" max="10" value="5">
+      </div>
+    </div>
+    <div id="themesGrid" class="themes-grid"></div>
+    <p id="themesInfo" class="subtitle" style="margin-top:10px;"></p>
+
+    <div class="custom-theme-box">
+      <label for="customThemeInput">Ajouter un thème personnalisé</label>
+      <div class="row" style="gap:10px;">
+        <input type="text" id="customThemeInput" placeholder="Ex : Superhéros, Chanson, Insulte...">
+        <button class="btn secondary" id="addCustomThemeBtn" type="button" style="flex:0 0 auto;">+ Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Temps de réponse</h3>
+    <label for="timePerRound">Durée par manche</label>
+    <select id="timePerRound">
+      <option value="30">30 secondes</option>
+      <option value="60" selected>1 minute</option>
+      <option value="90">1 minute 30</option>
+      <option value="120">2 minutes</option>
+      <option value="150">2 minutes 30</option>
+      <option value="180">3 minutes</option>
+    </select>
+  </div>
+
+  <div class="center">
+    <button class="btn" id="createBtn">Créer la partie ▶</button>
+    <p class="error-msg" id="errorMsg"></p>
+  </div>
+
+  <div class="panel" id="linksPanel" style="display:none;">
+    <h3>Partie créée ✅</h3>
+    <p class="subtitle">Ouvrez la page maître sur cet ordinateur, et distribuez un lien à chaque joueur.</p>
+    <div class="center mt">
+      <a class="btn" href="/master" target="_blank">Ouvrir la page Maître</a>
+    </div>
+    <h3 class="mt">Liens des joueurs</h3>
+    <ul class="link-list" id="linkList"></ul>
+  </div>
+</div>
+
+<script src="/js/setup.js"></script>
+</body>
+</html>

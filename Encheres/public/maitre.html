@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu des Enchères — Maître (Mode A)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        #gameScreen, #gameOverScreen { display: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Jeu des Enchères</h1>
+        <h2>Espace Maître — Mode A (Temps réel)</h2>
+    </header>
+
+    <!-- ÉCRAN DE CONFIGURATION -->
+    <div id="setupScreen">
+        <div class="panel">
+            <div class="setup-row">
+                <div class="setup-group">
+                    <label for="playerCount">Joueurs (2 à 8) :</label>
+                    <select id="playerCount">
+                        <option value="2" selected>2 Joueurs</option>
+                        <option value="3">3 Joueurs</option>
+                        <option value="4">4 Joueurs</option>
+                        <option value="5">5 Joueurs</option>
+                        <option value="6">6 Joueurs</option>
+                        <option value="7">7 Joueurs</option>
+                        <option value="8">8 Joueurs</option>
+                    </select>
+                </div>
+                <div class="setup-group">
+                    <label for="startingMoney">Argent de départ (M) :</label>
+                    <input type="number" id="startingMoney" min="10" step="10" value="500">
+                </div>
+                <div class="setup-group">
+                    <label for="maxPurchases">Achats max / joueur :</label>
+                    <select id="maxPurchases">
+                        <option value="1">1 achat max</option>
+                        <option value="2">2 achats max</option>
+                        <option value="3">3 achats max</option>
+                        <option value="4">4 achats max</option>
+                        <option value="5" selected>5 achats max</option>
+                        <option value="6">6 achats max</option>
+                        <option value="7">7 achats max</option>
+                        <option value="8">8 achats max</option>
+                        <option value="9">9 achats max</option>
+                        <option value="10">10 achats max</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="playerNamesSetup"></div>
+
+            <div class="setup-group" style="margin-top: 20px;">
+                <label for="filePicker">Sélectionner des images OU un fichier .ZIP :</label>
+                <input type="file" id="filePicker" multiple accept="image/*,.zip">
+            </div>
+
+            <div class="setup-group" style="margin-top: 10px;">
+                <label>Connexions joueurs en attente :</label>
+                <div class="lobby-list" id="lobbyList"></div>
+            </div>
+
+            <button class="btn btn-start" id="startBtn" disabled>Lancer la partie</button>
+            <p class="info-text" id="setupInfoText" style="margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <!-- ÉCRAN DE JEU -->
+    <div id="gameScreen">
+        <div class="center-col">
+            <p class="info-text" id="imagesRemainingText"></p>
+            <div class="image-frame"><img id="displayImage" src="" alt=""></div>
+            <div id="imageNameLabel"></div>
+            <div id="timerBadge" class="timer-badge"></div>
+            <div class="bid-info">Enchère actuelle : <span class="bid-amount" id="currentBidText">0 M</span><br>
+                <span id="highestBidderText" style="opacity:0.85;"></span>
+            </div>
+            <div id="resultBanner" class="result-banner" style="display:none;"></div>
+        </div>
+        <div class="player-grid" id="playerGrid"></div>
+    </div>
+
+    <!-- ÉCRAN DE FIN DE PARTIE -->
+    <div id="gameOverScreen">
+        <div class="game-over-box">
+            <h2 id="gameOverTitle">Partie terminée</h2>
+            <p id="gameOverReason" style="margin-bottom:20px;"></p>
+            <div class="player-grid" id="finalPlayerGrid"></div>
+            <button class="btn btn-start" id="resetBtn" style="max-width:300px; margin:25px auto 0 auto;">Nouvelle partie</button>
+        </div>
+    </div>
+
+    <div class="error-toast" id="errorToast"></div>
+
+    <script>
+        const socket = io();
+        socket.on('connect', () => socket.emit('register', { role: 'maitre' }));
+
+        // ---- Références DOM ----
+        const setupScreen = document.getElementById('setupScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+
+        const playerCountSelect = document.getElementById('playerCount');
+        const startingMoneyInput = document.getElementById('startingMoney');
+        const maxPurchasesSelect = document.getElementById('maxPurchases');
+        const playerNamesSetup = document.getElementById('playerNamesSetup');
+        const filePicker = document.getElementById('filePicker');
+        const startBtn = document.getElementById('startBtn');
+        const setupInfoText = document.getElementById('setupInfoText');
+        const lobbyList = document.getElementById('lobbyList');
+
+        const displayImage = document.getElementById('displayImage');
+        const imageNameLabel = document.getElementById('imageNameLabel');
+        const imagesRemainingText = document.getElementById('imagesRemainingText');
+        const timerBadge = document.getElementById('timerBadge');
+        const currentBidText = document.getElementById('currentBidText');
+        const highestBidderText = document.getElementById('highestBidderText');
+        const resultBanner = document.getElementById('resultBanner');
+        const playerGrid = document.getElementById('playerGrid');
+
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const gameOverReason = document.getElementById('gameOverReason');
+        const finalPlayerGrid = document.getElementById('finalPlayerGrid');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const errorToast = document.getElementById('errorToast');
+
+        let parsedFilesArray = [];
+        let countdownInterval = null;
+
+        function showError(msg) {
+            errorToast.innerText = msg;
+            errorToast.style.display = 'block';
+            setTimeout(() => errorToast.style.display = 'none', 3500);
+        }
+
+        // ---- Config joueurs ----
+        function updatePlayerInputs() {
+            const count = parseInt(playerCountSelect.value);
+            playerNamesSetup.innerHTML = '';
+            for (let i = 1; i <= count; i++) {
+                playerNamesSetup.innerHTML += `
+                    <div class="player-input-group">
+                        <label>Nom Joueur ${i} :</label>
+                        <input type="text" id="inputPlayerName-${i}" value="Joueur ${i}">
+                    </div>`;
+            }
+            renderLobby([]);
+        }
+        playerCountSelect.addEventListener('change', updatePlayerInputs);
+        updatePlayerInputs();
+
+        function renderLobby(connectedSlots) {
+            const count = parseInt(playerCountSelect.value);
+            lobbyList.innerHTML = '';
+            for (let i = 1; i <= count; i++) {
+                const on = connectedSlots.includes(i);
+                lobbyList.innerHTML += `<div class="lobby-slot ${on ? 'on' : ''}">Joueur ${i} ${on ? '✓ connecté' : '— en attente'}</div>`;
+            }
+        }
+
+        // ---- Chargement images / zip (identique au mode B) ----
+        function getCleanFileName(filename) {
+            return filename.substring(0, filename.lastIndexOf('.')) || filename;
+        }
+
+        function fileToDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function blobToDataURL(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        filePicker.addEventListener('change', async (e) => {
+            startBtn.disabled = true;
+            parsedFilesArray = [];
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            if (files.length === 1 && files[0].name.endsWith('.zip')) {
+                setupInfoText.innerText = "Déchiffrement du fichier ZIP...";
+                try {
+                    const zip = await JSZip.loadAsync(files[0]);
+                    const promises = [];
+                    zip.forEach((relativePath, zipEntry) => {
+                        if (!zipEntry.dir && !relativePath.includes('__MACOSX') && /\.(jfif|pjpeg|jpeg|pjpg|png|jpg|gif|webp|bmp)$/i.test(zipEntry.name)) {
+                            const p = zipEntry.async('blob').then(async (blob) => {
+                                const dataURL = await blobToDataURL(blob);
+                                parsedFilesArray.push({ name: zipEntry.name.split('/').pop(), dataURL });
+                            });
+                            promises.push(p);
+                        }
+                    });
+                    await Promise.all(promises);
+                    setupInfoText.innerText = `${parsedFilesArray.length} images chargées depuis le ZIP avec succès !`;
+                } catch (err) {
+                    showError("Erreur lors de la lecture du fichier ZIP.");
+                    return;
+                }
+            } else {
+                for (const file of files) {
+                    const dataURL = await fileToDataURL(file);
+                    parsedFilesArray.push({ name: file.name, dataURL });
+                }
+                setupInfoText.innerText = `${parsedFilesArray.length} image(s) chargée(s).`;
+            }
+            startBtn.disabled = parsedFilesArray.length === 0;
+        });
+
+        // ---- Lancement de la partie ----
+        startBtn.addEventListener('click', () => {
+            const count = parseInt(playerCountSelect.value);
+            const moneyValue = parseInt(startingMoneyInput.value);
+            const maxPurchases = parseInt(maxPurchasesSelect.value);
+
+            if (isNaN(moneyValue) || moneyValue < 10 || moneyValue % 10 !== 0) {
+                showError("La somme de départ doit être un multiple de 10, d'au moins 10 M.");
+                return;
+            }
+            if (parsedFilesArray.length === 0) {
+                showError("Veuillez charger au moins une image.");
+                return;
+            }
+
+            const playerNames = [];
+            for (let i = 1; i <= count; i++) {
+                const nameInput = document.getElementById(`inputPlayerName-${i}`);
+                playerNames.push(nameInput.value.trim() !== '' ? nameInput.value.trim() : `Joueur ${i}`);
+            }
+
+            startBtn.disabled = true;
+            socket.emit('setupGame', {
+                playerCount: count,
+                startingMoney: moneyValue,
+                maxPurchases: maxPurchases,
+                playerNames: playerNames,
+                images: parsedFilesArray,
+            });
+        });
+
+        socket.on('setupError', (msg) => {
+            showError(msg);
+            startBtn.disabled = false;
+        });
+
+        // ---- Réception de l'état du jeu ----
+        socket.on('newImage', (data) => {
+            displayImage.src = data.dataURL;
+            imageNameLabel.innerText = data.name;
+            imagesRemainingText.innerText = `Images restantes : ${data.imagesRemaining} / ${data.totalImages}`;
+            resultBanner.style.display = 'none';
+        });
+
+        socket.on('gameState', (state) => {
+            if (state.status === 'lobby') {
+                setupScreen.style.display = 'block';
+                gameScreen.style.display = 'none';
+                gameOverScreen.style.display = 'none';
+                if (state.lobbySlots) renderLobby(state.lobbySlots);
+                return;
+            }
+
+            if (state.status === 'running') {
+                setupScreen.style.display = 'none';
+                gameScreen.style.display = 'block';
+                gameOverScreen.style.display = 'none';
+                renderGameScreen(state);
+                return;
+            }
+
+            if (state.status === 'finished') {
+                setupScreen.style.display = 'none';
+                gameScreen.style.display = 'none';
+                gameOverScreen.style.display = 'block';
+                renderGameOver(state);
+            }
+        });
+
+        function formatTimerLabel(state) {
+            if (state.phase === 'waiting') return { text: 'En attente de la 1ère enchère', cls: 'timer-waiting' };
+            if (state.phase === 'overbid') return { text: 'Surenchère possible', cls: 'timer-overbid' };
+            return null;
+        }
+
+        function renderGameScreen(state) {
+            currentBidText.innerText = `${state.currentBid} M`;
+            highestBidderText.innerText = state.highestBidderName ? `Plus offrant : ${state.highestBidderName}` : "Aucune enchère pour l'instant";
+
+            if (state.phase === 'result' && state.roundResult) {
+                resultBanner.style.display = 'block';
+                if (state.roundResult.type === 'won') {
+                    resultBanner.className = 'result-banner result-won';
+                    resultBanner.innerText = `🎉 "${state.roundResult.imageName}" remportée par ${state.roundResult.winnerName} pour ${state.roundResult.price} M !`;
+                } else {
+                    resultBanner.className = 'result-banner result-nobid';
+                    resultBanner.innerText = `Personne n'a enchéri sur "${state.roundResult.imageName}" — chaque joueur perd ${state.roundResult.penalty} M.`;
+                }
+                timerBadge.style.display = 'none';
+            } else {
+                resultBanner.style.display = 'none';
+                timerBadge.style.display = 'block';
+            }
+
+            startCountdown(state);
+            renderPlayers(playerGrid, state, false);
+        }
+
+        function startCountdown(state) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            const info = formatTimerLabel(state);
+            if (!info) return;
+
+            function tick() {
+                const remainingMs = state.timerEnd - Date.now();
+                const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+                timerBadge.className = `timer-badge ${info.cls}`;
+                timerBadge.innerText = `${info.text} — ${seconds}s`;
+                if (remainingMs <= 0 && countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+            }
+            tick();
+            countdownInterval = setInterval(tick, 250);
+        }
+
+        function renderPlayers(container, state, isFinal) {
+            container.innerHTML = '';
+            state.players.forEach(p => {
+                const isHighest = state.highestBidderSlot === p.slot && state.phase !== 'result';
+                const classes = ['player-card'];
+                if (isHighest) classes.push('highest');
+                if (!isFinal && !p.connected) classes.push('disconnected');
+
+                let itemsHtml = '';
+                if (p.collection.length) {
+                    itemsHtml = '<div style="margin-top:6px; font-size:0.75rem; opacity:0.8;">' +
+                        p.collection.map(it => `${it.name} (${it.price}M)`).join('<br>') + '</div>';
+                }
+
+                container.innerHTML += `
+                    <div class="${classes.join(' ')}">
+                        <div class="player-header">
+                            <div class="player-name">
+                                ${isFinal ? '' : `<span class="player-status-dot ${p.connected ? 'dot-on' : 'dot-off'}"></span>`}${p.name}
+                            </div>
+                            <div class="player-money">${p.money} M</div>
+                        </div>
+                        <div class="player-stats">Achats : ${p.itemCount} / ${state.maxPurchases}</div>
+                        ${itemsHtml}
+                    </div>`;
+            });
+        }
+
+        function renderGameOver(state) {
+            if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+            const reasons = {
+                noImages: "Toutes les images ont été vendues ou passées.",
+                maxPurchases: "Tous les joueurs ont atteint leur nombre d'achats maximum.",
+                noMoney: "Plus aucun joueur n'a les moyens d'enchérir.",
+            };
+            gameOverReason.innerText = reasons[state.finishReason] || '';
+            renderPlayers(finalPlayerGrid, state, true);
+        }
+
+        resetBtn.addEventListener('click', () => {
+            socket.emit('resetGame');
+            parsedFilesArray = [];
+            filePicker.value = '';
+            setupInfoText.innerText = '';
+            startBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mastermind — Solo</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="top">
+  <div class="eyebrow">Mode solo</div>
+  <div class="badge-joueur" id="badge-nom" style="display:none;"></div>
+  <h1 id="titre">Devinez le nombre secret</h1>
+</div>
+
+<div class="carte">
+  <div class="compteur" id="compteur">Coups joués : 0</div>
+  <div class="saisie">
+    <input type="text" id="champ-guess" inputmode="numeric" placeholder="????" maxlength="6">
+    <button class="btn-principal" style="width:auto;" id="btn-valider">Valider</button>
+  </div>
+  <div class="erreur" id="erreur"></div>
+  <div class="legende">
+    <span><span class="pastille-mini vert"></span> bon endroit</span>
+    <span id="legende-orange"><span class="pastille-mini orange"></span> mauvais endroit</span>
+    <span><span class="pastille-mini rouge"></span> absent</span>
+  </div>
+</div>
+
+<div class="carte" id="carte-victoire" style="display:none;">
+  <h2>🎉 Bravo !</h2>
+  <p id="texte-victoire"></p>
+  <a class="retour" href="/">← Nouvelle partie</a>
+</div>
+
+<div class="carte">
+  <h3>Historique</h3>
+  <div class="historique" id="historique"></div>
+</div>
+
+<script src="/solo.js"></script>
+</body>
+</html>

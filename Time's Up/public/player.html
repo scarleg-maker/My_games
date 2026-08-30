@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Time's Up – Joueur</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f4c81 0%, #1a7a6e 50%, #0d9e75 100%);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem 1rem;
+}
+.card {
+  background: rgba(255,255,255,0.13);
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 1.5rem;
+  width: 100%; max-width: 480px;
+  text-align: center;
+}
+h1 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+p { opacity: 0.75; font-size: 0.9rem; margin-bottom: 1.2rem; }
+input[type=text] {
+  width: 100%; padding: 10px 14px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15); color: #fff;
+  font-size: 15px; margin-bottom: 10px;
+}
+input::placeholder { color: rgba(255,255,255,0.45); }
+.btn { width: 100%; padding: 13px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: filter 0.15s; margin-top: 10px; }
+.btn:hover { filter: brightness(0.88); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-green { background: #3db36a; color: #fff; }
+.error { color: #ff9f9f; font-size: 13px; margin-top: 6px; }
+.done-screen { display: none; flex-direction: column; align-items: center; gap: 12px; }
+.done-screen.visible { display: flex; }
+.checkmark { font-size: 4rem; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="form-area">
+    <h1 id="player-title">Chargement...</h1>
+    <p id="player-sub"></p>
+    <div id="inputs-area"></div>
+    <button class="btn btn-green" onclick="submitProposals()">✅ Valider mes propositions</button>
+    <div class="error" id="err-msg"></div>
+  </div>
+
+  <div class="done-screen" id="done-area">
+    <div class="checkmark">✅</div>
+    <h1>Propositions enregistrees !</h1>
+    <p>Vous pouvez fermer cette page.<br/>Le maitre du jeu lancera la partie quand tout le monde sera pret.</p>
+  </div>
+</div>
+
+<script>
+const socket = io();
+const playerName = decodeURIComponent(location.pathname.split('/joueur/')[1] || '');
+
+socket.on('state', (st) => {
+  if (st.phase !== 'collecting_multi') return;
+  if (st.playerValidations && st.playerValidations[playerName]) {
+    showDone();
+    return;
+  }
+  document.getElementById('player-title').textContent = '👤 ' + playerName;
+  document.getElementById('player-sub').textContent =
+    `Entrez vos ${st.config.proposalsPerPlayer} propositions`;
+  const n = st.config.proposalsPerPlayer;
+  const area = document.getElementById('inputs-area');
+  if (area.querySelectorAll('input').length !== n) {
+    area.innerHTML = Array.from({length: n}, (_,i) =>
+      `<input type="text" id="prop-${i}" placeholder="Proposition ${i+1}"/>`
+    ).join('');
+  }
+});
+
+function submitProposals() {
+  const err = document.getElementById('err-msg');
+  const inputs = document.querySelectorAll('#inputs-area input');
+  const props = Array.from(inputs).map(i => i.value.trim());
+  if (props.some(p => !p)) { err.textContent = 'Tous les champs doivent etre remplis.'; return; }
+  err.textContent = '';
+  socket.emit('submitProposalsMulti', { playerName, proposals: props });
+  showDone();
+}
+
+function showDone() {
+  document.getElementById('form-area').classList.add('hidden');
+  document.getElementById('done-area').classList.add('visible');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 Familles - Page Maître</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>🎴 Jeu des 7 Familles</h1>
+  <p class="subtitle">Page maître — hébergement de la partie (jusqu'à 10 joueurs)</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="cartes">1. Cartes</button>
+    <button class="tab-btn" data-tab="joueurs">2. Joueurs</button>
+    <button class="tab-btn" data-tab="partie">3. Partie</button>
+  </div>
+
+  <!-- ONGLET CARTES -->
+  <div class="tab-content active" id="tab-cartes">
+    <div class="card-panel">
+      <h2>Charger les images (fichier .zip - 42 fichiers)</h2>
+      <p>Format attendu des noms de fichiers : <code>Famille NN - Nom.png</code><br>
+      Exemple : <code>Pirate 01 - Monkey D. Luffy.png</code>, <code>Marine 03 - Kizaru.png</code></p>
+      <input type="file" id="zipInput" accept=".zip">
+      <button id="uploadBtn" style="margin-left:10px;">Charger le zip</button>
+      <p id="uploadStatus"></p>
+    </div>
+    <div class="card-panel" id="familiesPreview" style="display:none;">
+      <h3>Familles détectées</h3>
+      <div class="families-panel" id="familiesList"></div>
+      <p id="cardsCount" style="margin-top:10px;color:#555;"></p>
+    </div>
+  </div>
+
+  <!-- ONGLET JOUEURS -->
+  <div class="tab-content" id="tab-joueurs">
+    <div class="card-panel">
+      <h2>Nombre de joueurs</h2>
+      <label for="playerCount">Nombre de joueurs (2 à 10)</label><br>
+      <input type="number" id="playerCount" min="2" max="10" value="4" style="width:100px;">
+      <button id="genNamesBtn" style="margin-left:10px;">Valider le nombre</button>
+
+      <div id="namesForm" style="margin-top:16px;"></div>
+      <button id="savePlayersBtn" style="margin-top:10px; display:none;">Enregistrer les joueurs</button>
+      <p id="playersStatus"></p>
+    </div>
+  </div>
+
+  <!-- ONGLET PARTIE -->
+  <div class="tab-content" id="tab-partie">
+    <div class="card-panel">
+      <h2>Lancer la partie</h2>
+      <button id="startGameBtn">🚀 Lancer la partie</button>
+      <p id="startStatus"></p>
+      <div class="player-links" id="playerLinks"></div>
+    </div>
+
+    <div class="card-panel">
+      <h2>Suivi en direct</h2>
+      <table class="status-table" id="statusTable">
+        <thead>
+          <tr><th>Joueur</th><th>Cartes en main</th><th>Familles</th><th>Prêt</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p>Pioche restante : <strong id="piocheCount">-</strong></p>
+    </div>
+
+    <div class="card-panel">
+      <h2>Familles complétées</h2>
+      <div class="families-panel" id="completedFamilies"></div>
+    </div>
+
+    <div class="card-panel hidden" id="winnerPanel">
+      <h2>🏆 Partie terminée</h2>
+      <p id="winnerText" style="font-size:18px;font-weight:700;"></p>
+      <ol id="standingsList"></ol>
+    </div>
+  </div>
+
+  <footer class="note">Serveur maître — port 1500. Partagez les liens joueurs ci-dessus sur le réseau local.</footer>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/master.js"></script>
+</body>
+</html>

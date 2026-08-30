@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccalauréat — Joueur</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="toastBox" class="toast-box"></div>
+
+<div class="wrap">
+  <h1 class="title">🎓 Baccalauréat</h1>
+  <p class="subtitle" id="playerLabel">Joueur</p>
+
+  <div id="noGame" class="panel center">
+    <p>Aucune partie en cours pour le moment. Attendez que le maître du jeu démarre la partie.</p>
+  </div>
+
+  <div id="gameArea" style="display:none;">
+    <div class="panel center">
+      <div id="timerBox" class="timer" style="display:none;">--</div>
+      <p id="lowTimeMsg" class="low-time-msg" style="display:none;">⏰ Il reste 10 secondes !</p>
+      <p id="statusMsg" class="locked-msg">En attente du maître du jeu...</p>
+      <button class="btn" id="finishBtn" style="display:none;">✅ J'ai terminé</button>
+    </div>
+
+    <div class="panel" id="liveReviewPanel" style="display:none;">
+      <h3>Correction en direct — Thème : <span id="liveReviewTheme"></span> (<span id="liveReviewIdx"></span>/<span id="liveReviewTotal"></span>)</h3>
+      <table id="liveReviewTable"></table>
+    </div>
+
+    <div class="panel" id="currentRoundPanel" style="display:none;">
+      <h3>Manche en cours — Lettre <span class="badge letter" id="currentRoundLetter">?</span></h3>
+      <div id="currentRoundThemes"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Historique des manches</h3>
+      <table id="historyTable"></table>
+    </div>
+  </div>
+</div>
+
+<div id="letterOverlay" class="overlay" style="display:none;">
+  <div class="big-letter" id="letterOverlayLetter">A</div>
+  <div class="caption">La lettre de la manche !</div>
+</div>
+
+<div id="countdownOverlay" class="overlay" style="display:none;">
+  <div class="big-count" id="countdownDisplay">3</div>
+  <div class="caption">Préparez-vous...</div>
+</div>
+
+<div id="winnerOverlay" class="overlay" style="display:none;">
+  <div class="caption">🏆 Fin de la partie 🏆</div>
+  <div class="winner-name" id="winnerName"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/joueur.js"></script>
+</body>
+</html>

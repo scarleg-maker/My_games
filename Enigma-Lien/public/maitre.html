@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enigma-Lien — Écran maître</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap wide">
+  <h1>⬡ Enigma-Lien — Écran maître</h1>
+  <div class="sub"><a href="/">← Menu</a></div>
+
+  <div id="configBox">
+    <h2>1. Configurer le tournoi</h2>
+    <div class="field">
+      <label>Thème</label>
+      <div class="tiles" id="themeTiles"></div>
+    </div>
+    <div class="field">
+      <label>Type de tournoi</label>
+      <div class="radio-row" id="modeRadios">
+        <div class="radio-card" data-mode="sprint">
+          <div class="rtitle">🏃 Sprinteur</div>
+          <div class="rdesc">Le premier joueur à résoudre correctement <b>x</b> énigmes remporte le tournoi. Toutes les manches sont partagées : premier arrivé, premier servi.</div>
+        </div>
+        <div class="radio-card" data-mode="survie">
+          <div class="rtitle">💀 Survie</div>
+          <div class="rdesc">Chaque manche, tous les joueurs affrontent la même énigme avec <b>y</b> vies. Qui échoue est éliminé. Le dernier joueur en vie (ou celui qui va le plus loin) gagne.</div>
+        </div>
+      </div>
+    </div>
+    <div class="field" id="sprintTargetField">
+      <label>Nombre d'énigmes à résoudre pour gagner (x)</label>
+      <input type="number" id="sprintTarget" min="1" value="5">
+    </div>
+    <div class="field">
+      <label>Vies par énigme (y)</label>
+      <input type="number" id="livesPerRound" min="1" value="4">
+    </div>
+    <div class="toolbar">
+      <button class="primary" id="configureBtn">💾 Enregistrer la configuration</button>
+    </div>
+    <div class="status" id="configError"></div>
+  </div>
+
+  <h2>2. Joueurs inscrits <span id="playerCount"></span></h2>
+  <div id="rosterBox"></div>
+
+  <div class="toolbar mt">
+    <button class="primary" id="startBtn" disabled>▶️ Démarrer le tournoi</button>
+    <button class="danger" id="endBtn" style="display:none;">⏹️ Terminer le tournoi</button>
+    <button id="resetBtn" style="display:none;">↺ Nouveau tournoi (même joueurs)</button>
+  </div>
+
+  <div id="liveBox" class="mt" style="display:none;">
+    <h2>Manche en cours <span id="roundNum"></span></h2>
+    <div id="liveLinks" class="links"></div>
+  </div>
+
+  <div id="finalBox" class="mt" style="display:none;">
+    <h2>🏁 Tournoi terminé</h2>
+    <div class="status big" id="finalText"></div>
+  </div>
+
+  <footer>Diffuse cette page sur l'écran principal ; les joueurs rejoignent depuis leurs propres appareils via /joueur1.html … /joueur10.html.</footer>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let themes = [];
+let selectedThemeId = null;
+let selectedMode = 'sprint';
+let lastState = null;
+
+socket.on('connect', () => socket.emit('master:hello'));
+socket.on('themes:list', (list) => { themes = list; renderThemeTiles(); });
+socket.on('master:state', (state) => { lastState = state; render(state); });
+
+function renderThemeTiles() {
+  const box = document.getElementById('themeTiles');
+  box.innerHTML = '';
+  themes.forEach((t) => {
+    const div = document.createElement('div');
+    div.className = 'tile';
+    div.dataset.id = t.id;
+    div.innerHTML = `<div class="ticon">${t.icon || '❔'}</div><div class="tname">${t.name}</div><div class="tmeta">${t.count} entrées</div>`;
+    div.addEventListener('click', () => { selectedThemeId = t.id; renderThemeTiles(); });
+    box.appendChild(div);
+  });
+  document.querySelectorAll('#themeTiles .tile').forEach((el) => el.classList.toggle('selected', el.dataset.id === selectedThemeId));
+  if (!selectedThemeId && themes.length) { selectedThemeId = themes[0].id; renderThemeTiles(); }
+}
+
+document.querySelectorAll('#modeRadios .radio-card').forEach((el) => {
+  el.addEventListener('click', () => {
+    selectedMode = el.dataset.mode;
+    document.querySelectorAll('#modeRadios .radio-card').forEach((x) => x.classList.toggle('selected', x === el));
+    document.getElementById('sprintTargetField').style.display = selectedMode === 'sprint' ? 'block' : 'none';
+  });
+});
+document.querySelector('#modeRadios .radio-card[data-mode="sprint"]').classList.add('selected');
+
+document.getElementById('configureBtn').addEventListener('click', () => {
+  const cfg = {
+    themeId: selectedThemeId,
+    mode: selectedMode,
+    sprintTarget: parseInt(document.getElementById('sprintTarget').value, 10) || 5,
+    livesPerRound: parseInt(document.getElementById('livesPerRound').value, 10) || 4,
+  };
+  socket.emit('master:configure', cfg, (res) => {
+    document.getElementById('configError').textContent = res.ok ? '✅ Configuration enregistrée.' : res.error;
+  });
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  socket.emit('master:start', {}, (res) => {
+    if (!res.ok) alert(res.error);
+  });
+});
+document.getElementById('endBtn').addEventListener('click', () => {
+  if (!confirm('Terminer le tournoi maintenant ?')) return;
+  socket.emit('master:end', {}, (res) => { if (!res.ok) alert(res.error); });
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  socket.emit('master:reset', {}, (res) => { if (!res.ok) alert(res.error); });
+});
+
+const STATUS_LABELS = {
+  empty: 'libre', idle: 'prêt', playing: 'en train de jouer', solved: '✅ résolu',
+  'solved-late': '✅ résolu (trop tard)', out: '❌ hors-manche', eliminated: '💀 éliminé', spectateur: '👀 spectateur',
+};
+
+function render(state) {
+  const connected = state.players.filter(p => p.connected);
+  document.getElementById('playerCount').textContent = `(${connected.length} connecté${connected.length>1?'s':''} / 10)`;
+
+  let html = '';
+  if (!state.players.length) {
+    html = '<div class="note">Aucun joueur inscrit pour le moment. Fais ouvrir /joueur1.html, /joueur2.html, … à tes joueurs.</div>';
+  } else {
+    html = '<table class="stats"><thead><tr><th>Emplacement</th><th>Joueur</th><th>Score</th><th>Vies</th><th>Statut</th></tr></thead><tbody>';
+    for (const p of state.players) {
+      const isWinner = state.winnerSlots && state.winnerSlots.includes(p.slot);
+      html += `<tr><td>#${p.slot}</td><td>${p.name}${!p.connected ? ' 🔌' : ''}</td><td>${p.score}</td><td>${p.livesLeft}</td><td><span class="pill ${isWinner ? 'winner' : p.status}">${isWinner ? '🏆 vainqueur' : (STATUS_LABELS[p.status] || p.status)}</span></td></tr>`;
+    }
+    html += '</tbody></table>';
+  }
+  document.getElementById('rosterBox').innerHTML = html;
+
+  document.getElementById('startBtn').disabled = state.status !== 'lobby' || connected.length < 1;
+  document.getElementById('startBtn').style.display = state.status === 'lobby' ? 'inline-block' : 'none';
+  document.getElementById('endBtn').style.display = state.status === 'playing' ? 'inline-block' : 'none';
+  document.getElementById('resetBtn').style.display = state.status === 'finished' ? 'inline-block' : 'none';
+  document.getElementById('configBox').style.display = state.status === 'lobby' ? 'block' : 'none';
+
+  document.getElementById('liveBox').style.display = state.status === 'playing' ? 'block' : 'none';
+  if (state.status === 'playing' && state.round) {
+    document.getElementById('roundNum').textContent = `#${state.round.number}`;
+    const metaById = {};
+    (state.theme ? state.theme.criteria : []).forEach(c => metaById[c.id] = c);
+    document.getElementById('liveLinks').innerHTML = state.round.links.map(l => {
+      const meta = metaById[l.cat] || { label: l.cat, icon: '?' };
+      return `<div class="link"><div class="bracket"></div><div class="chip">${meta.icon}</div><div class="label">${meta.label} ${l.sym}</div></div>`;
+    }).join('');
+  }
+
+  document.getElementById('finalBox').style.display = state.status === 'finished' ? 'block' : 'none';
+  if (state.status === 'finished') {
+    const names = state.winnerSlots.map(s => (state.players.find(p=>p.slot===s)||{}).name).filter(Boolean);
+    document.getElementById('finalText').textContent = names.length ? `Vainqueur${names.length>1?'s':''} : ${names.join(', ')}` : 'Tournoi terminé sans vainqueur.';
+  }
+}
+</script>
+</body>
+</html>
