@@ -126,6 +126,18 @@ rm parties/partie-XXXXXXXXXX.json   # une sauvegarde de partie precise
 nano joueurs.txt                     # puis supprimez la ligne voulue
 ```
 
+## Ajouter un joueur en cours de partie
+
+A tout moment pendant une partie — y compris juste apres avoir recharge une
+partie sauvegardee — le maitre du jeu peut ajouter un nouveau joueur sans
+tout redemarrer. Dans la carte "Joueurs a la table", indiquez son nom et sa
+mise de depart (ou recuperez son solde sauvegarde via "Charger solde")
+puis cliquez sur **"+ Ajouter un joueur"**. Un nouveau lien d'ecran joueur
+apparait automatiquement, et le nouveau joueur profite immediatement des
+memes statistiques (numeros deja tires, chauds/froids, pourcentages) que
+le reste de la table, puisque ces statistiques sont communes a toute la
+partie et non propres a chaque joueur.
+
 ## Recharger un joueur a sec
 
 Si un joueur n'a plus d'argent en cours de partie, le maitre du jeu peut a

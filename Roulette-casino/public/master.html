@@ -76,6 +76,11 @@
   .save-game-box input {
     width: 220px;
   }
+  .add-player-box {
+    display:flex; gap:10px; align-items:center; justify-content:center; margin-top: 20px; flex-wrap:wrap;
+  }
+  .add-player-box input[type="text"] { width: 160px; }
+  .add-player-box input[type="number"] { width: 130px; }
 
   #dashboard-screen { display:none; }
   .dash-grid {
@@ -243,6 +248,14 @@
           <thead><tr><th></th><th>Nom</th><th>Solde</th><th>Mise</th><th>Recharger</th></tr></thead>
           <tbody id="players-tbody"></tbody>
         </table>
+
+        <div class="add-player-box">
+          <input type="text" id="add-player-name" placeholder="Nom du nouveau joueur">
+          <input type="number" id="add-player-balance" placeholder="Mise de depart" value="500" min="0">
+          <button class="btn-outline" id="add-player-load-btn">Charger solde</button>
+          <button class="btn-outline" id="add-player-btn">+ Ajouter un joueur</button>
+        </div>
+        <div class="load-hint" id="add-player-hint" style="text-align:center;"></div>
 
         <div class="save-game-box">
           <input type="text" id="save-label-input" placeholder="Nom de la sauvegarde (optionnel)">

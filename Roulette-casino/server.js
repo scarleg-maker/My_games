@@ -566,6 +566,28 @@ io.on('connection', (socket) => {
     broadcastAutoState();
   });
 
+  // ---- Master: add a new player to the currently running game (e.g. right
+  // after reloading a saved party, or anytime mid-game). Shares the same
+  // game.history / stats as everyone else since those are game-wide, not
+  // per-player. ------------------------------------------------------------
+  socket.on('add-player', ({ name, balance, history }) => {
+    if (!game.started) return;
+    const existingNums = Object.keys(game.players).map(Number);
+    const num = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+    game.players[num] = {
+      num,
+      name: (name || `Joueur ${num}`).trim(),
+      balance: Math.max(0, Number(balance) || 0),
+      bets: {},
+      lastBets: {},
+      connected: false,
+      socketId: null,
+      roundHistory: Array.isArray(history) ? history.slice(0, 25) : []
+    };
+    socket.emit('player-added', { num, name: game.players[num].name });
+    broadcastState();
+  });
+
   // ---- Player: join their numbered screen ---------------------------------
   socket.on('join-player', ({ num }) => {
     const p = game.players[num];

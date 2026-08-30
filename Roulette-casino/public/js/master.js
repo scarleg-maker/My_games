@@ -29,6 +29,12 @@
   const saveLabelInput = document.getElementById('save-label-input');
   const saveGameBtn = document.getElementById('save-game-btn');
   const saveGameHint = document.getElementById('save-game-hint');
+  const addPlayerNameInput = document.getElementById('add-player-name');
+  const addPlayerBalanceInput = document.getElementById('add-player-balance');
+  const addPlayerLoadBtn = document.getElementById('add-player-load-btn');
+  const addPlayerBtn = document.getElementById('add-player-btn');
+  const addPlayerHint = document.getElementById('add-player-hint');
+  let pendingAddPlayerHistory = [];
 
   function colorClass(c) { return c === 'red' ? 'c-red' : c === 'black' ? 'c-black' : 'c-green'; }
 
@@ -265,11 +271,10 @@
     socket.emit('create-game', { players });
   });
 
-  socket.on('game-created', ({ count }) => {
-    setupScreen.style.display = 'none';
-    resumeScreen.classList.add('hidden');
-    soldesScreen.classList.add('hidden');
-    dashboardScreen.style.display = 'block';
+  let lastLinksCount = 0;
+  function renderLinks(count) {
+    if (count === lastLinksCount) return;
+    lastLinksCount = count;
     linksBox.innerHTML = '';
     const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
     const origin = (isLocalhost && networkOrigin) ? networkOrigin : window.location.origin;
@@ -285,9 +290,53 @@
       });
       linksBox.appendChild(item);
     }
+  }
+
+  socket.on('game-created', ({ count }) => {
+    setupScreen.style.display = 'none';
+    resumeScreen.classList.add('hidden');
+    soldesScreen.classList.add('hidden');
+    dashboardScreen.style.display = 'block';
+    lastLinksCount = 0; // force a full rebuild even if the count happens to match
+    renderLinks(count);
+  });
+
+  socket.on('player-added', ({ num, name }) => {
+    addPlayerHint.textContent = `${name} a rejoint la table (Joueur ${num}).`;
+    addPlayerNameInput.value = '';
+    setTimeout(() => (addPlayerHint.textContent = ''), 4000);
+  });
+
+  socket.on('add-player-error', (d) => alert(d.message || 'Erreur lors de l\'ajout du joueur.'));
+
+  addPlayerLoadBtn.addEventListener('click', async () => {
+    const name = addPlayerNameInput.value.trim();
+    if (!name) return;
+    try {
+      const r = await fetch('/api/solde/' + encodeURIComponent(name));
+      const data = await r.json();
+      if (data.found) {
+        addPlayerBalanceInput.value = data.balance;
+        pendingAddPlayerHistory = data.history || [];
+        addPlayerHint.textContent = `Solde et historique charges (${(data.history || []).length} partie(s) precedentes).`;
+      } else {
+        pendingAddPlayerHistory = [];
+        addPlayerHint.textContent = '';
+        alert(`Aucun solde sauvegarde trouve pour "${name}".`);
+      }
+    } catch (e) { console.error(e); }
+  });
+
+  addPlayerBtn.addEventListener('click', () => {
+    const name = addPlayerNameInput.value.trim();
+    if (!name) { alert('Indiquez un nom pour le nouveau joueur.'); return; }
+    const balance = Math.max(0, parseFloat(addPlayerBalanceInput.value) || 0);
+    socket.emit('add-player', { name, balance, history: pendingAddPlayerHistory });
+    pendingAddPlayerHistory = [];
   });
 
   socket.on('state-update', (state) => {
+    renderLinks(state.players.length);
     playersTbody.innerHTML = '';
     state.players.forEach(p => {
       const isBankrupt = p.balance < 1 && p.totalBet === 0;
