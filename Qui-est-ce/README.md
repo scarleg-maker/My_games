@@ -94,6 +94,39 @@ smartphone, à condition qu'il soit **sur le même réseau** que le PC.
      désactiver cette option dans les paramètres du routeur/hotspot (pas
      modifiable depuis le jeu).
 
+## Déployer sur Render (alternative au réseau local)
+
+Héberger le jeu sur Render évite tous les soucis de réseau local / pare-feu
+ci-dessus : les deux joueurs se connectent simplement à une URL publique,
+quel que soit leur réseau.
+
+1. Mets le dossier du projet dans un dépôt Git (GitHub, GitLab...).
+2. Sur [render.com](https://render.com), crée un **New Web Service** et
+   connecte ce dépôt.
+3. Renseigne :
+   - **Build Command** : `pip install -r requirements.txt`
+   - **Start Command** : `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4`
+   
+   (ces valeurs sont aussi dans le `Procfile` fourni — Render peut les
+   détecter automatiquement, mais les renseigner à la main dans le
+   dashboard fonctionne toujours).
+4. Une fois déployé, Render donne une URL publique du type
+   `https://qui-est-ce-xxxx.onrender.com`. Les deux joueurs s'y rendent
+   directement, en ajoutant `/joueur1` et `/joueur2`.
+
+**Important : garde `--workers 1`.** La partie en cours est gardée en
+mémoire par le serveur (pas de base de données) ; avec plusieurs workers,
+les deux joueurs pourraient être répartis sur des processus différents qui
+ne partagent pas le même état, et le jeu se désynchroniserait. Le paramètre
+`--threads 4` permet quand même de gérer plusieurs requêtes en parallèle
+(utile puisque chaque page interroge le serveur chaque seconde) sans avoir
+besoin de plusieurs workers.
+
+Un `package.json` n'est pas nécessaire : ce projet n'utilise aucune
+dépendance Node.js, et Render (comme Railway) détecte un projet Python via
+`requirements.txt`. En ajouter un pourrait même perturber la détection
+automatique de certaines plateformes.
+
 ## Déroulé d'une partie
 
 1. **Page d'accueil** : indique le nom des deux joueurs, choisis la taille
