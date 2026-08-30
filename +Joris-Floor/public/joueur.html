@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Joueur</title>
+    <script src="theme-configs.js"></script>
+    <script src="localsync.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        background: linear-gradient(150deg, #F5F4ED 0%, #EDE8B4 35%, #F2D488 65%, #EDC96D 100%);
+        background-attachment: fixed;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        font-family: batavia, sans-serif;
+        text-align: center;
+        margin-top: 50px;
+      }
+      .container {
+        display: flex;
+        justify-content: center;
+        gap: 160px;
+        margin-top: 150px;
+        align-items: flex-start;
+      }
+      .player {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: opacity 0.3s ease, filter 0.3s ease;
+      }
+      .player.inactive-player {
+        opacity: 0.35;
+        filter: grayscale(70%);
+      }
+      #playerAssaillant.active-player .minuteur,
+      #playerAssaillant.active-player canvas.pendule {
+        animation: haloPulseRouge 1.5s ease-in-out infinite;
+      }
+      #playerDefenseur.active-player .minuteur,
+      #playerDefenseur.active-player canvas.pendule {
+        animation: haloPulseVert 1.5s ease-in-out infinite;
+      }
+      @keyframes haloPulseRouge {
+        0%, 100% { box-shadow: 0 0 60px 18px rgba(194, 23, 41, 0.75), 0 0 120px 42px rgba(194, 23, 41, 0.35); }
+        50% { box-shadow: 0 0 96px 36px rgba(194, 23, 41, 1), 0 0 165px 60px rgba(194, 23, 41, 0.55); }
+      }
+      @keyframes haloPulseVert {
+        0%, 100% { box-shadow: 0 0 60px 18px rgba(34, 145, 25, 0.75), 0 0 120px 42px rgba(34, 145, 25, 0.35); }
+        50% { box-shadow: 0 0 96px 36px rgba(34, 145, 25, 1), 0 0 165px 60px rgba(34, 145, 25, 0.55); }
+      }
+      .minuteur {
+        font-size: 2em;
+        border: 10px solid #007bff;
+        padding: 10px;
+        border-radius: 20px;
+        width: 150px;
+        background-color: #f0f8ff;
+        margin: 0 50px;
+        user-select: none;
+      }
+      @keyframes clignoterRouge {
+        0%, 100% { background-color: #f0f8ff; }
+        50% { background-color: red; }
+      }
+      .clignote {
+        animation: clignoterRouge 0.25s ease-in-out 4;
+      }
+      canvas.pendule {
+        margin-top: 15px;
+        border: 10px solid #007bff;
+        border-radius: 50%;
+        background-color: #f0f8ff;
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+      }
+      .random-image {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 550px;
+        height: 550px;
+        overflow: hidden;
+      }
+      .random-image img {
+        width: 550px;
+        height: 550px;
+        object-fit: contain;
+        display: none;
+        border: 0px solid black;
+        transition: all 0.3s ease;
+      }
+      .random-image img.visible {
+        display: block;
+      }
+      .action-feedback {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.98);
+        color: white;
+        font-family: 'Berlin Sans FB', Gadget, sans-serif;
+        font-size: 42px;
+        font-weight: bold;
+        text-align: center;
+        z-index: 20000;
+        pointer-events: none;
+      }
+      .label h1 {
+        font-family: Forte, sans-serif;
+        font-size: 40px;
+        margin: 0;
+        margin-bottom: 35px;
+      }
+      .label.assaillant h1 {
+        color: #c21729;
+      }
+      .label.defenseur h1 {
+        color: #229119;
+      }
+      #gauche.minuteur {
+        border: 10px solid #C21729;
+      }
+      #droite.minuteur {
+        border: 10px solid #229119;
+      }
+      #gauche {
+        color: #C21729;
+      }
+      #droite {
+        color: #229119;
+      }
+      #compteARebours {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.8);
+        font-size: 250px;
+        font-weight: bold;
+        color: #E3D42D;
+        text-shadow: 2px 2px 5px black;
+        opacity: 0;
+        transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 45000;
+        pointer-events: none;
+      }
+      #compteARebours.show {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      #compteARebours.hide {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.2);
+      }
+
+      #compteARebours.go {
+        color: #4CAF50;
+        transform: translate(-50%, -50%) scale(1.1);
+        text-shadow: 0 0 20px #4CAF50, 2px 2px 5px black;
+      }
+      #vainqueur {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 115px;
+        font-family: 'Berlin Sans FB', Gadget, sans-serif;
+        font-weight: bold;
+        font-style: italic;
+        color: #FAAD41;
+        text-shadow: 2px 2px 0 black, -2px 2px 0 black, 2px -2px 0 black, -2px -2px 0 black;
+        display: none;
+        z-index: 45000;
+        background: rgba(0, 0, 0, 0.001);
+        padding: 20px 40px;
+        border-radius: 15px;
+        text-align: center;
+      }
+      #retourPlateauBtn {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        z-index: 46000;
+        padding: 16px 32px;
+        font-size: 28px;
+        font-family: 'Berlin Sans FB', Gadget, sans-serif;
+        font-weight: bold;
+        text-decoration: none;
+        color: white;
+        background: linear-gradient(145deg, #2196F3, #1976D2);
+        border-radius: 15px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        transition: transform 0.2s ease;
+      }
+      #retourPlateauBtn:hover {
+        transform: translateX(-50%) scale(1.05);
+      }
+      #pauseOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.97);
+        z-index: 50000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      #pauseOverlay.visible {
+        display: flex;
+      }
+      #pauseOverlay span {
+        color: white;
+        font-family: 'Berlin Sans FB', Gadget, sans-serif;
+        font-size: 60px;
+        font-weight: bold;
+        text-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      }
+      #audioUnlockOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: 99999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 25px;
+        text-align: center;
+      }
+      #audioUnlockOverlay.visible {
+        display: flex;
+      }
+      #audioUnlockBtn {
+        padding: 30px 60px;
+        font-size: 32px;
+        font-family: 'Berlin Sans FB', Gadget, sans-serif;
+        font-weight: bold;
+        color: white;
+        background: linear-gradient(145deg, #4CAF50, #2e7d32);
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        transition: transform 0.2s ease;
+      }
+      #audioUnlockBtn:hover {
+        transform: scale(1.05);
+      }
+      #audioUnlockOverlay p {
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        max-width: 500px;
+        opacity: 0.85;
+      }
+      #arbitreButton {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        padding: 12px 24px;
+        font-size: 1.1em;
+        font-family: 'Berlin Sans FB', sans-serif;
+        font-weight: bold;
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        transition: all 0.3s ease;
+        z-index: 1000;
+        text-decoration: none;
+        display: inline-block;
+      }
+      #arbitreButton:hover {
+        background: linear-gradient(135deg, #0056b3, #004085);
+        box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+        transform: translateY(-2px);
+      }
+      .connection-status {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        z-index: 1000;
+        font-size: 16px;
+        font-family: 'Berlin Sans FB', Arial, sans-serif;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        letter-spacing: 0.5px;
+      }
+      .connected {
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+      }
+      .disconnected {
+        background: linear-gradient(135deg, #f44336, #d32f2f);
+        color: white;
+      }
+      .reconnecting {
+        background: linear-gradient(135deg, #ff9800, #e68900);
+        color: white;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+      }
+      .no-image {
+        color: #999;
+        font-size: 24px;
+        font-style: italic;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+      }
+
+      /* CSS supplémentaire pour les thèmes audio */
+      .audio-player {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        border: 2px solid #007bff;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      .audio-info h3 {
+        color: #007bff;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+
+      .audio-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        border: 2px solid #FFD700;
+        width: 180px;
+        height: 180px;
+      }
+
+      .audio-icon {
+        font-size: 64px;
+        margin-bottom: 15px;
+      }
+      .audio-icon.playing {
+        animation: pulse 1s infinite;
+      }
+    </style>
+  </head>
+  <body> <a id="arbitreButton" href="arbitre.html">📋
+      Mode Arbitre</a>
+    <div class="connection-status" id="connectionStatus">🔴 Connexion...</div>
+    <h1 style="text-align: center; height: 79px; margin-top: -10px;"> <span style="font-family: Elephant; font-size: 68px; color: #0F665F;">
+        <u>Thématique tirée</u> </span> </h1>
+    <p id="themeDescription" style="text-align: center; margin-top: -15px; margin-bottom: 10px; font-family: Elephant, sans-serif; font-size: 50px; color: #464EE3; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); min-height: 24px; font-style: italic;"></p>    <div class="container">
+      <div class="player" id="playerAssaillant">
+        <div class="label assaillant">
+          <h1><span style="font-family: Berlin Sans FB;">Assaillant</span></h1>
+        </div>
+        <div id="gauche" class="minuteur" style="text-align: center;"> <span style="font-family: Agency FB; font-size: 40px;"><b
+
+              id="timeAssaillant">45.00</b></span> </div>
+        <canvas id="penduleGauche" class="pendule" width="150" height="150"></canvas>
+      </div>
+      <div class="random-image"> <img id="imageAleatoire" src="" alt="Image aléatoire"
+
+          draggable="false">
+        <div id="noImagePlaceholder" class="no-image">En attente d'une image...</div>
+      </div>
+      <div class="player" id="playerDefenseur">
+        <div class="label defenseur">
+          <h1><span style="font-family: Berlin Sans FB; color: #229119;">Défenseur</span></h1>
+        </div>
+        <div id="droite" class="minuteur" style="text-align: center;"> <span style="font-family: Agency FB; font-size: 40px;"><b
+
+              id="timeDefenseur">45.00</b></span> </div>
+        <canvas id="penduleDroite" class="pendule" width="150" height="150"></canvas>
+      </div>
+    </div>
+    <div id="compteARebours"></div>
+    <div id="vainqueur"></div>
+    <a id="retourPlateauBtn" href="Plateau.html?resume=1">🎲 Retour au plateau</a>
+    <div id="pauseOverlay"><span>⏸ EN PAUSE</span></div>
+    <div id="audioUnlockOverlay">
+      <button id="audioUnlockBtn">🔊 Cliquer pour activer le son</button>
+      <p>Ce thème utilise des fichiers audio. Un clic est nécessaire pour autoriser leur lecture automatique tout au long de la partie (restriction du navigateur).</p>
+    </div>
+    <audio id="bipSound" preload="auto"> <source src="bip.mp3" type="audio/mpeg">
+    </audio>
+    <script type="module">
+      class TimerApp {
+        // === LOGIQUE UNIVERSELLE POUR LES THEMES ===
+
+        loadThemeConfig() {
+          // 1. Essayer de récupérer le thème depuis l'URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const themeParam = urlParams.get('theme');
+          
+          console.log('Paramètre thème depuis URL:', themeParam);
+          
+          if (themeParam && window.themeConfigs && window.themeConfigs[themeParam]) {
+            console.log('Configuration trouvée pour le thème:', themeParam);
+            return window.themeConfigs[themeParam];
+          }
+          
+          // 2. Essayer depuis localStorage (sélection précédente)
+          try {
+            const savedTheme = localStorage.getItem('selectedTheme');
+            const savedThemeKey = localStorage.getItem('selectedThemeKey');
+            
+            if (savedTheme && savedThemeKey) {
+              console.log('Thème récupéré depuis localStorage:', savedThemeKey);
+              return JSON.parse(savedTheme);
+            }
+          } catch (error) {
+            console.warn('Erreur lors de la récupération du thème depuis localStorage:', error);
+          }
+          
+          // 3. Configuration par défaut (desserts depuis theme-configs.js)
+          console.log('Utilisation du thème par défaut: desserts depuis theme-configs.js');
+          if (window.themeConfigs && window.themeConfigs.desserts) {
+            return window.themeConfigs.desserts;
+          }
+          
+          // Fallback si theme-configs.js n'est pas chargé
+          console.warn('theme-configs.js non trouvé, configuration minimale');
+          return {
+            name: 'Configuration par défaut',
+            displayName: 'Défaut',
+            folder: 'Images/Desserts/',
+            images: [],
+            sounds: {
+              bip: "bip.mp3",
+              assaillant: "Assaillant.mp3",
+              defenseur: "defenseur.mp3"
+            }
+          };
+        }
+
+        initializeTheme() {
+          this.themeConfig = this.loadThemeConfig();
+
+          // Le type de média (image ou audio) est indiqué explicitement
+          // dans theme-configs.js via "mediaType: 'audio'". Par défaut,
+          // un thème est basé sur des images.
+          if (this.themeConfig.mediaType === 'audio') {
+            this.mediaType = 'audio';
+            this.audioFiles = [];
+            this.availableAudios = [];
+          } else {
+            // Thème basé sur des images : la liste est détectée
+            // automatiquement depuis le dossier (voir loadThemeMedia(),
+            // appelée juste après dans init())
+            this.mediaType = 'image';
+            this.images = [];
+            this.availableImages = [];
+          }
+          
+          // Mise à jour du titre de la page
+          if (this.themeConfig.displayName) {
+            document.title = `Minuteur - ${this.themeConfig.displayName}`;
+            
+            // Mise à jour du h1 si il existe
+            const titleElement = document.querySelector('h1 span');
+            if (titleElement && titleElement.textContent.includes('Thématique')) {
+              titleElement.innerHTML = `Thématique: <em>${this.themeConfig.displayName}</em>`;
+            }
+          }
+
+          // Affiche la petite phrase descriptive du thème (si définie
+          // dans theme-configs.js)
+          const descriptionElement = document.getElementById('themeDescription');
+          if (descriptionElement) {
+            descriptionElement.textContent = this.themeConfig.description || '';
+          }
+          
+          console.log('Thème initialisé:', this.themeConfig.name, 'Type:', this.mediaType);
+          return this.themeConfig;
+        }
+
+        // Détection automatique des fichiers (images ou audio) du thème
+        // depuis son dossier (plus besoin de les lister dans
+        // theme-configs.js)
+        async loadThemeImages() {
+          if (!this.themeConfig.folder) return;
+          const type = this.mediaType === 'audio' ? 'audio' : 'image';
+          try {
+            const response = await fetch(`/api/list-images?folder=${encodeURIComponent(this.themeConfig.folder)}&type=${type}`);
+            if (!response.ok) {
+              throw new Error(`Erreur serveur (${response.status})`);
+            }
+            const data = await response.json();
+            const detectedFiles = data.images || [];
+
+            if (type === 'audio') {
+              this.audioFiles = detectedFiles.map(f => this.themeConfig.folder + f);
+              this.availableAudios = [...this.audioFiles];
+              console.log(`Fichiers audio détectés pour "${this.themeConfig.name}":`, this.audioFiles.length);
+            } else {
+              this.images = detectedFiles.map(f => this.themeConfig.folder + f);
+              this.availableImages = [...this.images];
+              console.log(`Images détectées pour "${this.themeConfig.name}":`, this.images.length);
+            }
+          } catch (error) {
+            console.warn('Détection automatique des fichiers impossible:', error.message);
+          }
+        }
+
+        // Fonction pour obtenir un média aléatoire (image ou audio)
+        getRandomMedia() {
+          if (this.mediaType === 'image') {
+            return this.getRandomImage();
+          } else if (this.mediaType === 'audio') {
+            return this.getRandomAudio();
+          }
+          return null;
+        }
+
+        getRandomImage() {
+          if (!this.availableImages || this.availableImages.length === 0) {
+            console.warn('Plus d\'images disponibles dans cette série !');
+            return null;
+          }
+          
+          const randomIndex = Math.floor(Math.random() * this.availableImages.length);
+          const selectedImage = this.availableImages[randomIndex];
+          
+          this.availableImages.splice(randomIndex, 1);
+          
+          const imageName = selectedImage.split('/').pop().replace('.png', '').replace('.jpg', '');
+          console.log(`Image sélectionnée: ${imageName} (${this.availableImages.length} restantes)`);
+          
+          return selectedImage;
+        }
+
+        getRandomAudio() {
+          if (!this.availableAudios || this.availableAudios.length === 0) {
+            console.warn('Plus de fichiers audio disponibles dans cette série !');
+            return null;
+          }
+          
+          const randomIndex = Math.floor(Math.random() * this.availableAudios.length);
+          const selectedAudio = this.availableAudios[randomIndex];
+          
+          this.availableAudios.splice(randomIndex, 1);
+          
+          const audioName = selectedAudio.split('/').pop().replace('.mp3', '').replace('.wav', '');
+          console.log(`Audio sélectionné: ${audioName} (${this.availableAudios.length} restants)`);
+          
+          return selectedAudio;
+        }
+
+        // Fonction pour jouer un son basé sur la configuration du thème
+        jouerSonTheme(type) {
+          const soundPath = this.themeConfig.sounds[type];
+          if (soundPath) {
+            const audio = new Audio(soundPath);
+            audio.volume = type === 'bip' ? 0.8 : 1.0;
+            audio.play().catch(err => console.log(`Lecture audio ${type} bloquée par le navigateur :`, err));
+          } else {
+            console.warn(`Son ${type} non défini pour ce thème`);
+          }
+        }
+
+        // Fonction pour mettre à jour l'affichage du média (image ou lecteur audio)
+        updateMediaDisplay(mediaSrc) {
+          if (this.mediaType === 'image') {
+            this.updateImageDisplay(mediaSrc);
+          } else if (this.mediaType === 'audio') {
+            this.updateAudioDisplay(mediaSrc);
+          }
+        }
+
+        updateImageDisplay(imageSrc) {
+          const imageEl = document.getElementById('imageAleatoire');
+          const placeholderEl = document.getElementById('noImagePlaceholder');
+          
+          if (imageSrc) {
+            imageEl.src = imageSrc;
+            imageEl.style.display = 'block';
+            placeholderEl.style.display = 'none';
+          } else {
+            imageEl.style.display = 'none';
+            placeholderEl.style.display = 'flex';
+            placeholderEl.textContent = 'En attente d\'une image...';
+          }
+        }
+
+        updateAudioDisplay(audioSrc) {
+          const mediaContainer = document.querySelector('.random-image');
+
+          // Coupe toute lecture précédente (et toute boucle en cours)
+          // avant d'en démarrer une nouvelle
+          this.stopCurrentAudio();
+
+          if (audioSrc) {
+            mediaContainer.innerHTML = `
+              <div class="audio-player">
+                <div class="audio-info">
+                  <div class="audio-icon" id="audioIcon">🔊</div>
+                </div>
+              </div>
+            `;
+
+            const audio = new Audio(audioSrc);
+            this._currentRoundAudio = audio;
+            this._audioLoopActive = true;
+            const icon = document.getElementById('audioIcon');
+
+            // Lecture en boucle, avec 1 seconde de pause entre
+            // chaque passage, tant que ce même fichier reste actif
+            // (utile pour les sons courts, ex: cris d'animaux).
+            // S'arrête dès que stopCurrentAudio() est appelée
+            // (nouvelle manche via "Bonne réponse"/"Passer").
+            const playOnce = () => {
+              if (!this._audioLoopActive || this._currentRoundAudio !== audio) return;
+              audio.currentTime = 0;
+              if (icon) icon.classList.add('playing');
+              audio.play().catch((err) => {
+                console.warn('Lecture audio impossible (autoplay bloqué par le navigateur ?) :', err.message);
+                if (icon) icon.classList.remove('playing');
+              });
+            };
+            this._audioPlayOnceFn = playOnce;
+
+            audio.addEventListener('ended', () => {
+              if (icon) icon.classList.remove('playing');
+              if (!this._audioLoopActive || this._currentRoundAudio !== audio) return;
+              this._audioLoopTimeout = setTimeout(playOnce, 1000);
+            });
+
+            playOnce();
+          } else {
+            mediaContainer.innerHTML = `
+              <div id="noImagePlaceholder" class="no-image">
+                En attente d'un fichier audio...
+              </div>
+            `;
+          }
+        }
+
+        // Coupe immédiatement le fichier audio en cours ET arrête sa
+        // boucle de relecture (appelée sur "Bonne réponse"/"Passer"
+        // pour éviter que deux fichiers se superposent au tour
+        // suivant)
+        stopCurrentAudio() {
+          this._audioLoopActive = false;
+          if (this._audioLoopTimeout) {
+            clearTimeout(this._audioLoopTimeout);
+            this._audioLoopTimeout = null;
+          }
+          if (this._currentRoundAudio) {
+            this._currentRoundAudio.pause();
+            this._currentRoundAudio.currentTime = 0;
+            this._currentRoundAudio = null;
+          }
+          this._audioPlayOnceFn = null;
+          const icon = document.getElementById('audioIcon');
+          if (icon) icon.classList.remove('playing');
+        }
+
+        // Détermine quel minuteur est actuellement en cours (ou null)
+        getActiveTimerId() {
+          if (this.timers.gauche.running) return 'gauche';
+          if (this.timers.droite.running) return 'droite';
+          return null;
+        }
+
+        handlePauseActivated() {
+          const overlay = document.getElementById('pauseOverlay');
+          if (overlay) overlay.classList.add('visible');
+
+          // Gèle le minuteur actif à sa valeur actuelle (stopTimer
+          // calcule et conserve "remaining" sans le réinitialiser)
+          this._pausedTimerId = this.getActiveTimerId();
+          if (this._pausedTimerId) {
+            this.stopTimer(this._pausedTimerId);
+          }
+
+          // Met le son en pause SANS le remettre à zéro, et suspend
+          // la boucle (annule le passage suivant s'il était en
+          // attente pendant la seconde de silence entre deux
+          // lectures), pour pouvoir reprendre exactement où on en
+          // était
+          if (this.mediaType === 'audio') {
+            if (this._audioLoopTimeout) {
+              clearTimeout(this._audioLoopTimeout);
+              this._audioLoopTimeout = null;
+              this._audioWasInGapWhenPaused = true;
+            } else {
+              this._audioWasInGapWhenPaused = false;
+            }
+            if (this._currentRoundAudio) {
+              this._currentRoundAudio.pause();
+              const icon = document.getElementById('audioIcon');
+              if (icon) icon.classList.remove('playing');
+            }
+          }
+
+          this.addLog && this.addLog('Partie mise en pause');
+          console.log('Pause activée côté Joueur');
+        }
+
+        handlePauseDeactivated() {
+          const overlay = document.getElementById('pauseOverlay');
+          const span = overlay ? overlay.querySelector('span') : null;
+
+          // Écran toujours obscur : décompte de 2s avant la reprise
+          // réelle (minuteur + son ne repartent qu'à la fin)
+          let remaining = 2;
+          if (span) span.textContent = `Reprise dans ${remaining}...`;
+
+          if (this._pauseCountdownInterval) clearInterval(this._pauseCountdownInterval);
+          this._pauseCountdownInterval = setInterval(() => {
+            remaining--;
+            if (remaining > 0) {
+              if (span) span.textContent = `Reprise dans ${remaining}...`;
+            } else {
+              clearInterval(this._pauseCountdownInterval);
+              this._pauseCountdownInterval = null;
+              this.finishPauseResume();
+            }
+          }, 1000);
+        }
+
+        // Applique réellement la reprise, une fois le décompte de 2s
+        // écoulé : retire l'écran obscur, relance le minuteur et le
+        // son là où ils s'étaient arrêtés
+        finishPauseResume() {
+          const overlay = document.getElementById('pauseOverlay');
+          const span = overlay ? overlay.querySelector('span') : null;
+          if (overlay) overlay.classList.remove('visible');
+          if (span) span.textContent = '⏸ EN PAUSE'; // prêt pour la prochaine pause
+
+          // Relance le même minuteur là où il s'était arrêté
+          // (startTimer recalcule endTime à partir de "remaining")
+          if (this._pausedTimerId) {
+            this.startTimer(this._pausedTimerId);
+            this._pausedTimerId = null;
+          }
+
+          // Reprend le son : soit en plein milieu d'un passage (on
+          // continue depuis currentTime), soit on était dans la
+          // seconde de silence entre deux lectures (on relance tout
+          // de suite la boucle)
+          if (this.mediaType === 'audio' && this._audioLoopActive) {
+            if (this._audioWasInGapWhenPaused && this._audioPlayOnceFn) {
+              this._audioPlayOnceFn();
+            } else if (this._currentRoundAudio) {
+              const icon = document.getElementById('audioIcon');
+              this._currentRoundAudio.play().then(() => {
+                if (icon) icon.classList.add('playing');
+              }).catch((err) => {
+                console.warn('Reprise du son impossible :', err.message);
+              });
+            }
+          }
+
+          console.log('Pause désactivée côté Joueur, reprise de la manche');
+        }
+
+        // Fonction pour réinitialiser les médias disponibles
+        resetAvailableMedia() {
+          if (this.mediaType === 'image') {
+            this.availableImages = [...this.images];
+          } else if (this.mediaType === 'audio') {
+            this.availableAudios = [...this.audioFiles];
+          }
+        }
+
+        // Fonction pour obtenir le nombre de médias restants
+        getRemainingMediaCount() {
+          if (this.mediaType === 'image') {
+            return this.availableImages ? this.availableImages.length : 0;
+          } else if (this.mediaType === 'audio') {
+            return this.availableAudios ? this.availableAudios.length : 0;
+          }
+          return 0;
+        }
+
+        constructor() {
+          this.database = null;
+          this.gameListener = null;
+          this.lastSyncTime = null;
+          
+          // Initialiser le thème AVANT le reste
+          this.initializeTheme();
+          
+          // Durée du minuteur : configurable par thème via
+          // "timerDuration" (en millisecondes) dans theme-configs.js.
+          // Si non précisé : 60s pour les thèmes audio, 45s sinon.
+          const defaultDuration = this.mediaType === 'audio' ? 60000 : 45000;
+          this.tempsInitial = (this.themeConfig && this.themeConfig.timerDuration) || defaultDuration;
+          this.timers = {
+            gauche: {
+              endTime: null,
+              remaining: this.tempsInitial,
+              interval: null,
+              running: false,
+            },
+            droite: {
+              endTime: null,
+              remaining: this.tempsInitial,
+              interval: null,
+              running: false,
+            },
+          };
+          
+          // Game state
+          this.gameState = {
+            lastActionTimestamp: null,
+            gameStarted: false,
+            lastCountdownValue: null
+          };
+          
+          this.init();
+        }
+
+        async init() {
+          try {
+            await this.initializeFirebase();
+            this.setupGameListener();
+            this.initializeCanvases();
+            await this.loadThemeImages();
+            this.updateConnectionStatus('connected');
+            this.setupAudioUnlock();
+
+            console.log('Application initialisée avec succès');
+          } catch (error) {
+            this.handleError('Erreur d\'initialisation', error);
+          }
+        }
+
+        // Les navigateurs bloquent la lecture automatique de son tant
+        // qu'aucune interaction humaine directe n'a eu lieu sur CETTE
+        // page (la page Joueur est purement passive, tous les clics
+        // ont lieu sur la page Arbitre, sur un autre appareil). Un
+        // seul clic ici débloque la lecture pour le reste de la
+        // session.
+        setupAudioUnlock() {
+          if (this.mediaType !== 'audio') return;
+
+          const overlay = document.getElementById('audioUnlockOverlay');
+          const btn = document.getElementById('audioUnlockBtn');
+          if (!overlay || !btn) return;
+
+          overlay.classList.add('visible');
+
+          btn.addEventListener('click', () => {
+            const unlockSound = this.themeConfig.sounds?.bip || 'bip.mp3';
+            const unlocker = new Audio(unlockSound);
+            unlocker.volume = 0.01;
+            unlocker.play().then(() => {
+              unlocker.pause();
+              unlocker.currentTime = 0;
+              overlay.classList.remove('visible');
+              console.log('Lecture audio débloquée pour la session.');
+            }).catch((err) => {
+              console.warn('Échec du déblocage audio:', err.message);
+              // On masque quand même l'écran pour ne pas bloquer la partie
+              overlay.classList.remove('visible');
+            });
+          });
+        }
+
+        async initializeFirebase() {
+          try {
+            // Remplacement local de Firebase (voir localsync.js) :
+            // même interface (ref / onValue), mais synchronisé via
+            // le serveur Node local, sans connexion internet.
+            this.database = LocalSync.createLocalDatabase();
+
+            this.firebaseRef = (_db, path) => path;
+            this.firebaseOnValue = (path, cb) => this.database.onValue(path, cb);
+            this.firebaseSet = (path, value) => this.database.set(path, value);
+
+            window.onLocalSyncStatusChange = (connected) => {
+              this.updateConnectionStatus(connected ? 'connected' : 'disconnected');
+
+              // Réannonce le thème actif à CHAQUE connexion ou
+              // reconnexion (pas seulement une fois au chargement) :
+              // garantit que la page Arbitre reçoit toujours la bonne
+              // valeur, même si la toute première annonce a été
+              // manquée (coupure réseau, tablette en arrière-plan,
+              // page restaurée depuis le cache du navigateur...).
+              if (connected && this.themeConfig && this.firebaseSet) {
+                this.firebaseSet(this.firebaseRef(this.database, 'game/theme'), this.themeConfig.name)
+                  .catch(err => console.warn('Annonce du thème échouée:', err));
+
+                // Uniquement à la toute première connexion de cette
+                // page (pas à chaque reconnexion après une simple
+                // coupure réseau) : efface l'image/le son laissés par
+                // la manche précédente, pour ne pas les montrer
+                // brièvement en arrivant sur un nouveau thème.
+                if (!this._hasConnectedOnce) {
+                  this._hasConnectedOnce = true;
+                  this.firebaseSet(this.firebaseRef(this.database, 'game/currentImage'), null).catch(() => {});
+                  this.firebaseSet(this.firebaseRef(this.database, 'game/mediaTimestamp'), null).catch(() => {});
+                }
+              }
+            };
+
+          } catch (error) {
+            this.updateConnectionStatus('disconnected');
+            throw new Error(`Échec de l'initialisation du sync local: ${error.message}`);
+          }
+        }
+
+        setupGameListener() {
+          if (!this.database) {
+            throw new Error('Base de données non initialisée');
+          }
+
+          try {
+            const gameRef = this.firebaseRef(this.database, 'game');
+            
+            this.gameListener = this.firebaseOnValue(gameRef, 
+              (snapshot) => this.handleGameUpdate(snapshot),
+              (error) => this.handleConnectionError(error)
+            );
+          } catch (error) {
+            this.handleError('Erreur de configuration du listener de jeu', error);
+          }
+        }
+
+        handleGameUpdate(snapshot) {
+          try {
+            const gameData = snapshot.val();
+            if (!gameData) return;
+
+            this.lastSyncTime = Date.now();
+            this.updateConnectionStatus('connected');
+
+            // Handle countdown
+            if (gameData.countdown && gameData.countdown.active) {
+              const countdownValue = gameData.countdown.value;
+              
+              // Détecter le tout début du décompte pour jouer la
+              // séquence de bips (une seule fois, pas à chaque tick)
+              if (countdownValue && !this.gameState.gameStarted && !this.gameState.bipSequencePlayed) {
+                this.jouerSonBip();
+                this.gameState.bipSequencePlayed = true;
+                console.log('Séquence de bips lancée pour le décompte');
+              }
+              
+              this.showCountdown(countdownValue);
+              
+              // Détecter la transition vers "GO!" pour démarrer le timer
+              if ((countdownValue === 'GO!' || countdownValue === 'GO') && 
+                  this.gameState.lastCountdownValue !== countdownValue && 
+                  !this.gameState.gameStarted) {
+                
+                console.log('Démarrage du jeu détecté!');
+                this.gameState.gameStarted = true;
+                
+                // Démarrer le timer de l'assaillant
+                setTimeout(() => {
+                  this.startTimer('gauche');
+                  this.updatePlayerDimming();
+                  console.log('Timer assaillant démarré');
+                }, 100); // Délai très court pour s'assurer que le countdown est visible
+              }
+              
+              this.gameState.lastCountdownValue = countdownValue;
+              
+            } else if (gameData.countdown && !gameData.countdown.active) {
+              this.gameState.bipSequencePlayed = false;
+              this.hideCountdown();
+            }
+
+            // Handle reset/new game
+            const isNewRound = gameData.gameReset && gameData.gameReset !== this.gameState.gameReset;
+            if (isNewRound) {
+              console.log('Reset du jeu détecté');
+              this.resetGame();
+            }
+
+            // Handle image/audio changes.
+            // On se base EXCLUSIVEMENT sur "mediaTimestamp" quand il
+            // est présent (unique à chaque nouveau tirage, envoyé par
+            // l'Arbitre en même temps que "currentImage", mais dans un
+            // message séparé). Ne pas combiner les deux avec un "OU" :
+            // sinon le message "currentImage" (qui arrive en premier)
+            // ET le message "mediaTimestamp" (qui arrive juste après)
+            // déclenchaient chacun une lecture, provoquant deux
+            // lectures qui se coupaient l'une l'autre. Le repli sur
+            // la comparaison de chemin ne sert que si l'Arbitre n'a
+            // pas encore été mis à jour avec mediaTimestamp.
+            const mediaChanged = gameData.mediaTimestamp
+              ? gameData.mediaTimestamp !== this.gameState.mediaTimestamp
+              : gameData.currentImage !== this.gameState.currentImage;
+            if (isNewRound || mediaChanged) {
+              if (this._pendingAction) {
+                // Une action (Bonne réponse/Passer) est en attente :
+                // ne pas afficher tout de suite, mais précharger en
+                // arrière-plan (surtout utile pour les images, pour
+                // qu'elles s'affichent instantanément à la révélation,
+                // 2 secondes après le clic de l'Arbitre - voir
+                // revealPendingMedia())
+                this._pendingMediaSrc = gameData.currentImage;
+                if (this.mediaType === 'image' && gameData.currentImage) {
+                  const preloadImg = new Image();
+                  preloadImg.src = gameData.currentImage;
+                }
+              } else {
+                this.updateImage(gameData.currentImage);
+              }
+            }
+
+            // Handle game actions
+            if (gameData.action && gameData.action.timestamp !== this.gameState.lastActionTimestamp) {
+              this.handleGameAction(gameData.action);
+            }
+
+            // Handle pause/reprise (assombrissement, gel du minuteur
+            // actif, pause/reprise du son en cours si thème audio)
+            if (!!gameData.isPaused !== !!this.gameState.isPaused) {
+              if (gameData.isPaused) {
+                this.handlePauseActivated();
+              } else {
+                this.handlePauseDeactivated();
+              }
+            }
+
+            // Mise à jour complète du gameState
+            this.gameState = { 
+              ...this.gameState, 
+              ...gameData,
+              gameStarted: this.gameState.gameStarted // Préserver l'état de démarrage
+            };
+
+          } catch (error) {
+            this.handleError('Erreur lors de la mise à jour du jeu', error);
+          }
+        }
+
+        resetGame() {
+          // Arrêter tous les timers
+          this.stopTimer('gauche');
+          this.stopTimer('droite');
+          
+          // Remettre à zéro les timers
+          this.timers.gauche.remaining = this.tempsInitial;
+          this.timers.droite.remaining = this.tempsInitial;
+          
+          // Mettre à jour l'affichage
+          const dureeAffichee = (this.tempsInitial / 1000).toFixed(2);
+          document.getElementById('timeAssaillant').textContent = dureeAffichee;
+          document.getElementById('timeDefenseur').textContent = dureeAffichee;
+          
+          // Cacher l'image/le son et le vainqueur
+          this.updateMediaDisplay(null);
+          document.getElementById("vainqueur").style.display = "none";
+          const retourBtnReset = document.getElementById("retourPlateauBtn");
+          if (retourBtnReset) retourBtnReset.style.display = "none";
+          
+          // Réinitialiser les pendules
+          this.initializeCanvases();
+
+          // Aucun joueur actif avant le prochain décompte : on
+          // retire l'assombrissement et le halo lumineux des deux côtés
+          const pa = document.getElementById('playerAssaillant');
+          const pd = document.getElementById('playerDefenseur');
+          if (pa) pa.classList.remove('inactive-player', 'active-player');
+          if (pd) pd.classList.remove('inactive-player', 'active-player');
+          
+          // Reset des états
+          this.gameState.gameStarted = false;
+          this.gameState.lastCountdownValue = null;
+          this.gameState.bipSequencePlayed = false;
+          this.hideActionOverlay();
+          this._pendingAction = null;
+          if (this._pauseCountdownInterval) {
+            clearInterval(this._pauseCountdownInterval);
+            this._pauseCountdownInterval = null;
+          }
+          this._pendingMediaSrc = undefined;
+          if (this._actionRevealTimeout) {
+            clearTimeout(this._actionRevealTimeout);
+            this._actionRevealTimeout = null;
+          }
+          
+          console.log('Jeu réinitialisé');
+        }
+
+        handleGameAction(action) {
+          console.log('Action reçue:', action);
+
+          // Remarque : on ne coupe plus l'audio ici. updateAudioDisplay()
+          // s'en charge déjà correctement à chaque nouvelle manche
+          // (elle coupe l'ancien son avant de jouer le nouveau).
+
+          if (action.type === 'bonneReponse' || action.type === 'passer' || action.type === 'passerAutre') {
+            // Mémorise quel côté jouait AVANT de tout arrêter (les
+            // deux minuteurs seront stoppés, impossible de le savoir
+            // après coup)
+            const activeBefore = this.getActiveTimerId();
+
+            // Stoppe LES DEUX minuteurs immédiatement
+            if (this.timers.gauche.running) this.stopTimer('gauche');
+            if (this.timers.droite.running) this.stopTimer('droite');
+
+            // Obscurcit la zone image/son tout de suite
+            this._pendingAction = { type: action.type, activeBefore };
+            this.showActionOverlay(action.type);
+
+            // Délai FIXE de 2 secondes, entièrement piloté ici (pas
+            // par l'Arbitre) : ainsi, aucune variation de réseau ne
+            // peut l'allonger. La nouvelle image (envoyée par
+            // l'Arbitre séparément, presque immédiatement) est
+            // préchargée en arrière-plan pendant ce temps, pour
+            // qu'elle s'affiche instantanément à la révélation.
+            if (this._actionRevealTimeout) clearTimeout(this._actionRevealTimeout);
+            this._actionRevealTimeout = setTimeout(() => {
+              this.revealPendingMedia();
+            }, 2000);
+          }
+
+          this.gameState.lastActionTimestamp = action.timestamp;
+        }
+
+        // Révèle l'image/le son mis en attente (précédemment
+        // préchargé) et applique l'action différée (changement de
+        // minuteur actif ou pénalité)
+        revealPendingMedia() {
+          this._actionRevealTimeout = null;
+
+          if (this._pendingMediaSrc !== undefined) {
+            this.updateImage(this._pendingMediaSrc);
+            this._pendingMediaSrc = undefined;
+          }
+
+          this.hideActionOverlay();
+
+          if (this._pendingAction) {
+            this.applyDelayedAction(this._pendingAction.type, this._pendingAction.activeBefore);
+            this._pendingAction = null;
+          }
+        }
+
+        // Affiche un écran obscurci devant l'image/le son, avec un
+        // message de confirmation (Bonne réponse / Passer)
+        showActionOverlay(type) {
+          this.hideActionOverlay();
+          const mediaContainer = document.querySelector('.random-image');
+          if (!mediaContainer) return;
+
+          const feedback = document.createElement('div');
+          feedback.className = 'action-feedback';
+          feedback.id = 'actionOverlay';
+          feedback.textContent = type === 'bonneReponse'
+            ? '✅ Bonne réponse !'
+            : (type === 'passerAutre' ? '➡️ Nouvelle image...' : '⏭️ Passé !');
+          mediaContainer.appendChild(feedback);
+        }
+
+        hideActionOverlay() {
+          const el = document.getElementById('actionOverlay');
+          if (el) el.remove();
+        }
+
+        // Met à jour l'assombrissement visuel du joueur qui n'est
+        // pas en train de jouer, et le halo lumineux de celui qui joue
+        updatePlayerDimming() {
+          const activeId = this.getActiveTimerId();
+          const pa = document.getElementById('playerAssaillant');
+          const pd = document.getElementById('playerDefenseur');
+          if (!pa || !pd) return;
+
+          if (!activeId) {
+            pa.classList.remove('inactive-player', 'active-player');
+            pd.classList.remove('inactive-player', 'active-player');
+            return;
+          }
+          if (activeId === 'gauche') {
+            pa.classList.remove('inactive-player');
+            pa.classList.add('active-player');
+            pd.classList.add('inactive-player');
+            pd.classList.remove('active-player');
+          } else {
+            pd.classList.remove('inactive-player');
+            pd.classList.add('active-player');
+            pa.classList.add('inactive-player');
+            pa.classList.remove('active-player');
+          }
+        }
+
+        // Applique réellement l'effet de "Bonne réponse"/"Passer" une
+        // fois le délai de 1,5s écoulé, en se basant sur le côté qui
+        // jouait AVANT l'arrêt des deux minuteurs (activeBefore),
+        // puisque les deux sont désormais à l'arrêt et qu'on ne peut
+        // plus le déduire de leur état "running"
+        applyDelayedAction(actionType, activeBefore) {
+          const id = activeBefore || 'gauche';
+
+          if (actionType === 'bonneReponse') {
+            const next = id === 'gauche' ? 'droite' : 'gauche';
+            this.startTimer(next);
+            this.clignoterPendule(next);
+          } else if (actionType === 'passer') {
+            const timer = this.timers[id];
+
+            // Retirer 3 secondes (3000 ms)
+            timer.remaining -= 3000;
+            if (timer.remaining < 0) timer.remaining = 0;
+
+            this.startTimer(id);
+            this.clignoterPendule(id);
+
+            // Clignotement du fond du minuteur concerné
+            const elem = document.getElementById(id);
+            const originalBg = elem.style.backgroundColor || "#f0f8ff";
+            let count = 0;
+            const blinkInterval = setInterval(() => {
+              elem.style.backgroundColor = (elem.style.backgroundColor === "rgb(240, 153, 153)" || elem.style.backgroundColor === "#F09999")
+                ? originalBg
+                : "#F09999";
+              count++;
+              if (count >= 4) {
+                clearInterval(blinkInterval);
+                elem.style.backgroundColor = originalBg;
+              }
+            }, 250);
+          } else if (actionType === 'passerAutre') {
+            // Aucune pénalité, aucun changement de côté : on relance
+            // simplement le même minuteur qui jouait avant
+            this.startTimer(id);
+            this.clignoterPendule(id);
+          }
+
+          this.updatePlayerDimming();
+        }
+
+        startTimer(id) {
+          let timer = this.timers[id];
+          if (timer.running) return;
+          
+          console.log(`Démarrage du timer ${id} avec ${timer.remaining}ms restant`);
+          
+          timer.endTime = Date.now() + timer.remaining;
+          timer.interval = setInterval(() => {
+            this.updateDisplay(id);
+            this.drawPendule(id);
+          }, 10);
+          timer.running = true;
+        }
+
+        stopTimer(id) {
+          let timer = this.timers[id];
+          if (timer.interval) {
+            clearInterval(timer.interval);
+          }
+          timer.running = false;
+          console.log(`Timer ${id} arrêté`);
+        }
+
+        updateDisplay(id) {
+          let timer = this.timers[id];
+          let remaining = timer.endTime - Date.now();
+          if (remaining < 0) remaining = 0;
+          timer.remaining = remaining;
+
+          let seconds = String(Math.floor(remaining / 1000)).padStart(2, "0");
+          let centi = String(Math.floor((remaining % 1000) / 10)).padStart(2, "0");
+
+          const timeElementId = id === 'gauche' ? 'timeAssaillant' : 'timeDefenseur';
+          document.getElementById(timeElementId).textContent = `${seconds}.${centi}`;
+
+          if (remaining <= 0) {
+            this.stopTimer(id);
+            this.handleTimerExpired(id);
+          }
+        }
+
+        handleTimerExpired(id) {
+          const elem = document.getElementById(id);
+
+          // Force le redémarrage de l'animation même si elle est
+          // déjà en cours (clic rapide/relance rapprochée), et se
+          // base sur la fin réelle de l'animation plutôt qu'un délai
+          // fixe pour retirer la classe - évite que l'élément reste
+          // bloqué en rouge.
+          elem.classList.remove("clignote");
+          void elem.offsetWidth; // force le reflow
+          elem.classList.add("clignote");
+          elem.addEventListener("animationend", () => {
+            elem.classList.remove("clignote");
+          }, { once: true });
+
+          // Cacher l'image/le son
+          this.updateMediaDisplay(null);
+
+          // Afficher vainqueur
+          this.showWinner(id);
+        }
+
+        showWinner(timerId) {
+          const vainqueurDiv = document.getElementById("vainqueur");
+          let textColor = "";
+          let message = "";
+
+          if (timerId === "gauche") {
+            textColor = "#229119"; // Couleur Défenseur
+            message = "→ Défenseur gagne !";
+            // Jouer le son Défenseur - MODIFIÉ pour utiliser les chemins fixes
+            this.jouerSonVainqueur("defenseur");
+          } else {
+            textColor = "#C21729"; // Couleur Assaillant
+            message = "← Assaillant gagne !";
+            // Jouer le son Assaillant - MODIFIÉ pour utiliser les chemins fixes
+            this.jouerSonVainqueur("assaillant");
+          }
+
+          vainqueurDiv.innerHTML = `
+            <a href="theme.html" title="Retour au thème" style="text-decoration: none; color: inherit;">
+              <span id="vainqueurTexte">${message}</span>
+            </a>
+          `;
+          
+          vainqueurDiv.style.color = textColor;
+          vainqueurDiv.style.display = "block";
+
+          // Afficher le bouton "Retour au plateau" en bas de page
+          const retourBtn = document.getElementById("retourPlateauBtn");
+          if (retourBtn) retourBtn.style.display = "block";
+
+          // Clignotement
+          const texte = document.getElementById("vainqueurTexte");
+          const originalColor = textColor;
+          const blinkColor = "blue";
+          let blinkCount = 0;
+          const maxBlinks = 5;
+
+          const blinkInterval = setInterval(() => {
+            texte.style.color = (texte.style.color === blinkColor) ? originalColor : blinkColor;
+            blinkCount++;
+            if (blinkCount >= maxBlinks * 2) {
+              clearInterval(blinkInterval);
+              texte.style.color = originalColor;
+            }
+          }, 250);
+        }
+
+        // MODIFIÉ : Fonction pour jouer les sons de vainqueur avec chemins fixes
+        jouerSonVainqueur(type) {
+          // Utiliser des chemins fixes pour les sons de vainqueur, indépendamment du thème
+          const cheminSon = type === "defenseur" ? "defenseur.mp3" : "Assaillant.mp3";
+          
+          console.log(`Tentative de lecture du son: ${cheminSon}`);
+          
+          const audio = new Audio(cheminSon);
+          audio.volume = 1.0; // Volume à 100%
+          
+          audio.play().then(() => {
+            console.log(`Son ${type} joué avec succès`);
+          }).catch(err => {
+            console.log(`Lecture audio ${type} bloquée par le navigateur ou fichier non trouvé:`, err);
+            
+            // Fallback: essayer avec le chemin du thème si les fichiers fixes n'existent pas
+            const fallbackSound = this.themeConfig.sounds[type];
+            if (fallbackSound && fallbackSound !== cheminSon) {
+              console.log(`Tentative avec le son du thème: ${fallbackSound}`);
+              const audioFallback = new Audio(fallbackSound);
+              audioFallback.volume = 1.0;
+              audioFallback.play().catch(err2 => console.log("Fallback audio également échoué:", err2));
+            }
+          });
+        }
+
+        jouerSonBip() {
+          // Utiliser le son bip du thème ou un fallback
+          const bipSoundPath = this.themeConfig.sounds?.bip || "bip.mp3";
+
+          // Réutilise le même objet Audio à chaque lecture (plutôt
+          // que d'en créer un nouveau), et remet toujours currentTime
+          // à 0 avant de jouer : garantit qu'aucune lecture ne peut
+          // se superposer à la précédente (plus d'écho).
+          if (!this._bipAudio || this._bipAudioSrc !== bipSoundPath) {
+            this._bipAudio = new Audio(bipSoundPath);
+            this._bipAudio.volume = 0.8;
+            this._bipAudioSrc = bipSoundPath;
+          }
+
+          const jouerUneFois = () => {
+            this._bipAudio.currentTime = 0;
+            this._bipAudio.play().catch(err => console.log("Lecture audio bip bloquée par le navigateur :", err));
+          };
+
+          // 3 bips espacés d'1 seconde, sur 3 secondes au total
+          // (aligné avec le décompte 3, 2, 1 de la page Arbitre)
+          jouerUneFois();
+          setTimeout(jouerUneFois, 1000);
+          setTimeout(jouerUneFois, 2000);
+        }
+
+        updateImage(imageSrc) {
+          this.updateMediaDisplay(imageSrc);
+        }
+
+        showCountdown(value) {
+          const countdownEl = document.getElementById('compteARebours');
+          if (countdownEl) {
+            if (value === 'GO!' || value === 'GO') {
+              countdownEl.textContent = 'GO!';
+              countdownEl.style.color = '#4CAF50';
+            } else {
+              countdownEl.textContent = value;
+              countdownEl.style.color = '#E3D42D';
+            }
+            countdownEl.style.opacity = '1';
+          }
+        }
+
+        hideCountdown() {
+          const countdownEl = document.getElementById('compteARebours');
+          if (countdownEl) {
+            countdownEl.style.opacity = '0';
+          }
+        }
+
+        clignoterPendule(id) {
+          const canvas = document.getElementById(id === "gauche" ? "penduleGauche" : "penduleDroite");
+          let clignote = true;
+          const interval = setInterval(() => {
+            canvas.style.borderColor = clignote ? "blue" : (id === "gauche" ? "#C21729" : "#229119");
+            clignote = !clignote;
+          }, 75);
+          setTimeout(() => {
+            clearInterval(interval);
+            canvas.style.borderColor = id === "gauche" ? "#C21729" : "#229119";
+          }, 750);
+        }
+
+        drawPendule(id) {
+          const canvas = document.getElementById(id === "gauche" ? "penduleGauche" : "penduleDroite");
+          const ctx = canvas.getContext("2d");
+          const timer = this.timers[id];
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          const radius = canvas.width / 2 - 10;
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+          ctx.fillStyle = "#e0e0e0";
+          ctx.fill();
+
+          let ratio = timer.remaining / this.tempsInitial;
+          if (ratio < 0) ratio = 0;
+
+          let startAngle = -Math.PI / 2;
+          let endAngle = startAngle + ratio * 2 * Math.PI;
+
+          ctx.beginPath();
+          ctx.moveTo(centerX, centerY);
+          ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
+          ctx.fillStyle = id === "gauche" ? "#C21729" : "#229119";
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius - 20, 0, 2 * Math.PI);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+        }
+
+        initializeCanvases() {
+          this.drawPendule("gauche");
+          this.drawPendule("droite");
+        }
+
+        updateConnectionStatus(status) {
+          const statusEl = document.getElementById('connectionStatus');
+          if (!statusEl) return;
+
+          switch (status) {
+            case 'connected':
+              statusEl.textContent = '🟢 Synchronisé';
+              statusEl.className = 'connection-status connected';
+              break;
+            case 'connecting':
+              statusEl.textContent = '🟡 Connexion...';
+              statusEl.className = 'connection-status reconnecting';
+              break;
+            case 'disconnected':
+              statusEl.textContent = '🔴 Déconnecté';
+              statusEl.className = 'connection-status disconnected';
+              break;
+          }
+        }
+
+        handleConnectionError(error) {
+          console.error('Erreur de connexion Firebase:', error);
+          this.updateConnectionStatus('disconnected');
+        }
+
+        handleError(context, error) {
+          console.error(`${context}:`, error);
+        }
+
+        cleanup() {
+          Object.keys(this.timers).forEach(id => this.stopTimer(id));
+          
+          if (this.gameListener && typeof this.gameListener === 'function') {
+            this.gameListener();
+          }
+        }
+      }
+
+      // Initialisation
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          window.timerApp = new TimerApp();
+        });
+      } else {
+        window.timerApp = new TimerApp();
+      }
+
+      window.addEventListener('beforeunload', () => {
+        if (window.timerApp) {
+          window.timerApp.cleanup();
+        }
+      });
+    </script>
+  </body>
+</html>

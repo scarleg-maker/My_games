@@ -1,0 +1,12 @@
+{
+  "name": "minuteur-serveur-local",
+  "version": "1.0.0",
+  "description": "Serveur local (sans internet) pour synchroniser les pages Arbitre et Joueur du minuteur",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

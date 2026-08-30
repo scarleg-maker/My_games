@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme</title>
+    <!-- Inclure le fichier de configuration -->
+    <script src="themes-config.js"></script>
+    <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: linear-gradient(105deg, #F2AF3A 0%, #F4DC67 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      }
+      /* Ovale central */
+      .ovale {
+        width: 750px;
+        height: 500px;
+        background-color: lightblue;
+        border-radius: 50%;
+        border: 6px solid darkred;
+        position: absolute;
+        top: 200px;
+        left: 30.5%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 100px;
+        font-family: 'Algerian', sans-serif;
+        color: darkblue;
+        font-weight: bold;
+        text-align: center;
+        padding: 40px;
+        box-sizing: border-box;
+        cursor: default;
+        user-select: none;
+        line-height: 1.05;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        white-space: normal;
+      }
+      /* Image à droite */
+      #imageDroite {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        top: calc(200px + (500px - 400px)/2);
+        left: calc(30.5% + 750px + 20px);
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        border-radius: 15px;
+        object-fit: cover;
+      }
+      /* Image à gauche */
+      #imageGauche {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        top: calc(200px + (500px - 400px)/2);
+        left: calc(30.5% - 400px - 20px);
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        border-radius: 15px;
+        object-fit: cover;
+        transform: scaleX(-1);
+      }
+      /* Bouton */
+      #startBtn {
+        position: absolute;
+        top: 725px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 30px;
+        font-size: 65px;
+        font-family: Bookman Old Style, sans-serif;
+        background-color: darkblue;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      /* Effet au survol du bouton Lancer */
+      #startBtn:hover {
+        background-color: #20832B;
+      }
+
+      /* Sélecteur de mode - Ajout */
+      .mode-selector {
+        position: absolute;
+        top: 750px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        gap: 20px;
+        margin-top: 20px;
+      }
+      
+      .mode-btn {
+        padding: 15px 30px;
+        font-size: 24px;
+        font-family: 'Bookman Old Style', sans-serif;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      .mode-btn.joueur {
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+      }
+      
+     
+      .mode-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      }
+      
+      .back-to-draw {
+        margin-top: 20px;
+        padding: 15px 30px;
+        font-size: 24px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        background: rgba(0, 0, 0, 0.3);
+        color: white;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        font-family: 'Bookman Old Style', sans-serif;
+        transition: all 0.3s ease;
+      }
+
+      .back-to-draw:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      }
+
+      .back-to-draw:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 style="color: darkblue; text-align: center; padding-top: 0px; height: 30px; font-size: 80px;">
+      <u><b style="font-family: Bookman Old Style;"><span>Thématique</span></b></u>
+    </h1>
+    <div class="ovale" id="ovale">Cliquez sur "Lancer"</div>
+    
+    <img id="imageGauche" src="" alt="Image thématique gauche">
+    <img id="imageDroite" src="" alt="Image thématique droite">
+    
+    <button id="startBtn">Lancer</button>
+    
+    <!-- Sélecteur de mode (caché initialement) -->
+    <div class="mode-selector" id="modeSelector">
+      <button class="mode-btn joueur" id="joueurBtn">👥 Mode Joueur</button>
+      <button class="back-to-draw" id="nouveauTirageBtn">🎲 Nouveau tirage du Défenseur</button>
+    </div>
+
+    <script>
+      // Mapping entre les anciens noms et les nouvelles clés
+      const themeMapping = {
+        "Langues étrangères": "langues-etrangeres",
+        "Génériques de séries": "series", 
+        "Desserts": "desserts",
+        "Drapeaux": "drapeaux",
+        "Sports": "sports",
+        "Personnages": "personnages",
+        "Mammifères": "mammiferes",
+		"Oiseaux": "oiseaux",
+		"Insectes": "insectes",
+        "Moyens de transport": "transport",
+        "Monnaies du monde": "monnaies",
+        "Instruments de musique": "instruments",
+        "Fruits": "fruits",
+        "Logos de marques": "logos",
+        "Géographie": "geographie",
+        "Cinéma": "cinema",
+        "Légumes": "legumes",
+        "Poissons et animaux marins": "poissons-marins",
+        "Arbres et feuilles": "arbres-feuilles",
+        "Cris d'animaux": "cris-animaux",
+        "Personnages Pokémon": "pokemon",
+        "Personnages Pixar": "pixar",
+        "Personnages de jeux vidéo": "jeux-video",
+        "Personnages mythologiques": "mythologie",
+        "Génériques de dessins animés": "dessins-animes",
+        "Accents et langues parlées": "accents-langues",
+        "Marques de voiture": "marques-voiture",
+        "Outils de bricolage": "bricolage",
+        "Jeux de société": "jeux-societe",
+        "Métiers": "metiers"
+      };
+
+      // Liste mise à jour des thèmes (gardez vos images existantes)
+      // ⚠️ Pour retirer temporairement un thème du tirage (sans le supprimer),
+      // passez son "actif" à false. Repassez-le à true pour le réactiver.
+      const textes = [
+        { texte: "Langues étrangères", themeKey: "langues-etrangeres", image: "Themes/langues.png", actif: true },
+        { texte: "Génériques de séries", themeKey: "series", image: "Themes/generiques.png", actif: true },
+        { texte: "Desserts", themeKey: "desserts", image: "Themes/desserts.png", actif: true },
+        { texte: "Drapeaux", themeKey: "drapeaux", image: "Themes/drapeaux.png", actif: true },
+        { texte: "Sports", themeKey: "sports", image: "Themes/sports.png", actif: true },
+        { texte: "Personnages", themeKey: "personnages", image: "Themes/personnages.png", actif: true },
+        { texte: "Mammiferes", themeKey: "mammiferes", image: "Themes/mammiferes.png", actif: true },
+		{ texte: "Insectes", themeKey: "insectes", image: "Themes/insectes.png", actif: true },
+		{ texte: "Oiseaux", themeKey: "oiseaux", image: "Themes/oiseaux.png", actif: true },
+        { texte: "Moyens de transport", themeKey: "transport", image: "Themes/transport.png", actif: true },
+        { texte: "Monnaies du monde", themeKey: "monnaies", image: "Themes/monnaies.png", actif: true },
+        { texte: "Instruments de musique", themeKey: "instruments", image: "Themes/instruments.png", actif: true },
+        { texte: "Fruits", themeKey: "fruits", image: "Themes/fruits.png", actif: true },
+        { texte: "Logos de marques", themeKey: "logos", image: "Themes/logos.png", actif: true },
+        { texte: "Géographie", themeKey: "geographie", image: "Themes/geographie.png", actif: true },
+        { texte: "Cinéma", themeKey: "cinema", image: "Themes/cinema.png", actif: true },
+        { texte: "Légumes", themeKey: "legumes", image: "Themes/legumes.png", actif: true },
+        { texte: "Poissons et animaux marins", themeKey: "poissons-marins", image: "Themes/poissons-marins.png", actif: true },
+        { texte: "Arbres et feuilles", themeKey: "arbres-feuilles", image: "Themes/arbres-feuilles.png", actif: true },
+        { texte: "Cris d'animaux", themeKey: "cris-animaux", image: "Themes/cris-animaux.png", actif: true },
+        { texte: "Personnages Pokémon", themeKey: "pokemon", image: "Themes/pokemon.png", actif: true },
+        { texte: "Personnages Pixar", themeKey: "pixar", image: "Themes/pixar.png", actif: true },
+        { texte: "Personnages de jeux vidéo", themeKey: "jeux-video", image: "Themes/jeux-video.png", actif: true },
+        { texte: "Personnages mythologiques", themeKey: "mythologie", image: "Themes/mythologie.png", actif: true },
+        { texte: "Génériques de dessins animés", themeKey: "dessins-animes", image: "Themes/dessins-animes.png", actif: true },
+        { texte: "Accents et langues parlées", themeKey: "accents-langues", image: "Themes/accents-langues.png", actif: true },
+        { texte: "Marques de voiture", themeKey: "marques-voiture", image: "Themes/marques-voiture.png", actif: true },
+        { texte: "Outils de bricolage", themeKey: "bricolage", image: "Themes/bricolage.png", actif: true },
+        { texte: "Jeux de société", themeKey: "jeux-societe", image: "Themes/jeux-societe.png", actif: true },
+        { texte: "Métiers", themeKey: "metiers", image: "Themes/metiers.png", actif: true }
+      ];
+
+      // Renvoie uniquement les thèmes actifs (actif !== false), utilisé
+      // partout où un tirage (visuel ou final) est effectué.
+      function themesActifs() {
+        const actifs = textes.filter(t => t.actif !== false);
+        if (actifs.length === 0) {
+          console.warn('Aucun thème actif : tous les thèmes ont actif:false. Le tirage utilisera la liste complète par sécurité.');
+          return textes;
+        }
+        return actifs;
+      }
+
+      const ovale = document.getElementById('ovale');
+      const startBtn = document.getElementById('startBtn');
+      const imageDroite = document.getElementById('imageDroite');
+      const imageGauche = document.getElementById('imageGauche');
+      const modeSelector = document.getElementById('modeSelector');
+      const joueurBtn = document.getElementById('joueurBtn');
+      const nouveauTirageBtn = document.getElementById('nouveauTirageBtn');
+
+      let intervalId;
+      const duree = 2500;
+      const intervalTemps = 150;
+      let tirageEffectue = false;
+      let selectedTheme = null;
+
+      function texteAleatoire() {
+        const pool = themesActifs();
+        const choix = pool[Math.floor(Math.random() * pool.length)];
+        return { index: textes.indexOf(choix), texte: choix.texte, themeKey: choix.themeKey };
+      }
+
+      // ---------- Compteur d'utilisation par thème (anti-répétition) ----------
+      // Stocké dans localStorage, invisible pour le joueur, persiste entre les pages.
+
+      function getUsageCounts() {
+        try {
+          return JSON.parse(localStorage.getItem('themeUsageCounts')) || {};
+        } catch (e) {
+          return {};
+        }
+      }
+
+      function saveUsageCounts(counts) {
+        localStorage.setItem('themeUsageCounts', JSON.stringify(counts));
+      }
+
+      // Tirage final pondéré : les thèmes les moins souvent validés ont plus
+      // de chances de sortir. Le dernier thème validé est exclu du tirage
+      // (s'il reste au moins un autre thème disponible).
+      function tirageFinalPondere() {
+        const counts = getUsageCounts();
+        const dernierTheme = localStorage.getItem('lastThemeKey');
+
+        let pool = themesActifs();
+        if (dernierTheme && pool.length > 1) {
+          const filtre = pool.filter(t => t.themeKey !== dernierTheme);
+          if (filtre.length > 0) pool = filtre;
+        }
+
+        const maxCount = Math.max(0, ...pool.map(t => counts[t.themeKey] || 0));
+
+        // Poids inversement proportionnel au compteur : un thème jamais
+        // validé a un poids maximal, un thème très souvent validé un
+        // poids minimal (mais jamais nul, pour qu'il reste possible).
+        const poids = pool.map(t => {
+          const c = counts[t.themeKey] || 0;
+          return Math.pow(maxCount - c + 1, 2);
+        });
+
+        const total = poids.reduce((a, b) => a + b, 0);
+        let r = Math.random() * total;
+        let choix = pool[0];
+        for (let i = 0; i < pool.length; i++) {
+          r -= poids[i];
+          if (r <= 0) { choix = pool[i]; break; }
+        }
+
+        return { index: textes.indexOf(choix), texte: choix.texte, themeKey: choix.themeKey };
+      }
+
+      // Enregistre la validation du thème (incrémente son compteur) puis
+      // redirige vers la page Joueur.
+      function validerTheme() {
+        if (!selectedTheme) return;
+
+        const counts = getUsageCounts();
+        counts[selectedTheme] = (counts[selectedTheme] || 0) + 1;
+        saveUsageCounts(counts);
+        localStorage.setItem('lastThemeKey', selectedTheme);
+
+        window.location.href = `joueur.html?theme=${selectedTheme}`;
+      }
+
+      // Ajuste dynamiquement la taille de police pour que le texte
+      // tienne toujours à l'intérieur de l'ovale, quelle que soit sa longueur
+      function ajusterTaillePolice(texte) {
+        const longueur = texte.length;
+        let taille;
+
+        if (longueur <= 8)       taille = 100;
+        else if (longueur <= 12) taille = 85;
+        else if (longueur <= 16) taille = 72;
+        else if (longueur <= 20) taille = 60;
+        else if (longueur <= 25) taille = 50;
+        else if (longueur <= 30) taille = 42;
+        else                     taille = 36;
+
+        ovale.style.fontSize = taille + 'px';
+      }
+
+      function lancerDefilement() {
+        if (tirageEffectue) return;
+        tirageEffectue = true;
+
+        startBtn.textContent = "Suspens...";
+        startBtn.disabled = true;
+        ovale.style.cursor = 'default';
+        ovale.textContent = "Défilement...";
+        imageDroite.style.opacity = 0;
+        imageGauche.style.opacity = 0;
+
+        intervalId = setInterval(() => {
+          const random = texteAleatoire();
+          ovale.textContent = random.texte;
+          ovale.dataset.index = random.index;
+          ovale.dataset.themeKey = random.themeKey;
+          ajusterTaillePolice(random.texte);
+        }, intervalTemps);
+
+        setTimeout(() => {
+          clearInterval(intervalId);
+
+          const final = tirageFinalPondere();
+          ovale.textContent = final.texte;
+          ovale.dataset.index = final.index;
+          ovale.dataset.themeKey = final.themeKey;
+          ajusterTaillePolice(final.texte);
+          selectedTheme = final.themeKey;
+
+          ovale.style.cursor = 'pointer';
+          startBtn.style.display = 'none';
+          modeSelector.style.display = 'flex';
+
+          // Affichage des images
+          imageDroite.src = textes[final.index].image;
+          imageGauche.src = textes[final.index].image;
+
+          imageDroite.style.opacity = 0;
+          imageGauche.style.opacity = 0;
+          void imageDroite.offsetWidth;
+          void imageGauche.offsetWidth;
+
+          imageDroite.style.opacity = 1;
+          imageGauche.style.opacity = 1;
+
+          // Sauvegarder le thème sélectionné
+          if (window.themeConfigs && window.themeConfigs[selectedTheme]) {
+            localStorage.setItem('selectedTheme', JSON.stringify(window.themeConfigs[selectedTheme]));
+            localStorage.setItem('selectedThemeKey', selectedTheme);
+            console.log(`Thème sélectionné: ${selectedTheme}`, window.themeConfigs[selectedTheme]);
+          } else {
+            console.warn(`Thème ${selectedTheme} non trouvé dans la configuration`);
+          }
+
+        }, duree);
+      }
+
+      function resetDraw() {
+        tirageEffectue = false;
+        selectedTheme = null;
+        startBtn.textContent = "Lancer";
+        startBtn.disabled = false;
+        startBtn.style.display = 'block';
+        modeSelector.style.display = 'none';
+        ovale.textContent = 'Cliquez sur "Lancer"';
+        ovale.style.fontSize = '60px';
+        ovale.style.cursor = 'default';
+        imageDroite.style.opacity = 0;
+        imageGauche.style.opacity = 0;
+        ovale.onclick = null;
+      }
+
+      // Event listeners
+      startBtn.addEventListener('click', lancerDefilement);
+
+      joueurBtn.addEventListener('click', validerTheme);
+
+      // Le bouton "Nouveau tirage du Défenseur" ne peut être utilisé
+      // qu'une seule fois : il se désactive après le premier clic.
+      nouveauTirageBtn.addEventListener('click', () => {
+        if (nouveauTirageBtn.disabled) return;
+        nouveauTirageBtn.disabled = true;
+        resetDraw();
+      });
+
+      // Gestion du clic direct sur l'ovale (pour compatibilité)
+      ovale.addEventListener('click', () => {
+        if (selectedTheme && modeSelector.style.display === 'flex') {
+          validerTheme();
+        }
+      });
+    </script>
+  </body>
+</html>

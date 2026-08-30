@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Arbitre</title>
+    <script src="theme-configs.js"></script>
+    <script src="localsync.js"></script>
+    <style>
+      body {
+        margin: 0;
+				padding: 20px 0; /* Ajouter un padding top */
+  			min-height: 100vh; /* Changer height en min-height */
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        font-family: 'Arial', sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+				justify-content: flex-start; /* Changer de center à flex-start */
+        color: white;
+      }
+      .arbitre-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        text-align: center;
+        min-width: 600px;
+        max-width: 800px;
+         margin-top: 60px; /* Ajouter une marge pour éviter le bouton retour */
+      }
+      h1 {
+        font-size: 48px;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        color: #FFD700;
+      }
+      .connection-status {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        z-index: 1000;
+      }
+      .connected {
+        background: #4CAF50;
+        color: white;
+      }
+      .disconnected {
+        background: #f44336;
+        color: white;
+      }
+      .reconnecting {
+        background: #ff9800;
+        color: white;
+      }
+      .game-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin: 30px 0;
+      }
+      .control-section {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .control-section h2 {
+        margin: 0 0 20px 0;
+        color: #FFD700;
+        font-size: 24px;
+      }
+      .btn-arbitre {
+        padding: 15px 30px;
+        font-size: 18px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        width: 100%;
+        margin: 10px 0;
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-arbitre:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+      .btn-start {
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+      }
+      .btn-start:hover:not(:disabled) {
+        background: linear-gradient(45deg, #45a049, #3d8b40);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+      }
+      .btn-pause {
+        background: linear-gradient(45deg, #ff9800, #e68900);
+        color: white;
+      }
+      .btn-pause:hover:not(:disabled) {
+        background: linear-gradient(45deg, #e68900, #cc7700);
+        transform: translateY(-2px);
+      }
+      .btn-reset {
+        background: linear-gradient(45deg, #f44336, #d32f2f);
+        color: white;
+      }
+      .btn-reset:hover:not(:disabled) {
+        background: linear-gradient(45deg, #d32f2f, #b71c1c);
+        transform: translateY(-2px);
+      }
+      .btn-action {
+        background: linear-gradient(45deg, #2196F3, #1976D2);
+        color: white;
+      }
+      .btn-action:hover:not(:disabled) {
+        background: linear-gradient(45deg, #1976D2, #1565C0);
+        transform: translateY(-2px);
+      }
+      .btn-passer-autre {
+        background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+        color: white;
+      }
+      .btn-passer-autre:hover:not(:disabled) {
+        background: linear-gradient(45deg, #7B1FA2, #6A1B9A);
+        transform: translateY(-2px);
+      }
+      .btn-new-series {
+        background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+        color: white;
+      }
+      .btn-new-series:hover:not(:disabled) {
+        background: linear-gradient(45deg, #7B1FA2, #6A1B9A);
+        transform: translateY(-2px);
+      }
+      .game-status {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .game-status h3 {
+        margin: 0 0 15px 0;
+        color: #FFD700;
+        font-size: 20px;
+      }
+      .status-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 15px;
+        text-align: center;
+      }
+      .status-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+      }
+      .status-item .label {
+        font-size: 14px;
+        opacity: 0.8;
+        margin-bottom: 5px;
+      }
+      .status-item .value {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      
+      /* Styles pour les timers */
+      .timers-display {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px 0;
+        align-items: center;
+      }
+      .timer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .minuteur {
+        font-size: 2em;
+        border: 10px solid #007bff;
+        padding: 10px;
+        border-radius: 20px;
+        width: 150px;
+        background-color: #f0f8ff;
+        margin: 0 20px;
+        user-select: none;
+        text-align: center;
+        font-family: Agency FB;
+        font-weight: bold;
+      }
+      #gauche.minuteur {
+        border: 10px solid #C21729;
+        color: #C21729;
+      }
+      #droite.minuteur {
+        border: 10px solid #E8A323;
+        color: #E8A323;
+      }
+      .label h3 {
+        margin: 5px 0;
+        font-size: 20px;
+      }
+      .label.assaillant h3 {
+        color: #C21729;
+      }
+      .label.defenseur h3 {
+        color: #E8A323;
+      }
+
+      @keyframes clignoterRouge {
+        0%, 100% { background-color: #f0f8ff; }
+        50% { background-color: red; }
+      }
+      .clignote {
+        animation: clignoterRouge 0.5s infinite;
+      }
+
+      .image-section {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .image-section h3 {
+        margin: 0 0 15px 0;
+        color: #FFD700;
+      }
+      .current-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 10px;
+        border: 2px solid #FFD700;
+      }
+      .image-placeholder {
+        width: 200px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px dashed #FFD700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        color: #FFD700;
+        font-style: italic;
+      }
+      .log-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 20px 0;
+        max-height: 150px;
+        overflow-y: auto;
+      }
+      .log-entry {
+        font-size: 12px;
+        margin: 5px 0;
+        padding: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        opacity: 0.8;
+      }
+.image-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+}
+.image-info {
+  flex: 1;
+  max-width: 450px;
+  min-width: 400px;
+}
+.image-name {
+  font-size: 36px;
+  font-weight: bold;
+  color: #FFD700;
+  text-align: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+#imageContainer {
+  flex-shrink: 0;
+}
+      
+    </style>
+  </head>
+  <body>
+    <div class="connection-status" id="connectionStatus">🔴 Connexion...</div>
+    <div class="arbitre-container">
+      <h1>🎯 Interface Arbitre</h1>
+      <!-- Affichage des timers -->
+      <div class="timers-display">
+        <div class="timer-container">
+          <div class="label assaillant">
+            <h3>Assaillant</h3>
+          </div>
+          <div id="gauche" class="minuteur">45.00</div>
+        </div>
+        <div class="timer-container">
+          <div class="label defenseur">
+            <h3>Défenseur</h3>
+          </div>
+          <div id="droite" class="minuteur">45.00</div>
+        </div>
+      </div>
+      <div class="image-section">
+        <h3>🖼️ Image Actuelle</h3>
+        <div class="image-content">
+          <div id="imageContainer">
+            <div class="image-placeholder">Aucune image</div>
+          </div>
+          <div class="image-info">
+            <div class="image-name" id="imageName">Aucune image sélectionnée</div>
+          </div>
+        </div>
+      </div>
+      <div class="game-status">
+        <div class="game-controls">
+          <div class="control-section">
+            <h2>🎮 Contrôles de Jeu</h2>
+            <button class="btn-arbitre btn-start" id="btnStart"> ▶️ Démarrer
+              Manche </button> <button class="btn-arbitre btn-pause" id="btnPause"
+
+              disabled="disabled"> ⏸️ Pause </button> <button class="btn-arbitre btn-reset"
+
+              id="btnReset"> 🔄 Reset Général </button> </div>
+          <div class="control-section">
+            <h2>⚡ Actions Rapides</h2>
+            <button class="btn-arbitre btn-action" id="btnBonneReponse" disabled="disabled">
+              ✅ Bonne Réponse </button> <button class="btn-arbitre btn-action"
+
+              id="btnPasser" disabled="disabled"> ⏭️ Passer (-3s) </button> <button class="btn-arbitre btn-passer-autre"
+
+              id="btnPasserAutre" disabled="disabled"> ➡️ Passer Autre (sans pénalité) </button> </div>
+          <div class="control-section" style="grid-column: 1 / -1;">
+            <h2>🎨 Thème</h2>
+            <button class="btn-arbitre btn-new-series" id="btnActualiserTheme">
+              🔄 Actualiser le thème (depuis la page Joueur) </button>
+          </div>
+        </div>
+        <h3>📊 État du Jeu</h3>
+        <div class="status-grid">
+          <div class="status-item">
+            <div class="label">État</div>
+            <div class="value" id="gameState">Arrêté</div>
+          </div>
+          <div class="status-item">
+            <div class="label">Tour Actuel</div>
+            <div class="value" id="currentTurn">Aucun</div>
+          </div>
+          <div class="status-item">
+            <div class="label">Manche</div>
+            <div class="value" id="roundNumber">1</div>
+          </div>
+          <div class="status-item">
+            <div class="label">Images restantes</div>
+            <div class="value" id="remainingImages">39</div>
+          </div>
+          <div class="status-item">
+            <div class="label">Thème actif</div>
+            <div class="value" id="currentThemeDisplay">Desserts (défaut)</div>
+          </div>
+        </div>
+      </div>
+      <div class="log-section"> <strong>📝 Journal d'Activité:</strong>
+        <div id="activityLog"></div>
+      </div>
+    </div>
+    <!-- Audio pour les effets sonores --> <audio id="bipSound" preload="auto">
+      <source src="bip.mp3" type="audio/mpeg"> </audio>
+    <div id="countdownDisplay" class="countdown-display" style="display: none !important;"></div>
+    <script type="module">
+      // Classe principale pour gérer l'interface arbitre
+      class ArbitreInterface {
+      // === LOGIQUE UNIVERSELLE POUR LES THEMES ===
+
+loadThemeConfig() {
+  // 1. Essayer de récupérer le thème depuis l'URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const themeParam = urlParams.get('theme');
+  
+  console.log('Paramètre thème depuis URL:', themeParam);
+  
+  if (themeParam && window.themeConfigs && window.themeConfigs[themeParam]) {
+    console.log('Configuration trouvée pour le thème:', themeParam);
+    return window.themeConfigs[themeParam];
+  }
+  
+  // 2. Essayer depuis localStorage (sélection précédente)
+  try {
+    const savedTheme = localStorage.getItem('selectedTheme');
+    const savedThemeKey = localStorage.getItem('selectedThemeKey');
+    
+    if (savedTheme && savedThemeKey) {
+      console.log('Thème récupéré depuis localStorage:', savedThemeKey);
+      return JSON.parse(savedTheme);
+    }
+  } catch (error) {
+    console.warn('Erreur lors de la récupération du thème depuis localStorage:', error);
+  }
+  
+  // 3. Configuration par défaut (desserts depuis theme-configs.js)
+          console.log('Utilisation du thème par défaut: desserts depuis theme-configs.js');
+          if (window.themeConfigs && window.themeConfigs.desserts) {
+            return window.themeConfigs.desserts;
+          }
+          
+          // Fallback si theme-configs.js n'est pas chargé
+          console.warn('theme-configs.js non trouvé, configuration minimale');
+          return {
+            name: 'Configuration par défaut',
+            displayName: 'Défaut',
+            folder: 'Images/Desserts/',
+            images: [],
+            sounds: {
+              bip: "bip.mp3",
+              assaillant: "Assaillant.mp3",
+              defenseur: "defenseur.mp3"
+            }
+          };
+        }
+
+initializeTheme() {
+  this.themeConfig = this.loadThemeConfig();
+  
+  // Construire la liste des fichiers selon le type de thème
+  if (this.themeConfig.images && this.themeConfig.images.length > 0) {
+    // Thème basé sur des images
+    this.images = this.themeConfig.images.map(img => this.themeConfig.folder + img);
+    this.availableImages = [...this.images];
+    this.mediaType = 'image';
+  } else if (this.themeConfig.audioFiles && this.themeConfig.audioFiles.length > 0) {
+    // Thème basé sur de l'audio (langues, génériques)
+    this.audioFiles = this.themeConfig.audioFiles.map(audio => this.themeConfig.folder + audio);
+    this.availableAudios = [...this.audioFiles];
+    this.mediaType = 'audio';
+  }
+  
+  // Mise à jour du titre de la page
+  if (this.themeConfig.displayName) {
+    document.title = `Minuteur - ${this.themeConfig.displayName}`;
+    
+    // Mise à jour du h1 si il existe
+    const titleElement = document.querySelector('h1 span');
+    if (titleElement && titleElement.textContent.includes('Thématique')) {
+      titleElement.innerHTML = `Thématique: <em>${this.themeConfig.displayName}</em>`;
+    }
+  }
+  
+  console.log('Thème initialisé:', this.themeConfig.name, 'Type:', this.mediaType);
+  return this.themeConfig;
+}
+
+// Fonction pour obtenir un média aléatoire (image ou audio)
+getRandomMedia() {
+  if (this.mediaType === 'image') {
+    return this.getRandomImage();
+  } else if (this.mediaType === 'audio') {
+    return this.getRandomAudio();
+  }
+  return null;
+}
+
+getRandomImage() {
+  if (!this.availableImages || this.availableImages.length === 0) {
+    console.warn('Plus d\'images disponibles dans cette série !');
+    return null;
+  }
+  
+  const randomIndex = Math.floor(Math.random() * this.availableImages.length);
+  const selectedImage = this.availableImages[randomIndex];
+  
+  this.availableImages.splice(randomIndex, 1);
+  
+  const imageName = selectedImage.split('/').pop().replace('.png', '').replace('.jpg', '');
+  console.log(`Image sélectionnée: ${imageName} (${this.availableImages.length} restantes)`);
+  
+  return selectedImage;
+}
+
+getRandomAudio() {
+  if (!this.availableAudios || this.availableAudios.length === 0) {
+    console.warn('Plus de fichiers audio disponibles dans cette série !');
+    return null;
+  }
+  
+  const randomIndex = Math.floor(Math.random() * this.availableAudios.length);
+  const selectedAudio = this.availableAudios[randomIndex];
+  
+  this.availableAudios.splice(randomIndex, 1);
+  
+  const audioName = selectedAudio.split('/').pop().replace('.mp3', '').replace('.wav', '');
+  console.log(`Audio sélectionné: ${audioName} (${this.availableAudios.length} restants)`);
+  
+  return selectedAudio;
+}
+
+// Fonction pour jouer un son basé sur la configuration du thème
+jouerSonTheme(type) {
+  const soundPath = this.themeConfig.sounds[type];
+  if (soundPath) {
+    const audio = new Audio(soundPath);
+    audio.volume = type === 'bip' ? 0.8 : 1.0;
+    audio.play().catch(err => console.log(`Lecture audio ${type} bloquée par le navigateur :`, err));
+  } else {
+    console.warn(`Son ${type} non défini pour ce thème`);
+  }
+}
+
+// Fonction pour mettre à jour l'affichage du média (image ou lecteur audio)
+updateMediaDisplay(mediaSrc) {
+  if (this.mediaType === 'image') {
+    this.updateImageDisplay(mediaSrc);
+  } else if (this.mediaType === 'audio') {
+    this.updateAudioDisplay(mediaSrc);
+  }
+}
+
+updateImageDisplay(imageSrc) {
+  const imageEl = document.getElementById('imageAleatoire');
+  const placeholderEl = document.getElementById('noImagePlaceholder');
+  
+  if (imageSrc) {
+    imageEl.src = imageSrc;
+    imageEl.style.display = 'block';
+    placeholderEl.style.display = 'none';
+  } else {
+    imageEl.style.display = 'none';
+    placeholderEl.style.display = 'flex';
+    placeholderEl.textContent = 'En attente d\'une image...';
+  }
+}
+
+updateAudioDisplay(audioSrc) {
+  const mediaContainer = document.querySelector('.random-image');
+  
+  if (audioSrc) {
+    const audioName = audioSrc.split('/').pop().replace('.mp3', '').replace('.wav', '');
+    
+    mediaContainer.innerHTML = `
+      <div class="audio-player">
+        <div class="audio-info">
+          <h3>🎵 ${audioName}</h3>
+          <audio controls autoplay style="width: 100%; margin-top: 15px;">
+            <source src="${audioSrc}" type="audio/mpeg">
+            <source src="${audioSrc.replace('.mp3', '.wav')}" type="audio/wav">
+            Votre navigateur ne supporte pas l'élément audio.
+          </audio>
+        </div>
+      </div>
+    `;
+  } else {
+    mediaContainer.innerHTML = `
+      <div id="noImagePlaceholder" class="no-image">
+        En attente d'un fichier audio...
+      </div>
+    `;
+  }
+}
+
+// Fonction pour réinitialiser les médias disponibles
+resetAvailableMedia() {
+  if (this.mediaType === 'image') {
+    this.availableImages = [...this.images];
+  } else if (this.mediaType === 'audio') {
+    this.availableAudios = [...this.audioFiles];
+  }
+}
+
+// Fonction pour obtenir le nombre de médias restants
+getRemainingMediaCount() {
+  if (this.mediaType === 'image') {
+    return this.availableImages ? this.availableImages.length : 0;
+  } else if (this.mediaType === 'audio') {
+    return this.availableAudios ? this.availableAudios.length : 0;
+  }
+  return 0;
+}
+
+// === MODIFICATIONS POUR LA PAGE JOUEUR ===
+
+// Dans TimerApp constructor, remplacer l'initialisation des images par :
+/*
+constructor() {
+  // ... autres initialisations ...
+  
+  // Initialiser le thème AVANT le reste
+  this.initializeTheme();
+  
+  // ... reste du constructor ...
+}
+*/
+
+// Dans updateImage, remplacer par :
+/*
+updateImage(mediaSrc) {
+  this.updateMediaDisplay(mediaSrc);
+}
+*/
+
+// Dans jouerSonBip, remplacer par :
+/*
+jouerSonBip() {
+  this.jouerSonTheme('bip');
+}
+*/
+
+// Dans jouerSonVainqueur, remplacer par :
+/*
+jouerSonVainqueur(type) {
+  const soundType = type.includes('defenseur') ? 'defenseur' : 'assaillant';
+  this.jouerSonTheme(soundType);
+}
+*/
+
+// === MODIFICATIONS POUR LA PAGE ARBITRE ===
+
+// Dans ArbitreInterface constructor, remplacer l'initialisation des images par :
+/*
+constructor() {
+  // ... autres initialisations ...
+  
+  // Initialiser le thème AVANT le reste
+  this.initializeTheme();
+  
+  // ... reste du constructor ...
+}
+*/
+
+// Dans getRandomImage, remplacer par :
+/*
+getRandomImage() {
+  const selectedMedia = this.getRandomMedia();
+  
+  if (selectedMedia) {
+    const mediaName = selectedMedia.split('/').pop().replace(/\.(png|jpg|mp3|wav)$/, '');
+    
+    // Mise à jour de l'affichage local pour l'arbitre
+    if (this.mediaType === 'image') {
+      document.getElementById('imageName').textContent = mediaName;
+    } else {
+      document.getElementById('imageName').textContent = `🎵 ${mediaName}`;
+    }
+    
+    this.addLog(`🎯 Nouveau média: ${mediaName} (${this.getRemainingMediaCount()} restants)`);
+    
+    if (this.getRemainingMediaCount() === 0) {
+      this.addLog('🎯 Série terminée ! Tous les médias ont été utilisés.');
+    }
+  }
+  
+  return selectedMedia;
+}
+*/
+
+// Dans updateImageDisplay (page arbitre), remplacer par :
+/*
+updateImageDisplay(mediaSrc) {
+  const container = document.getElementById('imageContainer');
+  const nameContainer = document.getElementById('imageName');
+  
+  if (mediaSrc) {
+    const mediaName = mediaSrc.split('/').pop().replace(/\.(png|jpg|mp3|wav)$/, '');
+    
+    if (this.mediaType === 'image') {
+      container.innerHTML = `
+        <img class="current-image" src="${mediaSrc}" alt="${mediaName}" 
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="image-placeholder" style="display:none;">Image introuvable</div>
+      `;
+      nameContainer.textContent = mediaName;
+    } else if (this.mediaType === 'audio') {
+      container.innerHTML = `
+        <div class="audio-preview">
+          <div class="audio-icon">🎵</div>
+          <audio controls style="width: 100%; margin-top: 10px;">
+            <source src="${mediaSrc}" type="audio/mpeg">
+            Fichier audio
+          </audio>
+        </div>
+      `;
+      nameContainer.textContent = `🎵 ${mediaName}`;
+    }
+  } else {
+    container.innerHTML = '<div class="image-placeholder">Aucun média</div>';
+    nameContainer.textContent = 'Aucun média sélectionné';
+  }
+}
+*/
+
+// Dans resetGame, ajouter :
+/*
+// Reset des médias disponibles
+this.resetAvailableMedia();
+this.updateRemainingMediaDisplay();
+*/
+
+// Dans updateRemainingImagesDisplay, remplacer par :
+/*
+updateRemainingMediaDisplay() {
+  const remaining = this.getRemainingMediaCount();
+  document.getElementById('remainingImages').textContent = remaining;
+  
+  // Mettre à jour le label si nécessaire
+  const label = document.querySelector('.status-item .label');
+  if (label && label.textContent === 'Images restantes') {
+    label.textContent = this.mediaType === 'image' ? 'Images restantes' : 'Audios restants';
+  }
+}
+*/
+
+// === CSS SUPPLÉMENTAIRE POUR LES THÈMES AUDIO ===
+
+// Ajouter ces styles CSS dans vos pages :
+/*
+.audio-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  border: 2px solid #007bff;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.audio-info h3 {
+  color: #007bff;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.audio-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  border: 2px solid #FFD700;
+  width: 180px;
+  height: 180px;
+}
+
+.audio-icon {
+  font-size: 64px;
+  margin-bottom: 15px;
+}
+*/
+        constructor() {
+          // Tableau des images de desserts français (noms corrects)
+          this.images = [
+            "Images/Desserts/Baba au rhum.png",
+"Images/Desserts/Canneles.png",
+"Images/Desserts/Charlotte aux fraises.png",
+"Images/Desserts/Chausson aux pommes.png",
+"Images/Desserts/Chouquettes.png",
+"Images/Desserts/Churros.png",
+"Images/Desserts/Clafoutis.png",
+"Images/Desserts/Creme brulee.png",
+"Images/Desserts/Crepes.png",
+"Images/Desserts/Croissant.png",
+"Images/Desserts/Eclair.png",
+"Images/Desserts/Far breton.png",
+"Images/Desserts/Financiers.png",
+"Images/Desserts/Flan.png",
+"Images/Desserts/Fondant au chocolat.png",
+"Images/Desserts/Foret noire.png",
+"Images/Desserts/Fraisier.png",
+"Images/Desserts/Galette des rois.png",
+"Images/Desserts/Gateau basque.png",
+"Images/Desserts/Ile flottante.png",
+"Images/Desserts/Kouign-Amann.png",
+"Images/Desserts/Macarons.png",
+"Images/Desserts/Madeleines.png",
+"Images/Desserts/Mille-feuilles.png",
+"Images/Desserts/Mousse au chocolat.png",
+"Images/Desserts/Nougat.png",
+"Images/Desserts/Opera.png",
+"Images/Desserts/Pain au chocolat.png",
+"Images/Desserts/Pain perdu.png",
+"Images/Desserts/Pana-cotta.png",
+"Images/Desserts/Paris-Brest.png",
+"Images/Desserts/Peche Melba.png",
+"Images/Desserts/Poire Belle-Helene.png",
+"Images/Desserts/Profiterolles.png",
+"Images/Desserts/Religieuse.png",
+"Images/Desserts/Riz au lait.png",
+"Images/Desserts/Saint-Honore.png",
+"Images/Desserts/Tarte au citron meringuee.png",
+"Images/Desserts/Tarte tatin.png"
+          ];
+          
+          // Images disponibles dans la série actuelle
+          this.availableImages = [...this.images];
+          
+          // Variables pour les timers
+          this.tempsInitial = 45000;
+          this.timers = {
+            gauche: {
+              endTime: null,
+              remaining: this.tempsInitial,
+              interval: null,
+              running: false,
+            },
+            droite: {
+              endTime: null,
+              remaining: this.tempsInitial,
+              interval: null,
+              running: false,
+            },
+          };
+          
+          this.app = null;
+          this.database = null;
+          this.gameState = {
+            isRunning: false,
+            isPaused: false,
+            currentPlayer: null,
+            roundNumber: 1,
+            currentImage: null
+          };
+          
+          this.countdownActive = false;
+          this.bipSound = null;
+          this.currentThemeName = 'desserts';
+          this.currentMediaType = 'image';
+          
+          this.init();
+        }
+
+        async init() {
+          try {
+            await this.initializeFirebase();
+            this.setupEventListeners();
+            this.setupGameStateListener();
+            this.initializeAudio();
+            this.updateRemainingImagesDisplay();
+            this.initializeTimersDisplay();
+            this.addLog('Interface arbitre initialisée');
+            console.log('Interface arbitre prête');
+          } catch (error) {
+            this.handleError('Erreur d\'initialisation', error);
+          }
+        }
+
+        async initializeFirebase() {
+          // Remplacement local de Firebase (voir localsync.js) :
+          // même interface (ref / set / onValue), mais synchronisé
+          // via le serveur Node local, sans connexion internet.
+          this.database = LocalSync.createLocalDatabase();
+
+          this.firebaseRef = (_db, path) => path;
+          this.firebaseSet = (path, value) => this.database.set(path, value);
+          this.firebaseGet = (path) => this.database.get(path);
+          this.firebaseOnValue = (path, cb) => this.database.onValue(path, cb);
+
+          window.onLocalSyncStatusChange = (connected) => this.updateConnectionStatus(connected);
+
+          this.updateConnectionStatus(true);
+        }
+
+        initializeAudio() {
+          this.bipSound = document.getElementById('bipSound');
+          if (this.bipSound) {
+            this.bipSound.volume = 0.7;
+          }
+        }
+
+        initializeTimersDisplay() {
+          const dureeAffichee = (this.tempsInitial / 1000).toFixed(2);
+          document.getElementById("gauche").textContent = dureeAffichee;
+          document.getElementById("droite").textContent = dureeAffichee;
+        }
+
+        setupEventListeners() {
+          document.getElementById('btnStart').addEventListener('click', () => this.startNewRound());
+          document.getElementById('btnPause').addEventListener('click', () => this.pauseGame());
+          document.getElementById('btnReset').addEventListener('click', () => this.resetGame());
+          document.getElementById('btnBonneReponse').addEventListener('click', () => this.bonneReponse());
+          document.getElementById('btnPasser').addEventListener('click', () => this.passerTour());
+          document.getElementById('btnPasserAutre').addEventListener('click', () => this.passerAutre());
+          document.getElementById('btnActualiserTheme').addEventListener('click', () => this.actualiserTheme());
+        }
+
+        setupGameStateListener() {
+          const gameRef = this.firebaseRef(this.database, 'game');
+          this.firebaseOnValue(gameRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+              this.updateGameDisplay(data);
+            }
+          }, (error) => {
+            this.handleError('Erreur de synchronisation', error);
+            this.updateConnectionStatus(false);
+          });
+        }
+
+        updateGameDisplay(gameData) {
+          // Mise à jour de l'affichage
+          document.getElementById('gameState').textContent = gameData.isRunning ? 
+            (gameData.isPaused ? 'En Pause' : 'En Cours') : 'Arrêté';
+          
+          document.getElementById('currentTurn').textContent = gameData.currentPlayer || 'Aucun';
+          document.getElementById('roundNumber').textContent = gameData.roundNumber || 1;
+          
+          // Mise à jour des boutons
+          this.updateButtonStates(gameData);
+          
+          this.gameState = { ...gameData };
+        }
+
+        updateButtonStates(gameData) {
+          const btnStart = document.getElementById('btnStart');
+          const btnPause = document.getElementById('btnPause');
+          const btnBonneReponse = document.getElementById('btnBonneReponse');
+          const btnPasser = document.getElementById('btnPasser');
+          const btnPasserAutre = document.getElementById('btnPasserAutre');
+          
+          btnStart.disabled = gameData.isRunning && !gameData.isPaused;
+          btnPause.disabled = !gameData.isRunning || gameData.isPaused;
+
+          // Pendant la transition de 1,5s (Bonne réponse/Passer en
+          // cours), ces boutons restent désactivés quoi qu'il arrive,
+          // pour éviter un double-clic - même si une mise à jour de
+          // synchronisation intermédiaire (déclenchée par cette même
+          // action) tentait de les réactiver entre-temps.
+          if (!this._actionInProgress) {
+            btnBonneReponse.disabled = !gameData.isRunning || gameData.isPaused;
+            btnPasser.disabled = !gameData.isRunning || gameData.isPaused;
+            btnPasserAutre.disabled = !gameData.isRunning || gameData.isPaused;
+          }
+          
+          // Mise à jour du texte du bouton start/resume
+          btnStart.innerHTML = gameData.isPaused ? 
+            '▶️ Reprendre' : '▶️ Démarrer Manche';
+        }
+
+        // Désactive/réactive les boutons d'action pendant la
+        // transition de 1,5s (Bonne réponse/Passer), pour empêcher
+        // un double-clic
+        setActionButtonsDisabled(disabled) {
+          const btnBonneReponse = document.getElementById('btnBonneReponse');
+          const btnPasser = document.getElementById('btnPasser');
+          const btnPasserAutre = document.getElementById('btnPasserAutre');
+          if (btnBonneReponse) btnBonneReponse.disabled = disabled;
+          if (btnPasser) btnPasser.disabled = disabled;
+          if (btnPasserAutre) btnPasserAutre.disabled = disabled;
+        }
+
+        updateDisplay(id) {
+          let timer = this.timers[id];
+          let remaining = timer.endTime - Date.now();
+          if (remaining < 0) remaining = 0;
+          timer.remaining = remaining;
+
+          let seconds = String(Math.floor(remaining / 1000)).padStart(2, "0");
+          let centi = String(Math.floor((remaining % 1000) / 10)).padStart(2, "0");
+
+          document.getElementById(id).textContent = `${seconds}.${centi}`;
+
+          if (remaining <= 0) {
+            this.stopTimer(id);
+            const elem = document.getElementById(id);
+            elem.classList.add("clignote");
+            setTimeout(() => {
+              elem.classList.remove("clignote");
+            }, 3000);
+
+            document.getElementById("imageContainer").innerHTML = '<div class="image-placeholder">Temps écoulé!</div>';
+            this.showWinner(id);
+          }
+        }
+
+        startTimer(id) {
+          let timer = this.timers[id];
+          if (timer.running) return;
+          timer.endTime = Date.now() + timer.remaining;
+          timer.interval = setInterval(() => {
+            this.updateDisplay(id);
+          }, 10);
+          timer.running = true;
+        }
+
+        stopTimer(id) {
+          let timer = this.timers[id];
+          clearInterval(timer.interval);
+          timer.running = false;
+        }
+
+        clignoterPendule(id) {
+          // Animation de clignotement pour le minuteur
+          const elem = document.getElementById(id);
+          let clignote = true;
+          const interval = setInterval(() => {
+            elem.style.borderColor = clignote ? "blue" : (id === "gauche" ? "#C21729" : "#E8A323");
+            clignote = !clignote;
+          }, 75);
+          setTimeout(() => {
+            clearInterval(interval);
+            elem.style.borderColor = id === "gauche" ? "#C21729" : "#E8A323";
+          }, 750);
+        }
+
+        showWinner(loserId) {
+          let message = "";
+
+          if (loserId === "gauche") {
+            message = "Défenseur gagne !";
+          } else {
+            message = "Assaillant gagne !";
+          }
+
+          this.addLog(`🏆 ${message}`);
+          
+          // Masquer les boutons d'action
+          document.getElementById('btnBonneReponse').style.display = "none";
+          document.getElementById('btnPasser').style.display = "none";
+          document.getElementById('btnPasserAutre').style.display = "none";
+        }
+
+        // **NOUVELLE MÉTHODE** : Gestion centralisée des images par l'arbitre
+        getRandomImage() {
+          if (this.availableImages.length === 0) {
+            if (!this.images || this.images.length === 0) {
+              this.addLog('⚠️ Aucun fichier disponible pour ce thème !');
+              return null;
+            }
+            // Recharge automatiquement le pool pour continuer
+            // indéfiniment (au lieu de s'arrêter définitivement une
+            // fois toutes les images/sons utilisés une première fois)
+            this.availableImages = [...this.images];
+            this.addLog('🔄 Série épuisée : nouveau cycle relancé avec les mêmes fichiers.');
+          }
+          
+          const randomIndex = Math.floor(Math.random() * this.availableImages.length);
+          const selectedImage = this.availableImages[randomIndex];
+          
+          this.availableImages.splice(randomIndex, 1);
+          this.updateRemainingImagesDisplay();
+          
+          const imageName = selectedImage.split('/').pop().replace('.png', '');
+          document.getElementById('imageName').textContent = imageName;
+          this.addLog(`🖼️ Nouvelle image: ${imageName} (${this.availableImages.length} restantes)`);
+          
+          if (this.availableImages.length === 0) {
+            this.addLog('🎯 Série terminée ! Toutes les images ont été utilisées.');
+          }
+          
+          return selectedImage;
+        }
+
+        async startNewRound() {
+          if (this.countdownActive) return;
+          
+          try {
+            this.addLog('Démarrage d\'une nouvelle manche...');
+            
+            if (this.gameState.isPaused) {
+              await this.resumeGame();
+              return;
+            }
+            
+            await this.startCountdown();
+            
+          } catch (error) {
+            this.handleError('Erreur de démarrage', error);
+          }
+        }
+
+        async startCountdown() {
+          this.countdownActive = true;
+          const countdownEl = document.getElementById('countdownDisplay');
+          
+          this.setButtonsEnabled(false);
+          
+          try {
+            // **MODIFICATION** : Jouer le bip au début du décompte
+            this.playBip();
+            
+            for (let i = 3; i >= 1; i--) {
+              countdownEl.textContent = i.toString();
+              countdownEl.style.opacity = '1';
+              
+              await this.firebaseSet(this.firebaseRef(this.database, 'game/countdown'), {
+                active: true,
+                value: i,
+                timestamp: Date.now()
+              });
+              
+              this.addLog(`Décompte: ${i}`);
+              await this.sleep(1000);
+              countdownEl.style.opacity = '0';
+              await this.sleep(200);
+            }
+            
+            countdownEl.textContent = 'GO!';
+            countdownEl.style.opacity = '1';
+            countdownEl.style.color = '#4CAF50';
+            
+            // **MODIFICATION** : L'arbitre choisit l'image et l'envoie
+            const newImage = this.getRandomImage();
+            if (newImage) {
+              // Mettre à jour l'affichage local de l'arbitre
+              this.updateImageDisplay(newImage);
+              
+              // Envoyer les données à Firebase pour synchroniser avec les joueurs
+              await this.firebaseSet(this.firebaseRef(this.database, 'game'), {
+                isRunning: true,
+                isPaused: false,
+                currentPlayer: 'Assaillant',
+                roundNumber: (this.gameState.roundNumber || 0) + 1,
+                startTime: Date.now(),
+                countdown: { 
+                  active: true,
+                  value: 'GO!',
+                  timestamp: Date.now()
+                },
+                currentImage: newImage,
+                mediaTimestamp: Date.now(),
+                gameReset: Date.now() // Pour déclencher le reset sur la page joueur si nécessaire
+              });
+              
+              // Démarrer le timer de l'assaillant
+              this.startTimer('gauche');
+              
+              this.addLog('Manche démarrée avec nouvelle image !');
+              this.addLog(`⏱️ Minuteur Assaillant démarré`);
+            } else {
+              this.addLog('❌ Impossible de démarrer: plus d\'images disponibles');
+              this.countdownActive = false;
+              this.setButtonsEnabled(true);
+              return;
+            }
+            
+            await this.sleep(1000);
+            
+            // Désactiver le countdown après GO!
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/countdown'), {
+              active: false,
+              timestamp: Date.now()
+            });
+            
+            countdownEl.style.opacity = '0';
+            countdownEl.style.color = '#FF4500';
+            
+          } finally {
+            this.countdownActive = false;
+            this.setButtonsEnabled(true);
+          }
+        }
+
+        async resumeGame() {
+          if (this._actionInProgress) return;
+          this._actionInProgress = true;
+          this.setActionButtonsDisabled(true);
+          document.getElementById('btnPause').disabled = true;
+          document.getElementById('btnStart').disabled = true;
+
+          await this.firebaseSet(this.firebaseRef(this.database, 'game/isPaused'), false);
+
+          // Attend 2 secondes (même décompte affiché côté Joueur)
+          // avant de relancer réellement le minuteur ici, pour
+          // rester synchronisé entre les deux pages
+          await this.sleep(2000);
+
+          if (this.gameState.currentPlayer === 'Assaillant') {
+            this.startTimer('gauche');
+          } else if (this.gameState.currentPlayer === 'Defenseur') {
+            this.startTimer('droite');
+          }
+          
+          this.addLog('Jeu repris');
+
+          this._actionInProgress = false;
+          this.setActionButtonsDisabled(false);
+        }
+
+        async pauseGame() {
+          await this.firebaseSet(this.firebaseRef(this.database, 'game/isPaused'), true);
+          
+          // Arrêter les timers
+          this.stopTimer('gauche');
+          this.stopTimer('droite');
+          
+          this.addLog('Jeu mis en pause');
+        }
+
+        async resetGame() {
+          if (confirm('Êtes-vous sûr de vouloir tout remettre à zéro ?')) {
+            await this.firebaseSet(this.firebaseRef(this.database, 'game'), {
+              isRunning: false,
+              isPaused: false,
+              currentPlayer: null,
+              roundNumber: 1,
+              countdown: { active: false },
+              currentImage: null,
+              gameReset: Date.now() // Signal pour la page joueur
+            });
+            
+            // Reset des timers
+            this.stopTimer('gauche');
+            this.stopTimer('droite');
+            this.timers.gauche.remaining = this.tempsInitial;
+            this.timers.droite.remaining = this.tempsInitial;
+            
+            // Reset des images disponibles
+            this.availableImages = [...this.images];
+            this.updateRemainingImagesDisplay();
+            this.updateImageDisplay(null);
+            this.initializeTimersDisplay();
+            
+            // Réafficher les boutons
+            document.getElementById('btnBonneReponse').style.display = 'block';
+            document.getElementById('btnPasser').style.display = 'block';
+            document.getElementById('btnPasserAutre').style.display = 'block';
+            
+            this.addLog('Jeu remis à zéro - Toutes les images sont à nouveau disponibles');
+          }
+        }
+
+        updateRemainingImagesDisplay() {
+          document.getElementById('remainingImages').textContent = this.availableImages.length;
+        }
+
+        async listImagesInFolder(folder, type = 'image') {
+          const response = await fetch(`/api/list-images?folder=${encodeURIComponent(folder)}&type=${type}`);
+          if (!response.ok) {
+            throw new Error(`Erreur serveur (${response.status}) lors du scan du dossier ${folder}`);
+          }
+          const data = await response.json();
+          return data.images || [];
+        }
+
+        async actualiserTheme() {
+          try {
+            // Lecture directe depuis le serveur (et non depuis la copie
+            // locale du navigateur), pour éviter toute valeur périmée
+            // si la connexion WebSocket a été coupée/suspendue un moment
+            // (fréquent sur tablette quand l'onglet passe en arrière-plan)
+            const response = await fetch('/api/get-state?path=game/theme');
+            if (!response.ok) {
+              throw new Error(`Erreur serveur (${response.status})`);
+            }
+            const data = await response.json();
+            const themeName = data.value;
+
+            if (!themeName) {
+              this.addLog('⚠️ Aucun thème actif détecté côté page Joueur pour le moment (ouvrez/rafraîchissez la page Joueur d\'abord).');
+              return;
+            }
+
+            if (!window.themeConfigs || !window.themeConfigs[themeName]) {
+              this.addLog(`⚠️ Thème "${themeName}" introuvable dans theme-configs.js`);
+              return;
+            }
+
+            const themeConfig = window.themeConfigs[themeName];
+            const mediaType = themeConfig.mediaType === 'audio' ? 'audio' : 'image';
+
+            const detectedFiles = await this.listImagesInFolder(themeConfig.folder, mediaType);
+
+            if (!detectedFiles || detectedFiles.length === 0) {
+              const typeLabel = mediaType === 'audio' ? 'fichier audio' : 'image';
+              this.addLog(`⚠️ Aucun ${typeLabel} trouvé dans le dossier "${themeConfig.folder}" pour le thème "${themeConfig.displayName || themeName}"`);
+              return;
+            }
+
+            this.currentThemeName = themeName;
+            this.currentMediaType = mediaType;
+            this.images = detectedFiles.map(f => themeConfig.folder + f);
+            this.availableImages = [...this.images];
+
+            // Durée du minuteur : configurable par thème via
+            // "timerDuration" (en ms) dans theme-configs.js. Par
+            // défaut : 60s pour l'audio, 45s sinon. Ne s'applique
+            // qu'entre les manches (pas en pleine partie en cours).
+            if (!this.timers.gauche.running && !this.timers.droite.running) {
+              const defaultDuration = mediaType === 'audio' ? 60000 : 45000;
+              this.tempsInitial = themeConfig.timerDuration || defaultDuration;
+              this.timers.gauche.remaining = this.tempsInitial;
+              this.timers.droite.remaining = this.tempsInitial;
+              this.initializeTimersDisplay();
+            }
+
+            this.updateRemainingImagesDisplay();
+            this.updateImageDisplay(null);
+
+            const themeDisplayEl = document.getElementById('currentThemeDisplay');
+            if (themeDisplayEl) {
+              const typeIcon = mediaType === 'audio' ? '🔊' : '🖼️';
+              themeDisplayEl.textContent = `${typeIcon} ${themeConfig.displayName || themeName} (${this.images.length})`;
+            }
+
+            this.addLog(`🎨 Thème actualisé : ${themeConfig.displayName || themeName} (${this.images.length} ${mediaType === 'audio' ? 'fichiers audio' : 'images'} chargés)`);
+          } catch (error) {
+            this.handleError('Erreur lors de l\'actualisation du thème', error);
+          }
+        }
+
+        async bonneReponse() {
+          if (this._actionInProgress) return;
+          this._actionInProgress = true;
+          this.setActionButtonsDisabled(true);
+
+          const activeBefore = this.timers.gauche.running ? 'gauche' : (this.timers.droite.running ? 'droite' : null);
+          if (activeBefore) this.stopTimer(activeBefore);
+
+          // Envoie le signal d'action D'ABORD : la page Joueur obscurcit
+          // sa zone image/son dès réception et gère elle-même le délai
+          // de révélation (2s, fixe, côté client - voir joueur.html)
+          await this.firebaseSet(this.firebaseRef(this.database, 'game/action'), {
+            type: 'bonneReponse',
+            timestamp: Date.now()
+          });
+
+          // Puis envoie immédiatement la nouvelle image/le son : la
+          // page Joueur la précharge en arrière-plan pendant son
+          // propre délai, pour un affichage instantané à la révélation
+          const newImage = this.getRandomImage();
+          if (newImage) {
+            this.updateImageDisplay(newImage);
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/currentImage'), newImage);
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/mediaTimestamp'), Date.now());
+          }
+
+          // Attend 2 secondes (même délai que côté Joueur) avant de
+          // relancer réellement le minuteur ici : sans ça, le minuteur
+          // de l'Arbitre repartait immédiatement pendant que celui du
+          // Joueur restait figé, créant un décalage entre les deux
+          await this.sleep(2000);
+
+          if (activeBefore === 'gauche') {
+            this.startTimer("droite");
+            this.clignoterPendule("droite");
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/currentPlayer'), 'Defenseur');
+            this.addLog('Bonne réponse ! Passage au Défenseur');
+          } else if (activeBefore === 'droite') {
+            this.startTimer("gauche");
+            this.clignoterPendule("gauche");
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/currentPlayer'), 'Assaillant');
+            this.addLog('Bonne réponse ! Passage à l\'Assaillant');
+          }
+
+          this._actionInProgress = false;
+          this.setActionButtonsDisabled(false);
+        }
+
+        async passerTour() {
+          if (this._actionInProgress) return;
+          this._actionInProgress = true;
+          this.setActionButtonsDisabled(true);
+
+          // Déterminer quel timer est actif et le stopper immédiatement
+          let actif = this.timers.gauche.running ? "gauche" : (this.timers.droite.running ? "droite" : null);
+          if (actif) this.stopTimer(actif);
+
+          // Envoie le signal d'action D'ABORD (la page Joueur gère
+          // elle-même le délai de révélation, 2s fixes côté client)
+          await this.firebaseSet(this.firebaseRef(this.database, 'game/action'), {
+            type: 'passer',
+            timestamp: Date.now()
+          });
+
+          // Puis envoie immédiatement la nouvelle image/le son
+          const newImage = this.getRandomImage();
+          if (newImage) {
+            this.updateImageDisplay(newImage);
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/currentImage'), newImage);
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/mediaTimestamp'), Date.now());
+          }
+
+          // Attend 2 secondes (même délai que côté Joueur) avant de
+          // relancer réellement le minuteur, pour rester synchronisé
+          await this.sleep(2000);
+
+          if (actif) {
+            let timer = this.timers[actif];
+
+            // Retirer 3 secondes (3000 ms)
+            timer.remaining -= 3000;
+            if (timer.remaining < 0) timer.remaining = 0;
+
+            this.startTimer(actif);
+            this.clignoterPendule(actif);
+
+            // Clignotement du fond du minuteur
+            const elem = document.getElementById(actif);
+            let originalBg = elem.style.backgroundColor || "#f0f8ff";
+            let count = 0;
+
+            const blinkInterval = setInterval(() => {
+              elem.style.backgroundColor = (elem.style.backgroundColor === "rgb(240, 153, 153)" || elem.style.backgroundColor === "#F09999")
+                ? originalBg
+                : "#F09999";
+              count++;
+              if (count >= 4) {
+                clearInterval(blinkInterval);
+                elem.style.backgroundColor = originalBg;
+              }
+            }, 250);
+          }
+
+          this.addLog('Tour passé (-3 secondes)');
+
+          this._actionInProgress = false;
+          this.setActionButtonsDisabled(false);
+        }
+
+        // Passe à une autre image/son du même thème, SANS pénalité
+        // de temps (le même joueur continue), mais avec le même
+        // écran noir de transition que Bonne réponse/Passer
+        async passerAutre() {
+          if (this._actionInProgress) return;
+          this._actionInProgress = true;
+          this.setActionButtonsDisabled(true);
+
+          const activeBefore = this.timers.gauche.running ? 'gauche' : (this.timers.droite.running ? 'droite' : null);
+          if (activeBefore) this.stopTimer(activeBefore);
+
+          await this.firebaseSet(this.firebaseRef(this.database, 'game/action'), {
+            type: 'passerAutre',
+            timestamp: Date.now()
+          });
+
+          const newImage = this.getRandomImage();
+          if (newImage) {
+            this.updateImageDisplay(newImage);
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/currentImage'), newImage);
+            await this.firebaseSet(this.firebaseRef(this.database, 'game/mediaTimestamp'), Date.now());
+            this.addLog('➡️ Passer Autre : nouvelle image/son (sans pénalité)');
+          } else {
+            this.addLog('⚠️ Aucun autre fichier disponible pour ce thème');
+          }
+
+          // Même délai de 2s que les autres actions, avant de
+          // relancer le même joueur (pas de changement de côté)
+          await this.sleep(2000);
+
+          if (activeBefore) {
+            this.startTimer(activeBefore);
+            this.clignoterPendule(activeBefore);
+          }
+
+          this._actionInProgress = false;
+          this.setActionButtonsDisabled(false);
+        }
+
+        updateImageDisplay(mediaSrc) {
+          const container = document.getElementById('imageContainer');
+          const nameContainer = document.getElementById('imageName');
+          const isAudio = this.currentMediaType === 'audio';
+
+          if (mediaSrc) {
+            const mediaName = mediaSrc.split('/').pop().replace(/\.(png|jpg|jpeg|gif|webp|mp3|wav|ogg)$/i, '').replace(/([a-z])([A-Z])/g, '$1 $2');
+
+            if (isAudio) {
+              // Aucune lecture possible côté Arbitre : simple
+              // indicateur visuel statique, le son ne se joue que
+              // sur la page Joueur.
+              container.innerHTML = `
+                <div class="image-placeholder" style="flex-direction:column; gap:15px;">
+                  <div style="font-size:48px;">🎵</div>
+                  <div style="opacity:0.8;">Fichier audio (lecture sur la page Joueur uniquement)</div>
+                </div>`;
+            } else {
+              container.innerHTML = `<img class="current-image" src="${mediaSrc}" alt="${mediaName}" 
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="image-placeholder" style="display:none;">Image introuvable</div>`;
+            }
+            nameContainer.textContent = mediaName;
+          } else {
+            container.innerHTML = `<div class="image-placeholder">${isAudio ? 'Aucun fichier audio' : 'Aucune image'}</div>`;
+            nameContainer.textContent = isAudio ? 'Aucun fichier audio sélectionné' : 'Aucune image sélectionnée';
+          }
+        }
+
+        setButtonsEnabled(enabled) {
+          const buttons = document.querySelectorAll('.btn-arbitre');
+          buttons.forEach(btn => {
+            if (enabled) {
+              btn.disabled = false;
+            } else {
+              btn.disabled = true;
+            }
+          });
+        }
+
+        playBip() {
+          if (this.bipSound) {
+            this.bipSound.currentTime = 0;
+            this.bipSound.play().catch(e => {
+              console.warn('Impossible de jouer le son:', e);
+            });
+          }
+        }
+
+        updateConnectionStatus(connected) {
+          const status = document.getElementById('connectionStatus');
+          if (connected) {
+            status.textContent = '🟢 Connecté';
+            status.className = 'connection-status connected';
+          } else {
+            status.textContent = '🔴 Déconnecté';
+            status.className = 'connection-status disconnected';
+          }
+        }
+
+        addLog(message) {
+          const logContainer = document.getElementById('activityLog');
+          const logEntry = document.createElement('div');
+          logEntry.className = 'log-entry';
+          logEntry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+          
+          logContainer.insertBefore(logEntry, logContainer.firstChild);
+          
+          while (logContainer.children.length > 20) {
+            logContainer.removeChild(logContainer.lastChild);
+          }
+        }
+
+        handleError(context, error) {
+          console.error(`${context}:`, error);
+          this.addLog(`❌ ${context}: ${error.message}`);
+          this.updateConnectionStatus(false);
+        }
+
+        sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+      }
+
+      // Initialiser l'interface quand le DOM est prêt
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          new ArbitreInterface();
+        });
+      } else {
+        new ArbitreInterface();
+      }
+      
+    </script>
+  </body>
+</html>
