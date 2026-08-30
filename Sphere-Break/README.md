@@ -20,6 +20,33 @@ Pour changer de port ponctuellement :
 PORT=8020 node server.js
 ```
 
+## Profils joueur (important si tu héberges le jeu en ligne, ex. Render)
+
+Depuis cette version, **aucune donnée de partie n'est stockée sur le
+serveur**. Chaque profil (nom, victoires, défaites, Gils, historique) est
+sauvegardé dans le **navigateur du joueur** (localStorage), pas dans un
+fichier partagé côté serveur.
+
+Pourquoi ce changement : si le jeu est déployé sur un hébergeur comme Render,
+un fichier `data/stats.json` côté serveur serait **partagé par tous les
+visiteurs du site** (tout le monde verrait le même profil), et la plupart des
+hébergeurs gratuits effacent le disque à chaque redéploiement de toute façon.
+Stocker la progression côté navigateur règle les deux problèmes : chaque
+visiteur a son propre profil, isolé et persistant tant qu'il ne vide pas les
+données de son navigateur.
+
+**Au chargement de la page**, un écran de connexion est désormais obligatoire :
+- **Continuer avec ce profil** (si un profil existe déjà sur cet appareil) ;
+- **Créer un nouveau profil** (nom au choix, démarre à 0V/0D avec 1000 Gils) ;
+- **Charger une sauvegarde `.txt`** (portabilité entre appareils/navigateurs).
+
+Un bouton **"↩ Changer de profil"** en haut de l'écran de sélection du
+croupier permet de revenir à cet écran à tout moment (utile pour tester
+plusieurs profils, ou changer de joueur sur un appareil partagé).
+
+Le serveur (`server.js`) ne fait plus que servir les fichiers statiques —
+aucune API de stats, aucun fichier `data/` nécessaire.
+
 ## Déroulement d'une partie
 
 1. **Choix du croupier** : 15 paliers de difficulté croissante (tours max,
@@ -79,21 +106,24 @@ leur carte), non modifiable pour cette manche.
 
 ## Sauvegarde des statistiques
 
-- Persistées côté serveur dans `data/stats.json` (nom du joueur, victoires,
-  défaites, Gils, meilleur quota atteint, série en cours, historique des 25
-  dernières manches).
-- **Importer** un fichier `.txt` (bouton "Profil / Sauvegarde") au format :
+- Persistées dans le **localStorage du navigateur** (nom du joueur,
+  victoires, défaites, Gils, meilleur quota atteint, série en cours,
+  historique des 25 dernières manches) — voir la section "Profils joueur"
+  plus haut pour le détail du fonctionnement multi-profils.
+- **Importer** un fichier `.txt` (depuis l'écran de connexion ou le bouton
+  "Profil / Sauvegarde") au format :
   ```
   nom=Sofu
   victoires=25
   defaites=10
   gils=1000
   ```
-- **Exporter** la sauvegarde actuelle au même format.
+- **Exporter** la sauvegarde actuelle au même format, pour la transférer vers
+  un autre appareil ou navigateur.
 - **Réduction partielle** : soustraire un même nombre aux victoires ET aux
   défaites (ex. 25V/10D avec "10" → 15V/0D), au coût de 200 Gils par point.
-  Le nombre ne peut jamais dépasser le nombre de défaites actuelles (le
-  serveur rejette la demande sinon), ni dépasser les Gils disponibles.
+  Le nombre ne peut jamais dépasser le nombre de défaites actuelles, ni
+  dépasser les Gils disponibles.
 - **Réinitialisation complète** disponible également (avec confirmation).
 
 ## Fichiers

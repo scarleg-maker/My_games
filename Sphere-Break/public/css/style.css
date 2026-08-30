@@ -211,6 +211,18 @@ html, body {
 }
 .screen-hint { text-align: center; color: var(--text-dim); margin: 0 0 4px; font-size: 14px; }
 
+.dealer-topline { display: flex; justify-content: flex-end; margin-bottom: -6px; }
+
+.gate-box {
+  max-width: 440px;
+  margin: 0 auto;
+  width: 100%;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(160deg, rgba(95,217,209,0.06), rgba(60,42,114,0.10));
+}
+
 /* ===== Dealer select ===== */
 .dealer-grid {
   display: grid;

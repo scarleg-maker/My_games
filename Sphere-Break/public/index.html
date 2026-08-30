@@ -39,8 +39,40 @@
     </div>
   </header>
 
+  <!-- ===================== SCREEN 0 : PROFILE GATE ===================== -->
+  <main class="screen" id="screen-gate">
+    <h2 class="screen-title">Bienvenue</h2>
+    <p class="screen-hint">Ta progression est sauvegardée sur cet appareil (navigateur), pas sur le serveur — connecte-toi ou crée un profil pour commencer.</p>
+
+    <div class="gate-box" id="gate-continue-box" hidden>
+      <label class="profile-label">Profil trouvé sur cet appareil</label>
+      <p class="profile-hint" id="gate-existing-summary"></p>
+      <button class="btn btn-primary btn-block" id="btn-gate-continue">Continuer avec ce profil</button>
+    </div>
+
+    <div class="gate-box">
+      <label class="profile-label" for="input-gate-newname">Créer un nouveau profil</label>
+      <div class="profile-row">
+        <input type="text" id="input-gate-newname" maxlength="40" placeholder="Ton nom">
+        <button class="btn btn-secondary" id="btn-gate-new">Créer</button>
+      </div>
+      <p class="profile-hint">Démarre à 0 victoire / 0 défaite avec 1000 Gils.</p>
+    </div>
+
+    <div class="gate-box">
+      <label class="profile-label">Charger une sauvegarde (.txt)</label>
+      <div class="profile-row">
+        <input type="file" id="input-gate-import" accept=".txt">
+      </div>
+      <p class="profile-hint" id="gate-import-error" style="color: var(--crimson);"></p>
+    </div>
+  </main>
+
   <!-- ===================== SCREEN 1 : DEALER SELECT ===================== -->
-  <main class="screen" id="screen-dealer">
+  <main class="screen" id="screen-dealer" hidden>
+    <div class="dealer-topline">
+      <button class="btn btn-secondary btn-small" id="btn-switch-profile">↩ Changer de profil</button>
+    </div>
     <h2 class="screen-title">Choisis ton croupier</h2>
     <p class="screen-hint">Bats un croupier pour progresser dans tes statistiques et débloquer les suivants.</p>
 

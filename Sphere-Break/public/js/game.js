@@ -10,6 +10,16 @@
   const REAPPEAR_MIN_EMPTY_TURNS = 2;
 
   const el = {
+    screenGate: document.getElementById('screen-gate'),
+    gateContinueBox: document.getElementById('gate-continue-box'),
+    gateExistingSummary: document.getElementById('gate-existing-summary'),
+    btnGateContinue: document.getElementById('btn-gate-continue'),
+    inputGateNewName: document.getElementById('input-gate-newname'),
+    btnGateNew: document.getElementById('btn-gate-new'),
+    inputGateImport: document.getElementById('input-gate-import'),
+    gateImportError: document.getElementById('gate-import-error'),
+    btnSwitchProfile: document.getElementById('btn-switch-profile'),
+
     statName: document.getElementById('stat-name'),
     statWins: document.getElementById('stat-wins'),
     statLosses: document.getElementById('stat-losses'),
@@ -89,21 +99,46 @@
   function randCoinValue() { return 1 + Math.floor(Math.random() * 9); }
   function randCoreNumber() { return 1 + Math.floor(Math.random() * 9); }
 
+  const STORAGE_KEY = 'spherebreak_profile_v1';
+
   function showScreen(name) {
+    el.screenGate.hidden = name !== 'gate';
     el.screenDealer.hidden = name !== 'dealer';
     el.screenEntry.hidden = name !== 'entry';
     el.screenGame.hidden = name !== 'game';
   }
 
-  function loadStats() {
-    return fetch('/api/stats')
-      .then(r => r.json())
-      .then(stats => { persistedStats = stats; renderStatStrip(); return stats; })
-      .catch(() => {
-        persistedStats = { playerName: 'Joueur', wins: 0, losses: 0, bestQuota: 0 };
-        renderStatStrip();
-        return persistedStats;
-      });
+  function defaultProfile(name) {
+    return {
+      playerName: (name || 'Joueur').slice(0, 40),
+      wins: 0,
+      losses: 0,
+      gamesPlayed: 0,
+      bestQuota: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      gils: 1000,
+      history: []
+    };
+  }
+
+  function readLocalProfile() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return Object.assign(defaultProfile(), JSON.parse(raw));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveLocalProfile() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedStats));
+    } catch (e) {
+      // localStorage unavailable (private mode, quota, etc.) — the session
+      // still works, it just won't persist across reloads.
+    }
   }
 
   function renderStatStrip() {
@@ -117,6 +152,78 @@
     el.statBest.textContent = persistedStats.bestQuota;
     el.statGils.textContent = persistedStats.gils;
   }
+
+  function enterApp() {
+    saveLocalProfile();
+    renderStatStrip();
+    renderComboToggles();
+    renderDealerGrid();
+    showScreen('dealer');
+  }
+
+  function parseSaveText(text) {
+    const payload = {};
+    const nameMatch = text.match(/^\s*(?:nom|name)\s*=\s*(.+)$/im);
+    const winsMatch = text.match(/^\s*(?:victoires|wins)\s*=\s*(\d+)/im);
+    const lossesMatch = text.match(/^\s*(?:defaites|défaites|losses)\s*=\s*(\d+)/im);
+    const gilsMatch = text.match(/^\s*(?:gils|gil|gold)\s*=\s*(\d+)/im);
+    if (nameMatch) payload.playerName = nameMatch[1].trim();
+    if (winsMatch) payload.wins = parseInt(winsMatch[1], 10);
+    if (lossesMatch) payload.losses = parseInt(lossesMatch[1], 10);
+    if (gilsMatch) payload.gils = parseInt(gilsMatch[1], 10);
+    return payload;
+  }
+
+  // ================= SCREEN 0: profile gate =================
+  function renderGate() {
+    const existing = readLocalProfile();
+    if (existing) {
+      el.gateContinueBox.hidden = false;
+      const games = existing.wins + existing.losses;
+      const ratio = games > 0 ? Math.round((existing.wins / games) * 100) : 0;
+      el.gateExistingSummary.textContent = `${existing.playerName} — ${existing.wins}V / ${existing.losses}D (${ratio}%), ${existing.gils} G`;
+    } else {
+      el.gateContinueBox.hidden = true;
+    }
+    el.inputGateNewName.value = '';
+    el.gateImportError.textContent = '';
+    showScreen('gate');
+  }
+
+  el.btnGateContinue.addEventListener('click', () => {
+    const existing = readLocalProfile();
+    if (!existing) return;
+    persistedStats = existing;
+    enterApp();
+  });
+
+  el.btnGateNew.addEventListener('click', () => {
+    const name = el.inputGateNewName.value.trim() || 'Joueur';
+    persistedStats = defaultProfile(name);
+    enterApp();
+  });
+
+  el.inputGateImport.addEventListener('change', (evt) => {
+    const file = evt.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const payload = parseSaveText(String(reader.result));
+      if (payload.playerName === undefined && payload.wins === undefined && payload.losses === undefined && payload.gils === undefined) {
+        el.gateImportError.textContent = 'Fichier illisible. Format attendu : nom=..., victoires=..., defaites=..., gils=...';
+        return;
+      }
+      persistedStats = Object.assign(defaultProfile(), payload);
+      enterApp();
+    };
+    reader.readAsText(file);
+    evt.target.value = '';
+  });
+
+  el.btnSwitchProfile.addEventListener('click', () => {
+    persistedStats = null;
+    renderGate();
+  });
 
   function renderComboToggles() {
     el.toggleComboMultiple.classList.toggle('active', comboMultiplePref);
@@ -589,24 +696,33 @@
       stuck: 'Tous les jetons étaient sélectionnés sans somme valide.'
     }[reason] || '';
 
-    fetch('/api/stats/result', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        outcome,
-        dealerId: match.dealer.id,
-        quotaReached: match.quotaProgress,
-        quotaTarget: match.dealer.quota,
-        gilsEarned: outcome === 'win' ? match.dealer.gilReward : 0
-      })
-    })
-      .then(r => r.json())
-      .then(stats => {
-        persistedStats = stats;
-        renderStatStrip();
-        showModal(outcome, reasonText);
-      })
-      .catch(() => showModal(outcome, reasonText));
+    const gilsEarned = outcome === 'win' ? match.dealer.gilReward : 0;
+
+    persistedStats.gamesPlayed += 1;
+    if (match.quotaProgress > persistedStats.bestQuota) persistedStats.bestQuota = match.quotaProgress;
+    if (outcome === 'win') {
+      persistedStats.wins += 1;
+      persistedStats.gils += gilsEarned;
+      persistedStats.currentStreak = persistedStats.currentStreak > 0 ? persistedStats.currentStreak + 1 : 1;
+    } else {
+      persistedStats.losses += 1;
+      persistedStats.currentStreak = persistedStats.currentStreak < 0 ? persistedStats.currentStreak - 1 : -1;
+    }
+    if (persistedStats.currentStreak > persistedStats.bestStreak) persistedStats.bestStreak = persistedStats.currentStreak;
+
+    persistedStats.history.unshift({
+      date: new Date().toISOString(),
+      outcome,
+      quotaReached: match.quotaProgress,
+      quotaTarget: match.dealer.quota,
+      dealerId: match.dealer.id,
+      gilsEarned
+    });
+    persistedStats.history = persistedStats.history.slice(0, 25);
+
+    saveLocalProfile();
+    renderStatStrip();
+    showModal(outcome, reasonText);
   }
 
   el.btnAbandon.addEventListener('click', () => {
@@ -645,14 +761,11 @@
 
   el.btnSaveName.addEventListener('click', () => {
     const name = el.inputPlayerName.value.trim();
-    if (!name) return;
-    fetch('/api/stats/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ playerName: name })
-    })
-      .then(r => r.json())
-      .then(stats => { persistedStats = stats; renderStatStrip(); renderDealerGrid(); });
+    if (!name || !persistedStats) return;
+    persistedStats.playerName = name.slice(0, 40);
+    saveLocalProfile();
+    renderStatStrip();
+    renderDealerGrid();
   });
 
   el.inputImportFile.addEventListener('change', (evt) => {
@@ -660,36 +773,19 @@
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const text = String(reader.result);
-      const payload = {};
-      const nameMatch = text.match(/^\s*(?:nom|name)\s*=\s*(.+)$/im);
-      const winsMatch = text.match(/^\s*(?:victoires|wins)\s*=\s*(\d+)/im);
-      const lossesMatch = text.match(/^\s*(?:defaites|défaites|losses)\s*=\s*(\d+)/im);
-      const gilsMatch = text.match(/^\s*(?:gils|gil|gold)\s*=\s*(\d+)/im);
-      if (nameMatch) payload.playerName = nameMatch[1].trim();
-      if (winsMatch) payload.wins = parseInt(winsMatch[1], 10);
-      if (lossesMatch) payload.losses = parseInt(lossesMatch[1], 10);
-      if (gilsMatch) payload.gils = parseInt(gilsMatch[1], 10);
-
-      if (!payload.playerName && payload.wins === undefined && payload.losses === undefined && payload.gils === undefined) {
+      const payload = parseSaveText(String(reader.result));
+      if (payload.playerName === undefined && payload.wins === undefined && payload.losses === undefined && payload.gils === undefined) {
         alert('Fichier illisible. Format attendu : nom=..., victoires=..., defaites=..., gils=... (une valeur par ligne).');
         return;
       }
-
-      fetch('/api/stats/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(r => r.json())
-        .then(stats => {
-          persistedStats = stats;
-          renderStatStrip();
-          renderDealerGrid();
-          alert('Sauvegarde importée.');
-        });
+      persistedStats = Object.assign(defaultProfile(), persistedStats, payload);
+      saveLocalProfile();
+      renderStatStrip();
+      renderDealerGrid();
+      alert('Sauvegarde importée.');
     };
     reader.readAsText(file);
+    evt.target.value = '';
   });
 
   el.btnExport.addEventListener('click', () => {
@@ -709,7 +805,6 @@
     el.adjustError.textContent = '';
     if (!Number.isFinite(amount) || amount <= 0) {
       el.adjustCostPreview.textContent = '';
-      el.btnAdjust.disabled = false;
       return;
     }
     const cost = amount * GIL_COST_PER_POINT;
@@ -724,41 +819,38 @@
 
   el.btnAdjust.addEventListener('click', () => {
     const amount = parseInt(el.inputAdjust.value, 10);
-    if (!Number.isFinite(amount) || amount <= 0) return;
+    if (!Number.isFinite(amount) || amount <= 0 || !persistedStats) return;
     el.adjustError.textContent = '';
-    fetch('/api/stats/adjust', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount })
-    })
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) {
-          el.adjustError.textContent = data.error || 'Erreur inconnue.';
-          return;
-        }
-        persistedStats = data;
-        renderStatStrip();
-        renderDealerGrid();
-        el.inputAdjust.value = '';
-        el.adjustCostPreview.textContent = '';
-      });
+
+    if (amount > persistedStats.losses) {
+      el.adjustError.textContent = `Impossible de soustraire ${amount} : tu n'as que ${persistedStats.losses} défaite(s) en stock.`;
+      return;
+    }
+    const cost = amount * GIL_COST_PER_POINT;
+    if (cost > persistedStats.gils) {
+      el.adjustError.textContent = `Gils insuffisants : ${cost} G nécessaires, tu as ${persistedStats.gils} G.`;
+      return;
+    }
+
+    persistedStats.wins = Math.max(0, persistedStats.wins - amount);
+    persistedStats.losses = Math.max(0, persistedStats.losses - amount);
+    persistedStats.gils -= cost;
+    persistedStats.gamesPlayed = persistedStats.wins + persistedStats.losses;
+    saveLocalProfile();
+    renderStatStrip();
+    renderDealerGrid();
+    el.inputAdjust.value = '';
+    el.adjustCostPreview.textContent = '';
   });
 
   el.btnFullReset.addEventListener('click', () => {
-    if (!confirm('Réinitialiser complètement les statistiques (victoires, défaites, meilleur quota) ? Cette action est irréversible.')) return;
-    fetch('/api/stats/reset', { method: 'POST' })
-      .then(r => r.json())
-      .then(stats => {
-        persistedStats = stats;
-        renderStatStrip();
-        renderDealerGrid();
-      });
+    if (!confirm('Réinitialiser complètement les statistiques (victoires, défaites, Gils, meilleur quota) ? Cette action est irréversible.')) return;
+    const name = persistedStats ? persistedStats.playerName : 'Joueur';
+    persistedStats = defaultProfile(name);
+    saveLocalProfile();
+    renderStatStrip();
+    renderDealerGrid();
   });
 
-  loadStats().then(() => {
-    renderComboToggles();
-    renderDealerGrid();
-    showScreen('dealer');
-  });
+  renderGate();
 })();
