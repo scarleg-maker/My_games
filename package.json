@@ -1,0 +1,12 @@
+{
+  "name": "monopoly-local",
+  "version": "1.0.0",
+  "description": "Jeu de Monopoly jouable en local (hot-seat) sur Node.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
