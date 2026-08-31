@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monopoly — Table de jeu</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="board-wrap">
+    <div id="board" class="board"></div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="players-panel" id="players-panel"></div>
+
+    <div class="turn-panel">
+      <div id="current-player-banner" class="current-player-banner">Connexion…</div>
+      <div class="dice-row">
+        <div class="die" id="die1">?</div>
+        <div class="die" id="die2">?</div>
+      </div>
+      <button id="manage-btn" class="btn ghost wide">🏠 Gérer mes propriétés</button>
+      <div class="action-buttons" id="action-buttons"></div>
+    </div>
+
+    <div class="log-panel">
+      <h3>Journal</h3>
+      <div id="log" class="log"></div>
+    </div>
+  </aside>
+</div>
+
+<div id="modal-overlay" class="overlay hidden">
+  <div id="modal-card" class="modal-card"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
+</body>
+</html>

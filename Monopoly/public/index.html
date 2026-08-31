@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monopoly — Créer une partie</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="lobby-body">
+
+<div class="lobby-wrap">
+  <div class="setup-card">
+    <h1 class="logo">MONOPOLY</h1>
+    <p class="tagline">Créez une partie, puis ouvrez une page par joueur humain</p>
+
+    <label class="field-label">Plateau</label>
+    <select id="board-select" class="select"></select>
+
+    <div class="count-row">
+      <label class="field-label" style="margin:0">Joueurs</label>
+      <div class="count-controls">
+        <button type="button" id="count-minus" class="btn ghost small">−</button>
+        <span id="count-display">2</span>
+        <button type="button" id="count-plus" class="btn ghost small">+</button>
+      </div>
+      <button type="button" id="solo-ai-btn" class="btn ghost small">1 contre IA</button>
+    </div>
+
+    <div id="player-rows"></div>
+
+    <button id="start-game-btn" class="btn primary wide">Créer la partie</button>
+  </div>
+
+  <div id="result-card" class="setup-card hidden">
+    <h2>Partie créée !</h2>
+    <p class="tagline">Ouvrez un lien par joueur humain (dans un nouvel onglet, ou partagez-le sur votre réseau local). Les joueurs IA jouent automatiquement.</p>
+    <div id="links-list" class="links-list"></div>
+    <button id="new-game-btn" class="btn ghost wide">Créer une nouvelle partie</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="setup.js"></script>
+</body>
+</html>
