@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yam's</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ ACCUEIL ============ -->
+  <section id="screen-home" class="screen active">
+    <div class="card home-card">
+      <h1>🎲 Yam's</h1>
+      <p class="subtitle">Choisissez un mode de jeu</p>
+      <div class="mode-buttons">
+        <button id="btn-goto-classic" class="btn-primary btn-big">🎮 Jeu classique</button>
+        <button id="btn-goto-scoresheet" class="btn-secondary btn-big">📋 Tableau de scores</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CONFIG JEU CLASSIQUE ============ -->
+  <section id="screen-classic-setup" class="screen">
+    <div class="card">
+      <button class="btn-back" data-target="screen-home">← Retour</button>
+      <h2>Jeu classique — Configuration</h2>
+
+      <label class="field-label" for="classic-num-players">Nombre de joueurs</label>
+      <select id="classic-num-players" class="select-input"></select>
+
+      <div id="classic-player-names" class="player-names-list"></div>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="classic-points-sup">
+        <span>Règle « Points sup. »</span>
+        <button type="button" id="btn-explain-points-sup" class="info-btn" title="Explication">?</button>
+      </label>
+      <div id="points-sup-explanation" class="explanation hidden">
+        Si une combinaison <strong>Full</strong>, <strong>Petite suite</strong>, <strong>Grande suite</strong> ou <strong>Yam</strong>
+        est réalisée dès le <strong>premier lancé</strong> (sans relancer les dés), les points sont doublés :
+        Full 25→50, Petite suite 30→60, Grande suite 40→80, Yam 50→100.
+      </div>
+
+      <button id="btn-show-rules" class="btn-link">📖 Rappel des combinaisons</button>
+
+      <button id="btn-start-classic" class="btn-primary btn-big">▶ Démarrer la partie</button>
+    </div>
+  </section>
+
+  <!-- ============ JEU CLASSIQUE - PARTIE EN COURS ============ -->
+  <section id="screen-classic-game" class="screen">
+    <div class="game-header">
+      <div id="current-player-banner" class="current-player-banner"></div>
+      <button id="btn-show-rules-2" class="btn-link small">📖 Règles</button>
+    </div>
+
+    <div class="dice-zone">
+      <div id="dice-container" class="dice-container">
+        <!-- 5 dés générés en JS -->
+      </div>
+      <div class="dice-controls">
+        <button id="btn-roll" class="btn-primary btn-big">🎲 Lancer les dés</button>
+        <button id="btn-pass-turn" class="btn-secondary btn-big" disabled>✅ Arrêter et marquer</button>
+        <span id="rolls-left" class="rolls-left"></span>
+      </div>
+      <p class="hint">Cliquez sur un dé pour le conserver avant le prochain lancer. Vous pouvez arrêter de lancer et choisir votre ligne dès le 1er lancer.</p>
+    </div>
+
+    <div class="score-table-wrap">
+      <table id="classic-score-table" class="score-table"></table>
+    </div>
+  </section>
+
+  <!-- ============ JEU CLASSIQUE - FIN DE PARTIE ============ -->
+  <section id="screen-classic-end" class="screen">
+    <div class="card">
+      <h2>🏆 Partie terminée !</h2>
+      <div id="final-results"></div>
+      <button id="btn-end-back-home" class="btn-primary btn-big">Retour à l'accueil</button>
+    </div>
+  </section>
+
+  <!-- ============ CONFIG TABLEAU DE SCORES ============ -->
+  <section id="screen-scoresheet-setup" class="screen">
+    <div class="card">
+      <button class="btn-back" data-target="screen-home">← Retour</button>
+      <h2>Tableau de scores — Configuration</h2>
+
+      <label class="field-label" for="sheet-num-players">Nombre de joueurs</label>
+      <select id="sheet-num-players" class="select-input"></select>
+
+      <div id="sheet-player-names" class="player-names-list"></div>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="sheet-points-sup">
+        <span>Règle « Points sup. »</span>
+        <button type="button" id="btn-explain-points-sup-sheet" class="info-btn" title="Explication">?</button>
+      </label>
+      <div id="points-sup-explanation-sheet" class="explanation hidden">
+        Si une combinaison <strong>Full</strong>, <strong>Petite suite</strong>, <strong>Grande suite</strong> ou <strong>Yam</strong>
+        est réalisée dès le <strong>premier lancé</strong> (sans relancer les dés), les points sont doublés :
+        Full 25→50, Petite suite 30→60, Grande suite 40→80, Yam 50→100.
+        Une fois la partie commencée, cochez la case <strong>« Obtenu dès le 1er lancer »</strong> avant de valider une ligne concernée : le score se double automatiquement.
+      </div>
+
+      <button id="btn-show-rules-3" class="btn-link">📖 Rappel des combinaisons</button>
+
+      <button id="btn-generate-sheet" class="btn-primary btn-big">▶ Générer le tableau</button>
+    </div>
+  </section>
+
+  <!-- ============ TABLEAU DE SCORES - PARTIE EN COURS ============ -->
+  <section id="screen-scoresheet-table" class="screen">
+    <div class="game-header">
+      <div id="sheet-current-player-banner" class="current-player-banner"></div>
+      <button id="btn-show-rules-4" class="btn-link small">📖 Règles</button>
+    </div>
+
+    <div class="dice-zone">
+      <p class="hint" style="margin:0 0 10px;">Réglez les dés sur les valeurs obtenues avec vos dés physiques, puis cliquez sur la ligne correspondante dans le tableau.</p>
+      <div id="sheet-dice-container" class="dice-container">
+        <!-- 5 dés générés en JS, cliquables pour changer leur valeur -->
+      </div>
+      <label id="sheet-first-roll-label" class="checkbox-label hidden" style="justify-content:center; margin-top:14px;">
+        <input type="checkbox" id="sheet-first-roll">
+        <span>Obtenu dès le 1er lancer (sans relance)</span>
+      </label>
+    </div>
+
+    <div class="score-table-wrap">
+      <table id="sheet-score-table" class="score-table"></table>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ MODALE REGLES ============ -->
+<div id="rules-modal" class="modal hidden">
+  <div class="modal-content">
+    <button id="btn-close-rules" class="btn-close">✕</button>
+    <h2>📖 Rappel des combinaisons</h2>
+    <ul class="rules-list">
+      <li><strong>Chiffres (1 à 6)</strong> : somme des dés portant la valeur choisie.</li>
+      <li><strong>Brelan</strong> : au moins 3 dés identiques → somme des 3 dés identiques + les 2 autres (= somme des 5 dés).</li>
+      <li><strong>Carré</strong> : au moins 4 dés identiques → somme des 4 dés identiques + le 5e dé (= somme des 5 dés).</li>
+      <li><strong>Full</strong> : 2 dés identiques d'une valeur + 3 dés identiques d'une autre valeur → <strong>25 points</strong>.</li>
+      <li><strong>Petite suite</strong> : dés de valeur 1, 2, 3, 4 et 5 → <strong>30 points</strong>.</li>
+      <li><strong>Grande suite</strong> : dés de valeur 2, 3, 4, 5 et 6 → <strong>40 points</strong>.</li>
+      <li><strong>Yam</strong> : 5 dés identiques → <strong>50 points</strong>.</li>
+      <li><strong>Somme</strong> : aucune combinaison requise, somme libre des 5 dés.</li>
+    </ul>
+    <p class="rules-note">
+      Règle « Points sup. » (si activée) : Full, Petite suite, Grande suite ou Yam réalisés dès le premier lancé
+      voient leurs points doublés (50 / 60 / 80 / 100).
+    </p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

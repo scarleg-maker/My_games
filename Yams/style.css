@@ -1,0 +1,465 @@
+:root {
+  --bg: #f4f1ea;
+  --paper: #ffffff;
+  --ink: #2b2b2b;
+  --primary: #b3541e;
+  --primary-dark: #8a3f14;
+  --secondary: #2f6f5e;
+  --accent: #d8a13a;
+  --line: #e2ddd0;
+  --held: #f0c14b;
+  --danger: #b3413b;
+  --radius: 10px;
+  font-size: 16px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.card {
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.home-card {
+  text-align: center;
+  margin-top: 10vh;
+}
+
+h1 { font-size: 2.4rem; margin: 0 0 4px; }
+h2 { margin-top: 4px; color: var(--primary-dark); }
+.subtitle { color: #666; margin-bottom: 28px; }
+
+.mode-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--secondary);
+  color: #fff;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.btn-secondary:hover { opacity: 0.9; }
+
+.btn-big { width: 100%; padding: 16px; font-size: 1.1rem; margin-top: 18px; }
+
+.btn-back {
+  background: none;
+  color: var(--primary-dark);
+  font-weight: 600;
+  padding: 4px 0;
+  margin-bottom: 10px;
+}
+
+.btn-link {
+  background: none;
+  color: var(--secondary);
+  text-decoration: underline;
+  padding: 6px 0;
+  display: block;
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+.btn-link.small { display: inline; margin: 0; }
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  margin: 16px 0 6px;
+}
+
+.select-input, .name-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.player-names-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.player-name-row { display: flex; flex-direction: column; gap: 4px; }
+.player-name-row label { font-size: 0.85rem; color: #666; }
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.checkbox-label input { width: 18px; height: 18px; }
+
+.info-btn {
+  background: var(--secondary);
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.explanation {
+  background: #f2ede0;
+  border-left: 4px solid var(--accent);
+  padding: 12px 14px;
+  margin-top: 10px;
+  border-radius: 6px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.hidden { display: none !important; }
+
+/* ===== Jeu classique - en cours ===== */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.current-player-banner {
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.dice-zone {
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+.dice-container {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  padding: 20px 0;
+}
+
+/* ===== Dé 3D ===== */
+.die-3d {
+  width: 130px;
+  height: 130px;
+  perspective: 700px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.die-3d.held { transform: translateY(-12px); }
+
+.die-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.34, 1.4, 0.4, 1);
+}
+.die-cube.rolling {
+  transition: none;
+  animation-name: dieTumble;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes dieTumble {
+  from { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+  to   { transform: rotateX(360deg) rotateY(360deg) rotateZ(15deg); }
+}
+
+.die-face {
+  position: absolute;
+  inset: 0;
+  width: 130px;
+  height: 130px;
+  background: #fdfdfb;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: inset 0 0 14px rgba(0,0,0,0.06);
+}
+.die-3d.held .die-face { background: var(--held); border-color: var(--primary-dark); }
+
+.die-face.front  { transform: translateZ(65px); }
+.die-face.back   { transform: rotateY(180deg) translateZ(65px); }
+.die-face.right  { transform: rotateY(90deg) translateZ(65px); }
+.die-face.left   { transform: rotateY(-90deg) translateZ(65px); }
+.die-face.top    { transform: rotateX(90deg) translateZ(65px); }
+.die-face.bottom { transform: rotateX(-90deg) translateZ(65px); }
+
+/* Points (pips) du dé, disposés sur une grille 3x3 */
+.pips {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  grid-template-areas:
+    "tl . tr"
+    "ml c mr"
+    "bl . br";
+  padding: 18%;
+  box-sizing: border-box;
+}
+.pip {
+  border-radius: 50%;
+  background: var(--ink);
+  width: 78%;
+  height: 78%;
+  align-self: center;
+  justify-self: center;
+  opacity: 0;
+}
+.pip.tl { grid-area: tl; } .pip.tr { grid-area: tr; }
+.pip.ml { grid-area: ml; } .pip.c  { grid-area: c;  }
+.pip.mr { grid-area: mr; }
+.pip.bl { grid-area: bl; } .pip.br { grid-area: br; }
+
+.pips.v1 .c { opacity: 1; }
+.pips.v2 .tr, .pips.v2 .bl { opacity: 1; }
+.pips.v3 .tr, .pips.v3 .c, .pips.v3 .bl { opacity: 1; }
+.pips.v4 .tl, .pips.v4 .tr, .pips.v4 .bl, .pips.v4 .br { opacity: 1; }
+.pips.v5 .tl, .pips.v5 .tr, .pips.v5 .c, .pips.v5 .bl, .pips.v5 .br { opacity: 1; }
+.pips.v6 .tl, .pips.v6 .ml, .pips.v6 .bl, .pips.v6 .tr, .pips.v6 .mr, .pips.v6 .br { opacity: 1; }
+.die-3d.held .pip { background: var(--primary-dark); }
+
+.dice-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dice-controls .btn-primary { width: auto; margin-top: 0; padding: 12px 26px; }
+.dice-controls .btn-secondary { width: auto; margin-top: 0; padding: 12px 22px; }
+.dice-controls .btn-secondary:disabled { background: #ccc; cursor: not-allowed; opacity: 0.7; }
+
+.rolls-left { font-weight: 600; color: var(--secondary); }
+
+.hint { color: #888; font-size: 0.85rem; margin: 12px 0 0; }
+
+/* ===== Tableau des scores ===== */
+.score-table-wrap { overflow-x: auto; }
+
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--paper);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.score-table th, .score-table td {
+  border: 1px solid var(--line);
+  padding: 9px 10px;
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.score-table thead th {
+  background: var(--secondary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.score-table td.row-label, .score-table th.row-label {
+  text-align: left;
+  font-weight: 600;
+  background: #f7f4ec;
+  white-space: nowrap;
+}
+
+.score-table tr.section-title td {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  text-align: left;
+}
+
+.score-table tr.subtotal-row td, .score-table tr.total-row td {
+  background: #ece6d6;
+  font-weight: 700;
+}
+.score-table tr.total-row td { background: var(--primary); color: #fff; font-size: 1rem; }
+
+.score-cell {
+  cursor: default;
+}
+.score-cell.filled { color: var(--ink); font-weight: 700; }
+.score-cell.empty-current {
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+/* Ligne où le joueur courant peut marquer un score positif : surbrillance verte légère */
+tr.row-playable td.empty-current {
+  background: #dcf0e4;
+  color: var(--secondary);
+}
+tr.row-playable td.empty-current:hover { background: #bfe5d0; }
+/* Ligne où seul le "barrage" (0) est possible : surbrillance neutre légère */
+tr.row-barren td.empty-current {
+  background: #f2ede4;
+  color: #8a8375;
+}
+tr.row-barren td.empty-current:hover { background: #e8e0d0; }
+
+.score-cell.zero-score { color: #999; font-style: italic; }
+.score-cell.other-empty { color: #ccc; }
+.score-cell.doubled { color: var(--danger); }
+.ps-star { margin-left: 3px; }
+
+.manual-cell input {
+  width: 64px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 4px;
+  font-size: 0.95rem;
+}
+
+.doublable-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.ps-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: var(--secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.ps-checkbox input { width: 13px; height: 13px; }
+
+.ps-result {
+  font-size: 0.72rem;
+  color: var(--danger);
+  font-weight: 700;
+  min-height: 12px;
+}
+
+/* ===== Fin de partie ===== */
+#final-results { margin: 18px 0; }
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.05rem;
+}
+.result-row.winner {
+  background: #fff6e0;
+  border-radius: 8px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+/* ===== Modale règles ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+.modal-content {
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+.btn-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  font-size: 1.2rem;
+  color: #666;
+}
+.rules-list { padding-left: 20px; line-height: 1.6; }
+.rules-note { margin-top: 14px; font-size: 0.9rem; color: #555; }
+
+@media (max-width: 480px) {
+  .die-3d, .die-face { width: 84px; height: 84px; }
+  .die-face.front, .die-face.back, .die-face.right, .die-face.left { }
+  .die-face.front  { transform: translateZ(42px); }
+  .die-face.back   { transform: rotateY(180deg) translateZ(42px); }
+  .die-face.right  { transform: rotateY(90deg) translateZ(42px); }
+  .die-face.left   { transform: rotateY(-90deg) translateZ(42px); }
+  .die-face.top    { transform: rotateX(90deg) translateZ(42px); }
+  .die-face.bottom { transform: rotateX(-90deg) translateZ(42px); }
+  .dice-container { gap: 16px; }
+  h1 { font-size: 2rem; }
+}
