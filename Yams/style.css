@@ -451,6 +451,45 @@ tr.row-barren td.empty-current:hover { background: #e8e0d0; }
 .rules-list { padding-left: 20px; line-height: 1.6; }
 .rules-note { margin-top: 14px; font-size: 0.9rem; color: #555; }
 
+/* ===== Bannière de reprise de partie ===== */
+.resume-banner {
+  background: #f2ede0;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  text-align: left;
+}
+.resume-banner p { margin: 0 0 10px; font-weight: 600; color: var(--primary-dark); }
+.resume-buttons { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.resume-buttons .btn-primary { padding: 9px 16px; font-size: 0.92rem; }
+
+/* ===== Actions d'en-tête (sauvegarde, règles) ===== */
+.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.save-confirm {
+  color: var(--secondary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: opacity 0.3s;
+}
+
+/* ===== Palmarès ===== */
+.hof-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.hof-row:last-child { border-bottom: none; }
+.hof-rank { font-weight: 700; color: var(--primary-dark); font-size: 1.1rem; }
+.hof-name { font-weight: 600; }
+.hof-score { font-weight: 700; color: var(--secondary); }
+.hof-ps { font-size: 0.78rem; color: #999; white-space: nowrap; }
+.hof-ps.active { color: var(--danger); font-weight: 700; }
+.hof-empty { color: #888; text-align: center; padding: 20px 0; }
+
 @media (max-width: 480px) {
   .die-3d, .die-face { width: 84px; height: 84px; }
   .die-face.front, .die-face.back, .die-face.right, .die-face.left { }

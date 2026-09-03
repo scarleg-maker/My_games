@@ -15,9 +15,19 @@
     <div class="card home-card">
       <h1>🎲 Yam's</h1>
       <p class="subtitle">Choisissez un mode de jeu</p>
+
+      <div id="resume-banner" class="resume-banner hidden">
+        <p id="resume-text"></p>
+        <div class="resume-buttons">
+          <button id="btn-resume-game" class="btn-primary">▶ Reprendre la partie</button>
+          <button id="btn-delete-save" class="btn-link small">🗑 Supprimer la sauvegarde</button>
+        </div>
+      </div>
+
       <div class="mode-buttons">
         <button id="btn-goto-classic" class="btn-primary btn-big">🎮 Jeu classique</button>
         <button id="btn-goto-scoresheet" class="btn-secondary btn-big">📋 Tableau de scores</button>
+        <button id="btn-goto-hof" class="btn-link">🏆 Palmarès — 5 meilleurs scores</button>
       </div>
     </div>
   </section>
@@ -54,7 +64,11 @@
   <section id="screen-classic-game" class="screen">
     <div class="game-header">
       <div id="current-player-banner" class="current-player-banner"></div>
-      <button id="btn-show-rules-2" class="btn-link small">📖 Règles</button>
+      <div class="header-actions">
+        <button id="btn-save-classic" class="btn-link small">💾 Sauvegarder</button>
+        <span id="save-confirm-classic" class="save-confirm hidden">✓ Sauvegardé</span>
+        <button id="btn-show-rules-2" class="btn-link small">📖 Règles</button>
+      </div>
     </div>
 
     <div class="dice-zone">
@@ -116,7 +130,11 @@
   <section id="screen-scoresheet-table" class="screen">
     <div class="game-header">
       <div id="sheet-current-player-banner" class="current-player-banner"></div>
-      <button id="btn-show-rules-4" class="btn-link small">📖 Règles</button>
+      <div class="header-actions">
+        <button id="btn-save-sheet" class="btn-link small">💾 Sauvegarder</button>
+        <span id="save-confirm-sheet" class="save-confirm hidden">✓ Sauvegardé</span>
+        <button id="btn-show-rules-4" class="btn-link small">📖 Règles</button>
+      </div>
     </div>
 
     <div class="dice-zone">
@@ -135,6 +153,15 @@
     </div>
   </section>
 
+</div>
+
+<!-- ============ MODALE PALMARES ============ -->
+<div id="hof-modal" class="modal hidden">
+  <div class="modal-content">
+    <button id="btn-close-hof" class="btn-close">✕</button>
+    <h2>🏆 Palmarès — 5 meilleurs scores</h2>
+    <div id="hof-list"></div>
+  </div>
 </div>
 
 <!-- ============ MODALE REGLES ============ -->

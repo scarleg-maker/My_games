@@ -33,6 +33,8 @@
   const PIP_POSITIONS = ['tl', 'tr', 'ml', 'c', 'mr', 'bl', 'br'];
 
   const LS_PLAYERS_KEY = 'yams_player_names';
+  const LS_SAVE_KEY = 'yams_saved_game';
+  const LS_HOF_KEY = 'yams_hall_of_fame';
 
   /* ===================== UTILITAIRES ===================== */
 
@@ -42,6 +44,7 @@
   function showScreen(id) {
     $all('.screen').forEach(s => s.classList.remove('active'));
     $(`#${id}`).classList.add('active');
+    if (id === 'screen-home') checkForSavedGame();
   }
 
   function emptyScoreCard() {
@@ -70,6 +73,108 @@
 
   function saveNames(names) {
     localStorage.setItem(LS_PLAYERS_KEY, JSON.stringify(names));
+  }
+
+  /* ===================== SAUVEGARDE DE PARTIE ===================== */
+
+  function saveCurrentGame() {
+    if (!game) return;
+    const snapshot = Object.assign({}, game, { rolling: false, savedAt: new Date().toISOString() });
+    localStorage.setItem(LS_SAVE_KEY, JSON.stringify(snapshot));
+  }
+
+  function loadSavedGame() {
+    try {
+      const raw = localStorage.getItem(LS_SAVE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function deleteSavedGame() {
+    localStorage.removeItem(LS_SAVE_KEY);
+  }
+
+  function flashSaveConfirm(id) {
+    const el = $(id);
+    if (!el) return;
+    el.classList.remove('hidden');
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => el.classList.add('hidden'), 2000);
+  }
+
+  function checkForSavedGame() {
+    const saved = loadSavedGame();
+    const banner = $('#resume-banner');
+    if (!saved) {
+      banner.classList.add('hidden');
+      return;
+    }
+    const modeLabel = saved.mode === 'classic' ? 'Jeu classique' : 'Tableau de scores';
+    const current = saved.players[saved.currentPlayerIndex];
+    $('#resume-text').textContent = `Une partie est en attente : ${modeLabel} — ${saved.players.length} joueur(s), au tour de ${current ? current.name : '?'}.`;
+    banner.classList.remove('hidden');
+  }
+
+  function resumeSavedGame() {
+    const saved = loadSavedGame();
+    if (!saved) return;
+    game = saved;
+    game.rolling = false;
+
+    if (game.mode === 'classic') {
+      renderDice();
+      renderClassicHeader();
+      renderClassicTable();
+      updateRollUI();
+      showScreen('screen-classic-game');
+    } else {
+      $('#sheet-first-roll-label').classList.toggle('hidden', !game.pointsSup);
+      $('#sheet-first-roll').checked = game.rollCount === 1;
+      renderSheetDice();
+      renderSheetHeader();
+      renderSheetTable();
+      showScreen('screen-scoresheet-table');
+    }
+  }
+
+  /* ===================== PALMARES (5 MEILLEURS SCORES) ===================== */
+
+  function loadHallOfFame() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(LS_HOF_KEY) || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function addResultsToHallOfFame(players, pointsSup) {
+    const hof = loadHallOfFame();
+    players.forEach(p => {
+      hof.push({ name: p.name, score: cardTotal(p.card), pointsSup: !!pointsSup, date: new Date().toISOString() });
+    });
+    hof.sort((a, b) => b.score - a.score);
+    localStorage.setItem(LS_HOF_KEY, JSON.stringify(hof.slice(0, 5)));
+  }
+
+  function renderHallOfFame() {
+    const hof = loadHallOfFame();
+    const container = $('#hof-list');
+    if (hof.length === 0) {
+      container.innerHTML = '<p class="hof-empty">Aucune partie terminée pour le moment. Jouez une partie pour apparaître ici !</p>';
+      return;
+    }
+    const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+    container.innerHTML = hof.map((entry, i) => `
+      <div class="hof-row">
+        <span class="hof-rank">${medals[i] || (i + 1) + '.'}</span>
+        <span class="hof-name">${escapeHtml(entry.name)}</span>
+        <span class="hof-score">${entry.score} pts</span>
+        <span class="hof-ps${entry.pointsSup ? ' active' : ''}">${entry.pointsSup ? '⭐ Points sup.' : '—'}</span>
+      </div>
+    `).join('');
   }
 
   /* ===================== CALCUL DES SCORES ===================== */
@@ -177,6 +282,30 @@
   $('#btn-close-rules').addEventListener('click', () => $('#rules-modal').classList.add('hidden'));
   $('#rules-modal').addEventListener('click', (e) => {
     if (e.target.id === 'rules-modal') $('#rules-modal').classList.add('hidden');
+  });
+
+  $('#btn-goto-hof').addEventListener('click', () => {
+    renderHallOfFame();
+    $('#hof-modal').classList.remove('hidden');
+  });
+  $('#btn-close-hof').addEventListener('click', () => $('#hof-modal').classList.add('hidden'));
+  $('#hof-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'hof-modal') $('#hof-modal').classList.add('hidden');
+  });
+
+  $('#btn-resume-game').addEventListener('click', resumeSavedGame);
+  $('#btn-delete-save').addEventListener('click', () => {
+    deleteSavedGame();
+    checkForSavedGame();
+  });
+
+  $('#btn-save-classic').addEventListener('click', () => {
+    saveCurrentGame();
+    flashSaveConfirm('#save-confirm-classic');
+  });
+  $('#btn-save-sheet').addEventListener('click', () => {
+    saveCurrentGame();
+    flashSaveConfirm('#save-confirm-sheet');
   });
 
   /* ============================================================
@@ -541,6 +670,9 @@
   }
 
   function endGame() {
+    addResultsToHallOfFame(game.players, game.pointsSup);
+    deleteSavedGame();
+
     const results = game.players
       .map(p => ({ name: p.name, total: cardTotal(p.card) }))
       .sort((a, b) => b.total - a.total);
@@ -639,5 +771,8 @@
     div.textContent = str;
     return div.innerHTML;
   }
+
+  /* ===================== INITIALISATION ===================== */
+  checkForSavedGame();
 
 })();
