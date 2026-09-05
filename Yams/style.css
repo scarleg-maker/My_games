@@ -84,6 +84,15 @@ button {
 }
 .btn-secondary:hover { opacity: 0.9; }
 
+.btn-hof {
+  background: var(--accent);
+  color: #fff;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.btn-hof:hover { opacity: 0.88; }
+
 .btn-big { width: 100%; padding: 16px; font-size: 1.1rem; margin-top: 18px; }
 
 .btn-back {
@@ -450,6 +459,32 @@ tr.row-barren td.empty-current:hover { background: #e8e0d0; }
 }
 .rules-list { padding-left: 20px; line-height: 1.6; }
 .rules-note { margin-top: 14px; font-size: 0.9rem; color: #555; }
+
+.modal-narrow { max-width: 360px; }
+.score-entry-hint { color: #666; font-size: 0.9rem; margin: 4px 0 14px; }
+.score-entry-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 1.2rem;
+  text-align: center;
+}
+.score-entry-error {
+  color: var(--danger);
+  font-size: 0.88rem;
+  min-height: 18px;
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+.score-entry-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.score-entry-buttons .btn-primary { padding: 10px 22px; }
 
 /* ===== Bannière de reprise de partie ===== */
 .resume-banner {

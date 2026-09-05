@@ -130,9 +130,6 @@
       updateRollUI();
       showScreen('screen-classic-game');
     } else {
-      $('#sheet-first-roll-label').classList.toggle('hidden', !game.pointsSup);
-      $('#sheet-first-roll').checked = game.rollCount === 1;
-      renderSheetDice();
       renderSheetHeader();
       renderSheetTable();
       showScreen('screen-scoresheet-table');
@@ -248,6 +245,104 @@
     return pointsSup ? `${label} (${base} / ${base * 2} pts)` : `${label} (${base} pts)`;
   }
 
+  // Vérifie qu'un score saisi manuellement (mode Tableau) est cohérent avec la combinaison visée
+  function isValidScoreForRow(key, value, pointsSup) {
+    if (typeof key === 'number') {
+      const allowed = [0, 1, 2, 3, 4, 5].map(n => n * key);
+      return allowed.includes(value);
+    }
+    switch (key) {
+      case 'brelan':
+      case 'carre':
+      case 'somme':
+        return value === 0 || (value >= 5 && value <= 30);
+      case 'full':
+      case 'petiteSuite':
+      case 'grandeSuite':
+      case 'yam': {
+        const base = COMBO_BASE_POINTS[key];
+        const allowed = pointsSup ? [0, base, base * 2] : [0, base];
+        return allowed.includes(value);
+      }
+    }
+    return false;
+  }
+
+  // Indique si le score saisi correspond au montant doublé (pour l'étoile ⭐ et le suivi "Points sup.")
+  function isDoubledValue(key, value, pointsSup) {
+    if (!pointsSup || !DOUBLABLE.includes(key)) return false;
+    return value === COMBO_BASE_POINTS[key] * 2;
+  }
+
+  // Texte d'aide indiquant les valeurs acceptées pour une ligne donnée
+  function validValuesHint(key, pointsSup) {
+    if (typeof key === 'number') {
+      const vals = [0, 1, 2, 3, 4, 5].map(n => n * key);
+      return `Valeurs possibles : ${vals.join(', ')}`;
+    }
+    switch (key) {
+      case 'brelan':
+      case 'carre':
+      case 'somme':
+        return 'Valeur possible : 0, ou un total entre 5 et 30';
+      case 'full':
+      case 'petiteSuite':
+      case 'grandeSuite':
+      case 'yam': {
+        const base = COMBO_BASE_POINTS[key];
+        return pointsSup
+          ? `Valeurs possibles : 0, ${base} ou ${base * 2} (avec Points sup.)`
+          : `Valeurs possibles : 0 ou ${base}`;
+      }
+    }
+    return '';
+  }
+
+  /* ---------- Modale de saisie de score (mode Tableau) ---------- */
+
+  let pendingEntry = null; // { key, playerIndex }
+
+  function openScoreEntryModal(key, playerIndex) {
+    pendingEntry = { key, playerIndex };
+    const player = game.players[playerIndex];
+    const label = typeof key === 'number' ? UPPER_LABELS[key] : LOWER_LABELS[key];
+    $('#score-entry-title').textContent = `${player.name} — ${label}`;
+    $('#score-entry-hint').textContent = validValuesHint(key, game.pointsSup);
+    $('#score-entry-input').value = '';
+    $('#score-entry-error').textContent = '';
+    $('#score-entry-modal').classList.remove('hidden');
+    setTimeout(() => $('#score-entry-input').focus(), 50);
+  }
+
+  function closeScoreEntryModal() {
+    pendingEntry = null;
+    $('#score-entry-modal').classList.add('hidden');
+  }
+
+  function submitScoreEntry() {
+    if (!pendingEntry) return;
+    const raw = $('#score-entry-input').value.trim();
+    if (raw === '') {
+      $('#score-entry-error').textContent = 'Veuillez entrer une valeur.';
+      return;
+    }
+    const value = parseInt(raw, 10);
+    if (isNaN(value) || value < 0) {
+      $('#score-entry-error').textContent = 'Merci d’entrer un nombre valide.';
+      return;
+    }
+    const { key, playerIndex } = pendingEntry;
+    if (!isValidScoreForRow(key, value, game.pointsSup)) {
+      $('#score-entry-error').textContent = `Score impossible pour cette ligne. ${validValuesHint(key, game.pointsSup)}.`;
+      return;
+    }
+    const player = game.players[playerIndex];
+    player.card[key] = value;
+    player.doubled[key] = isDoubledValue(key, value, game.pointsSup);
+    closeScoreEntryModal();
+    nextTurn();
+  }
+
   /* ============================================================
      NAVIGATION GENERALE
      ============================================================ */
@@ -297,6 +392,16 @@
   $('#btn-delete-save').addEventListener('click', () => {
     deleteSavedGame();
     checkForSavedGame();
+  });
+
+  $('#btn-score-entry-submit').addEventListener('click', submitScoreEntry);
+  $('#btn-score-entry-cancel').addEventListener('click', closeScoreEntryModal);
+  $('#btn-close-score-entry').addEventListener('click', closeScoreEntryModal);
+  $('#score-entry-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'score-entry-modal') closeScoreEntryModal();
+  });
+  $('#score-entry-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitScoreEntry();
   });
 
   $('#btn-save-classic').addEventListener('click', () => {
@@ -587,38 +692,55 @@
     labelTd.textContent = label;
     tr.appendChild(labelTd);
 
-    // Détermine si la ligne courante est jouable pour le joueur actif, pour appliquer
-    // une surbrillance légère sur toute la ligne (verte = score possible, neutre = à barrer)
     const currentPlayer = game.players[game.currentPlayerIndex];
     const currentFilled = currentPlayer.card[key] !== null;
-    const currentCanPlay = !currentFilled && game.rollCount >= 1 && !game.rolling;
-    if (currentCanPlay) {
-      const currentPreview = calcScore(key, game.dice, game.rollCount, game.pointsSup);
-      tr.className = currentPreview > 0 ? 'row-playable' : 'row-barren';
+
+    // Surbrillance légère de toute la ligne quand le joueur courant peut y jouer
+    if (game.mode === 'classic') {
+      const currentCanPlay = !currentFilled && game.rollCount >= 1 && !game.rolling;
+      if (currentCanPlay) {
+        const currentPreview = calcScore(key, game.dice, game.rollCount, game.pointsSup);
+        tr.className = currentPreview > 0 ? 'row-playable' : 'row-barren';
+      }
+    } else if (!currentFilled) {
+      tr.className = 'row-playable';
     }
 
     game.players.forEach((p, playerIndex) => {
       const td = document.createElement('td');
       const filled = p.card[key] !== null;
       const isCurrent = playerIndex === game.currentPlayerIndex;
-      const canPlay = isCurrent && !filled && game.rollCount >= 1 && !game.rolling;
 
       if (filled) {
         const wasDbl = p.doubled[key];
         td.innerHTML = p.card[key] + (wasDbl ? ' <span class="ps-star" title="Points sup. obtenus">⭐</span>' : '');
         td.className = 'score-cell filled' + (p.card[key] === 0 ? ' zero-score' : '');
-      } else if (canPlay) {
-        const preview = calcScore(key, game.dice, game.rollCount, game.pointsSup);
-        const doubled = wasDoubled(key, preview, game.dice, game.rollCount, game.pointsSup);
-        td.textContent = preview > 0 ? (preview + (doubled ? ' ⭐' : '')) : '0 (barrer)';
-        td.className = 'score-cell empty-current' + (doubled ? ' doubled' : '');
-        td.title = preview > 0
-          ? (doubled ? 'Points sup. ! Score doublé car obtenu dès le 1er lancer.' : 'Cliquez pour valider ce score.')
-          : 'Combinaison non réalisée : cliquez pour barrer cette ligne (0 point).';
-        td.addEventListener('click', () => selectRow(key));
+      } else if (game.mode === 'classic') {
+        const canPlay = isCurrent && !filled && game.rollCount >= 1 && !game.rolling;
+        if (canPlay) {
+          const preview = calcScore(key, game.dice, game.rollCount, game.pointsSup);
+          const doubled = wasDoubled(key, preview, game.dice, game.rollCount, game.pointsSup);
+          td.textContent = preview > 0 ? (preview + (doubled ? ' ⭐' : '')) : '0 (barrer)';
+          td.className = 'score-cell empty-current' + (doubled ? ' doubled' : '');
+          td.title = preview > 0
+            ? (doubled ? 'Points sup. ! Score doublé car obtenu dès le 1er lancer.' : 'Cliquez pour valider ce score.')
+            : 'Combinaison non réalisée : cliquez pour barrer cette ligne (0 point).';
+          td.addEventListener('click', () => selectRow(key));
+        } else {
+          td.textContent = '–';
+          td.className = 'score-cell other-empty';
+        }
       } else {
-        td.textContent = '–';
-        td.className = 'score-cell other-empty';
+        // Mode Tableau : seul le joueur en cours peut saisir un score sur cette ligne
+        if (isCurrent) {
+          td.textContent = '✎ Saisir';
+          td.className = 'score-cell empty-current';
+          td.title = 'Cliquez pour indiquer le score obtenu sur cette ligne.';
+          td.addEventListener('click', () => openScoreEntryModal(key, playerIndex));
+        } else {
+          td.textContent = '–';
+          td.className = 'score-cell other-empty';
+        }
       }
       tr.appendChild(td);
     });
@@ -649,9 +771,9 @@
     } while (isCardFull(game.players[next].card));
 
     game.currentPlayerIndex = next;
-    game.dice = [1, 1, 1, 1, 1];
 
     if (game.mode === 'classic') {
+      game.dice = [1, 1, 1, 1, 1];
       game.held = [false, false, false, false, false];
       game.rollCount = 0;
       game.locked = false;
@@ -660,10 +782,6 @@
       renderClassicTable();
       updateRollUI();
     } else {
-      game.rollCount = 2; // pas de bonus tant que "1er lancer" n'est pas recoché
-      const firstRollBox = $('#sheet-first-roll');
-      if (firstRollBox) firstRollBox.checked = false;
-      renderSheetDice();
       renderSheetHeader();
       renderSheetTable();
     }
@@ -692,7 +810,7 @@
   $('#btn-end-back-home').addEventListener('click', () => showScreen('screen-home'));
 
   /* ============================================================
-     MODE 2 : TABLEAU DE SCORES (saisie des dés, score entré automatiquement)
+     MODE 2 : TABLEAU DE SCORES (saisie manuelle vérifiée par ligne)
      ============================================================ */
 
   const sheetNumSelect = $('#sheet-num-players');
@@ -722,40 +840,13 @@
       mode: 'sheet',
       players: names.map(name => ({ name, card: emptyScoreCard(), doubled: {} })),
       pointsSup,
-      currentPlayerIndex: 0,
-      dice: [1, 1, 1, 1, 1],
-      held: [false, false, false, false, false],
-      rollCount: 2, // pas de doublement tant que la case "1er lancer" n'est pas cochée
-      rolling: false
+      currentPlayerIndex: 0
     };
 
-    $('#sheet-first-roll-label').classList.toggle('hidden', !pointsSup);
-    $('#sheet-first-roll').checked = false;
-
-    renderSheetDice();
     renderSheetHeader();
     renderSheetTable();
     showScreen('screen-scoresheet-table');
   });
-
-  $('#sheet-first-roll').addEventListener('change', () => {
-    game.rollCount = $('#sheet-first-roll').checked ? 1 : 2;
-    renderSheetTable();
-  });
-
-  function renderSheetDice() {
-    const container = $('#sheet-dice-container');
-    if (!container.querySelector('.die-3d')) {
-      buildDiceDOM(container, onSheetDieClick);
-    }
-    updateDiceVisuals(container, game.dice, null);
-  }
-
-  function onSheetDieClick(i) {
-    game.dice[i] = (game.dice[i] % 6) + 1;
-    updateDiceVisuals($('#sheet-dice-container'), game.dice, null);
-    renderSheetTable();
-  }
 
   function renderSheetHeader() {
     const p = game.players[game.currentPlayerIndex];

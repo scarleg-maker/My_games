@@ -27,7 +27,7 @@
       <div class="mode-buttons">
         <button id="btn-goto-classic" class="btn-primary btn-big">🎮 Jeu classique</button>
         <button id="btn-goto-scoresheet" class="btn-secondary btn-big">📋 Tableau de scores</button>
-        <button id="btn-goto-hof" class="btn-link">🏆 Palmarès — 5 meilleurs scores</button>
+        <button id="btn-goto-hof" class="btn-hof btn-big">🏆 Palmarès — 5 meilleurs scores</button>
       </div>
     </div>
   </section>
@@ -117,7 +117,7 @@
         Si une combinaison <strong>Full</strong>, <strong>Petite suite</strong>, <strong>Grande suite</strong> ou <strong>Yam</strong>
         est réalisée dès le <strong>premier lancé</strong> (sans relancer les dés), les points sont doublés :
         Full 25→50, Petite suite 30→60, Grande suite 40→80, Yam 50→100.
-        Une fois la partie commencée, cochez la case <strong>« Obtenu dès le 1er lancer »</strong> avant de valider une ligne concernée : le score se double automatiquement.
+        Lors de la saisie du score, indiquez directement la valeur obtenue (25 ou 50, 30 ou 60, etc.) : le programme la vérifie automatiquement.
       </div>
 
       <button id="btn-show-rules-3" class="btn-link">📖 Rappel des combinaisons</button>
@@ -138,14 +138,7 @@
     </div>
 
     <div class="dice-zone">
-      <p class="hint" style="margin:0 0 10px;">Réglez les dés sur les valeurs obtenues avec vos dés physiques, puis cliquez sur la ligne correspondante dans le tableau.</p>
-      <div id="sheet-dice-container" class="dice-container">
-        <!-- 5 dés générés en JS, cliquables pour changer leur valeur -->
-      </div>
-      <label id="sheet-first-roll-label" class="checkbox-label hidden" style="justify-content:center; margin-top:14px;">
-        <input type="checkbox" id="sheet-first-roll">
-        <span>Obtenu dès le 1er lancer (sans relance)</span>
-      </label>
+      <p class="hint" style="margin:0;">Cliquez sur la ligne concernée pour <strong>indiquer le score obtenu</strong> par le joueur en cours. Le score saisi est vérifié : seules les valeurs possibles pour cette combinaison sont acceptées.</p>
     </div>
 
     <div class="score-table-wrap">
@@ -153,6 +146,21 @@
     </div>
   </section>
 
+</div>
+
+<!-- ============ MODALE SAISIE DE SCORE (mode Tableau) ============ -->
+<div id="score-entry-modal" class="modal hidden">
+  <div class="modal-content modal-narrow">
+    <button id="btn-close-score-entry" class="btn-close">✕</button>
+    <h2 id="score-entry-title">Score</h2>
+    <p id="score-entry-hint" class="score-entry-hint"></p>
+    <input type="number" id="score-entry-input" class="score-entry-input" min="0" placeholder="Points obtenus">
+    <p id="score-entry-error" class="score-entry-error"></p>
+    <div class="score-entry-buttons">
+      <button id="btn-score-entry-cancel" class="btn-back">Annuler</button>
+      <button id="btn-score-entry-submit" class="btn-primary">✓ Valider</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============ MODALE PALMARES ============ -->
