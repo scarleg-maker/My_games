@@ -93,6 +93,10 @@
     <div class="card">
       <h2>🏆 Partie terminée !</h2>
       <div id="final-results"></div>
+      <p class="hint" style="margin:16px 0 8px;">Feuille de score complète (corrections possibles via ✏️) :</p>
+      <div class="score-table-wrap">
+        <table id="final-score-table" class="score-table"></table>
+      </div>
       <button id="btn-end-back-home" class="btn-primary btn-big">Retour à l'accueil</button>
     </div>
   </section>
@@ -165,10 +169,11 @@
 
 <!-- ============ MODALE PALMARES ============ -->
 <div id="hof-modal" class="modal hidden">
-  <div class="modal-content">
+  <div class="modal-content modal-wide">
     <button id="btn-close-hof" class="btn-close">✕</button>
     <h2>🏆 Palmarès — 5 meilleurs scores</h2>
-    <div id="hof-list"></div>
+    <div id="hof-list" class="hof-columns"></div>
+    <button id="btn-reset-hof" class="btn-link small">🗑 Réinitialiser le palmarès</button>
   </div>
 </div>
 
@@ -185,11 +190,15 @@
       <li><strong>Petite suite</strong> : dés de valeur 1, 2, 3, 4 et 5 → <strong>30 points</strong>.</li>
       <li><strong>Grande suite</strong> : dés de valeur 2, 3, 4, 5 et 6 → <strong>40 points</strong>.</li>
       <li><strong>Yam</strong> : 5 dés identiques → <strong>50 points</strong>.</li>
-      <li><strong>Somme</strong> : aucune combinaison requise, somme libre des 5 dés.</li>
+      <li><strong>Chance</strong> : aucune combinaison requise, somme libre des 5 dés.</li>
     </ul>
     <p class="rules-note">
       Règle « Points sup. » (si activée) : Full, Petite suite, Grande suite ou Yam réalisés dès le premier lancé
       voient leurs points doublés (50 / 60 / 80 / 100).
+    </p>
+    <p class="rules-note">
+      Bonus classique : si le sous-total des 6 premières lignes (chiffres) atteint ou dépasse <strong>63 points</strong>, un bonus de <strong>+35 points</strong> est ajouté.
+      Avec la règle « Points sup. » active, si <strong>aucune ligne n'est barrée</strong> (0 point) sur tout le tableau, un bonus supplémentaire de <strong>+10 points</strong> est ajouté au total.
     </p>
   </div>
 </div>

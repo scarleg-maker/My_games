@@ -14,7 +14,7 @@
     petiteSuite: 'Petite suite',
     grandeSuite: 'Grande suite',
     yam: 'Yam',
-    somme: 'Somme (Chance)'
+    somme: 'Chance'
   };
 
   const DOUBLABLE = ['full', 'petiteSuite', 'grandeSuite', 'yam'];
@@ -58,8 +58,26 @@
     return UPPER_KEYS.concat(LOWER_KEYS).every(k => card[k] !== null);
   }
 
-  function cardTotal(card) {
-    return UPPER_KEYS.concat(LOWER_KEYS).reduce((sum, k) => sum + (card[k] || 0), 0);
+  // Sous-total des 6 lignes de chiffres (section supérieure)
+  function upperSubtotal(card) {
+    return UPPER_KEYS.reduce((sum, k) => sum + (card[k] || 0), 0);
+  }
+
+  // Bonus classique : +35 points si le sous-total supérieur atteint ou dépasse 63
+  function upperBonus(card) {
+    return upperSubtotal(card) >= 63 ? 35 : 0;
+  }
+
+  // Bonus "Points sup." : +10 points si, la partie terminée, aucune ligne n'a été barrée (0 point)
+  function perfectCardBonus(card, pointsSup) {
+    if (!pointsSup || !isCardFull(card)) return 0;
+    const hasZero = UPPER_KEYS.concat(LOWER_KEYS).some(k => card[k] === 0);
+    return hasZero ? 0 : 10;
+  }
+
+  function cardTotal(card, pointsSup) {
+    const base = UPPER_KEYS.concat(LOWER_KEYS).reduce((sum, k) => sum + (card[k] || 0), 0);
+    return base + upperBonus(card) + perfectCardBonus(card, pointsSup);
   }
 
   function savedNames(count) {
@@ -136,7 +154,7 @@
     }
   }
 
-  /* ===================== PALMARES (5 MEILLEURS SCORES) ===================== */
+  /* ===================== PALMARES (5 MEILLEURS SCORES, 2 CATEGORIES) ===================== */
 
   function loadHallOfFame() {
     try {
@@ -150,28 +168,38 @@
   function addResultsToHallOfFame(players, pointsSup) {
     const hof = loadHallOfFame();
     players.forEach(p => {
-      hof.push({ name: p.name, score: cardTotal(p.card), pointsSup: !!pointsSup, date: new Date().toISOString() });
+      hof.push({ name: p.name, score: cardTotal(p.card, pointsSup), pointsSup: !!pointsSup, date: new Date().toISOString() });
     });
+    // Conserve un historique large ; le classement top 5 par catégorie se calcule à l'affichage
     hof.sort((a, b) => b.score - a.score);
-    localStorage.setItem(LS_HOF_KEY, JSON.stringify(hof.slice(0, 5)));
+    localStorage.setItem(LS_HOF_KEY, JSON.stringify(hof.slice(0, 200)));
+  }
+
+  function resetHallOfFame() {
+    localStorage.removeItem(LS_HOF_KEY);
+  }
+
+  function renderHofColumn(title, entries) {
+    const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+    const rows = entries.length === 0
+      ? '<p class="hof-empty">Aucun score enregistré.</p>'
+      : entries.map((entry, i) => `
+          <div class="hof-row">
+            <span class="hof-rank">${medals[i] || (i + 1) + '.'}</span>
+            <span class="hof-name">${escapeHtml(entry.name)}</span>
+            <span class="hof-score">${entry.score} pts</span>
+          </div>
+        `).join('');
+    return `<div class="hof-column"><h3>${title}</h3>${rows}</div>`;
   }
 
   function renderHallOfFame() {
     const hof = loadHallOfFame();
-    const container = $('#hof-list');
-    if (hof.length === 0) {
-      container.innerHTML = '<p class="hof-empty">Aucune partie terminée pour le moment. Jouez une partie pour apparaître ici !</p>';
-      return;
-    }
-    const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
-    container.innerHTML = hof.map((entry, i) => `
-      <div class="hof-row">
-        <span class="hof-rank">${medals[i] || (i + 1) + '.'}</span>
-        <span class="hof-name">${escapeHtml(entry.name)}</span>
-        <span class="hof-score">${entry.score} pts</span>
-        <span class="hof-ps${entry.pointsSup ? ' active' : ''}">${entry.pointsSup ? '⭐ Points sup.' : '—'}</span>
-      </div>
-    `).join('');
+    const classic = hof.filter(e => !e.pointsSup).sort((a, b) => b.score - a.score).slice(0, 5);
+    const withPointsSup = hof.filter(e => e.pointsSup).sort((a, b) => b.score - a.score).slice(0, 5);
+    $('#hof-list').innerHTML =
+      renderHofColumn('🎯 Classique', classic) +
+      renderHofColumn('⭐ Points sup. activé', withPointsSup);
   }
 
   /* ===================== CALCUL DES SCORES ===================== */
@@ -386,6 +414,12 @@
   $('#btn-close-hof').addEventListener('click', () => $('#hof-modal').classList.add('hidden'));
   $('#hof-modal').addEventListener('click', (e) => {
     if (e.target.id === 'hof-modal') $('#hof-modal').classList.add('hidden');
+  });
+  $('#btn-reset-hof').addEventListener('click', () => {
+    if (window.confirm('Réinitialiser tout le palmarès (les deux colonnes) ? Cette action est irréversible.')) {
+      resetHallOfFame();
+      renderHallOfFame();
+    }
   });
 
   $('#btn-resume-game').addEventListener('click', resumeSavedGame);
@@ -644,14 +678,21 @@
     // Section supérieure
     tbody.appendChild(sectionTitleRow('Chiffres', game.players.length + 1));
     UPPER_KEYS.forEach(key => tbody.appendChild(buildScoreRow(UPPER_LABELS[key], key)));
-    tbody.appendChild(subtotalRow('Sous-total (1-6)', UPPER_KEYS, game.players.length + 1, false));
+    tbody.appendChild(subtotalRow('Sous-total (1-6)', UPPER_KEYS));
+    tbody.appendChild(bonusRow());
+    tbody.appendChild(upperTotalRow());
 
     // Section inférieure
     tbody.appendChild(sectionTitleRow('Combinaisons', game.players.length + 1));
     LOWER_KEYS.forEach(key => tbody.appendChild(buildScoreRow(comboLabel(key, game.pointsSup), key)));
 
+    if (game.pointsSup) {
+      tbody.appendChild(preFinalTotalRow());
+      tbody.appendChild(perfectBonusRow());
+    }
+
     // Total
-    tbody.appendChild(subtotalRow('TOTAL', UPPER_KEYS.concat(LOWER_KEYS), game.players.length + 1, true));
+    tbody.appendChild(totalRow());
 
     table.appendChild(tbody);
   }
@@ -668,9 +709,9 @@
     return tr;
   }
 
-  function subtotalRow(label, keys, colCountTotal, isTotal) {
+  function subtotalRow(label, keys) {
     const tr = document.createElement('tr');
-    tr.className = isTotal ? 'total-row' : 'subtotal-row';
+    tr.className = 'subtotal-row';
     const labelTd = document.createElement('td');
     labelTd.className = 'row-label';
     labelTd.textContent = label;
@@ -683,6 +724,101 @@
       tr.appendChild(td);
     });
     return tr;
+  }
+
+  function bonusRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'subtotal-row';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = 'Bonus (si ≥ 63) : +35';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      const bonus = upperBonus(p.card);
+      td.textContent = bonus > 0 ? `+${bonus}` : '0';
+      if (bonus > 0) td.classList.add('bonus-active');
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  // 1er sous-résultat : total de la section Chiffres, bonus des 63 pts inclus
+  function upperTotalRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'subtotal-row running-total';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = '→ Total Chiffres (avec bonus)';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      td.textContent = upperSubtotal(p.card) + upperBonus(p.card);
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  // 2e sous-résultat : total général avant l'éventuel bonus "Points sup." (+10)
+  function preFinalTotalRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'subtotal-row running-total';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = '→ Sous-total avant bonus Points sup.';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      const lowerSum = LOWER_KEYS.reduce((s, k) => s + (p.card[k] || 0), 0);
+      td.textContent = upperSubtotal(p.card) + upperBonus(p.card) + lowerSum;
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  function perfectBonusRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'subtotal-row';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = 'Bonus Points sup. (aucune ligne barrée) : +10';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      const bonus = perfectCardBonus(p.card, game.pointsSup);
+      td.textContent = bonus > 0 ? `+${bonus}` : (isCardFull(p.card) ? '0' : '—');
+      if (bonus > 0) td.classList.add('bonus-active');
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  function totalRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'total-row';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = 'TOTAL';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      td.textContent = cardTotal(p.card, game.pointsSup);
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  let editingCell = null; // { key, playerIndex } — ligne en cours de correction
+
+  // Ré-affiche le tableau actuellement visible (partie en cours ou écran de fin) après une correction
+  function refreshVisibleTable() {
+    if ($('#screen-classic-game').classList.contains('active')) {
+      renderClassicTable();
+    } else if ($('#screen-scoresheet-table').classList.contains('active')) {
+      renderSheetTable();
+    } else if ($('#screen-classic-end').classList.contains('active')) {
+      renderFinalResults();
+    }
   }
 
   function buildScoreRow(label, key) {
@@ -710,11 +846,62 @@
       const td = document.createElement('td');
       const filled = p.card[key] !== null;
       const isCurrent = playerIndex === game.currentPlayerIndex;
+      const isEditingThis = editingCell && editingCell.key === key && editingCell.playerIndex === playerIndex;
 
-      if (filled) {
+      if (isEditingThis) {
+        td.className = 'score-cell editing';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'edit-score-input';
+        input.min = '0';
+        input.value = p.card[key];
+        const validateBtn = document.createElement('button');
+        validateBtn.className = 'edit-score-btn';
+        validateBtn.textContent = '✓';
+        validateBtn.title = 'Valider la correction';
+        const submitEdit = () => {
+          const newVal = parseInt(input.value, 10);
+          if (isNaN(newVal) || newVal < 0 || !isValidScoreForRow(key, newVal, game.pointsSup)) {
+            input.classList.add('invalid');
+            input.title = `Score invalide. ${validValuesHint(key, game.pointsSup)}.`;
+            return;
+          }
+          p.card[key] = newVal;
+          p.doubled[key] = isDoubledValue(key, newVal, game.pointsSup);
+          editingCell = null;
+          refreshVisibleTable();
+        };
+        validateBtn.addEventListener('click', (e) => { e.stopPropagation(); submitEdit(); });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitEdit(); });
+        input.addEventListener('input', () => input.classList.remove('invalid'));
+        td.appendChild(input);
+        td.appendChild(validateBtn);
+      } else if (filled) {
         const wasDbl = p.doubled[key];
-        td.innerHTML = p.card[key] + (wasDbl ? ' <span class="ps-star" title="Points sup. obtenus">⭐</span>' : '');
         td.className = 'score-cell filled' + (p.card[key] === 0 ? ' zero-score' : '');
+
+        const scoreSpan = document.createElement('span');
+        scoreSpan.textContent = p.card[key];
+        td.appendChild(scoreSpan);
+
+        if (wasDbl) {
+          const star = document.createElement('span');
+          star.className = 'ps-star';
+          star.title = 'Points sup. obtenus';
+          star.textContent = '⭐';
+          td.appendChild(star);
+        }
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-score-btn';
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Corriger ce score';
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          editingCell = { key, playerIndex };
+          refreshVisibleTable();
+        });
+        td.appendChild(editBtn);
       } else if (game.mode === 'classic') {
         const canPlay = isCurrent && !filled && game.rollCount >= 1 && !game.rolling;
         if (canPlay) {
@@ -757,6 +944,8 @@
   }
 
   function nextTurn() {
+    editingCell = null;
+
     // Vérifie fin de partie
     const allFull = game.players.every(p => isCardFull(p.card));
     if (allFull) {
@@ -787,23 +976,29 @@
     }
   }
 
-  function endGame() {
-    addResultsToHallOfFame(game.players, game.pointsSup);
-    deleteSavedGame();
-
+  function renderFinalResults() {
     const results = game.players
-      .map(p => ({ name: p.name, total: cardTotal(p.card) }))
+      .map(p => ({ name: p.name, total: cardTotal(p.card, game.pointsSup) }))
       .sort((a, b) => b.total - a.total);
 
+    const RANK_LABELS = ['🏆 1er', '🥈 2e', '🥉 3e'];
     const container = $('#final-results');
     container.innerHTML = '';
     results.forEach((r, i) => {
       const div = document.createElement('div');
       div.className = 'result-row' + (i === 0 ? ' winner' : '');
-      div.innerHTML = `<span>${i === 0 ? '🏆 ' : ''}${escapeHtml(r.name)}</span><span>${r.total} pts</span>`;
+      const rankLabel = RANK_LABELS[i] || `${i + 1}e`;
+      div.innerHTML = `<span>${rankLabel} — ${escapeHtml(r.name)}</span><span>${r.total} pts</span>`;
       container.appendChild(div);
     });
 
+    renderScoreTable($('#final-score-table'));
+  }
+
+  function endGame() {
+    addResultsToHallOfFame(game.players, game.pointsSup);
+    deleteSavedGame();
+    renderFinalResults();
     showScreen('screen-classic-end');
   }
 
