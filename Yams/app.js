@@ -14,7 +14,7 @@
     petiteSuite: 'Petite suite',
     grandeSuite: 'Grande suite',
     yam: 'Yam',
-    somme: 'Somme (Chance)'
+    somme: 'Chance'
   };
 
   const DOUBLABLE = ['full', 'petiteSuite', 'grandeSuite', 'yam'];
@@ -58,8 +58,26 @@
     return UPPER_KEYS.concat(LOWER_KEYS).every(k => card[k] !== null);
   }
 
-  function cardTotal(card) {
-    return UPPER_KEYS.concat(LOWER_KEYS).reduce((sum, k) => sum + (card[k] || 0), 0);
+  // Sous-total des 6 lignes de chiffres (section supérieure)
+  function upperSubtotal(card) {
+    return UPPER_KEYS.reduce((sum, k) => sum + (card[k] || 0), 0);
+  }
+
+  // Bonus classique : +35 points si le sous-total supérieur atteint ou dépasse 63
+  function upperBonus(card) {
+    return upperSubtotal(card) >= 63 ? 35 : 0;
+  }
+
+  // Bonus "Points sup." : +10 points si, la partie terminée, aucune ligne n'a été barrée (0 point)
+  function perfectCardBonus(card, pointsSup) {
+    if (!pointsSup || !isCardFull(card)) return 0;
+    const hasZero = UPPER_KEYS.concat(LOWER_KEYS).some(k => card[k] === 0);
+    return hasZero ? 0 : 10;
+  }
+
+  function cardTotal(card, pointsSup) {
+    const base = UPPER_KEYS.concat(LOWER_KEYS).reduce((sum, k) => sum + (card[k] || 0), 0);
+    return base + upperBonus(card) + perfectCardBonus(card, pointsSup);
   }
 
   function savedNames(count) {
@@ -130,16 +148,13 @@
       updateRollUI();
       showScreen('screen-classic-game');
     } else {
-      $('#sheet-first-roll-label').classList.toggle('hidden', !game.pointsSup);
-      $('#sheet-first-roll').checked = game.rollCount === 1;
-      renderSheetDice();
       renderSheetHeader();
       renderSheetTable();
       showScreen('screen-scoresheet-table');
     }
   }
 
-  /* ===================== PALMARES (5 MEILLEURS SCORES) ===================== */
+  /* ===================== PALMARES (5 MEILLEURS SCORES, 2 CATEGORIES) ===================== */
 
   function loadHallOfFame() {
     try {
@@ -153,28 +168,38 @@
   function addResultsToHallOfFame(players, pointsSup) {
     const hof = loadHallOfFame();
     players.forEach(p => {
-      hof.push({ name: p.name, score: cardTotal(p.card), pointsSup: !!pointsSup, date: new Date().toISOString() });
+      hof.push({ name: p.name, score: cardTotal(p.card, pointsSup), pointsSup: !!pointsSup, date: new Date().toISOString() });
     });
+    // Conserve un historique large ; le classement top 5 par catégorie se calcule à l'affichage
     hof.sort((a, b) => b.score - a.score);
-    localStorage.setItem(LS_HOF_KEY, JSON.stringify(hof.slice(0, 5)));
+    localStorage.setItem(LS_HOF_KEY, JSON.stringify(hof.slice(0, 200)));
+  }
+
+  function resetHallOfFame() {
+    localStorage.removeItem(LS_HOF_KEY);
+  }
+
+  function renderHofColumn(title, entries) {
+    const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+    const rows = entries.length === 0
+      ? '<p class="hof-empty">Aucun score enregistré.</p>'
+      : entries.map((entry, i) => `
+          <div class="hof-row">
+            <span class="hof-rank">${medals[i] || (i + 1) + '.'}</span>
+            <span class="hof-name">${escapeHtml(entry.name)}</span>
+            <span class="hof-score">${entry.score} pts</span>
+          </div>
+        `).join('');
+    return `<div class="hof-column"><h3>${title}</h3>${rows}</div>`;
   }
 
   function renderHallOfFame() {
     const hof = loadHallOfFame();
-    const container = $('#hof-list');
-    if (hof.length === 0) {
-      container.innerHTML = '<p class="hof-empty">Aucune partie terminée pour le moment. Jouez une partie pour apparaître ici !</p>';
-      return;
-    }
-    const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
-    container.innerHTML = hof.map((entry, i) => `
-      <div class="hof-row">
-        <span class="hof-rank">${medals[i] || (i + 1) + '.'}</span>
-        <span class="hof-name">${escapeHtml(entry.name)}</span>
-        <span class="hof-score">${entry.score} pts</span>
-        <span class="hof-ps${entry.pointsSup ? ' active' : ''}">${entry.pointsSup ? '⭐ Points sup.' : '—'}</span>
-      </div>
-    `).join('');
+    const classic = hof.filter(e => !e.pointsSup).sort((a, b) => b.score - a.score).slice(0, 5);
+    const withPointsSup = hof.filter(e => e.pointsSup).sort((a, b) => b.score - a.score).slice(0, 5);
+    $('#hof-list').innerHTML =
+      renderHofColumn('🎯 Classique', classic) +
+      renderHofColumn('⭐ Points sup. activé', withPointsSup);
   }
 
   /* ===================== CALCUL DES SCORES ===================== */
@@ -248,6 +273,104 @@
     return pointsSup ? `${label} (${base} / ${base * 2} pts)` : `${label} (${base} pts)`;
   }
 
+  // Vérifie qu'un score saisi manuellement (mode Tableau) est cohérent avec la combinaison visée
+  function isValidScoreForRow(key, value, pointsSup) {
+    if (typeof key === 'number') {
+      const allowed = [0, 1, 2, 3, 4, 5].map(n => n * key);
+      return allowed.includes(value);
+    }
+    switch (key) {
+      case 'brelan':
+      case 'carre':
+      case 'somme':
+        return value === 0 || (value >= 5 && value <= 30);
+      case 'full':
+      case 'petiteSuite':
+      case 'grandeSuite':
+      case 'yam': {
+        const base = COMBO_BASE_POINTS[key];
+        const allowed = pointsSup ? [0, base, base * 2] : [0, base];
+        return allowed.includes(value);
+      }
+    }
+    return false;
+  }
+
+  // Indique si le score saisi correspond au montant doublé (pour l'étoile ⭐ et le suivi "Points sup.")
+  function isDoubledValue(key, value, pointsSup) {
+    if (!pointsSup || !DOUBLABLE.includes(key)) return false;
+    return value === COMBO_BASE_POINTS[key] * 2;
+  }
+
+  // Texte d'aide indiquant les valeurs acceptées pour une ligne donnée
+  function validValuesHint(key, pointsSup) {
+    if (typeof key === 'number') {
+      const vals = [0, 1, 2, 3, 4, 5].map(n => n * key);
+      return `Valeurs possibles : ${vals.join(', ')}`;
+    }
+    switch (key) {
+      case 'brelan':
+      case 'carre':
+      case 'somme':
+        return 'Valeur possible : 0, ou un total entre 5 et 30';
+      case 'full':
+      case 'petiteSuite':
+      case 'grandeSuite':
+      case 'yam': {
+        const base = COMBO_BASE_POINTS[key];
+        return pointsSup
+          ? `Valeurs possibles : 0, ${base} ou ${base * 2} (avec Points sup.)`
+          : `Valeurs possibles : 0 ou ${base}`;
+      }
+    }
+    return '';
+  }
+
+  /* ---------- Modale de saisie de score (mode Tableau) ---------- */
+
+  let pendingEntry = null; // { key, playerIndex }
+
+  function openScoreEntryModal(key, playerIndex) {
+    pendingEntry = { key, playerIndex };
+    const player = game.players[playerIndex];
+    const label = typeof key === 'number' ? UPPER_LABELS[key] : LOWER_LABELS[key];
+    $('#score-entry-title').textContent = `${player.name} — ${label}`;
+    $('#score-entry-hint').textContent = validValuesHint(key, game.pointsSup);
+    $('#score-entry-input').value = '';
+    $('#score-entry-error').textContent = '';
+    $('#score-entry-modal').classList.remove('hidden');
+    setTimeout(() => $('#score-entry-input').focus(), 50);
+  }
+
+  function closeScoreEntryModal() {
+    pendingEntry = null;
+    $('#score-entry-modal').classList.add('hidden');
+  }
+
+  function submitScoreEntry() {
+    if (!pendingEntry) return;
+    const raw = $('#score-entry-input').value.trim();
+    if (raw === '') {
+      $('#score-entry-error').textContent = 'Veuillez entrer une valeur.';
+      return;
+    }
+    const value = parseInt(raw, 10);
+    if (isNaN(value) || value < 0) {
+      $('#score-entry-error').textContent = 'Merci d’entrer un nombre valide.';
+      return;
+    }
+    const { key, playerIndex } = pendingEntry;
+    if (!isValidScoreForRow(key, value, game.pointsSup)) {
+      $('#score-entry-error').textContent = `Score impossible pour cette ligne. ${validValuesHint(key, game.pointsSup)}.`;
+      return;
+    }
+    const player = game.players[playerIndex];
+    player.card[key] = value;
+    player.doubled[key] = isDoubledValue(key, value, game.pointsSup);
+    closeScoreEntryModal();
+    nextTurn();
+  }
+
   /* ============================================================
      NAVIGATION GENERALE
      ============================================================ */
@@ -292,11 +415,27 @@
   $('#hof-modal').addEventListener('click', (e) => {
     if (e.target.id === 'hof-modal') $('#hof-modal').classList.add('hidden');
   });
+  $('#btn-reset-hof').addEventListener('click', () => {
+    if (window.confirm('Réinitialiser tout le palmarès (les deux colonnes) ? Cette action est irréversible.')) {
+      resetHallOfFame();
+      renderHallOfFame();
+    }
+  });
 
   $('#btn-resume-game').addEventListener('click', resumeSavedGame);
   $('#btn-delete-save').addEventListener('click', () => {
     deleteSavedGame();
     checkForSavedGame();
+  });
+
+  $('#btn-score-entry-submit').addEventListener('click', submitScoreEntry);
+  $('#btn-score-entry-cancel').addEventListener('click', closeScoreEntryModal);
+  $('#btn-close-score-entry').addEventListener('click', closeScoreEntryModal);
+  $('#score-entry-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'score-entry-modal') closeScoreEntryModal();
+  });
+  $('#score-entry-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitScoreEntry();
   });
 
   $('#btn-save-classic').addEventListener('click', () => {
@@ -539,14 +678,17 @@
     // Section supérieure
     tbody.appendChild(sectionTitleRow('Chiffres', game.players.length + 1));
     UPPER_KEYS.forEach(key => tbody.appendChild(buildScoreRow(UPPER_LABELS[key], key)));
-    tbody.appendChild(subtotalRow('Sous-total (1-6)', UPPER_KEYS, game.players.length + 1, false));
+    tbody.appendChild(subtotalRow('Sous-total (1-6)', UPPER_KEYS));
+    tbody.appendChild(bonusRow());
 
     // Section inférieure
     tbody.appendChild(sectionTitleRow('Combinaisons', game.players.length + 1));
     LOWER_KEYS.forEach(key => tbody.appendChild(buildScoreRow(comboLabel(key, game.pointsSup), key)));
 
+    if (game.pointsSup) tbody.appendChild(perfectBonusRow());
+
     // Total
-    tbody.appendChild(subtotalRow('TOTAL', UPPER_KEYS.concat(LOWER_KEYS), game.players.length + 1, true));
+    tbody.appendChild(totalRow());
 
     table.appendChild(tbody);
   }
@@ -563,9 +705,9 @@
     return tr;
   }
 
-  function subtotalRow(label, keys, colCountTotal, isTotal) {
+  function subtotalRow(label, keys) {
     const tr = document.createElement('tr');
-    tr.className = isTotal ? 'total-row' : 'subtotal-row';
+    tr.className = 'subtotal-row';
     const labelTd = document.createElement('td');
     labelTd.className = 'row-label';
     labelTd.textContent = label;
@@ -580,6 +722,68 @@
     return tr;
   }
 
+  function bonusRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'subtotal-row';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = 'Bonus (si ≥ 63) : +35';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      const bonus = upperBonus(p.card);
+      td.textContent = bonus > 0 ? `+${bonus}` : '0';
+      if (bonus > 0) td.classList.add('bonus-active');
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  function perfectBonusRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'subtotal-row';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = 'Bonus Points sup. (aucune ligne barrée) : +10';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      const bonus = perfectCardBonus(p.card, game.pointsSup);
+      td.textContent = bonus > 0 ? `+${bonus}` : (isCardFull(p.card) ? '0' : '—');
+      if (bonus > 0) td.classList.add('bonus-active');
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  function totalRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'total-row';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = 'TOTAL';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      td.textContent = cardTotal(p.card, game.pointsSup);
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  let editingCell = null; // { key, playerIndex } — ligne en cours de correction
+
+  // Ré-affiche le tableau actuellement visible (partie en cours ou écran de fin) après une correction
+  function refreshVisibleTable() {
+    if ($('#screen-classic-game').classList.contains('active')) {
+      renderClassicTable();
+    } else if ($('#screen-scoresheet-table').classList.contains('active')) {
+      renderSheetTable();
+    } else if ($('#screen-classic-end').classList.contains('active')) {
+      renderFinalResults();
+    }
+  }
+
   function buildScoreRow(label, key) {
     const tr = document.createElement('tr');
     const labelTd = document.createElement('td');
@@ -587,38 +791,106 @@
     labelTd.textContent = label;
     tr.appendChild(labelTd);
 
-    // Détermine si la ligne courante est jouable pour le joueur actif, pour appliquer
-    // une surbrillance légère sur toute la ligne (verte = score possible, neutre = à barrer)
     const currentPlayer = game.players[game.currentPlayerIndex];
     const currentFilled = currentPlayer.card[key] !== null;
-    const currentCanPlay = !currentFilled && game.rollCount >= 1 && !game.rolling;
-    if (currentCanPlay) {
-      const currentPreview = calcScore(key, game.dice, game.rollCount, game.pointsSup);
-      tr.className = currentPreview > 0 ? 'row-playable' : 'row-barren';
+
+    // Surbrillance légère de toute la ligne quand le joueur courant peut y jouer
+    if (game.mode === 'classic') {
+      const currentCanPlay = !currentFilled && game.rollCount >= 1 && !game.rolling;
+      if (currentCanPlay) {
+        const currentPreview = calcScore(key, game.dice, game.rollCount, game.pointsSup);
+        tr.className = currentPreview > 0 ? 'row-playable' : 'row-barren';
+      }
+    } else if (!currentFilled) {
+      tr.className = 'row-playable';
     }
 
     game.players.forEach((p, playerIndex) => {
       const td = document.createElement('td');
       const filled = p.card[key] !== null;
       const isCurrent = playerIndex === game.currentPlayerIndex;
-      const canPlay = isCurrent && !filled && game.rollCount >= 1 && !game.rolling;
+      const isEditingThis = editingCell && editingCell.key === key && editingCell.playerIndex === playerIndex;
 
-      if (filled) {
+      if (isEditingThis) {
+        td.className = 'score-cell editing';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'edit-score-input';
+        input.min = '0';
+        input.value = p.card[key];
+        const validateBtn = document.createElement('button');
+        validateBtn.className = 'edit-score-btn';
+        validateBtn.textContent = '✓';
+        validateBtn.title = 'Valider la correction';
+        const submitEdit = () => {
+          const newVal = parseInt(input.value, 10);
+          if (isNaN(newVal) || newVal < 0 || !isValidScoreForRow(key, newVal, game.pointsSup)) {
+            input.classList.add('invalid');
+            input.title = `Score invalide. ${validValuesHint(key, game.pointsSup)}.`;
+            return;
+          }
+          p.card[key] = newVal;
+          p.doubled[key] = isDoubledValue(key, newVal, game.pointsSup);
+          editingCell = null;
+          refreshVisibleTable();
+        };
+        validateBtn.addEventListener('click', (e) => { e.stopPropagation(); submitEdit(); });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitEdit(); });
+        input.addEventListener('input', () => input.classList.remove('invalid'));
+        td.appendChild(input);
+        td.appendChild(validateBtn);
+      } else if (filled) {
         const wasDbl = p.doubled[key];
-        td.innerHTML = p.card[key] + (wasDbl ? ' <span class="ps-star" title="Points sup. obtenus">⭐</span>' : '');
         td.className = 'score-cell filled' + (p.card[key] === 0 ? ' zero-score' : '');
-      } else if (canPlay) {
-        const preview = calcScore(key, game.dice, game.rollCount, game.pointsSup);
-        const doubled = wasDoubled(key, preview, game.dice, game.rollCount, game.pointsSup);
-        td.textContent = preview > 0 ? (preview + (doubled ? ' ⭐' : '')) : '0 (barrer)';
-        td.className = 'score-cell empty-current' + (doubled ? ' doubled' : '');
-        td.title = preview > 0
-          ? (doubled ? 'Points sup. ! Score doublé car obtenu dès le 1er lancer.' : 'Cliquez pour valider ce score.')
-          : 'Combinaison non réalisée : cliquez pour barrer cette ligne (0 point).';
-        td.addEventListener('click', () => selectRow(key));
+
+        const scoreSpan = document.createElement('span');
+        scoreSpan.textContent = p.card[key];
+        td.appendChild(scoreSpan);
+
+        if (wasDbl) {
+          const star = document.createElement('span');
+          star.className = 'ps-star';
+          star.title = 'Points sup. obtenus';
+          star.textContent = '⭐';
+          td.appendChild(star);
+        }
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-score-btn';
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Corriger ce score';
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          editingCell = { key, playerIndex };
+          refreshVisibleTable();
+        });
+        td.appendChild(editBtn);
+      } else if (game.mode === 'classic') {
+        const canPlay = isCurrent && !filled && game.rollCount >= 1 && !game.rolling;
+        if (canPlay) {
+          const preview = calcScore(key, game.dice, game.rollCount, game.pointsSup);
+          const doubled = wasDoubled(key, preview, game.dice, game.rollCount, game.pointsSup);
+          td.textContent = preview > 0 ? (preview + (doubled ? ' ⭐' : '')) : '0 (barrer)';
+          td.className = 'score-cell empty-current' + (doubled ? ' doubled' : '');
+          td.title = preview > 0
+            ? (doubled ? 'Points sup. ! Score doublé car obtenu dès le 1er lancer.' : 'Cliquez pour valider ce score.')
+            : 'Combinaison non réalisée : cliquez pour barrer cette ligne (0 point).';
+          td.addEventListener('click', () => selectRow(key));
+        } else {
+          td.textContent = '–';
+          td.className = 'score-cell other-empty';
+        }
       } else {
-        td.textContent = '–';
-        td.className = 'score-cell other-empty';
+        // Mode Tableau : seul le joueur en cours peut saisir un score sur cette ligne
+        if (isCurrent) {
+          td.textContent = '✎ Saisir';
+          td.className = 'score-cell empty-current';
+          td.title = 'Cliquez pour indiquer le score obtenu sur cette ligne.';
+          td.addEventListener('click', () => openScoreEntryModal(key, playerIndex));
+        } else {
+          td.textContent = '–';
+          td.className = 'score-cell other-empty';
+        }
       }
       tr.appendChild(td);
     });
@@ -635,6 +907,8 @@
   }
 
   function nextTurn() {
+    editingCell = null;
+
     // Vérifie fin de partie
     const allFull = game.players.every(p => isCardFull(p.card));
     if (allFull) {
@@ -649,9 +923,9 @@
     } while (isCardFull(game.players[next].card));
 
     game.currentPlayerIndex = next;
-    game.dice = [1, 1, 1, 1, 1];
 
     if (game.mode === 'classic') {
+      game.dice = [1, 1, 1, 1, 1];
       game.held = [false, false, false, false, false];
       game.rollCount = 0;
       game.locked = false;
@@ -660,39 +934,41 @@
       renderClassicTable();
       updateRollUI();
     } else {
-      game.rollCount = 2; // pas de bonus tant que "1er lancer" n'est pas recoché
-      const firstRollBox = $('#sheet-first-roll');
-      if (firstRollBox) firstRollBox.checked = false;
-      renderSheetDice();
       renderSheetHeader();
       renderSheetTable();
     }
   }
 
-  function endGame() {
-    addResultsToHallOfFame(game.players, game.pointsSup);
-    deleteSavedGame();
-
+  function renderFinalResults() {
     const results = game.players
-      .map(p => ({ name: p.name, total: cardTotal(p.card) }))
+      .map(p => ({ name: p.name, total: cardTotal(p.card, game.pointsSup) }))
       .sort((a, b) => b.total - a.total);
 
+    const RANK_LABELS = ['🏆 1er', '🥈 2e', '🥉 3e'];
     const container = $('#final-results');
     container.innerHTML = '';
     results.forEach((r, i) => {
       const div = document.createElement('div');
       div.className = 'result-row' + (i === 0 ? ' winner' : '');
-      div.innerHTML = `<span>${i === 0 ? '🏆 ' : ''}${escapeHtml(r.name)}</span><span>${r.total} pts</span>`;
+      const rankLabel = RANK_LABELS[i] || `${i + 1}e`;
+      div.innerHTML = `<span>${rankLabel} — ${escapeHtml(r.name)}</span><span>${r.total} pts</span>`;
       container.appendChild(div);
     });
 
+    renderScoreTable($('#final-score-table'));
+  }
+
+  function endGame() {
+    addResultsToHallOfFame(game.players, game.pointsSup);
+    deleteSavedGame();
+    renderFinalResults();
     showScreen('screen-classic-end');
   }
 
   $('#btn-end-back-home').addEventListener('click', () => showScreen('screen-home'));
 
   /* ============================================================
-     MODE 2 : TABLEAU DE SCORES (saisie des dés, score entré automatiquement)
+     MODE 2 : TABLEAU DE SCORES (saisie manuelle vérifiée par ligne)
      ============================================================ */
 
   const sheetNumSelect = $('#sheet-num-players');
@@ -722,40 +998,13 @@
       mode: 'sheet',
       players: names.map(name => ({ name, card: emptyScoreCard(), doubled: {} })),
       pointsSup,
-      currentPlayerIndex: 0,
-      dice: [1, 1, 1, 1, 1],
-      held: [false, false, false, false, false],
-      rollCount: 2, // pas de doublement tant que la case "1er lancer" n'est pas cochée
-      rolling: false
+      currentPlayerIndex: 0
     };
 
-    $('#sheet-first-roll-label').classList.toggle('hidden', !pointsSup);
-    $('#sheet-first-roll').checked = false;
-
-    renderSheetDice();
     renderSheetHeader();
     renderSheetTable();
     showScreen('screen-scoresheet-table');
   });
-
-  $('#sheet-first-roll').addEventListener('change', () => {
-    game.rollCount = $('#sheet-first-roll').checked ? 1 : 2;
-    renderSheetTable();
-  });
-
-  function renderSheetDice() {
-    const container = $('#sheet-dice-container');
-    if (!container.querySelector('.die-3d')) {
-      buildDiceDOM(container, onSheetDieClick);
-    }
-    updateDiceVisuals(container, game.dice, null);
-  }
-
-  function onSheetDieClick(i) {
-    game.dice[i] = (game.dice[i] % 6) + 1;
-    updateDiceVisuals($('#sheet-dice-container'), game.dice, null);
-    renderSheetTable();
-  }
 
   function renderSheetHeader() {
     const p = game.players[game.currentPlayerIndex];

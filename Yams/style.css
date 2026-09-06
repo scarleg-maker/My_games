@@ -84,6 +84,15 @@ button {
 }
 .btn-secondary:hover { opacity: 0.9; }
 
+.btn-hof {
+  background: var(--accent);
+  color: #fff;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.btn-hof:hover { opacity: 0.88; }
+
 .btn-big { width: 100%; padding: 16px; font-size: 1.1rem; margin-top: 18px; }
 
 .btn-back {
@@ -369,39 +378,36 @@ tr.row-barren td.empty-current:hover { background: #e8e0d0; }
 .score-cell.doubled { color: var(--danger); }
 .ps-star { margin-left: 3px; }
 
-.manual-cell input {
-  width: 64px;
-  text-align: center;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 6px 4px;
-  font-size: 0.95rem;
-}
-
-.doublable-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.ps-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.72rem;
+/* ===== Correction d'une ligne déjà remplie ===== */
+.score-cell.filled { position: relative; }
+.edit-score-btn {
+  background: none;
+  border: none;
   color: var(--secondary);
-  font-weight: 700;
+  font-size: 0.8rem;
+  margin-left: 6px;
+  padding: 2px 4px;
   cursor: pointer;
+  opacity: 0.65;
+  vertical-align: middle;
 }
-.ps-checkbox input { width: 13px; height: 13px; }
+.edit-score-btn:hover { opacity: 1; }
+.score-cell.editing {
+  background: #fff8e6;
+}
+.edit-score-input {
+  width: 56px;
+  text-align: center;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 4px 2px;
+  font-size: 0.95rem;
+  margin-right: 4px;
+}
+.edit-score-input.invalid { border-color: var(--danger); background: #fdeceb; }
 
-.ps-result {
-  font-size: 0.72rem;
-  color: var(--danger);
-  font-weight: 700;
-  min-height: 12px;
-}
+/* ===== Lignes de bonus ===== */
+.score-table td.bonus-active { color: var(--secondary); font-weight: 700; }
 
 /* ===== Fin de partie ===== */
 #final-results { margin: 18px 0; }
@@ -440,6 +446,7 @@ tr.row-barren td.empty-current:hover { background: #e8e0d0; }
   overflow-y: auto;
   position: relative;
 }
+.modal-content.modal-wide { max-width: 680px; }
 .btn-close {
   position: absolute;
   top: 12px;
@@ -450,6 +457,32 @@ tr.row-barren td.empty-current:hover { background: #e8e0d0; }
 }
 .rules-list { padding-left: 20px; line-height: 1.6; }
 .rules-note { margin-top: 14px; font-size: 0.9rem; color: #555; }
+
+.modal-narrow { max-width: 360px; }
+.score-entry-hint { color: #666; font-size: 0.9rem; margin: 4px 0 14px; }
+.score-entry-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 1.2rem;
+  text-align: center;
+}
+.score-entry-error {
+  color: var(--danger);
+  font-size: 0.88rem;
+  min-height: 18px;
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+.score-entry-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.score-entry-buttons .btn-primary { padding: 10px 22px; }
 
 /* ===== Bannière de reprise de partie ===== */
 .resume-banner {
@@ -474,9 +507,25 @@ tr.row-barren td.empty-current:hover { background: #e8e0d0; }
 }
 
 /* ===== Palmarès ===== */
+.hof-columns {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.hof-column {
+  flex: 1;
+  min-width: 220px;
+}
+.hof-column h3 {
+  margin: 0 0 8px;
+  color: var(--primary-dark);
+  font-size: 1rem;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 6px;
+}
 .hof-row {
   display: grid;
-  grid-template-columns: 32px 1fr auto auto;
+  grid-template-columns: 32px 1fr auto;
   align-items: center;
   gap: 10px;
   padding: 10px 8px;
@@ -485,10 +534,8 @@ tr.row-barren td.empty-current:hover { background: #e8e0d0; }
 .hof-row:last-child { border-bottom: none; }
 .hof-rank { font-weight: 700; color: var(--primary-dark); font-size: 1.1rem; }
 .hof-name { font-weight: 600; }
-.hof-score { font-weight: 700; color: var(--secondary); }
-.hof-ps { font-size: 0.78rem; color: #999; white-space: nowrap; }
-.hof-ps.active { color: var(--danger); font-weight: 700; }
-.hof-empty { color: #888; text-align: center; padding: 20px 0; }
+.hof-score { font-weight: 700; color: var(--secondary); white-space: nowrap; }
+.hof-empty { color: #888; text-align: center; padding: 20px 0; font-size: 0.9rem; }
 
 @media (max-width: 480px) {
   .die-3d, .die-face { width: 84px; height: 84px; }
