@@ -351,6 +351,13 @@ button {
 }
 .score-table tr.total-row td { background: var(--primary); color: #fff; font-size: 1rem; }
 
+/* Sous-résultats intermédiaires (total Chiffres avec bonus, total avant bonus Points sup.) */
+.score-table tr.running-total td {
+  background: #e3ddc8;
+  font-style: italic;
+}
+.score-table tr.running-total td.row-label { font-style: normal; color: var(--primary-dark); }
+
 .score-cell {
   cursor: default;
 }

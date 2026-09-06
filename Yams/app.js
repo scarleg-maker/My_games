@@ -680,12 +680,16 @@
     UPPER_KEYS.forEach(key => tbody.appendChild(buildScoreRow(UPPER_LABELS[key], key)));
     tbody.appendChild(subtotalRow('Sous-total (1-6)', UPPER_KEYS));
     tbody.appendChild(bonusRow());
+    tbody.appendChild(upperTotalRow());
 
     // Section inférieure
     tbody.appendChild(sectionTitleRow('Combinaisons', game.players.length + 1));
     LOWER_KEYS.forEach(key => tbody.appendChild(buildScoreRow(comboLabel(key, game.pointsSup), key)));
 
-    if (game.pointsSup) tbody.appendChild(perfectBonusRow());
+    if (game.pointsSup) {
+      tbody.appendChild(preFinalTotalRow());
+      tbody.appendChild(perfectBonusRow());
+    }
 
     // Total
     tbody.appendChild(totalRow());
@@ -734,6 +738,39 @@
       const bonus = upperBonus(p.card);
       td.textContent = bonus > 0 ? `+${bonus}` : '0';
       if (bonus > 0) td.classList.add('bonus-active');
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  // 1er sous-résultat : total de la section Chiffres, bonus des 63 pts inclus
+  function upperTotalRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'subtotal-row running-total';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = '→ Total Chiffres (avec bonus)';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      td.textContent = upperSubtotal(p.card) + upperBonus(p.card);
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  // 2e sous-résultat : total général avant l'éventuel bonus "Points sup." (+10)
+  function preFinalTotalRow() {
+    const tr = document.createElement('tr');
+    tr.className = 'subtotal-row running-total';
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = '→ Sous-total avant bonus Points sup.';
+    tr.appendChild(labelTd);
+    game.players.forEach(p => {
+      const td = document.createElement('td');
+      const lowerSum = LOWER_KEYS.reduce((s, k) => s + (p.card[k] || 0), 0);
+      td.textContent = upperSubtotal(p.card) + upperBonus(p.card) + lowerSum;
       tr.appendChild(td);
     });
     return tr;
