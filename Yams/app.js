@@ -846,7 +846,10 @@
       const td = document.createElement('td');
       const filled = p.card[key] !== null;
       const isCurrent = playerIndex === game.currentPlayerIndex;
+<<<<<<< HEAD
       const isEditingThis = editingCell && editingCell.key === key && editingCell.playerIndex === playerIndex;
+=======
+>>>>>>> 7437107cdf430b62e3b684227273e1f26e562a16
 
       if (isEditingThis) {
         td.className = 'score-cell editing';
@@ -879,6 +882,7 @@
       } else if (filled) {
         const wasDbl = p.doubled[key];
         td.className = 'score-cell filled' + (p.card[key] === 0 ? ' zero-score' : '');
+<<<<<<< HEAD
 
         const scoreSpan = document.createElement('span');
         scoreSpan.textContent = p.card[key];
@@ -902,6 +906,8 @@
           refreshVisibleTable();
         });
         td.appendChild(editBtn);
+=======
+>>>>>>> 7437107cdf430b62e3b684227273e1f26e562a16
       } else if (game.mode === 'classic') {
         const canPlay = isCurrent && !filled && game.rollCount >= 1 && !game.rolling;
         if (canPlay) {
