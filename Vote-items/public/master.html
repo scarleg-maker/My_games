@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vote_items — Page maître</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>🗳️ Vote_items</h1>
+      <div class="subtitle">Page maître — configuration et résultats</div>
+    </div>
+  </header>
+
+  <div id="save-card" class="card">
+    <h2>💾 Sauvegarder / reprendre plus tard</h2>
+    <p class="hint" style="margin-top:-4px">
+      La session est déjà enregistrée automatiquement sur le serveur (vous pouvez fermer et relancer le programme sans rien perdre).
+      Ces boutons servent à garder un exemplaire du fichier vous-même, ou à reprendre la session sur un autre ordinateur.
+    </p>
+    <div class="row-actions">
+      <a class="btn-secondary" id="link-export" href="/api/export" style="text-decoration:none;display:inline-flex;align-items:center">📄 Exporter le résumé (.txt)</a>
+      <a class="btn-secondary" id="link-backup" href="/api/backup" style="text-decoration:none;display:inline-flex;align-items:center">🗄️ Télécharger la sauvegarde (.json)</a>
+      <label class="btn-secondary" style="display:inline-flex;align-items:center;cursor:pointer;margin:0">
+        📂 Restaurer une sauvegarde (.json)
+        <input type="file" id="restore-file" accept="application/json,.json" style="display:none">
+      </label>
+    </div>
+    <div class="status-msg" id="backup-msg"></div>
+  </div>
+
+  <div id="config-card" class="card" style="display:none">
+    <h2>Configuration de la session</h2>
+    <div class="grid-2">
+      <div>
+        <label for="participants">Participants (un nom par ligne)</label>
+        <textarea id="participants" rows="8" placeholder="Alice&#10;Bob&#10;Chloé"></textarea>
+        <div class="hint"><span id="participants-count">0</span> participant(s)</div>
+      </div>
+      <div>
+        <label for="items">Items à voter (un par ligne, 30 maximum)</label>
+        <textarea id="items" rows="8" placeholder="Item 1&#10;Item 2&#10;Item 3"></textarea>
+        <div class="hint"><span id="items-count">0</span> / 30 item(s)</div>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button class="btn-primary" id="btn-create">Créer / mettre à jour la session</button>
+      <button class="btn-secondary" id="btn-cancel-edit" style="display:none">Annuler</button>
+    </div>
+    <div class="status-msg" id="config-msg"></div>
+  </div>
+
+  <div id="summary-card" class="card" style="display:none">
+    <h2>Session en cours</h2>
+    <p><strong id="summary-participants-count">0</strong> participant(s) — <strong id="summary-items-count">0</strong> item(s) à voter</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Participant</th><th>Lien de vote</th><th>Progression</th><th>Statut</th><th></th></tr>
+        </thead>
+        <tbody id="status-body"></tbody>
+      </table>
+    </div>
+    <div id="all-validated-banner" class="locked-banner" style="display:none;margin-top:16px">
+      ✅ Tous les participants ont validé leurs votes — les résultats ci-dessous sont définitifs.
+    </div>
+    <div class="row-actions">
+      <button class="btn-secondary" id="btn-edit-config">Modifier la configuration</button>
+      <button class="btn-danger" id="btn-reset">Réinitialiser toute la session</button>
+    </div>
+  </div>
+
+  <div id="results-card" class="card" style="display:none">
+    <h2>Résultats — moyennes par item</h2>
+    <p class="muted" style="margin-top:-8px;font-size:0.85rem">Les moyennes se mettent à jour en direct au fur et à mesure des votes.</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr id="results-head"></tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+    <div class="legend">
+      <div><span class="swatch green"></span>8 meilleures moyennes</div>
+      <div><span class="swatch yellow"></span>9e et 10e meilleures moyennes</div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/master.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "vote-items",
+  "version": "1.0.0",
+  "description": "Site de vote multi-appareils pour noter des items en groupe",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
