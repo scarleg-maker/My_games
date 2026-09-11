@@ -257,16 +257,41 @@ app.post('/api/config', (req, res) => {
     return res.status(400).json({ error: `Maximum ${MAX_ITEMS} items.` });
   }
 
+  // Fusion intelligente avec les votes existants : un participant et un item
+  // sont considérés comme "le même" s'ils portent exactement le même nom
+  // qu'avant. Leur vote est alors conservé, quelle que soit sa nouvelle
+  // position dans la liste. Seuls les votes d'un item supprimé (ou renommé)
+  // ou d'un participant supprimé (ou renommé) sont perdus, puisqu'il n'y a
+  // alors plus rien à quoi les rattacher.
+  const oldItems = state.items || [];
+  const oldVotes = state.votes || {};
+
   const votes = {};
   for (const name of participants) {
-    votes[name] = { values: new Array(items.length).fill(null), validated: false };
+    const oldEntry = oldVotes[name];
+    const values = items.map((label) => {
+      if (!oldEntry) return null;
+      const oldIndex = oldItems.indexOf(label);
+      if (oldIndex === -1) return null;
+      const v = oldEntry.values[oldIndex];
+      return typeof v === 'number' ? v : null;
+    });
+    // On ne conserve la validation que si ce participant était déjà validé
+    // ET que tous ses votes restent renseignés après la fusion (sinon la
+    // validation n'aurait plus de sens : il manquerait des votes).
+    const validated = !!(oldEntry && oldEntry.validated && values.every((v) => typeof v === 'number'));
+    votes[name] = { values, validated };
   }
+
+  const isFirstConfig = !state.configured;
 
   state.configured = true;
   state.participants = participants;
   state.items = items;
   state.votes = votes;
-  state.createdAt = new Date().toISOString();
+  if (isFirstConfig) {
+    state.createdAt = new Date().toISOString();
+  }
 
   saveState().then(() => res.json(publicState()));
 });

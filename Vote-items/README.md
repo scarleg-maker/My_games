@@ -28,6 +28,7 @@ Ouvrez `http://localhost:15000/` sur l'ordinateur qui héberge le serveur.
 - Le tableau des résultats met automatiquement en **surbrillance verte** les 8 items ayant les meilleures moyennes, et en **surbrillance jaune** les 9ᵉ et 10ᵉ meilleures moyennes.
 - Un bouton **Déverrouiller** permet de rouvrir le vote d'un participant qui aurait déjà validé (en cas d'erreur).
 - **Réinitialiser toute la session** efface participants, items et votes pour repartir de zéro.
+- **Modifier la configuration** (ajouter/retirer un participant ou un item) conserve automatiquement les votes déjà saisis pour tout participant et tout item dont le nom n'a pas changé — seuls les votes liés à un item ou un participant supprimé (ou renommé) sont perdus. Si tous les votes d'un participant restaient complets après la modification et qu'il avait déjà validé, sa validation est conservée ; sinon elle repasse "en cours".
 
 ### 2. Pages de vote (participants)
 

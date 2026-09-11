@@ -36,7 +36,7 @@
     }
 
     const proceed = state && state.configured
-      ? confirm('Cela réinitialisera tous les votes déjà enregistrés. Continuer ?')
+      ? confirm("Les votes déjà enregistrés seront conservés pour les participants et items inchangés. Les votes liés à un item ou un participant supprimé (ou renommé) seront perdus. Continuer ?")
       : true;
     if (!proceed) return;
 
