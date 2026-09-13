@@ -14,6 +14,7 @@ const winnerBanner = document.getElementById('winnerBanner');
 const endButtons = document.getElementById('endButtons');
 const restartBtn = document.getElementById('restartBtn');
 const editBtn = document.getElementById('editBtn');
+const otherPlayerLinks = document.getElementById('otherPlayerLinks');
 
 let currentState = null;
 
@@ -157,6 +158,32 @@ function renderBoard(state) {
   }
 }
 
+function renderOtherLinks(state) {
+  otherPlayerLinks.innerHTML = '';
+  const others = state.players.filter((p, idx) => idx !== myPlayerIndex);
+  if (others.length === 0) return;
+  const label = document.createElement('div');
+  label.style.cssText = 'width:100%;text-align:center;opacity:0.75;font-size:13px;margin-top:8px;';
+  label.textContent = 'Autres écrans joueurs :';
+  otherPlayerLinks.appendChild(label);
+  state.players.forEach((p, idx) => {
+    if (idx === myPlayerIndex) return;
+    const a = document.createElement('a');
+    a.className = 'player-link';
+    a.href = `/joueur${idx + 1}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    const sw = document.createElement('span');
+    sw.className = 'swatch';
+    sw.style.background = colorAlpha(p.color).replace('0.5', '1');
+    a.appendChild(sw);
+    const txt = document.createElement('span');
+    txt.textContent = `/joueur${idx + 1} — ${p.name}`;
+    a.appendChild(txt);
+    otherPlayerLinks.appendChild(a);
+  });
+}
+
 function renderState(state) {
   const previous = currentState;
   currentState = state;
@@ -183,6 +210,7 @@ function renderState(state) {
 
   renderBoard(state);
   renderLegend(state);
+  renderOtherLinks(state);
 
   messageBar.textContent = state.lastMessage || '';
 

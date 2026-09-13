@@ -365,3 +365,37 @@ a.link-btn {
   color: #fff;
   text-decoration: underline;
 }
+
+.player-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.player-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 22px;
+  padding: 8px 16px;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 700;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.player-link:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.25);
+}
+
+.player-link .swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.8);
+}

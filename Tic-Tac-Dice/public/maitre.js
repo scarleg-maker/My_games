@@ -8,6 +8,7 @@ const boardSizeGroup = document.getElementById('boardSizeGroup');
 const winLengthGroup = document.getElementById('winLengthGroup');
 const errorMsg = document.getElementById('errorMsg');
 const startBtn = document.getElementById('startBtn');
+const playerLinksEl = document.getElementById('playerLinks');
 
 let playersData = []; // {name, color}
 
@@ -39,6 +40,7 @@ function renderPlayers() {
     nameInput.placeholder = `Nom du joueur ${idx + 1}`;
     nameInput.addEventListener('input', () => {
       playersData[idx].name = nameInput.value;
+      renderPlayerLinks();
     });
 
     const colorSelect = document.createElement('select');
@@ -62,6 +64,7 @@ function renderPlayers() {
     row.appendChild(colorSelect);
     playersList.appendChild(row);
   });
+  renderPlayerLinks();
 }
 
 function colorToHex(name) {
@@ -71,6 +74,29 @@ function colorToHex(name) {
     noir: '#111827', blanc: '#f9fafb'
   };
   return map[name] || '#999';
+}
+
+function renderPlayerLinks() {
+  playerLinksEl.innerHTML = '';
+  playersData.forEach((p, idx) => {
+    const num = idx + 1;
+    const a = document.createElement('a');
+    a.className = 'player-link';
+    a.href = `/joueur${num}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+
+    const sw = document.createElement('span');
+    sw.className = 'swatch';
+    sw.style.background = colorToHex(p.color);
+    a.appendChild(sw);
+
+    const txt = document.createElement('span');
+    txt.textContent = `/joueur${num} — ${p.name || 'Joueur ' + num}`;
+    a.appendChild(txt);
+
+    playerLinksEl.appendChild(a);
+  });
 }
 
 nbJoueursSel.addEventListener('change', () => {
