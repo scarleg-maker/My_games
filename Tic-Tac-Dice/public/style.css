@@ -1,0 +1,367 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #16a34a 0%, #4c1d95 100%);
+  background-attachment: fixed;
+  color: #fff;
+  padding: 24px 12px 60px;
+}
+
+h1, h2, h3 {
+  text-align: center;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+
+.container {
+  max-width: 1040px;
+  margin: 0 auto;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+select, input[type="text"] {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.radio-group label {
+  background: rgba(255,255,255,0.15);
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.radio-group input {
+  accent-color: #16a34a;
+}
+
+.radio-group label.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.player-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.08);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.player-row .swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.8);
+  flex-shrink: 0;
+}
+
+.player-row input[type="text"] {
+  flex: 1;
+}
+
+.player-row select {
+  flex: 1;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 22px;
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #22c55e, #7e22ce);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+button:hover:not(:disabled) { transform: translateY(-2px); }
+button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.error-msg {
+  color: #ffdddd;
+  background: rgba(180,0,0,0.35);
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+/* ---------- Joueur page ---------- */
+
+.identity-banner {
+  text-align: center;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  background: rgba(255,255,255,0.15);
+}
+
+.identity-banner.spectator {
+  background: rgba(0,0,0,0.25);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.status-bar {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.current-player {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.15);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.message-bar {
+  text-align: center;
+  min-height: 22px;
+  margin: 8px 0 18px;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.dice-area {
+  display: flex;
+  justify-content: center;
+  gap: 56px;
+  margin-bottom: 26px;
+}
+
+.die-slot {
+  width: 76px;
+  height: 76px;
+  perspective: 500px;
+}
+
+.die-3d {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  transform-style: preserve-3d;
+  transform: rotateX(0deg) rotateY(0deg);
+  transition: transform 0.4s ease-out;
+}
+
+.die-3d.spinning {
+  animation: diceRoll3d 0.65s linear infinite;
+  transition: none;
+}
+
+@keyframes diceRoll3d {
+  0%   { transform: rotateX(0deg)   rotateY(0deg)   rotateZ(0deg); }
+  25%  { transform: rotateX(180deg) rotateY(95deg)  rotateZ(40deg); }
+  50%  { transform: rotateX(280deg) rotateY(190deg) rotateZ(95deg); }
+  75%  { transform: rotateX(90deg)  rotateY(280deg) rotateZ(190deg); }
+  100% { transform: rotateX(360deg) rotateY(370deg) rotateZ(360deg); }
+}
+
+.die-face {
+  position: absolute;
+  width: 76px;
+  height: 76px;
+  left: 0;
+  top: 0;
+  background: linear-gradient(145deg, #ffffff, #d6d6d6);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 800;
+  color: #222;
+  box-shadow: inset 0 0 0 3px rgba(0,0,0,0.08);
+  backface-visibility: hidden;
+}
+
+.die-face.front  { transform: translateZ(38px); }
+.die-face.back   { transform: rotateY(180deg) translateZ(38px); }
+.die-face.right  { transform: rotateY(90deg) translateZ(38px); }
+.die-face.left   { transform: rotateY(-90deg) translateZ(38px); }
+.die-face.top    { transform: rotateX(90deg) translateZ(38px); }
+.die-face.bottom { transform: rotateX(-90deg) translateZ(38px); }
+
+.board-wrap {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.board-grid {
+  display: grid;
+  gap: 3px;
+  background: rgba(0,0,0,0.25);
+  padding: 6px;
+  border-radius: 12px;
+}
+
+.cell, .head-cell {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.head-cell {
+  font-weight: 700;
+  font-size: 17px;
+  opacity: 0.85;
+  background: transparent;
+}
+
+.cell {
+  background: rgba(255,255,255,0.15);
+  position: relative;
+  cursor: default;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.cell.selectable {
+  cursor: pointer;
+  box-shadow: 0 0 0 3px #facc15, 0 0 14px 3px #facc15;
+  animation: pulseCell 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes pulseCell {
+  from { box-shadow: 0 0 0 3px #facc15, 0 0 10px 2px #facc15; }
+  to   { box-shadow: 0 0 0 5px #fde68a, 0 0 20px 6px #fde68a; }
+}
+
+.cell.win-cell {
+  box-shadow: 0 0 0 4px #fff, 0 0 22px 6px #fff;
+}
+
+.pawn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.35);
+  position: relative;
+  box-shadow: inset 0 -4px 6px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* Damage hole: a light ring around a dark core, so it stays visible
+   whether the pawn underneath is very dark (noir) or very light (blanc). */
+.pawn.damaged::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 30%, #444 0%, #000 70%);
+  border: 2px solid rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.6), inset 0 2px 3px rgba(0,0,0,0.8);
+}
+
+/* color classes */
+.c-bleu { background: #2563eb; }
+.c-rouge { background: #dc2626; }
+.c-jaune { background: #eab308; }
+.c-vert { background: #16a34a; }
+.c-orange { background: #f97316; }
+.c-violet { background: #7e22ce; }
+.c-rose { background: #ec4899; }
+.c-marron { background: #78350f; }
+.c-noir { background: #111827; }
+.c-blanc { background: #f9fafb; }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.legend-item .swatch {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.6);
+}
+
+.legend-item.active {
+  outline: 2px solid #facc15;
+}
+
+.winner-banner {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  margin: 18px 0;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.waiting-msg {
+  text-align: center;
+  font-size: 18px;
+  opacity: 0.85;
+  margin-top: 40px;
+}
+
+a.link-btn {
+  color: #fff;
+  text-decoration: underline;
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Dice — Page Maître</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+  <h1>🎲 Tic-Tac-Dice</h1>
+  <h3>Configuration de la partie</h3>
+
+  <div class="field">
+    <label for="nbJoueurs">Nombre de joueurs (2 à 6)</label>
+    <select id="nbJoueurs">
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Joueurs</label>
+    <div id="playersList"></div>
+  </div>
+
+  <div class="field">
+    <label>Taille du plateau</label>
+    <div class="radio-group" id="boardSizeGroup">
+      <label><input type="radio" name="boardSize" value="6"> 6 x 6</label>
+      <label><input type="radio" name="boardSize" value="7" checked> 7 x 7</label>
+      <label><input type="radio" name="boardSize" value="8"> 8 x 8</label>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Condition de victoire</label>
+    <div class="radio-group" id="winLengthGroup">
+      <label><input type="radio" name="winLength" value="3" checked> 3 alignés</label>
+      <label><input type="radio" name="winLength" value="4"> 4 alignés</label>
+    </div>
+  </div>
+
+  <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+  <div class="btn-row">
+    <button id="startBtn">▶ Démarrer la partie</button>
+  </div>
+
+  <p style="text-align:center; margin-top:20px; opacity:0.85;">
+    Chaque joueur ouvre <strong>sa propre page</strong> : <code>/joueur1</code>, <code>/joueur2</code>, ... jusqu'à
+    <code>/joueur6</code> selon le nombre de joueurs configuré. Le plateau est identique et synchronisé sur tous
+    les écrans, mais seul le joueur dont c'est le tour peut lancer les dés et poser un pion sur sa page.
+  </p>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/maitre.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "tic-tac-dice",
+  "version": "1.0.0",
+  "description": "Tic-Tac-Dice - jeu de plateau multijoueur avec dés",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Dice — Plateau</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+  <h1>🎲 Tic-Tac-Dice</h1>
+
+  <div id="waitingMsg" class="waiting-msg">
+    En attente de la configuration de la partie sur la page maître (<a class="link-btn" href="/">ouvrir</a>)...
+  </div>
+
+  <div id="gameArea" style="display:none;">
+    <div id="identityBanner" class="identity-banner"></div>
+
+    <div class="status-bar">
+      <div id="currentPlayer" class="current-player"></div>
+    </div>
+    <div id="messageBar" class="message-bar"></div>
+
+    <div class="dice-area">
+      <div class="die-slot"><div id="die1" class="die-3d"></div></div>
+      <div class="die-slot"><div id="die2" class="die-3d"></div></div>
+    </div>
+
+    <div class="btn-row">
+      <button id="rollBtn">🎲 Lancer les dés</button>
+    </div>
+
+    <div id="winnerBanner" class="winner-banner" style="display:none;"></div>
+
+    <div class="board-wrap">
+      <div id="boardGrid" class="board-grid"></div>
+    </div>
+
+    <div id="legend" class="legend"></div>
+
+    <div class="btn-row" id="endButtons" style="display:none;">
+      <button id="restartBtn">🔄 Relancer la partie</button>
+      <button id="editBtn">✏️ Éditer la partie</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/joueur.js"></script>
+</body>
+</html>
