@@ -19,12 +19,14 @@ const otherPlayerLinks = document.getElementById('otherPlayerLinks');
 let currentState = null;
 
 // ---------- Identify which player this page belongs to ----------
-const match = window.location.pathname.match(/^\/joueur([1-6])$/);
+const isSingleScreen = window.location.pathname === '/ecran-unique';
+const match = window.location.pathname.match(/^\/joueur([1-9]|10)$/);
 const myPlayerNum = match ? parseInt(match[1], 10) : null; // 1-based
 const myPlayerIndex = myPlayerNum ? myPlayerNum - 1 : null; // 0-based
 
 socket.on('connect', () => {
-  if (myPlayerNum) socket.emit('identify', { playerNum: myPlayerNum });
+  if (isSingleScreen) socket.emit('identify', { single: true });
+  else if (myPlayerNum) socket.emit('identify', { playerNum: myPlayerNum });
 });
 
 // ---------- 3D dice ----------
@@ -81,8 +83,14 @@ function renderLegend(state) {
     sw.className = 'swatch ' + playerColorClass(p.color);
     item.appendChild(sw);
     const txt = document.createElement('span');
-    txt.textContent = p.name + (idx === myPlayerIndex ? ' (vous)' : '');
+    txt.textContent = p.name + (idx === myPlayerIndex && !p.isAI ? ' (vous)' : '');
     item.appendChild(txt);
+    if (p.isAI) {
+      const tag = document.createElement('span');
+      tag.className = 'ai-tag';
+      tag.textContent = 'IA';
+      item.appendChild(tag);
+    }
     legend.appendChild(item);
   });
 }
@@ -102,9 +110,18 @@ function computeSelectable(state) {
   return free.length > 0 ? free : options; // if no alternative, allow the forced choice
 }
 
+function computeCellSize(size) {
+  const wrap = document.querySelector('.board-wrap');
+  const available = (wrap ? wrap.clientWidth : window.innerWidth) - 16; // minus grid padding
+  const raw = Math.floor(available / (size + 1));
+  return Math.max(26, Math.min(60, raw));
+}
+
 function renderBoard(state) {
   const size = state.boardSize;
-  boardGrid.style.gridTemplateColumns = `44px repeat(${size}, 60px)`;
+  const cell = computeCellSize(size);
+  boardGrid.style.setProperty('--cell', cell + 'px');
+  boardGrid.style.gridTemplateColumns = `repeat(${size + 1}, var(--cell))`;
 
   boardGrid.innerHTML = '';
 
@@ -119,7 +136,8 @@ function renderBoard(state) {
     boardGrid.appendChild(head);
   }
 
-  const isMyTurn = state.status === 'playing' && myPlayerIndex === state.currentPlayerIndex;
+  const myself = myPlayerIndex !== null ? state.players[myPlayerIndex] : null;
+  const isMyTurn = state.status === 'playing' && (isSingleScreen || (myPlayerIndex === state.currentPlayerIndex && myself && !myself.isAI));
   const selectable = isMyTurn ? computeSelectable(state) : [];
   const selectableSet = new Set(selectable.map((o) => `${o.row}-${o.col}`));
 
@@ -160,6 +178,7 @@ function renderBoard(state) {
 
 function renderOtherLinks(state) {
   otherPlayerLinks.innerHTML = '';
+  if (isSingleScreen) return; // not relevant on the shared screen
   const others = state.players.filter((p, idx) => idx !== myPlayerIndex);
   if (others.length === 0) return;
   const label = document.createElement('div');
@@ -196,10 +215,18 @@ function renderState(state) {
   gameArea.style.display = 'block';
 
   // Identity banner
-  if (myPlayerIndex !== null && myPlayerIndex < state.players.length) {
+  if (isSingleScreen) {
+    identityBanner.textContent = '🖥️ Mode écran unique — chaque joueur joue ici à tour de rôle';
+    identityBanner.className = 'identity-banner single-screen';
+  } else if (myPlayerIndex !== null && myPlayerIndex < state.players.length) {
     const me = state.players[myPlayerIndex];
-    identityBanner.textContent = `Vous êtes : ${me.name} (${me.color})`;
-    identityBanner.className = 'identity-banner ' + playerColorClass(me.color);
+    if (me.isAI) {
+      identityBanner.textContent = `${me.name} (${me.color}) est maintenant contrôlé par l'IA — cette page est en lecture seule.`;
+      identityBanner.className = 'identity-banner spectator';
+    } else {
+      identityBanner.textContent = `Vous êtes : ${me.name} (${me.color})`;
+      identityBanner.className = 'identity-banner ' + playerColorClass(me.color);
+    }
   } else if (myPlayerIndex !== null) {
     identityBanner.textContent = `/joueur${myPlayerNum} — aucun joueur ${myPlayerNum} dans cette partie (spectateur)`;
     identityBanner.className = 'identity-banner spectator';
@@ -233,12 +260,15 @@ function renderState(state) {
     endButtons.style.display = 'none';
 
     const current = state.players[state.currentPlayerIndex];
-    const isMyTurn = myPlayerIndex === state.currentPlayerIndex;
-    currentPlayerEl.textContent = `Au tour de : ${current.name} (${current.color})` + (isMyTurn ? ' — à vous de jouer !' : '');
+    const myself = myPlayerIndex !== null ? state.players[myPlayerIndex] : null;
+    const isMyTurn = isSingleScreen || (myPlayerIndex === state.currentPlayerIndex && myself && !myself.isAI);
+    currentPlayerEl.textContent = `Au tour de : ${current.name} (${current.color})` + (current.isAI ? ' 🤖' : '') + (isMyTurn && !isSingleScreen ? ' — à vous de jouer !' : '');
     currentPlayerEl.style.background = colorAlpha(current.color);
 
     rollBtn.disabled = hasPending || !isMyTurn;
-    rollBtn.textContent = isMyTurn ? '🎲 Lancer les dés' : ('🎲 En attente de ' + current.name + '...');
+    rollBtn.textContent = isMyTurn
+      ? '🎲 Lancer les dés'
+      : (current.isAI ? `🤖 ${current.name} réfléchit...` : ('🎲 En attente de ' + current.name + '...'));
 
     if (!hasPending) {
       if (spinIntervals.length) { spinIntervals.forEach((i) => clearInterval(i)); spinIntervals = []; }
@@ -292,4 +322,12 @@ socket.on('game:rolling', ({ faces }) => {
   if (!currentState) return;
   startSpin(die1, faces);
   startSpin(die2, faces);
+});
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (currentState) renderBoard(currentState);
+  }, 150);
 });

@@ -9,6 +9,30 @@ const winLengthGroup = document.getElementById('winLengthGroup');
 const errorMsg = document.getElementById('errorMsg');
 const startBtn = document.getElementById('startBtn');
 const playerLinksEl = document.getElementById('playerLinks');
+const warningBox = document.getElementById('warningBox');
+const forceBtn = document.getElementById('forceBtn');
+const aiControlPanel = document.getElementById('aiControlPanel');
+const aiControlList = document.getElementById('aiControlList');
+
+let gameInProgress = false;
+let forceOverride = false;
+
+function updateStartAvailability() {
+  if (gameInProgress && !forceOverride) {
+    startBtn.disabled = true;
+    startBtn.textContent = '⏳ Partie en cours...';
+    warningBox.style.display = 'block';
+  } else {
+    startBtn.disabled = false;
+    startBtn.textContent = '▶ Démarrer la partie';
+    warningBox.style.display = 'none';
+  }
+}
+
+forceBtn.addEventListener('click', () => {
+  forceOverride = true;
+  updateStartAvailability();
+});
 
 let playersData = []; // {name, color}
 
@@ -18,7 +42,7 @@ function defaultPlayers(n, keepExisting) {
     if (keepExisting && playersData[i]) {
       arr.push(playersData[i]);
     } else {
-      arr.push({ name: `Joueur ${i + 1}`, color: COLORS[i % COLORS.length] });
+      arr.push({ name: `Joueur ${i + 1}`, color: COLORS[i % COLORS.length], isAI: false });
     }
   }
   playersData = arr;
@@ -62,6 +86,20 @@ function renderPlayers() {
     row.appendChild(swatch);
     row.appendChild(nameInput);
     row.appendChild(colorSelect);
+
+    const aiToggle = document.createElement('label');
+    aiToggle.className = 'ai-toggle' + (idx === 0 ? ' locked' : '');
+    const aiCheckbox = document.createElement('input');
+    aiCheckbox.type = 'checkbox';
+    aiCheckbox.checked = !!p.isAI && idx !== 0;
+    aiCheckbox.disabled = idx === 0;
+    aiCheckbox.addEventListener('change', () => {
+      playersData[idx].isAI = aiCheckbox.checked;
+    });
+    aiToggle.appendChild(aiCheckbox);
+    aiToggle.appendChild(document.createTextNode(idx === 0 ? 'Humain' : '🤖 IA'));
+    row.appendChild(aiToggle);
+
     playersList.appendChild(row);
   });
   renderPlayerLinks();
@@ -74,6 +112,50 @@ function colorToHex(name) {
     noir: '#111827', blanc: '#f9fafb'
   };
   return map[name] || '#999';
+}
+
+function renderAiControlPanel(state) {
+  if (!state || state.status !== 'playing') {
+    aiControlPanel.style.display = 'none';
+    aiControlList.innerHTML = '';
+    return;
+  }
+  aiControlPanel.style.display = 'block';
+  aiControlList.innerHTML = '';
+  state.players.forEach((p, idx) => {
+    const row = document.createElement('div');
+    row.className = 'ai-control-row' + (idx === 0 ? ' locked' : '');
+
+    const info = document.createElement('div');
+    info.className = 'player-info';
+    const sw = document.createElement('span');
+    sw.className = 'swatch';
+    sw.style.background = colorToHex(p.color);
+    info.appendChild(sw);
+    info.appendChild(document.createTextNode(p.name + (idx === state.currentPlayerIndex ? ' (tour actuel)' : '')));
+    row.appendChild(info);
+
+    const badge = document.createElement('span');
+    badge.className = 'mode-badge' + (p.isAI ? ' is-ai' : '');
+    badge.textContent = p.isAI ? '🤖 IA' : '🧑 Humain';
+    row.appendChild(badge);
+
+    const btn = document.createElement('button');
+    btn.className = 'toggle-btn';
+    btn.type = 'button';
+    btn.textContent = p.isAI ? 'Repasser en humain' : 'Passer en IA';
+    btn.addEventListener('click', () => {
+      const question = p.isAI
+        ? `Confirmer : ${p.name} redevient un joueur humain ?`
+        : `Confirmer : ${p.name} sera désormais contrôlé par l'IA (intelligence modérée) ?`;
+      if (window.confirm(question)) {
+        socket.emit('game:setPlayerAI', { playerIndex: idx, isAI: !p.isAI });
+      }
+    });
+    row.appendChild(btn);
+
+    aiControlList.appendChild(row);
+  });
 }
 
 function renderPlayerLinks() {
@@ -123,7 +205,7 @@ boardSizeGroup.addEventListener('change', updateForbiddenCombo);
 
 function validate() {
   const n = playersData.length;
-  if (n < 2 || n > 6) return 'Le nombre de joueurs doit être entre 2 et 6.';
+  if (n < 2 || n > 10) return 'Le nombre de joueurs doit être entre 2 et 10.';
   for (const p of playersData) {
     if (!p.name || !p.name.trim()) return 'Chaque joueur doit avoir un nom.';
   }
@@ -146,19 +228,26 @@ startBtn.addEventListener('click', () => {
   const boardSize = parseInt(document.querySelector('input[name="boardSize"]:checked').value, 10);
   const winLength = parseInt(document.querySelector('input[name="winLength"]:checked').value, 10);
   socket.emit('setup:start', {
-    players: playersData.map((p) => ({ name: p.name.trim(), color: p.color })),
+    players: playersData.map((p, idx) => ({ name: p.name.trim(), color: p.color, isAI: idx === 0 ? false : !!p.isAI })),
     boardSize,
     winLength
   });
   startBtn.textContent = 'Partie démarrée ✔ — ouvrez /joueur1';
   startBtn.disabled = true;
-  setTimeout(() => { startBtn.disabled = false; startBtn.textContent = '▶ Démarrer la partie'; }, 2500);
+  forceOverride = false;
+  setTimeout(() => { updateStartAvailability(); }, 2500);
+});
+
+socket.on('state', (state) => {
+  gameInProgress = !!(state && state.status === 'playing');
+  updateStartAvailability();
+  renderAiControlPanel(state);
 });
 
 socket.on('setup:config', (config) => {
   if (!config) return;
   nbJoueursSel.value = String(config.players.length);
-  playersData = config.players.map((p) => ({ name: p.name, color: p.color }));
+  playersData = config.players.map((p) => ({ name: p.name, color: p.color, isAI: !!p.isAI }));
   renderPlayers();
   document.querySelector(`input[name="boardSize"][value="${config.boardSize}"]`).checked = true;
   updateForbiddenCombo();

@@ -12,13 +12,17 @@
   <h3>Configuration de la partie</h3>
 
   <div class="field">
-    <label for="nbJoueurs">Nombre de joueurs (2 à 6)</label>
+    <label for="nbJoueurs">Nombre de joueurs (2 à 10)</label>
     <select id="nbJoueurs">
       <option value="2">2</option>
       <option value="3">3</option>
       <option value="4">4</option>
       <option value="5">5</option>
       <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
     </select>
   </div>
 
@@ -33,6 +37,7 @@
       <label><input type="radio" name="boardSize" value="6"> 6 x 6</label>
       <label><input type="radio" name="boardSize" value="7" checked> 7 x 7</label>
       <label><input type="radio" name="boardSize" value="8"> 8 x 8</label>
+      <label><input type="radio" name="boardSize" value="9"> 9 x 9</label>
     </div>
   </div>
 
@@ -45,6 +50,10 @@
   </div>
 
   <div id="errorMsg" class="error-msg" style="display:none;"></div>
+  <div id="warningBox" class="warning-msg" style="display:none;">
+    <p>⚠️ Une partie est actuellement en cours. Démarrer une nouvelle configuration effacera la partie en cours pour tous les écrans.</p>
+    <button id="forceBtn" type="button">Forcer une nouvelle partie quand même</button>
+  </div>
 
   <div class="btn-row">
     <button id="startBtn">▶ Démarrer la partie</button>
@@ -56,6 +65,18 @@
   </p>
 
   <div id="playerLinks" class="player-links"></div>
+
+  <div style="text-align:center; margin-top:18px;">
+    <a class="player-link" href="/ecran-unique" target="_blank" rel="noopener" style="display:inline-flex;">
+      🖥️ Jouer à plusieurs sur un seul écran (pass &amp; play)
+    </a>
+  </div>
+
+  <div id="aiControlPanel" class="ai-panel" style="display:none;">
+    <h3>🤖 Contrôle des joueurs en cours de partie</h3>
+    <p class="ai-panel-hint">Basculez un joueur entre humain et IA à tout moment (le joueur 1 reste toujours humain).</p>
+    <div id="aiControlList"></div>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
