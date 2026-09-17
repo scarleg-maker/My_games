@@ -43,6 +43,8 @@
     height: auto;
   }
   #exportRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  #projectRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .file-btn-label { display: inline-block; cursor: pointer; }
   #errorBox {
     width: 100%;
     max-width: 380px;
@@ -185,16 +187,24 @@
       <input type="text" id="exportFilename" placeholder="nom-de-la-carte" value="carte">
       <button class="primary" id="exportBtn">⬇️ Télécharger le PNG</button>
     </div>
+    <div id="projectRow">
+      <button class="ghost" id="saveProjectBtn" type="button">💾 Sauvegarder le projet</button>
+      <label class="ghost file-btn-label" for="loadProjectInput">📂 Charger un projet</label>
+      <input type="file" id="loadProjectInput" accept=".json,application/json" style="display:none;">
+    </div>
     <div class="hint" style="max-width:360px; text-align:center;">
       Le damier gris n'apparaît pas dans l'export : il indique juste les zones transparentes. L'export
-      conserve toute la transparence (carte prête à l'emploi).
+      conserve toute la transparence (carte prête à l'emploi).<br><br>
+      <strong>Astuce :</strong> le PNG téléchargé ne contient plus les réglages (police, position...).
+      Pour pouvoir rouvrir et modifier cette carte plus tard (nom, valeurs, élément...), téléchargez
+      aussi son <strong>fichier projet</strong> (.json) via le bouton "💾 Sauvegarder le projet" ci-dessus.
     </div>
   </div>
 
   <div id="panel">
 
     <div class="card-block">
-      <h2>1. Cadre (Normal / Rare / As) <small>cliquez sur un cadre pour l'activer ; importez une image dans chacun une seule fois</small></h2>
+      <h2>1. Cadre (Normal / Bronze / Rare / As) <small>cliquez sur un cadre pour l'activer ; importez une image dans chacun une seule fois</small></h2>
       <div class="frame-slots" id="frameSlots"></div>
     </div>
 
@@ -207,11 +217,12 @@
         <span class="checkbox-inline"><input type="checkbox" id="nameBold"> <label for="nameBold" style="flex:none;">Gras</label></span>
         <span class="checkbox-inline"><input type="checkbox" id="nameItalic"> <label for="nameItalic" style="flex:none;">Italique</label></span>
       </div>
-      <div class="row"><label>Taille</label><input type="range" id="nameSize" min="10" max="70" value="40"><span class="val" id="nameSizeVal">32px</span></div>
+      <div class="row"><label>Taille</label><input type="range" id="nameSize" min="10" max="70" value="50"><span class="val" id="nameSizeVal">32px</span></div>
       <div class="row"><label>Position Y</label><input type="range" id="namePosY" min="0" max="30" value="11"><span class="val" id="namePosYVal">11%</span></div>
       <div class="row"><label>Couleur</label>
         <select id="nameColor">
           <option value="#ffffff">Blanc</option>
+          <option value="#B87333">Cuivre</option>
           <option value="#c0c0c0">Argent</option>
           <option value="#ffd873">Doré</option>
         </select>
@@ -225,12 +236,13 @@
       <div class="row"><label>Bas</label><input type="number" id="statBottom" min="1" max="10" value="5"></div>
       <div class="row"><label>Gauche</label><input type="number" id="statLeft" min="1" max="10" value="5"></div>
       <div class="row"><label>Police</label><select id="statFont"></select></div>
-      <div class="row"><label>Taille</label><input type="range" id="statSize" min="10" max="60" value="60"><span class="val" id="statSizeVal">34px</span></div>
-      <div class="row"><label>Bloc X</label><input type="range" id="statBlockX" min="0" max="60" value="21"><span class="val" id="statBlockXVal">18%</span></div>
-      <div class="row"><label>Bloc Y</label><input type="range" id="statBlockY" min="10" max="60" value="26"><span class="val" id="statBlockYVal">26%</span></div>
+      <div class="row"><label>Taille</label><input type="range" id="statSize" min="10" max="100" value="90"><span class="val" id="statSizeVal">34px</span></div>
+      <div class="row"><label>Bloc X</label><input type="range" id="statBlockX" min="0" max="60" value="24"><span class="val" id="statBlockXVal">25%</span></div>
+      <div class="row"><label>Bloc Y</label><input type="range" id="statBlockY" min="10" max="60" value="30"><span class="val" id="statBlockYVal">15%</span></div>
       <div class="row"><label>Couleur</label>
         <select id="statColor">
           <option value="#ffffff">Blanc</option>
+          <option value="#B87333">Cuivre</option>
           <option value="#c0c0c0">Argent</option>
           <option value="#ffd873">Doré</option>
         </select>
@@ -240,12 +252,13 @@
     <div class="card-block">
       <h2>4. Niveau de la carte <small>cadre jaune — 1 à 10 ("A" pour 10)</small></h2>
       <div class="row"><label>Niveau</label><input type="number" id="cardLevel" min="1" max="10" value="1"></div>
-      <div class="row"><label>Taille</label><input type="range" id="levelSize" min="10" max="50" value="39"><span class="val" id="levelSizeVal">26px</span></div>
+      <div class="row"><label>Taille</label><input type="range" id="levelSize" min="10" max="50" value="44"><span class="val" id="levelSizeVal">26px</span></div>
       <div class="row"><label>Position X</label><input type="range" id="levelX" min="0" max="100" value="50"><span class="val" id="levelXVal">50%</span></div>
       <div class="row"><label>Position Y</label><input type="range" id="levelY" min="70" max="100" value="89"><span class="val" id="levelYVal">88%</span></div>
       <div class="row"><label>Couleur</label>
         <select id="levelColor">
           <option value="#ffffff">Blanc</option>
+          <option value="#B87333">Cuivre</option>
           <option value="#c0c0c0">Argent</option>
           <option value="#ffd873">Doré</option>
         </select>
@@ -258,9 +271,9 @@
       <p class="hint">Cliquez sur une icône pour l'utiliser, ou importez la vôtre ci-dessous.</p>
       <input type="file" id="elementUpload" accept="image/*">
       <button class="ghost" id="elementClearBtn" type="button">Retirer</button>
-      <div class="row"><label>Position X</label><input type="range" id="elX" min="0" max="100" value="81"><span class="val" id="elXVal">80%</span></div>
-      <div class="row"><label>Position Y</label><input type="range" id="elY" min="0" max="100" value="21"><span class="val" id="elYVal">14%</span></div>
-      <div class="row"><label>Taille</label><input type="range" id="elSize" min="5" max="40" value="15"><span class="val" id="elSizeVal">12%</span></div>
+      <div class="row"><label>Position X</label><input type="range" id="elX" min="0" max="100" value="79"><span class="val" id="elXVal">80%</span></div>
+      <div class="row"><label>Position Y</label><input type="range" id="elY" min="0" max="100" value="25"><span class="val" id="elYVal">14%</span></div>
+      <div class="row"><label>Taille</label><input type="range" id="elSize" min="5" max="40" value="20"><span class="val" id="elSizeVal">12%</span></div>
       <div class="row"><label>Rotation</label><input type="range" id="elRotation" min="-180" max="180" value="0"><span class="val" id="elRotationVal">0°</span></div>
     </div>
 
@@ -271,6 +284,10 @@
       <div class="row"><label>Position Y</label><input type="range" id="artY" min="-50" max="150" value="50"><span class="val" id="artYVal">50%</span></div>
       <div class="row"><label>Taille</label><input type="range" id="artScale" min="10" max="300" value="115"><span class="val" id="artScaleVal">115%</span></div>
       <div class="row"><label>Rotation</label><input type="range" id="artRotation" min="-180" max="180" value="0"><span class="val" id="artRotationVal">0°</span></div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="artFlipH">
+        <label for="artFlipH">Symétrie horizontale (miroir gauche/droite)</label>
+      </div>
       <div class="checkbox-row">
         <input type="checkbox" id="clipEnabled" checked>
         <label for="clipEnabled">Rogner l'illustration dans une zone (évite les débords hors du cadre)</label>
@@ -293,6 +310,25 @@
 
 <script>
 'use strict';
+
+// ===================================================================================
+// RÉGLAGE MANUEL — disposition en losange des 4 valeurs (Nord/Sud/Est/Ouest)
+// Modifiez ces deux nombres directement ici (ouvrez ce fichier avec Notepad++ par
+// exemple) pour ajuster l'écartement des valeurs autour du centre du bloc "Valeurs" :
+//   - STAT_VERTICAL_SPREAD   : écart Nord (Haut) / Sud (Bas)   — plus grand = plus éloignés
+//   - STAT_HORIZONTAL_SPREAD : écart Est (Droite) / Ouest (Gauche) — plus grand = plus éloignés
+// Valeurs par défaut ci-dessous : forme en losange (Nord/Sud nettement plus espacés que
+// Est/Ouest). Chaque valeur est un multiplicateur de la taille de police des valeurs
+// (curseur "Taille" de l'étape 3) — inutile de changer d'unité, juste ces deux nombres.
+// ===================================================================================
+const STAT_VERTICAL_SPREAD = 0.92;   // Nord / Sud (Haut / Bas)
+const STAT_HORIZONTAL_SPREAD = 0.63; // Est / Ouest (Droite / Gauche)
+
+// Valeur unique à chaque chargement de page, ajoutée en "?v=..." aux images de cadre/élément
+// fournies avec l'outil : force le navigateur à toujours aller chercher la dernière version du
+// fichier sur le disque, sans jamais utiliser une copie mise en cache (utile après avoir remplacé
+// un cadre/élément par une nouvelle version — plus besoin de rafraîchissement forcé manuel).
+const CACHE_BUST = Date.now();
 
 const canvas = document.getElementById('cardCanvas');
 const ctx = canvas.getContext('2d');
@@ -324,7 +360,7 @@ const SETTINGS_KEYS = [
   'statFont','statSize','statBlockX','statBlockY','statColor',
   'levelSize','levelX','levelY','levelColor',
   'elX','elY','elSize','elRotation',
-  'artX','artY','artScale','artRotation','clipEnabled','clipX','clipY','clipW','clipH',
+  'artX','artY','artScale','artRotation','artFlipH','clipEnabled','clipX','clipY','clipW','clipH',
 ];
 
 const FONT_OPTIONS = [
@@ -352,9 +388,10 @@ function displayValue(v) {
 
 // ---- Les 3 cadres fixes ----
 const frameSlots = [
-  { key: 'normal', label: 'Normal', img: null, defaultSrc: 'sample-frame-normal.png' },
-  { key: 'rare', label: 'Rare', img: null, defaultSrc: 'sample-frame-rare.png' },
-  { key: 'as', label: 'As', img: null, defaultSrc: 'sample-frame-as.png' },
+  { key: 'normal', label: 'Normal', img: null, defaultSrc: 'sample-frame-normal.png', customDataUrl: null },
+  { key: 'bronze', label: 'Bronze', img: null, defaultSrc: 'sample-frame-bronze.png', customDataUrl: null },
+  { key: 'rare', label: 'Rare', img: null, defaultSrc: 'sample-frame-rare.png', customDataUrl: null },
+  { key: 'as', label: 'As', img: null, defaultSrc: 'sample-frame-as.png', customDataUrl: null },
 ];
 let activeFrameIndex = 0;
 
@@ -365,7 +402,9 @@ function loadDefaultFrames() {
     const image = new Image();
     image.onload = () => { slot.img = image; buildFrameSlots(); scheduleRedraw(); };
     image.onerror = () => { loadedCount++; }; // fichier d'exemple absent : l'utilisateur importera le sien
-    image.src = slot.defaultSrc;
+    // "?v=..." force le navigateur à toujours recharger une version fraîche du fichier (jamais depuis
+    // le cache) — évite qu'un cadre modifié sur le disque continue d'afficher l'ancienne version.
+    image.src = slot.defaultSrc + '?v=' + CACHE_BUST;
   });
 }
 
@@ -397,6 +436,7 @@ function buildFrameSlots() {
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
+        slot.customDataUrl = reader.result;
         const image = new Image();
         image.onload = () => { slot.img = image; activeFrameIndex = idx; buildFrameSlots(); scheduleRedraw(); };
         image.src = reader.result;
@@ -433,6 +473,7 @@ const elementPresets = [
   { key: 'terre', label: 'Terre', defaultSrc: 'elements/Terre.png' },
   { key: 'poison', label: 'Poison', defaultSrc: 'elements/Poison.png' },
   { key: 'sacre', label: 'Sacré', defaultSrc: 'elements/Sacre.png' },
+  { key: 'tenebres', label: 'Ténèbres', defaultSrc: 'elements/Tenebres.png' },
 ];
 let activeElementKey = null; // null = aucun préréglage actif (image personnalisée ou aucune)
 
@@ -465,7 +506,7 @@ function loadDefaultElements() {
     const image = new Image();
     image.onload = () => { preset.img = image; buildElementPresets(); };
     image.onerror = () => { /* fichier absent : ignoré silencieusement */ };
-    image.src = preset.defaultSrc;
+    image.src = preset.defaultSrc + '?v=' + CACHE_BUST;
   });
 }
 
@@ -496,13 +537,18 @@ bindRange('levelSize', 'px'); bindRange('levelX', '%'); bindRange('levelY', '%')
   document.getElementById(id).addEventListener('input', () => { scheduleRedraw(); saveSettings(); });
 });
 document.getElementById('clipEnabled').addEventListener('change', () => { scheduleRedraw(); saveSettings(); });
+document.getElementById('artFlipH').addEventListener('change', () => { scheduleRedraw(); saveSettings(); });
 
 // ---- Upload illustration / élément ----
+let artworkImgDataUrl = null;   // conservé pour pouvoir sauvegarder/recharger un projet
+let elementCustomDataUrl = null; // idem, uniquement si un élément personnalisé (pas un préréglage) est utilisé
+
 document.getElementById('artworkUpload').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
+    artworkImgDataUrl = reader.result;
     const image = new Image();
     image.onload = () => { artworkImg = image; scheduleRedraw(); };
     image.src = reader.result;
@@ -515,6 +561,7 @@ document.getElementById('elementUpload').addEventListener('change', (e) => {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
+    elementCustomDataUrl = reader.result;
     const image = new Image();
     image.onload = () => { elementImg = image; activeElementKey = null; buildElementPresets(); scheduleRedraw(); };
     image.src = reader.result;
@@ -523,16 +570,19 @@ document.getElementById('elementUpload').addEventListener('change', (e) => {
 });
 document.getElementById('elementClearBtn').addEventListener('click', () => {
   elementImg = null;
+  elementCustomDataUrl = null;
   activeElementKey = null;
   buildElementPresets();
   scheduleRedraw();
 });
 
-/** Dessine une image (illustration ou élément) centrée en (cx,cy), avec taille et rotation. */
-function drawRotatedImage(image, cx, cy, drawW, drawH, rotationDeg) {
+/** Dessine une image (illustration ou élément) centrée en (cx,cy), avec taille, rotation et
+ * symétrie horizontale optionnelle (miroir gauche/droite). */
+function drawRotatedImage(image, cx, cy, drawW, drawH, rotationDeg, flipH = false) {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(rotationDeg * Math.PI / 180);
+  if (flipH) ctx.scale(-1, 1);
   ctx.drawImage(image, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
 }
@@ -563,6 +613,7 @@ function redraw() {
     const posX = Number(document.getElementById('artX').value) / 100;
     const posY = Number(document.getElementById('artY').value) / 100;
     const rotation = Number(document.getElementById('artRotation').value);
+    const flipH = document.getElementById('artFlipH').checked;
 
     const baseSize = Math.min(clipW, clipH);
     const drawW = (artworkImg.width / Math.max(artworkImg.width, artworkImg.height)) * baseSize * scale;
@@ -571,7 +622,7 @@ function redraw() {
     const centerX = clipX + clipW * posX;
     const centerY = clipY + clipH * posY;
 
-    drawRotatedImage(artworkImg, centerX, centerY, drawW, drawH, rotation);
+    drawRotatedImage(artworkImg, centerX, centerY, drawW, drawH, rotation, flipH);
     ctx.restore();
   }
 
@@ -618,8 +669,8 @@ function redraw() {
   const statColor = document.getElementById('statColor').value;
   const blockX = w * Number(document.getElementById('statBlockX').value) / 100;
   const blockY = h * Number(document.getElementById('statBlockY').value) / 100;
-  const halfCol = statSize * 0.75; // écart horizontal entre Gauche/Droite et le centre
-  const halfRow = statSize * 0.65; // écart vertical entre Haut/Bas et le centre
+  const halfCol = statSize * STAT_HORIZONTAL_SPREAD; // écart horizontal entre Gauche/Droite et le centre
+  const halfRow = statSize * STAT_VERTICAL_SPREAD;   // écart vertical entre Haut/Bas et le centre
 
   ctx.font = `900 ${statSize}px "${statFont}"`;
   ctx.textAlign = 'center';
@@ -713,6 +764,147 @@ function loadSettings() {
     });
   } catch { /* ignore */ }
 }
+
+// ---- Champs de contenu de la carte (nom, niveau, valeurs) : pas mémorisés automatiquement d'une
+// carte à l'autre (contrairement à SETTINGS_KEYS), mais inclus dans un fichier "projet". ----
+const PROJECT_CONTENT_KEYS = ['cardName', 'cardLevel', 'statTop', 'statRight', 'statBottom', 'statLeft', 'exportFilename'];
+
+/**
+ * Sauvegarde un "projet" complet (.json) : tous les réglages ET les images (illustration, élément,
+ * cadre s'il a été remplacé manuellement) encodées en base64, pour pouvoir rouvrir et modifier cette
+ * carte précise plus tard — contrairement au PNG exporté, qui est une image aplatie non réutilisable.
+ */
+async function saveProject() {
+  const data = { __type: 'triple-triad-card-project', __version: 1 };
+
+  [...SETTINGS_KEYS, ...PROJECT_CONTENT_KEYS].forEach(id => {
+    const el = document.getElementById(id);
+    data[id] = el.type === 'checkbox' ? el.checked : el.value;
+  });
+
+  data.activeFrameIndex = activeFrameIndex;
+  data.activeFrameKey = frameSlots[activeFrameIndex] ? frameSlots[activeFrameIndex].key : null;
+  // n'embarque le cadre que s'il a été remplacé manuellement (les 3 cadres fournis se rechargent
+  // automatiquement tout seuls, inutile de dupliquer leurs données dans chaque fichier projet)
+  data.frameCustomDataUrls = frameSlots.map(s => s.customDataUrl || null);
+
+  data.activeElementKey = activeElementKey;
+  data.elementCustomDataUrl = activeElementKey ? null : elementCustomDataUrl;
+
+  data.artworkImgDataUrl = artworkImgDataUrl;
+
+  const filename = (document.getElementById('exportFilename').value || 'carte').trim();
+  const finalName = `${filename}.projet.json`;
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+
+  // Navigateurs à base de Chromium (Chrome, Edge...) : vraie boîte de dialogue "Enregistrer sous",
+  // permettant de choisir le dossier et le nom du fichier (même mécanisme que l'export PNG).
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: finalName,
+        types: [{ description: 'Projet de carte (JSON)', accept: { 'application/json': ['.json'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return; // annulé par l'utilisateur : rien à faire
+      console.warn('Sélecteur de fichier indisponible, repli sur le téléchargement classique.', err);
+    }
+  }
+  // Repli (Firefox, Safari, ou erreur ci-dessus) : téléchargement classique vers le dossier par
+  // défaut du navigateur (aucune boîte de dialogue de choix d'emplacement disponible côté web sur
+  // ces navigateurs).
+  const link = document.createElement('a');
+  link.download = finalName;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+/** Recharge un fichier "projet" précédemment sauvegardé : restaure tous les champs et les images. */
+function loadProject(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try {
+      data = JSON.parse(reader.result);
+    } catch (err) {
+      alert('Fichier projet invalide (JSON illisible).');
+      return;
+    }
+    if (data.__type !== 'triple-triad-card-project') {
+      alert('Ce fichier ne semble pas être un projet de carte valide.');
+      return;
+    }
+
+    [...SETTINGS_KEYS, ...PROJECT_CONTENT_KEYS].forEach(id => {
+      if (!(id in data)) return;
+      const el = document.getElementById(id);
+      if (el.type === 'checkbox') el.checked = data[id];
+      else el.value = data[id];
+    });
+
+    // restaure les cadres personnalisés éventuellement embarqués dans le projet
+    if (Array.isArray(data.frameCustomDataUrls)) {
+      data.frameCustomDataUrls.forEach((dataUrl, i) => {
+        if (dataUrl && frameSlots[i]) {
+          frameSlots[i].customDataUrl = dataUrl;
+          const image = new Image();
+          image.onload = () => { frameSlots[i].img = image; buildFrameSlots(); scheduleRedraw(); };
+          image.src = dataUrl;
+        }
+      });
+    }
+    if (typeof data.activeFrameKey === 'string') {
+      const idx = frameSlots.findIndex(s => s.key === data.activeFrameKey);
+      if (idx !== -1) activeFrameIndex = idx;
+    } else if (typeof data.activeFrameIndex === 'number') {
+      activeFrameIndex = data.activeFrameIndex;
+    }
+
+    // restaure l'élément (préréglage ou personnalisé)
+    if (data.activeElementKey) {
+      const preset = elementPresets.find(p => p.key === data.activeElementKey);
+      activeElementKey = data.activeElementKey;
+      if (preset && preset.img) elementImg = preset.img;
+    } else if (data.elementCustomDataUrl) {
+      elementCustomDataUrl = data.elementCustomDataUrl;
+      activeElementKey = null;
+      const image = new Image();
+      image.onload = () => { elementImg = image; buildElementPresets(); scheduleRedraw(); };
+      image.src = data.elementCustomDataUrl;
+    } else {
+      elementImg = null;
+      activeElementKey = null;
+    }
+    buildElementPresets();
+
+    // restaure l'illustration
+    if (data.artworkImgDataUrl) {
+      artworkImgDataUrl = data.artworkImgDataUrl;
+      const image = new Image();
+      image.onload = () => { artworkImg = image; scheduleRedraw(); };
+      image.src = data.artworkImgDataUrl;
+    }
+
+    buildFrameSlots();
+    document.querySelectorAll('input[type="range"]').forEach(el => el.dispatchEvent(new Event('input')));
+    scheduleRedraw();
+    saveSettings();
+    alert('Projet chargé avec succès.');
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('saveProjectBtn').addEventListener('click', saveProject);
+document.getElementById('loadProjectInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) loadProject(file);
+  e.target.value = '';
+});
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   if (!confirm('Réinitialiser tous les réglages ? Les images resteront en place.')) return;

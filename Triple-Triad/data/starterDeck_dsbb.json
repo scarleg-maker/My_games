@@ -1,0 +1,28 @@
+{
+  "dsbb": [
+    {
+      "id": "avant_garde_dsbb",
+      "quantity": 3
+    },
+    {
+      "id": "virevent_dsbb",
+      "quantity": 3
+    },
+    {
+      "id": "phalange_dsbb",
+      "quantity": 3
+    },
+    {
+      "id": "dernier_geant_dsbb",
+      "quantity": 3
+    },
+    {
+      "id": "arbre_geant_maudit_dsbb",
+      "quantity": 3
+    },
+    {
+      "id": "demon_capra_dsbb",
+      "quantity": 3
+    }
+  ]
+}

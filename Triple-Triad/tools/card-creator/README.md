@@ -4,9 +4,26 @@ Outil autonome, 100% local (aucune connexion internet requise, rien n'est envoy�
 image de carte complète (cadre + illustration + nom + valeurs + niveau + élément) et l'exporte en PNG
 transparent, prêt à l'emploi dans `data/cards_ffviii.json` (ou tout autre `data/cards_<votre_set>.json`).
 
+## Ouverture rapide (Windows) — recommandé sur Opera GX
+
+Double-cliquez sur **`Lancer_Card_Creator.bat`**. Il démarre un petit serveur local (nécessite Python,
+déjà présent sur la plupart des PC ; sinon [python.org](https://python.org)) et ouvre l'outil automatiquement
+dans votre navigateur par défaut à `http://localhost:8090`.
+
+**Pourquoi c'est utile** : sur les navigateurs à base de Chromium (Chrome, Edge, **Opera GX**), la fenêtre
+"Enregistrer sous" du bouton de téléchargement (qui laisse choisir le dossier de destination) ne
+fonctionne correctement que si la page est servie via `http://...`, pas en ouverture directe du fichier
+(`file://...`). Ce script règle ce point automatiquement, sans avoir à taper de commande dans PowerShell.
+
+Pour arrêter le serveur, fermez simplement la fenêtre noire qui s'est ouverte.
+
+*(Sur Firefox/Safari, ou si vous préférez, l'ouverture directe de `index.html` en double-clic reste tout
+à fait fonctionnelle — juste sans le choix du dossier de destination au téléchargement.)*
+
 ## Utilisation
 
-1. Ouvrez `index.html` directement dans votre navigateur (double-clic, aucun serveur nécessaire).
+1. Ouvrez `index.html` directement dans votre navigateur (double-clic, aucun serveur nécessaire) — ou
+   utilisez `Lancer_Card_Creator.bat` ci-dessus pour une expérience complète sur Opera GX/Chrome/Edge.
 2. **1. Cadre** : les 3 cadres fournis (Normal / Rare / As) se chargent **automatiquement** à
    l'ouverture — cliquez simplement sur celui que vous voulez utiliser pour la carte en cours. Vous
    pouvez remplacer n'importe lequel par votre propre image via son bouton d'import, si besoin.
@@ -51,6 +68,26 @@ Tous les réglages numériques (positions, tailles, rotations, polices, couleurs
 navigateur d'une carte à l'autre — seules les images personnalisées (illustration, élément, ou un cadre
 que vous remplaceriez) doivent être réimportées à chaque nouvelle carte. Bouton "↺ Réinitialiser" pour
 tout effacer.
+
+## Modifier une carte déjà créée (fichiers "projet")
+
+Le PNG téléchargé est une image **aplatie** : impossible d'en extraire à nouveau le nom, les valeurs ou
+la police pour les corriger. Pour pouvoir rouvrir une carte plus tard (nom faux, valeur à changer, ajout
+d'un élément...), utilisez les deux boutons sous "Télécharger le PNG" :
+
+- **💾 Sauvegarder le projet** : télécharge un fichier `<nom>.projet.json` contenant **tous les
+  réglages** (nom, niveau, valeurs, police, positions, couleurs, cadre choisi) **et l'illustration
+  elle-même** (encodée dans le fichier). Gardez ce fichier à côté de votre PNG exporté.
+- **📂 Charger un projet** : sélectionnez un fichier `.projet.json` précédemment sauvegardé pour tout
+  restaurer d'un coup — modifiez ce qu'il faut, puis réexportez le PNG.
+
+**Astuce** : sauvegardez le fichier projet **à chaque fois** que vous exportez une carte définitive, même
+si vous pensez ne plus y toucher — bien plus rapide qu'un recommencement de zéro si une correction s'avère
+nécessaire plus tard (typo dans le nom, valeur mal recopiée...).
+
+*(Le cadre n'est embarqué dans le fichier projet que si vous en avez importé un personnalisé à la main —
+les 3 cadres fournis avec l'outil se rechargent de toute façon automatiquement à chaque ouverture, inutile
+de les dupliquer dans chaque fichier projet.)*
 
 ## Polices personnalisées ("Medieval Scribish", "E-BrantScript"...)
 

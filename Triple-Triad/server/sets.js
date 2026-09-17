@@ -36,8 +36,24 @@ function getOpponentsForSet(setId) {
     .filter(tier => tier.opponents.length > 0);
 }
 
+/**
+ * Deck de départ pour ce set, toujours retourné sous forme de liste plate (avec doublons) prête à
+ * être utilisée telle quelle par saveManager. Accepte deux formats en entrée dans le fichier JSON :
+ *  - format compact (recommandé) : [{ "id": "bogomile_ffviii", "quantity": 3 }, ...]
+ *  - ancien format : liste plate ["bogomile_ffviii", "bogomile_ffviii", "bogomile_ffviii", ...]
+ */
 function getStarterDeckForSet(setId) {
-  return STARTER_DECKS_RAW[setId] || [];
+  const raw = STARTER_DECKS_RAW[setId] || [];
+  const flat = [];
+  for (const entry of raw) {
+    if (typeof entry === 'string') {
+      flat.push(entry); // ancien format : déjà une carte individuelle
+    } else if (entry && entry.id) {
+      const qty = Number(entry.quantity) || 1;
+      for (let i = 0; i < qty; i++) flat.push(entry.id);
+    }
+  }
+  return flat;
 }
 
 module.exports = { getSets, getSetDef, isValidSet, getCardsForSet, getOpponentsForSet, getStarterDeckForSet };

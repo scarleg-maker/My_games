@@ -16,11 +16,14 @@
     <div id="setBar" class="hidden">
       Univers : <strong id="activeSetLabel"></strong>
       <button id="changeSetBtn">Changer d'univers</button>
+      <button id="milestonesBtn" title="Voir mes jalons de progression">🎖️ Jalons</button>
     </div>
     <div id="sessionBar" class="hidden">
-      Connecté : <strong id="sessionPlayerName"></strong> — <span id="sessionPoints"></span> points
+      <span class="nowrap-group">Connecté : <strong id="sessionPlayerName"></strong></span>
+      <span class="nowrap-group">— <span id="sessionPoints"></span> points</span>
       <button id="downloadSaveBtn">⬇️ Télécharger ma sauvegarde</button>
       <button id="logoutBtn" class="danger-btn">Déconnecter</button>
+      <div id="milestoneTitleRow"><span id="milestoneIcon"></span> <span id="milestoneTitle"></span></div>
     </div>
     <nav id="mainMenu">
       <button id="navHowTo">Comment jouer ?</button>
@@ -29,6 +32,7 @@
       <button id="navEncyclopedia">Encyclopédie</button>
       <button id="navShop">Commerce / Échange</button>
       <button id="navTournament">Tournoi</button>
+      <button id="navProfile">Profil joueur</button>
     </nav>
   </header>
 
@@ -141,6 +145,7 @@
 
     <div class="setup-block">
       <h3>2. Choisissez un adversaire</h3>
+      <p id="opponentLevelsLabel" class="hint"></p>
       <div id="opponentList" class="pill-list"></div>
     </div>
 
@@ -189,7 +194,18 @@
   <section id="view-pvpMenu" class="view hidden">
     <h2>Mode Duel (PvP) — <span id="pvpPlayerName"></span></h2>
 
-    <div class="setup-block">
+    <div id="pvpKindTabs" class="pill-list">
+      <button id="pvpTabFriendly" type="button" class="selected">Amicale</button>
+      <button id="pvpTabRanked" type="button">Classée</button>
+    </div>
+    <p class="hint">
+      <strong>Amicale</strong> : choisissez vos règles librement, aucune carte en jeu, aucune influence
+      sur vos statistiques victoires/défaites.<br>
+      <strong>Classée</strong> : règles tirées au hasard à chaque duel (entre 0 et toutes en même temps),
+      aucune carte en jeu, mais la victoire/défaite compte dans vos statistiques.
+    </p>
+
+    <div id="pvpFriendlyRulesBlock" class="setup-block">
       <h3>Règles de jeu</h3>
       <div id="pvpRuleToggles">
         <div class="pill-list rule-row-open">
@@ -205,16 +221,6 @@
           <button type="button" class="rule-toggle" data-rule="suddenDeath" title="En cas d'égalité, on rejoue avec les cartes déjà posées">Mort subite</button>
         </div>
       </div>
-    </div>
-    <div class="setup-block">
-      <h3>Règle de mise</h3>
-      <select id="pvpTradeRuleSelect">
-        <option value="one">Une carte (One)</option>
-        <option value="direct">Direct</option>
-        <option value="diff">Différence (Diff)</option>
-        <option value="all">Toutes (All)</option>
-        <option value="none">Aucune (None)</option>
-      </select>
     </div>
 
     <div class="setup-block">
@@ -236,6 +242,21 @@
 
   <!-- ================= JEU ================= -->
   <section id="view-game" class="view hidden">
+    <div id="gameOverOverlay" class="hidden">
+      <div id="gameOverContent">
+        <div id="gameOverTitle"></div>
+        <div id="gameOverScore"></div>
+        <button id="gameOverContinueBtn">Continuer</button>
+      </div>
+    </div>
+    <div id="chooseCardOverlay" class="hidden">
+      <div id="chooseCardContent">
+        <h2>Choisissez votre butin</h2>
+        <p id="chooseCardInstructions"></p>
+        <div id="chooseCardGrid" class="card-grid"></div>
+        <button id="confirmChooseCardBtn" disabled>Confirmer</button>
+      </div>
+    </div>
     <div id="gameHeader">
       <div id="scoreIndicator"></div>
     </div>
@@ -248,6 +269,17 @@
       </div>
 
       <div id="board-frame">
+        <div id="coinFlipOverlay" class="hidden">
+          <div id="coinFlipLegend">
+            <span class="coin-legend-item"><span class="coin-legend-dot coin-legend-blue"></span> Vous</span>
+            <span class="coin-legend-item"><span class="coin-legend-dot coin-legend-red"></span> <span id="coinFlipOpponentLabel">Adversaire</span></span>
+          </div>
+          <div id="singleCoin">
+            <div class="coin-face coin-face-blue"></div>
+            <div class="coin-face coin-face-red"></div>
+          </div>
+          <div id="coinFlipResultText"></div>
+        </div>
         <div id="board"></div>
       </div>
 
@@ -274,17 +306,13 @@
       <button id="rematchBtn">Rejouer</button>
       <button id="otherOpponentBtn">Autre adversaire</button>
     </div>
+    <div id="pvpPostGameActions" class="pvp-actions hidden">
+      <button id="pvpRematchBtn">Revanche</button>
+      <p id="pvpRematchStatus" class="hint"></p>
+    </div>
     <div id="tournamentMatchActions" class="pvp-actions hidden">
       <button id="tournamentBackBtn">Voir le tournoi</button>
     </div>
-  </section>
-
-  <!-- ================= CHOIX DE LA CARTE GAGNÉE ================= -->
-  <section id="view-chooseCard" class="view hidden">
-    <h2>Choisissez votre butin</h2>
-    <p id="chooseCardInstructions"></p>
-    <div id="chooseCardGrid" class="card-grid"></div>
-    <button id="confirmChooseCardBtn" disabled>Confirmer</button>
   </section>
 
   <!-- ================= ENCYCLOPÉDIE ================= -->
@@ -295,6 +323,34 @@
     <button class="back" data-view="home">Retour</button>
   </section>
 
+  <!-- ================= PROFIL JOUEUR ================= -->
+  <section id="view-profile" class="view hidden">
+    <h2>Profil joueur — <span id="profilePlayerName"></span></h2>
+
+    <div class="setup-block">
+      <h3>Statistiques (Mode Solo uniquement)</h3>
+      <div id="profileStatsDisplay"></div>
+    </div>
+
+    <div class="setup-block">
+      <h3>Ajuster le ratio victoires / défaites</h3>
+      <p>
+        Retire un même nombre de victoires et de défaites de vos statistiques, pour améliorer votre
+        ratio (utile pour certains déblocages). <strong>Action irréversible</strong> : le nombre total
+        de victoires diminue aussi, ce qui peut vous faire repasser sous un seuil de victoires minimum
+        requis ailleurs.
+      </p>
+      <div class="row">
+        <label>Nombre à retirer</label>
+        <input type="number" id="ratioAdjustInput" min="1" value="1">
+      </div>
+      <div id="ratioAdjustPreview"></div>
+      <button id="ratioAdjustBtn">Appliquer</button>
+    </div>
+
+    <button class="back" data-view="home">Retour</button>
+  </section>
+
   <!-- ================= COMMERCE ================= -->
   <section id="view-shop" class="view hidden">
     <h2>Commerce / Échange — <span id="shopPlayerName"></span> (<span id="shopPoints"></span> points)</h2>
@@ -302,6 +358,17 @@
     <div id="shopTabs" class="pill-list">
       <button id="shopTabBuySell" type="button" class="selected">Boutique</button>
       <button id="shopTabTrade" type="button">Échange entre joueurs</button>
+      <button id="shopTabLegendary" type="button">Cartes légendaires</button>
+    </div>
+
+    <!-- ---- Onglet Cartes légendaires ---- -->
+    <div id="shopLegendaryPanel" class="hidden">
+      <p class="hint">
+        Achats spéciaux liés aux cartes légendaires. Les conditions non remplies sont grisées avec
+        l'indication de ce qui manque — elles se débloquent automatiquement dès que la condition est
+        atteinte.
+      </p>
+      <div id="shopLegendaryGrid" class="shop-buy-grid"></div>
     </div>
 
     <!-- ---- Onglet Boutique ---- -->
@@ -382,39 +449,50 @@
 
     <div id="tournamentNewPanel" class="setup-block">
       <h3>Nouveau tournoi</h3>
-      <p>5 adversaires de plus en plus forts vous attendent. Aucune carte n'est en jeu pendant le
-      tournoi — seules les récompenses finales comptent.</p>
+      <p>Aucune carte n'est en jeu pendant les manches — seules les récompenses finales comptent.
+      Aucune influence sur vos statistiques victoires/défaites. Règles de jeu fixes, imposées par
+      tournoi (aucune personnalisation possible).</p>
 
-      <h4>1. Choisissez un niveau de tournoi</h4>
-      <div id="tournamentTierPicker" class="pill-list"></div>
+      <h4>1. Choisissez un tournoi</h4>
+      <div id="tournamentTierPicker"></div>
 
-      <h4>2. Règles de jeu</h4>
-      <div id="tournamentRuleToggles">
-        <div class="pill-list rule-row-open">
-          <button type="button" class="rule-toggle rule-toggle-open" data-rule="open" title="Voir les cartes de l'adversaire avant qu'il les pose">Open</button>
-          <button type="button" class="rule-toggle rule-toggle-open" data-rule="random" title="Vos 5 cartes sont tirées au hasard dans votre collection (le choix ci-dessous est alors ignoré)">Aléatoire</button>
-        </div>
-        <div class="pill-list">
-          <button type="button" class="rule-toggle" data-rule="same" title="Chiffre opposé de même valeur">Identique</button>
-          <button type="button" class="rule-toggle" data-rule="plus" title="Somme des chiffres opposés égale sur 2 côtés ou plus">Plus</button>
-          <button type="button" class="rule-toggle" data-rule="combo" title="Les captures Identique/Plus se propagent en chaîne aux cartes adjacentes">Combo</button>
-          <button type="button" class="rule-toggle" data-rule="elemental" title="+1 si l'élément de la carte correspond à la case, -1 sinon (capture directe uniquement)">Élémental</button>
-          <button type="button" class="rule-toggle" data-rule="wallAce" title="Les bords du plateau valent 10 (As) pour Identique et Plus">Mur en As</button>
-          <button type="button" class="rule-toggle" data-rule="suddenDeath" title="En cas d'égalité, on rejoue avec les cartes déjà posées">Mort subite</button>
-        </div>
-      </div>
-
-      <h4>3. Vos 5 cartes (utilisées pour tout le tournoi)</h4>
+      <h4>2. Vos 5 cartes (utilisées pour tout le tournoi)</h4>
       <div id="tournamentDeckPicker" class="card-grid"></div>
       <p>Sélectionnées: <span id="tournamentDeckCount">0</span> / 5</p>
 
-      <button id="tournamentStartBtn" disabled>Payer et commencer</button>
+      <button id="tournamentStartBtn" disabled>Commencer le tournoi</button>
 
     </div>
 
     <button class="back" data-view="home">Retour</button>
   </section>
 
+  <!-- ================= COMBAT NIVEAU 9 : PRÉPARATION ================= -->
+  <section id="view-legendaryDuelSetup" class="view hidden">
+    <h2>Combat : <span id="legendaryDuelOpponentLabel"></span></h2>
+    <p>Combat unique — victoire = la carte rejoint votre collection et l'accès est consommé.
+    Défaite = aucune conséquence, vous pouvez retenter ce combat plus tard (l'accès reste possédé).
+    Aucune influence sur vos statistiques victoires/défaites.</p>
+
+    <h4>Vos 5 cartes</h4>
+    <div id="legendaryDuelDeckPicker" class="card-grid"></div>
+    <p>Sélectionnées: <span id="legendaryDuelDeckCount">0</span> / 5</p>
+
+    <button id="legendaryDuelStartBtn" disabled>Combattre</button>
+    <button id="legendaryDuelBackBtn" class="back" type="button">Retour</button>
+  </section>
+
+</div>
+
+<!-- Overlay du tableau récapitulatif des jalons -->
+<div id="milestonesOverlay" class="hidden">
+  <div id="milestonesContent">
+    <h2>Jalons de progression — <span id="milestonesPlayerName"></span></h2>
+    <p id="milestonesCurrentSummary"></p>
+    <div id="milestonesTable"></div>
+    <div id="milestonesBadges"></div>
+    <button id="milestonesCloseBtn">Fermer</button>
+  </div>
 </div>
 
 <!-- Overlay de révélation d'un achat -->

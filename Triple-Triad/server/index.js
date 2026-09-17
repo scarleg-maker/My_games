@@ -14,6 +14,8 @@ const legendaryRegistry = require('./legendaryRegistry');
 const shop = require('./shop');
 const sets = require('./sets');
 const tournament = require('./tournament');
+const legendaryDuels = require('./legendaryDuels');
+const milestones = require('./milestones');
 const ELEMENTS = require('../data/elements.json');
 
 const app = express();
@@ -39,7 +41,15 @@ function requireValidSet(req, res) {
 app.get('/api/sets', (req, res) => res.json(sets.getSets()));
 app.get('/api/elements', (req, res) => res.json(ELEMENTS));
 app.get('/api/shop/tiers', (req, res) => res.json(shop.getBuyTiers()));
-app.get('/api/tournament/tiers', (req, res) => res.json(tournament.getVisibleTiers()));
+app.get('/api/:set/save/:name/tournament/list', (req, res) => {
+  const setId = requireValidSet(req, res);
+  if (!setId) return;
+  const save = saveManager.loadOrCreateSave(req.params.name, setId);
+  res.json({
+    base: tournament.getBaseTournamentsWithStatus(save),
+    special: tournament.getSpecialTournamentsWithStatus(setId, save),
+  });
+});
 
 app.get('/api/:set/cards', (req, res) => {
   const setId = requireValidSet(req, res);
@@ -133,49 +143,157 @@ app.post('/api/:set/save/:name/shop/sell', (req, res) => {
   }
 });
 
+// ---------- Boutique : achats spéciaux liés aux cartes légendaires (FFVIII pour l'instant) ----------
+
+app.get('/api/:set/save/:name/shop/legendary-items', (req, res) => {
+  const setId = requireValidSet(req, res);
+  if (!setId) return;
+  const save = saveManager.loadOrCreateSave(req.params.name, setId);
+  res.json({ items: shop.getLegendaryShopItems(setId, save) });
+});
+
+app.post('/api/:set/save/:name/shop/buy-legendary-card', (req, res) => {
+  const setId = requireValidSet(req, res);
+  if (!setId) return;
+  try {
+    const { cardId } = req.body;
+    const save = saveManager.loadOrCreateSave(req.params.name, setId);
+    const cost = shop.buyDirectLegendaryCard(setId, save, cardId);
+    saveManager.spendPoints(req.params.name, setId, cost);
+    saveManager.addCardsToSave(req.params.name, setId, [cardId]);
+    const updated = saveManager.loadOrCreateSave(req.params.name, setId);
+    res.json({ save: updated, items: shop.getLegendaryShopItems(setId, updated) });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post('/api/:set/save/:name/shop/buy-gf-pass', (req, res) => {
+  const setId = requireValidSet(req, res);
+  if (!setId) return;
+  try {
+    const save = saveManager.loadOrCreateSave(req.params.name, setId);
+    const { cost, key } = shop.buyGfPass(setId, save);
+    saveManager.spendPoints(req.params.name, setId, cost);
+    saveManager.addUnlock(req.params.name, setId, key);
+    const updated = saveManager.loadOrCreateSave(req.params.name, setId);
+    res.json({ save: updated, items: shop.getLegendaryShopItems(setId, updated) });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post('/api/:set/save/:name/shop/buy-lvl9-duel', (req, res) => {
+  const setId = requireValidSet(req, res);
+  if (!setId) return;
+  try {
+    const { cardId } = req.body;
+    const save = saveManager.loadOrCreateSave(req.params.name, setId);
+    const { cost, key } = shop.buyLvl9Duel(setId, save, cardId);
+    saveManager.spendPoints(req.params.name, setId, cost);
+    saveManager.addUnlock(req.params.name, setId, key);
+    const updated = saveManager.loadOrCreateSave(req.params.name, setId);
+    res.json({ save: updated, items: shop.getLegendaryShopItems(setId, updated) });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post('/api/:set/save/:name/shop/buy-legendary-pass', (req, res) => {
+  const setId = requireValidSet(req, res);
+  if (!setId) return;
+  try {
+    const save = saveManager.loadOrCreateSave(req.params.name, setId);
+    const { cost, key } = shop.buyLegendaryPass(setId, save);
+    saveManager.spendPoints(req.params.name, setId, cost);
+    saveManager.addUnlock(req.params.name, setId, key);
+    const updated = saveManager.loadOrCreateSave(req.params.name, setId);
+    res.json({ save: updated, items: shop.getLegendaryShopItems(setId, updated) });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// ---------- Profil joueur : ajustement volontaire du ratio victoires/défaites ----------
+
+app.post('/api/:set/save/:name/profile/adjust-ratio', (req, res) => {
+  const setId = requireValidSet(req, res);
+  if (!setId) return;
+  try {
+    const { removeCount } = req.body;
+    const save = saveManager.adjustRatio(req.params.name, setId, removeCount);
+    res.json({ save });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.get('/api/:set/save/:name/milestones', (req, res) => {
+  const setId = requireValidSet(req, res);
+  if (!setId) return;
+  const save = saveManager.loadOrCreateSave(req.params.name, setId);
+  res.json(milestones.getMilestoneSummary(setId, save));
+});
+
 // ---------- Tournoi : démarrage / abandon (REST) ----------
 
 app.post('/api/:set/save/:name/tournament/start', (req, res) => {
   const setId = requireValidSet(req, res);
   if (!setId) return;
   try {
-    const { deckCardIds, rules, tierKey } = req.body;
+    const { deckCardIds, tournamentId } = req.body;
     const name = req.params.name;
     const save = saveManager.loadOrCreateSave(name, setId);
 
     if (save.tournament && save.tournament.active && !save.tournament.finished) {
       throw new Error('Un tournoi est déjà en cours. Terminez-le, reprenez-le, ou abandonnez-le avant d\'en démarrer un nouveau.');
     }
-    const tierDef = tournament.getTierDef(tierKey);
-    if (!tierDef) throw new Error('Palier de tournoi invalide.');
-    if (!tournament.isTierUnlocked(tierDef, save)) throw new Error('Ce palier de tournoi n\'est pas encore débloqué.');
-    const parsedRules = defaultRules(rules);
-    if (!parsedRules.random) {
-      if (!Array.isArray(deckCardIds) || deckCardIds.length !== 5) throw new Error('Il faut exactement 5 cartes.');
-      const collectionCopy = [...save.collection];
-      for (const id of deckCardIds) {
-        const idx = collectionCopy.indexOf(id);
-        if (idx === -1) throw new Error(`Carte non possédée: ${id}`);
-        collectionCopy.splice(idx, 1);
+
+    const baseDef = tournament.getBaseTournamentDef(tournamentId);
+    const specialDef = baseDef ? null : tournament.getSpecialTournamentDef(setId, tournamentId);
+    if (!baseDef && !specialDef) throw new Error('Tournoi invalide.');
+
+    let kind;
+    let rounds;
+    let effectiveRules;
+    if (baseDef) {
+      const status = tournament.getBaseTournamentsWithStatus(save).find(t => t.id === tournamentId);
+      if (!status.unlocked) throw new Error('Ce tournoi n\'est pas encore débloqué (remportez le précédent).');
+      kind = 'base';
+      rounds = tournament.pickBaseTournamentRounds(setId, baseDef);
+      effectiveRules = baseDef.rules;
+    } else {
+      if (!(save.unlocks || []).includes(specialDef.passKey)) {
+        throw new Error('Vous ne possédez pas le pass requis pour ce tournoi (achetez-le en boutique).');
       }
+      kind = 'special';
+      rounds = tournament.pickSpecialTournamentRounds(setId, specialDef);
+      effectiveRules = specialDef.rules;
     }
 
-    saveManager.spendPoints(name, setId, tierDef.cost); // lève une erreur si solde insuffisant
+    // Règles imposées PAR TOURNOI (aucune personnalisation par le joueur) ; deck obligatoire
+    // (règle "Aléatoire" jamais active dans un tournoi, quel que soit le tournoi choisi).
+    if (!Array.isArray(deckCardIds) || deckCardIds.length !== 5) throw new Error('Il faut exactement 5 cartes.');
+    const collectionCopy = [...save.collection];
+    for (const id of deckCardIds) {
+      const idx = collectionCopy.indexOf(id);
+      if (idx === -1) throw new Error(`Carte non possédée: ${id}`);
+      collectionCopy.splice(idx, 1);
+    }
 
-    const rounds = tournament.pickTournamentOpponents(setId, tierDef);
     const freshSave = saveManager.loadOrCreateSave(name, setId);
     freshSave.tournament = {
       active: true,
       finished: false,
       placement: null,
-      tierKey: tierDef.id,
+      kind,              // 'base' ou 'special'
+      tournamentId,       // 'classique'/'bronze'/'argent'/'or'/'gforces'/'legende'
       deckCardIds: [...deckCardIds],
-      rules: parsedRules,
-      opponents: rounds,       // 5 manches normales, choisies une fois pour toute la durée du tournoi
-      deciderOpponent: null,   // rempli seulement si la manche décisive se déclenche (défaite en manche 4)
-      roundIndex: 0,           // 0 à 4 = manches normales 1 à 5
-      isDecider: false,
-      results: [],             // historique 'win'/'loss' des manches déjà jouées
+      rules: effectiveRules,
+      opponents: rounds,  // manches fixées une fois pour toute la durée du tournoi
+      roundIndex: 0,
+      results: [],
+      reward: null,       // rempli à la fin (points et/ou carte gagnée)
     };
     saveManager.writeSave(freshSave);
     res.json({ save: freshSave });
@@ -196,6 +314,7 @@ app.post('/api/:set/save/:name/tournament/abandon', (req, res) => {
 // ---------- État en mémoire ----------
 const soloSessions = new Map();       // socket.id -> session (mode Solo)
 const tournamentSessions = new Map(); // socket.id -> session (une manche de Tournoi)
+const legendaryDuelSessions = new Map(); // socket.id -> session (combat unique niveau 9)
 const pvpRooms = new Map();           // roomCode -> room
 const tradeRooms = new Map();         // roomCode -> room (échange de cartes/points entre 2 joueurs)
 
@@ -216,6 +335,17 @@ function defaultRules(rulesInput) {
   };
 }
 
+/**
+ * Tire des règles au hasard pour un duel PvP Classée : chaque règle a indépendamment 50% de chance
+ * d'être active, donc le duel peut se retrouver avec 0, 1, 2... jusqu'à toutes les règles activées.
+ */
+function generateRandomPvpRules() {
+  const keys = ['same', 'plus', 'combo', 'suddenDeath', 'elemental', 'wallAce', 'open', 'random'];
+  const rules = {};
+  for (const k of keys) rules[k] = Math.random() < 0.5;
+  return rules;
+}
+
 /** Choisit 5 cartes au hasard dans la collection réelle du joueur (règle "Aléatoire"). */
 function pickRandomHandCardIds(collection) {
   const pool = [...collection];
@@ -226,6 +356,40 @@ function pickRandomHandCardIds(collection) {
     pool.splice(idx, 1);
   }
   return hand;
+}
+
+/**
+ * Tire 5 cartes au hasard dans le "pool" de deck d'un adversaire (qui peut contenir plus de 5
+ * cartes, ex: 8 à 12 selon le palier). Si le pool fait déjà 5 cartes ou moins, il est utilisé tel
+ * quel (compatibilité avec d'éventuels decks classiques à 5 cartes fixes). Tirage complètement
+ * aléatoire, y compris pour les IA "smart" (seul le placement des cartes reste stratégique, pas la
+ * composition de la main — voulu ainsi pour varier les combats contre un même adversaire).
+ */
+/** Tire exactement `n` cartes au hasard dans `pool` (sans remise, pas de doublon dans le résultat). */
+function pickNRandomFrom(pool, n) {
+  const copy = [...pool];
+  const picked = [];
+  for (let i = 0; i < n && copy.length > 0; i++) {
+    const idx = Math.floor(Math.random() * copy.length);
+    picked.push(copy[idx]);
+    copy.splice(idx, 1);
+  }
+  return picked;
+}
+
+function pickRandomOpponentHand(deckPool) {
+  if (deckPool.length <= 5) return [...deckPool];
+  return pickNRandomFrom(deckPool, 5);
+}
+
+/**
+ * Variante pour les adversaires de combat unique niveau 9 : la carte convoitée (mandatoryCardId)
+ * est TOUJOURS incluse dans la main de l'adversaire, complétée par 4 cartes tirées au hasard dans
+ * le reste de son pool.
+ */
+function pickLegendaryDuelHand(deckPool, mandatoryCardId) {
+  const rest = deckPool.filter(id => id !== mandatoryCardId);
+  return [mandatoryCardId, ...pickNRandomFrom(rest, 4)];
 }
 
 /**
@@ -288,9 +452,10 @@ io.on('connection', (socket) => {
 
       const handA = buildHand(actualDeckCardIds, 'A');  // joueur
       // Deck réellement distribué à l'IA : une carte légendaire déjà obtenue par CE joueur (ou ayant
-      // migré chez un autre adversaire suite à une défaite passée) est remplacée par un substitut.
+      // migré chez un autre adversaire suite à une défaite passée) est remplacée par un substitut,
+      // PUIS 5 cartes sont tirées au hasard dans ce pool résolu (peut contenir plus de 5 cartes).
       const resolvedDeckB = legendaryRegistry.resolveOpponentDeck(set, opponent.deck, tier, opponentIndex, save.discovered || []);
-      const handB = buildHand(resolvedDeckB, 'B');     // IA
+      const handB = buildHand(pickRandomOpponentHand(resolvedDeckB), 'B');     // IA
       const startingPlayer = Math.random() < 0.5 ? 'A' : 'B';
       const cellElements = parsedRules.elemental ? assignRandomElements() : Array(9).fill(null);
 
@@ -321,7 +486,7 @@ io.on('connection', (socket) => {
         cellElements: session.cellElements,
       });
 
-      if (startingPlayer === 'B') aiPlaySolo(socket, session);
+      if (startingPlayer === 'B') aiPlaySolo(socket, session, 2000);
     } catch (e) {
       socket.emit('error:msg', e.message);
     }
@@ -362,6 +527,87 @@ io.on('connection', (socket) => {
     finalizeSoloResult(socket, session, score, 'wins', chosenCardIds);
   });
 
+  // ---------- COMBAT UNIQUE NIVEAU 9 ----------
+
+  socket.on('legendaryDuel:start', ({ set, name, cardId, deckCardIds }) => {
+    try {
+      if (!sets.isValidSet(set)) return socket.emit('error:msg', `Set inconnu: ${set}`);
+      const save = saveManager.loadOrCreateSave(name, set);
+
+      const unlockKey = `duel_lvl9_${cardId}`;
+      if (!(save.unlocks || []).includes(unlockKey)) {
+        return socket.emit('error:msg', 'Vous ne possédez pas l\'accès à ce combat (achetez-le en boutique).');
+      }
+      if (save.collection.includes(cardId)) {
+        return socket.emit('error:msg', 'Vous possédez déjà cette carte.');
+      }
+      const duelOpponent = legendaryDuels.getDuelOpponent(set, cardId);
+      if (!duelOpponent) return socket.emit('error:msg', 'Combat introuvable pour cette carte.');
+
+      if (!Array.isArray(deckCardIds) || deckCardIds.length !== 5) {
+        return socket.emit('error:msg', 'Il faut exactement 5 cartes.');
+      }
+      const collectionCopy = [...save.collection];
+      for (const id of deckCardIds) {
+        const idx = collectionCopy.indexOf(id);
+        if (idx === -1) return socket.emit('error:msg', `Carte non possédée: ${id}`);
+        collectionCopy.splice(idx, 1);
+      }
+
+      const handA = buildHand(deckCardIds, 'A');
+      const handB = buildHand(pickLegendaryDuelHand(duelOpponent.deck, cardId), 'B');
+      const startingPlayer = Math.random() < 0.5 ? 'A' : 'B';
+
+      const session = {
+        set,
+        name,
+        cardId,
+        board: engine.createEmptyBoard(),
+        hands: { A: handA, B: handB },
+        rules: legendaryDuels.IMPOSED_RULES,
+        cellElements: Array(9).fill(null),
+        turn: startingPlayer,
+        opponentName: duelOpponent.name,
+        aiDifficulty: 'seasoned',
+      };
+      legendaryDuelSessions.set(socket.id, session);
+
+      socket.emit('legendaryDuel:state', {
+        board: publicBoard(session.board),
+        hands: session.hands,
+        turn: session.turn,
+        rules: session.rules,
+        cellElements: session.cellElements,
+        opponentName: session.opponentName,
+      });
+
+      if (startingPlayer === 'B') aiPlayLegendaryDuel(socket, session, 2000);
+    } catch (e) {
+      socket.emit('error:msg', e.message);
+    }
+  });
+
+  socket.on('legendaryDuel:place', ({ instanceId, cellIndex }) => {
+    const session = legendaryDuelSessions.get(socket.id);
+    if (!session) return socket.emit('error:msg', 'Aucun combat en cours.');
+    if (session.turn !== 'A') return socket.emit('error:msg', 'Ce n\'est pas votre tour.');
+    try {
+      const lastMove = playMove(session, 'A', instanceId, cellIndex);
+      socket.emit('legendaryDuel:state', {
+        board: publicBoard(session.board),
+        hands: session.hands,
+        turn: session.turn,
+        rules: session.rules,
+        cellElements: session.cellElements,
+        lastMove,
+      });
+      if (finishLegendaryDuelIfBoardFull(socket, session)) return;
+      if (session.turn === 'B') aiPlayLegendaryDuel(socket, session, computeAiDelay(lastMove));
+    } catch (e) {
+      socket.emit('error:msg', e.message);
+    }
+  });
+
   // ---------- TOURNOI ----------
 
   socket.on('tournament:playRound', ({ set, name }) => {
@@ -371,7 +617,7 @@ io.on('connection', (socket) => {
       const t = save.tournament;
       if (!t || !t.active || t.finished) return socket.emit('error:msg', 'Aucun tournoi actif à jouer.');
 
-      const opponentInfo = t.isDecider ? t.deciderOpponent : t.opponents[t.roundIndex];
+      const opponentInfo = t.opponents[t.roundIndex];
       if (!opponentInfo) return socket.emit('error:msg', 'Manche introuvable.');
 
       const opponentsForSet = sets.getOpponentsForSet(set);
@@ -387,7 +633,7 @@ io.on('connection', (socket) => {
 
       const handA = buildHand(actualDeckCardIds, 'A');
       const resolvedDeckB = legendaryRegistry.resolveOpponentDeck(set, opponent.deck, opponentInfo.tier, opponentInfo.opponentIndex, save.discovered || []);
-      const handB = buildHand(resolvedDeckB, 'B');
+      const handB = buildHand(pickRandomOpponentHand(resolvedDeckB), 'B');
       const startingPlayer = Math.random() < 0.5 ? 'A' : 'B';
       const cellElements = t.rules.elemental ? assignRandomElements() : Array(9).fill(null);
 
@@ -402,7 +648,6 @@ io.on('connection', (socket) => {
         opponentName: opponent.name,
         aiDifficulty: opponent.ai,
         roundIndex: t.roundIndex,
-        isDecider: t.isDecider,
       };
       tournamentSessions.set(socket.id, session);
 
@@ -416,7 +661,7 @@ io.on('connection', (socket) => {
         bracket: t,
       });
 
-      if (startingPlayer === 'B') aiPlayTournament(socket, session);
+      if (startingPlayer === 'B') aiPlayTournament(socket, session, 2000);
     } catch (e) {
       socket.emit('error:msg', e.message);
     }
@@ -439,9 +684,11 @@ io.on('connection', (socket) => {
     aiPlayTournament(socket, session, computeAiDelay(lastMove));
   });
 
-  socket.on('pvp:create', ({ set, playerName, rules, tradeRule, deckCardIds }) => {
+  socket.on('pvp:create', ({ set, playerName, kind, rules, deckCardIds }) => {
     if (!sets.isValidSet(set)) return socket.emit('error:msg', `Set inconnu: ${set}`);
-    const parsedRules = defaultRules(rules);
+    const roomKind = kind === 'ranked' ? 'ranked' : 'friendly';
+    // Classée : règles imposées par tirage au hasard, toute règle envoyée par le client est ignorée.
+    const parsedRules = roomKind === 'ranked' ? generateRandomPvpRules() : defaultRules(rules);
     if (!parsedRules.random) {
       const err = validatePvpDeck(playerName, set, deckCardIds);
       if (err) return socket.emit('error:msg', err);
@@ -451,9 +698,10 @@ io.on('connection', (socket) => {
     const room = {
       code: roomCode,
       set,
+      kind: roomKind,
       rules: parsedRules,
       cellElements: parsedRules.elemental ? assignRandomElements() : Array(9).fill(null),
-      tradeRule: tradeRule || 'one',
+      tradeRule: 'none', // aucune carte n'est jamais échangée en PvP (Amicale et Classée)
       players: [{ socketId: socket.id, name: playerName, deckCardIds, owner: 'A' }],
       board: engine.createEmptyBoard(),
       hands: {},
@@ -518,8 +766,73 @@ io.on('connection', (socket) => {
 
     if (engine.isBoardFull(room.board)) {
       const score = engine.countScore(room.board);
-      io.to(roomCode).emit('pvp:gameover', { score, players: room.players.map(p => ({ name: p.name, owner: p.owner })) });
+
+      // Classée uniquement : la victoire/défaite/nul compte dans les statistiques des DEUX joueurs
+      // (aucune carte n'est jamais échangée, en Amicale comme en Classée).
+      if (room.kind === 'ranked') {
+        let resultA, resultB;
+        if (score.A > score.B) { resultA = 'wins'; resultB = 'losses'; }
+        else if (score.A < score.B) { resultA = 'losses'; resultB = 'wins'; }
+        else { resultA = 'draws'; resultB = 'draws'; }
+        for (const p of room.players) {
+          saveManager.recordResult(p.name, room.set, p.owner === 'A' ? resultA : resultB);
+        }
+      }
+
+      io.to(roomCode).emit('pvp:gameover', { score, kind: room.kind, players: room.players.map(p => ({ name: p.name, owner: p.owner })) });
     }
+  });
+
+  socket.on('pvp:rematch', ({ roomCode }) => {
+    const room = pvpRooms.get(roomCode);
+    if (!room) return socket.emit('error:msg', 'Salon introuvable (l\'adversaire a peut-être quitté).');
+    const player = room.players.find(p => p.socketId === socket.id);
+    if (!player) return socket.emit('error:msg', 'Vous n\'êtes pas dans ce salon.');
+    if (room.players.length < 2) return socket.emit('error:msg', 'En attente du retour de l\'adversaire.');
+
+    room.rematchReady = room.rematchReady || new Set();
+    room.rematchReady.add(socket.id);
+    socket.to(roomCode).emit('pvp:rematchWaiting', { playerName: player.name });
+    if (room.rematchReady.size < 2) return; // attend que l'autre joueur confirme aussi
+
+    const [p1, p2] = room.players;
+    // Revalide les decks (une carte a pu être vendue/échangée depuis la fin du match précédent).
+    if (!room.rules.random) {
+      const err1 = validatePvpDeck(p1.name, room.set, p1.deckCardIds);
+      const err2 = err1 ? null : validatePvpDeck(p2.name, room.set, p2.deckCardIds);
+      const err = err1 || err2;
+      if (err) {
+        room.rematchReady.clear();
+        return io.to(roomCode).emit('error:msg', `Revanche impossible : ${err}`);
+      }
+    }
+
+    // Classée : nouveau tirage de règles à chaque revanche (un nouveau duel = un nouveau tirage).
+    if (room.kind === 'ranked') room.rules = generateRandomPvpRules();
+    room.cellElements = room.rules.elemental ? assignRandomElements() : Array(9).fill(null);
+
+    const save1 = saveManager.loadOrCreateSave(p1.name, room.set);
+    const save2 = saveManager.loadOrCreateSave(p2.name, room.set);
+    const actualDeckA = room.rules.random ? pickRandomHandCardIds(save1.collection) : p1.deckCardIds;
+    const actualDeckB = room.rules.random ? pickRandomHandCardIds(save2.collection) : p2.deckCardIds;
+    room.hands.A = buildHand(actualDeckA, 'A');
+    room.hands.B = buildHand(actualDeckB, 'B');
+    room.originalDeck = { A: [...actualDeckA], B: [...actualDeckB] };
+    room.board = engine.createEmptyBoard();
+    room.turn = Math.random() < 0.5 ? 'A' : 'B';
+    room.started = true;
+    room.rematchReady.clear();
+
+    io.to(roomCode).emit('pvp:start', {
+      board: publicBoard(room.board),
+      hands: room.hands,
+      turn: room.turn,
+      rules: room.rules,
+      tradeRule: room.tradeRule,
+      cellElements: room.cellElements,
+      kind: room.kind,
+      players: room.players.map(p => ({ name: p.name, owner: p.owner })),
+    });
   });
 
   // ---------- ÉCHANGE ENTRE JOUEURS ----------
@@ -700,7 +1013,7 @@ function aiPlaySolo(socket, session, delay = 650) {
   setTimeout(() => {
     const hand = session.hands.B;
     if (hand.length === 0) return;
-    const { cardIndexInHand, cellIndex } = chooseAIMove(session.board, hand, session.rules, session.aiDifficulty);
+    const { cardIndexInHand, cellIndex } = chooseAIMove(session.board, hand, session.rules, session.aiDifficulty, session.hands.A);
     const instanceId = hand[cardIndexInHand].instanceId;
     const lastMove = playMove(session, 'B', instanceId, cellIndex);
     socket.emit('solo:state', {
@@ -753,6 +1066,7 @@ function finalizeSoloResult(socket, session, score, result, chosenGains) {
         loserOriginalDeck: session.originalDeck.B,
         scoreWinner: score.A,
         scoreLoser: score.B,
+        boardCardIds: session.board.filter(c => c).map(c => c.cardId),
       });
       if (trade.mode === 'direct') {
         gains = session.board.filter(c => c && c.owner === 'A' && session.originalDeck.B.includes(c.cardId)).map(c => c.cardId);
@@ -771,6 +1085,7 @@ function finalizeSoloResult(socket, session, score, result, chosenGains) {
       loserOriginalDeck: session.originalDeck.A,
       scoreWinner: score.B,
       scoreLoser: score.A,
+      boardCardIds: session.board.filter(c => c).map(c => c.cardId),
     });
     if (trade.mode === 'direct') {
       losses = session.board.filter(c => c && c.owner === 'B' && session.originalDeck.A.includes(c.cardId)).map(c => c.cardId);
@@ -798,6 +1113,50 @@ function finalizeSoloResult(socket, session, score, result, chosenGains) {
   soloSessions.delete(socket.id);
 }
 
+// ---------- Combat unique niveau 9 : IA et fin de combat ----------
+
+function aiPlayLegendaryDuel(socket, session, delay = 650) {
+  if (session.turn !== 'B') return;
+  setTimeout(() => {
+    const hand = session.hands.B;
+    if (hand.length === 0) return;
+    const { cardIndexInHand, cellIndex } = chooseAIMove(session.board, hand, session.rules, session.aiDifficulty, session.hands.A);
+    const instanceId = hand[cardIndexInHand].instanceId;
+    const lastMove = playMove(session, 'B', instanceId, cellIndex);
+    socket.emit('legendaryDuel:state', {
+      board: publicBoard(session.board),
+      hands: session.hands,
+      turn: session.turn,
+      rules: session.rules,
+      cellElements: session.cellElements,
+      lastMove,
+    });
+    finishLegendaryDuelIfBoardFull(socket, session);
+  }, delay);
+}
+
+/**
+ * Fin d'un combat niveau 9 : victoire = la carte convoitée rejoint la collection et l'accès acheté
+ * est consommé (disparaît, conformément à la règle) ; défaite = rien ne change, l'accès reste
+ * utilisable pour retenter le combat plus tard. Aucune influence sur les statistiques victoires/
+ * défaites (comme les tournois), et aucune autre carte ne change de main dans les deux cas.
+ */
+function finishLegendaryDuelIfBoardFull(socket, session) {
+  if (!engine.isBoardFull(session.board)) return false;
+
+  const score = engine.countScore(session.board);
+  const result = score.A > score.B ? 'win' : 'loss';
+
+  if (result === 'win') {
+    saveManager.addCardsToSave(session.name, session.set, [session.cardId]);
+    saveManager.removeUnlock(session.name, session.set, `duel_lvl9_${session.cardId}`);
+  }
+
+  socket.emit('legendaryDuel:gameover', { score, result, cardId: session.cardId });
+  legendaryDuelSessions.delete(socket.id);
+  return true;
+}
+
 // ---------- Tournoi : IA et fin de manche ----------
 
 function aiPlayTournament(socket, session, delay = 650) {
@@ -805,7 +1164,7 @@ function aiPlayTournament(socket, session, delay = 650) {
   setTimeout(() => {
     const hand = session.hands.B;
     if (hand.length === 0) return;
-    const { cardIndexInHand, cellIndex } = chooseAIMove(session.board, hand, session.rules, session.aiDifficulty);
+    const { cardIndexInHand, cellIndex } = chooseAIMove(session.board, hand, session.rules, session.aiDifficulty, session.hands.A);
     const instanceId = hand[cardIndexInHand].instanceId;
     const lastMove = playMove(session, 'B', instanceId, cellIndex);
     socket.emit('tournament:state', {
@@ -837,41 +1196,64 @@ function finishTournamentIfBoardFull(socket, session) {
 
   t.results.push(result);
 
+  const totalRounds = t.opponents.length; // 4 pour un tournoi de base, 5 pour un tournoi spécial
+  const isLastRound = session.roundIndex === totalRounds - 1;
+
   let finished = false;
   let placement = null;
+  let reward = null;
 
-  if (session.isDecider) {
+  if (result === 'loss') {
     finished = true;
-    placement = result === 'win' ? 'third' : 'eliminated';
-  } else if (session.roundIndex === 4) {
-    // 5e manche
+    if (isLastRound) {
+      // Défaite à la toute dernière manche : "2e place" (ou récompense de consolation spéciale).
+      placement = 'second';
+      if (t.kind === 'base') {
+        const def = tournament.getBaseTournamentDef(t.tournamentId);
+        reward = { points: def.rewardPoints };
+      } else {
+        const def = tournament.getSpecialTournamentDef(session.set, t.tournamentId);
+        reward = { points: def.lossReward.points };
+      }
+      if (reward.points) saveManager.addPoints(session.name, session.set, reward.points);
+    } else {
+      // Défaite avant la dernière manche : élimination directe, aucune récompense.
+      placement = 'eliminated';
+    }
+  } else if (isLastRound) {
+    // Victoire à la dernière manche : champion.
     finished = true;
-    placement = result === 'win' ? 'champion' : 'second';
-  } else if (result === 'loss' && session.roundIndex === 3) {
-    // défaite en 4e manche : déclenche la manche décisive pour la 3e place
-    const lostRoundInfo = t.opponents[3];
-    t.deciderOpponent = tournament.pickDeciderOpponent(session.set, lostRoundInfo.tier, lostRoundInfo.opponentIndex);
-    t.isDecider = true;
-  } else if (result === 'loss') {
-    // défaite avant la 4e manche : élimination directe, pas de manche décisive
-    finished = true;
-    placement = 'eliminated';
+    placement = 'champion';
+    if (t.kind === 'base') {
+      const def = tournament.getBaseTournamentDef(t.tournamentId);
+      reward = { points: def.rewardPoints };
+      const pool = tournament.unclaimedByLevel(session.set, save, def.rewardCardLevel);
+      if (pool.length) reward.cardId = pool[Math.floor(Math.random() * pool.length)];
+      saveManager.addTournamentWin(session.name, session.set, t.tournamentId);
+    } else {
+      const def = tournament.getSpecialTournamentDef(session.set, t.tournamentId);
+      reward = tournament.computeSpecialWinReward(session.set, save, def);
+    }
+    if (reward.points) saveManager.addPoints(session.name, session.set, reward.points);
+    if (reward.cardId) saveManager.addCardsToSave(session.name, session.set, [reward.cardId]);
   } else {
-    // victoire normale : on passe à la manche suivante
+    // Victoire normale : on passe à la manche suivante.
     t.roundIndex += 1;
   }
 
   t.finished = finished;
   t.placement = placement;
+  t.reward = reward;
   t.active = !finished; // reste "actif" (reprenable) tant que ce n'est pas fini
 
-  if (finished) {
-    tournament.grantTournamentReward(placement, { name: session.name, setId: session.set, tierKey: t.tierKey }, saveManager);
-  }
+  // Recharge une version fraîche du disque (capture les écritures séparées faites juste au-dessus :
+  // addPoints / addCardsToSave / addTournamentWin) avant d'appliquer la mise à jour de progression du
+  // tournoi — sinon une écriture finale basée sur la copie mémoire obsolète écraserait ces changements.
+  const updatedSave = saveManager.loadOrCreateSave(session.name, session.set);
+  updatedSave.tournament = t;
+  saveManager.writeSave(updatedSave);
 
-  saveManager.writeSave(save);
-
-  socket.emit('tournament:matchOver', { score, result, bracket: save.tournament, finished, placement });
+  socket.emit('tournament:matchOver', { score, result, bracket: updatedSave.tournament, finished, placement, reward });
   tournamentSessions.delete(socket.id);
   return true;
 }

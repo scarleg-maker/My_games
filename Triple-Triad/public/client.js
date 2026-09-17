@@ -10,7 +10,7 @@ let ELEMENT_BY_NAME = new Map(); // nom d'élément -> { name, icon, image }
 let LEGENDARY_HOLDERS = new Map(); // cardId -> { tier, opponentIndex, opponentName } | null
 let SHOP_BUY_TIERS = {}; // clé -> { cost, minLevel, maxLevel, label }
 let AVAILABLE_SETS = []; // [{ id, label, includes }]
-let TOURNAMENT_TIERS = []; // [{ id, label, cost, opponentTierRange, rewardScale }]
+// (TOURNAMENT_TIERS retiré : la liste des tournois est désormais chargée par sauvegarde, voir buildTournamentTierPicker)
 const SELL_PRICE_BY_LEVEL = { 1: 50, 2: 75, 3: 100, 4: 125, 5: 150, 6: 175, 7: 200 };
 
 let state = {
@@ -24,7 +24,7 @@ let state = {
   selectedDeck: [],      // tableau de cardId (doublons autorisés), max 5
   pvpDeck: [],
   tournamentDeck: [],
-  selectedTournamentTier: null,
+  selectedTournamentId: null,
   roomCode: null,
   myOwner: null,         // 'A' en solo/tournoi toujours; en pvp dépend
   lastSoloConfig: null,  // pour "Rejouer"
@@ -144,8 +144,6 @@ function setRuleToggles(containerId, rules) {
 
 async function bootstrap() {
   AVAILABLE_SETS = await (await fetch('/api/sets')).json();
-  const tiers = await (await fetch('/api/tournament/tiers')).json();
-  TOURNAMENT_TIERS = tiers;
 
   const remembered = localStorage.getItem('activeSet');
   if (remembered && AVAILABLE_SETS.some(s => s.id === remembered)) {
@@ -267,11 +265,73 @@ function activateSession(save) {
   document.getElementById('sessionPlayerName').textContent = save.name;
   document.getElementById('sessionPoints').textContent = save.points ?? 0;
   document.getElementById('sessionBar').classList.remove('hidden');
+  refreshMilestoneTitle();
 }
 
-function updateSessionBarPoints() {
+async function updateSessionBarPoints() {
   document.getElementById('sessionPoints').textContent = state.save?.points ?? 0;
+  await refreshMilestoneTitle();
 }
+
+/** Récupère et affiche le titre de jalon actuel sous le nom du joueur (barre de session). */
+async function refreshMilestoneTitle() {
+  if (!state.playerName || !state.activeSet) return;
+  try {
+    const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/milestones`);
+    const data = await res.json();
+    state.milestones = data;
+    document.getElementById('milestoneIcon').textContent = data.displayIcon;
+    document.getElementById('milestoneTitle').textContent = data.displayTitle;
+  } catch {
+    // non bloquant : le reste de l'interface continue de fonctionner si cet appel échoue
+  }
+}
+
+/** Construit et affiche l'overlay du tableau récapitulatif des jalons (icône barre "Univers"). */
+async function openMilestonesOverlay() {
+  document.getElementById('milestonesPlayerName').textContent = state.playerName;
+  const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/milestones`);
+  const data = await res.json();
+  state.milestones = data;
+
+  const nextLabel = data.nextTier
+    ? `Prochain palier : ${data.nextTier.icon} ${data.nextTier.label} (${data.nextTier.threshold} pts, encore ${data.nextTier.threshold - data.points} pts)`
+    : 'Palier maximal des jalons de points atteint.';
+  document.getElementById('milestonesCurrentSummary').innerHTML =
+    `Titre actuel : ${data.displayIcon} <strong>${data.displayTitle}</strong> — ${data.points} points<br>${nextLabel}`;
+
+  const tableEl = document.getElementById('milestonesTable');
+  tableEl.innerHTML = '';
+  data.allTiers.forEach(t => {
+    const row = document.createElement('div');
+    row.className = 'milestone-tier-row' + (t.reached ? ' reached' : '') + (t.label === data.currentTierLabel ? ' current' : '');
+    const statusIcon = t.reached ? '✅' : '🔒';
+    row.innerHTML = `<span>${t.icon} ${t.label}</span><span>${t.threshold} pts ${statusIcon}</span>`;
+    tableEl.appendChild(row);
+  });
+
+  const badgesEl = document.getElementById('milestonesBadges');
+  const badgeDefs = [
+    { key: 'maitreDesGForces', label: 'Maître des G-Forces (toutes les cartes niveau 8 et 9)' },
+    { key: 'celebrite', label: 'Célébrité (toutes les cartes niveau 10)' },
+    { key: 'herosLegendaire', label: 'Héros légendaire (collection complète — remplace tous les autres titres)' },
+  ];
+  badgesEl.innerHTML = '<h3>Jalons spéciaux</h3>';
+  badgeDefs.forEach(b => {
+    const earned = data.badges[b.key];
+    const icon = data.badgeIcons[b.key];
+    const div = document.createElement('div');
+    div.className = 'milestone-badge' + (earned ? ' earned' : '');
+    div.innerHTML = `<span class="milestone-badge-icon">${icon}</span> ${earned ? '✅ Obtenu' : '🔒 Non obtenu'} — ${b.label}`;
+    badgesEl.appendChild(div);
+  });
+
+  document.getElementById('milestonesOverlay').classList.remove('hidden');
+}
+document.getElementById('milestonesBtn').addEventListener('click', openMilestonesOverlay);
+document.getElementById('milestonesCloseBtn').addEventListener('click', () => {
+  document.getElementById('milestonesOverlay').classList.add('hidden');
+});
 
 function deactivateSession() {
   state.save = null;
@@ -322,6 +382,7 @@ async function enterFeature(target) {
     showView('soloSetup');
   } else if (target === 'pvp') {
     document.getElementById('pvpPlayerName').textContent = state.playerName;
+    switchPvpKind('friendly');
     buildPvpDeckPicker();
     showView('pvpMenu');
   } else if (target === 'encyclopedia') {
@@ -339,8 +400,13 @@ async function enterFeature(target) {
   } else if (target === 'tournament') {
     await refreshSave();
     document.getElementById('tournamentPlayerName').textContent = state.playerName;
-    buildTournamentView();
+    await buildTournamentView();
     showView('tournamentEntry');
+  } else if (target === 'profile') {
+    await refreshSave();
+    document.getElementById('profilePlayerName').textContent = state.playerName;
+    buildProfileView();
+    showView('profile');
   }
 }
 
@@ -350,6 +416,7 @@ document.getElementById('navPvp').addEventListener('click', () => goToFeature('p
 document.getElementById('navEncyclopedia').addEventListener('click', () => goToFeature('encyclopedia'));
 document.getElementById('navShop').addEventListener('click', () => goToFeature('shop'));
 document.getElementById('navTournament').addEventListener('click', () => goToFeature('tournament'));
+document.getElementById('navProfile').addEventListener('click', () => goToFeature('profile'));
 
 // ---- Écran de connexion ----
 document.getElementById('loginLoadBtn').addEventListener('click', async () => {
@@ -427,60 +494,99 @@ function buildGroupedDeckPicker({ containerId, countElId, stateKey, onChange }) 
   const counts = groupCounts(state.save.collection);
   const uniqueIds = sortCardIdsByLevelAndNumber([...counts.keys()].filter(id => CARD_BY_ID.has(id)));
 
+  // Regroupe par niveau : seuls les niveaux où au moins une carte est possédée apparaissent.
+  const byLevel = new Map();
+  uniqueIds.forEach(cardId => {
+    const lvl = CARD_BY_ID.get(cardId).level;
+    if (!byLevel.has(lvl)) byLevel.set(lvl, []);
+    byLevel.get(lvl).push(cardId);
+  });
+  const levels = [...byLevel.keys()].sort((a, b) => a - b);
+
+  const tabsEl = document.createElement('div');
+  tabsEl.className = 'pill-list deck-picker-level-tabs';
+  const gridEl = document.createElement('div');
+  gridEl.className = 'card-grid';
+  container.append(tabsEl, gridEl);
+
+  if (levels.length === 0) return; // aucune carte possédée (cas limite)
+
+  let activeLevel = levels[0];
   const refreshers = [];
   function refreshAll() { refreshers.forEach(fn => fn()); }
 
-  uniqueIds.forEach(cardId => {
-    const def = CARD_BY_ID.get(cardId);
-    const owned = counts.get(cardId);
+  function renderGrid() {
+    gridEl.innerHTML = '';
+    refreshers.length = 0;
 
-    const item = document.createElement('div');
-    item.className = 'deck-picker-item';
+    byLevel.get(activeLevel).forEach(cardId => {
+      const def = CARD_BY_ID.get(cardId);
+      const owned = counts.get(cardId);
 
-    const tile = document.createElement('div');
-    tile.className = 'card-tile';
+      const item = document.createElement('div');
+      item.className = 'deck-picker-item';
 
-    const qtyControl = document.createElement('div');
-    qtyControl.className = 'qty-control';
-    const minusBtn = document.createElement('button');
-    minusBtn.type = 'button';
-    minusBtn.textContent = '−';
-    const qtyValue = document.createElement('span');
-    qtyValue.className = 'qty-value';
-    const plusBtn = document.createElement('button');
-    plusBtn.type = 'button';
-    plusBtn.textContent = '+';
-    qtyControl.append(minusBtn, qtyValue, plusBtn);
+      const tile = document.createElement('div');
+      tile.className = 'card-tile';
 
-    function refresh() {
-      const selected = state[stateKey].filter(id => id === cardId).length;
-      tile.classList.toggle('selected', selected > 0);
-      const badges = owned > 1 ? `<span class="badge badge-owned">x${owned}</span>` : '';
-      tile.innerHTML = cardTileHTML(def, badges);
-      qtyValue.textContent = `${selected}/${owned}`;
-      minusBtn.disabled = selected <= 0;
-      plusBtn.disabled = selected >= owned || state[stateKey].length >= 5;
-      document.getElementById(countElId).textContent = state[stateKey].length;
-      if (onChange) onChange();
-    }
-    refreshers.push(refresh);
+      const qtyControl = document.createElement('div');
+      qtyControl.className = 'qty-control';
+      const minusBtn = document.createElement('button');
+      minusBtn.type = 'button';
+      minusBtn.textContent = '−';
+      const qtyValue = document.createElement('span');
+      qtyValue.className = 'qty-value';
+      const plusBtn = document.createElement('button');
+      plusBtn.type = 'button';
+      plusBtn.textContent = '+';
+      qtyControl.append(minusBtn, qtyValue, plusBtn);
 
-    minusBtn.addEventListener('click', () => {
-      const idx = state[stateKey].indexOf(cardId);
-      if (idx !== -1) state[stateKey].splice(idx, 1);
-      refreshAll();
+      function refresh() {
+        const selected = state[stateKey].filter(id => id === cardId).length;
+        tile.classList.toggle('selected', selected > 0);
+        const badges = owned > 1 ? `<span class="badge badge-owned">x${owned}</span>` : '';
+        tile.innerHTML = cardTileHTML(def, badges);
+        qtyValue.textContent = `${selected}/${owned}`;
+        minusBtn.disabled = selected <= 0;
+        plusBtn.disabled = selected >= owned || state[stateKey].length >= 5;
+        document.getElementById(countElId).textContent = state[stateKey].length;
+        if (onChange) onChange();
+      }
+      refreshers.push(refresh);
+
+      minusBtn.addEventListener('click', () => {
+        const idx = state[stateKey].indexOf(cardId);
+        if (idx !== -1) state[stateKey].splice(idx, 1);
+        refreshAll();
+      });
+      plusBtn.addEventListener('click', () => {
+        const selected = state[stateKey].filter(id => id === cardId).length;
+        if (selected >= owned || state[stateKey].length >= 5) return;
+        state[stateKey].push(cardId);
+        refreshAll();
+      });
+
+      refresh();
+      item.append(tile, qtyControl);
+      gridEl.appendChild(item);
     });
-    plusBtn.addEventListener('click', () => {
-      const selected = state[stateKey].filter(id => id === cardId).length;
-      if (selected >= owned || state[stateKey].length >= 5) return;
-      state[stateKey].push(cardId);
-      refreshAll();
-    });
+  }
 
-    refresh();
-    item.append(tile, qtyControl);
-    container.appendChild(item);
+  levels.forEach(lvl => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = `Niveau ${lvl}`;
+    if (lvl === activeLevel) btn.classList.add('selected');
+    btn.addEventListener('click', () => {
+      activeLevel = lvl;
+      [...tabsEl.children].forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      renderGrid();
+    });
+    tabsEl.appendChild(btn);
   });
+
+  renderGrid();
 }
 
 // ================= SOLO =================
@@ -510,6 +616,27 @@ function buildOpponentList(tierData) {
   const tradeSelect = document.getElementById('tradeRuleSelect');
   tradeSelect.classList.remove('rules-locked');
   tradeSelect.disabled = false;
+
+  // "Level cartes : X et Y" — niveaux de cartes réellement présents dans les decks-pools du palier
+  const levelsUsed = new Set();
+  tierData.opponents.forEach(opp => {
+    opp.deck.forEach(cardId => {
+      const def = CARD_BY_ID.get(cardId);
+      if (def) levelsUsed.add(def.level);
+    });
+  });
+  const sortedLevels = [...levelsUsed].sort((a, b) => a - b);
+  const levelsLabel = document.getElementById('opponentLevelsLabel');
+  if (sortedLevels.length === 0) {
+    levelsLabel.textContent = '';
+  } else if (sortedLevels.length === 1) {
+    levelsLabel.textContent = `Level cartes : ${sortedLevels[0]}`;
+  } else {
+    const last = sortedLevels[sortedLevels.length - 1];
+    const rest = sortedLevels.slice(0, -1).join(', ');
+    levelsLabel.textContent = `Level cartes : ${rest} et ${last}`;
+  }
+
   tierData.opponents.forEach((opp, idx) => {
     const b = document.createElement('button');
     b.textContent = opp.name;
@@ -560,6 +687,9 @@ function startSoloDuel(config) {
   state.myOwner = 'A';
   state.lastSoloConfig = config;
   gameEnded = false;
+  coinFlipShown = false;
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  document.getElementById('chooseCardOverlay').classList.add('hidden');
   document.getElementById('postGameActions').classList.add('hidden');
   document.getElementById('tournamentMatchActions').classList.add('hidden');
   document.getElementById('capturedCardsPanel').classList.add('hidden');
@@ -620,13 +750,22 @@ function buildPvpDeckPicker() {
   buildGroupedDeckPicker({ containerId: 'pvpDeckPicker', countElId: 'pvpDeckCount', stateKey: 'pvpDeck' });
 }
 
+function switchPvpKind(kind) {
+  state.pvpKind = kind;
+  document.getElementById('pvpTabFriendly').classList.toggle('selected', kind === 'friendly');
+  document.getElementById('pvpTabRanked').classList.toggle('selected', kind === 'ranked');
+  document.getElementById('pvpFriendlyRulesBlock').classList.toggle('hidden', kind !== 'friendly');
+}
+document.getElementById('pvpTabFriendly').addEventListener('click', () => switchPvpKind('friendly'));
+document.getElementById('pvpTabRanked').addEventListener('click', () => switchPvpKind('ranked'));
+
 document.getElementById('pvpCreateBtn').addEventListener('click', () => {
   if (!validatePvpForm()) return;
   socket.emit('pvp:create', {
     set: state.activeSet,
     playerName: state.playerName,
-    rules: pvpRules(),
-    tradeRule: document.getElementById('pvpTradeRuleSelect').value,
+    kind: state.pvpKind,
+    rules: state.pvpKind === 'friendly' ? pvpRules() : null,
     deckCardIds: state.pvpDeck,
   });
 });
@@ -639,8 +778,6 @@ document.getElementById('pvpJoinBtn').addEventListener('click', () => {
   socket.emit('pvp:join', {
     roomCode,
     playerName: state.playerName,
-    rules: pvpRules(),
-    tradeRule: document.getElementById('pvpTradeRuleSelect').value,
     deckCardIds: state.pvpDeck,
   });
 });
@@ -664,17 +801,21 @@ socket.on('pvp:start', (payload) => {
   const me = payload.players.find(p => p.name === state.playerName);
   state.myOwner = me ? me.owner : 'A';
   gameEnded = false;
+  coinFlipShown = false;
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  document.getElementById('chooseCardOverlay').classList.add('hidden');
   document.getElementById('opponentLabel').textContent = 'Adversaire (J2)';
   document.getElementById('postGameActions').classList.add('hidden');
+  document.getElementById('pvpPostGameActions').classList.add('hidden');
   document.getElementById('tournamentMatchActions').classList.add('hidden');
   document.getElementById('capturedCardsPanel').classList.add('hidden');
   showView('game');
-  renderGameState(payload);
+  revealGameStart(payload, renderGameState);
 });
 
 socket.on('pvp:state', (payload) => renderGameState(payload));
 
-socket.on('pvp:gameover', ({ score, players }) => {
+socket.on('pvp:gameover', ({ score, kind, players }) => {
   gameEnded = true;
   renderGameState(currentGame);
   const myScore = score[state.myOwner];
@@ -684,13 +825,108 @@ socket.on('pvp:gameover', ({ score, players }) => {
   if (myScore > otherScore) msg = 'Vous avez gagné le duel !';
   else if (myScore < otherScore) msg = 'Vous avez perdu le duel.';
   else msg = 'Match nul !';
-  document.getElementById('gameMessage').textContent = `${msg} (${score.A} - ${score.B})`;
+  const rankedNote = kind === 'ranked' ? ' (Classée — comptabilisé dans vos statistiques)' : ' (Amicale — non comptabilisé)';
+  showGameOverOverlay(msg, `Score final : ${score.A} - ${score.B}${rankedNote}`, `${msg} (${score.A} - ${score.B})${rankedNote}`);
+  if (kind === 'ranked') refreshSave().then(updateSessionBarPoints);
+
+  document.getElementById('pvpPostGameActions').classList.remove('hidden');
+  document.getElementById('pvpRematchStatus').textContent = '';
+  document.getElementById('pvpRematchBtn').disabled = false;
+});
+
+document.getElementById('pvpRematchBtn').addEventListener('click', () => {
+  socket.emit('pvp:rematch', { roomCode: state.roomCode });
+  document.getElementById('pvpRematchBtn').disabled = true;
+  document.getElementById('pvpRematchStatus').textContent = 'En attente de la confirmation de l\'adversaire...';
+});
+
+socket.on('pvp:rematchWaiting', ({ playerName }) => {
+  document.getElementById('pvpRematchStatus').textContent = `${playerName} souhaite une revanche — cliquez sur "Revanche" pour accepter.`;
 });
 
 // ================= JEU (rendu commun solo/pvp/tournoi) =================
 let currentGame = { board: Array(9).fill(null), hands: { A: [], B: [] }, turn: 'A' };
 let selectedHandInstanceId = null;
 let gameEnded = false;
+let coinFlipShown = false; // évite de rejouer l'animation de pièce à chaque mise à jour du plateau
+
+/**
+ * Affiche l'animation de pièce (bleu = vous, rouge = adversaire) qui tourne 2s puis se fige 1,5s sur
+ * le résultat, avant de révéler l'état réel de la partie. Ne se déclenche qu'une seule fois par
+ * manche (contrôlé par coinFlipShown, réinitialisé à chaque nouveau début de duel).
+ */
+let pendingGameState = null; // dernier état reçu du serveur, utilisé même si l'animation de pièce est en cours
+
+function revealGameStart(payload, renderFn) {
+  // mémorise toujours le DERNIER état reçu, même si une animation de pièce est déjà en cours et
+  // qu'on ne l'affiche pas immédiatement — évite qu'un état plus ancien (plateau vide) n'écrase par
+  // erreur un état plus récent (ex: le coup d'ouverture de l'IA) une fois l'animation terminée.
+  pendingGameState = payload;
+  if (coinFlipShown) {
+    renderFn(payload);
+    return;
+  }
+  coinFlipShown = true;
+  const myOwner = state.myOwner || 'A';
+  const playerStarts = payload.turn === myOwner;
+  showCoinFlip(playerStarts, () => renderFn(pendingGameState));
+}
+
+function showCoinFlip(playerStarts, onDone) {
+  const overlay = document.getElementById('coinFlipOverlay');
+  const coin = document.getElementById('singleCoin');
+  const resultText = document.getElementById('coinFlipResultText');
+
+  coin.classList.remove('landed');
+  coin.style.transition = 'none';
+  coin.style.transform = 'rotateY(0deg)';
+  resultText.textContent = '';
+  overlay.classList.remove('hidden');
+
+  // force le navigateur à appliquer la réinitialisation ci-dessus avant de lancer l'animation
+  // (sinon le passage transition:none -> transition:... pourrait être fusionné et ignoré)
+  void coin.offsetWidth;
+  coin.classList.add('spinning');
+
+  setTimeout(() => {
+    coin.classList.remove('spinning');
+    // Continue la rotation sur plusieurs tours supplémentaires pour un ralentissement fluide,
+    // en s'arrêtant pile sur la bonne face : 0°/360°/... = bleu (vous), 180°/540°/... = rouge.
+    const extraSpins = 5;
+    const finalAngle = extraSpins * 360 + (playerStarts ? 0 : 180);
+    coin.style.transition = 'transform 1s cubic-bezier(0.15, 0.8, 0.25, 1)';
+    coin.style.transform = `rotateY(${finalAngle}deg)`;
+    coin.classList.add('landed');
+    resultText.textContent = playerStarts ? 'Vous commencez !' : 'L\'adversaire commence !';
+
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      onDone();
+    }, 1500);
+  }, 2000);
+}
+
+/**
+ * Affiche l'écran de fin de partie (titre + score) par-dessus le plateau, qui reste visible en
+ * arrière-plan (aucun changement de vue, la musique continue normalement). Reste affiché tant que
+ * le joueur n'a pas cliqué sur "Continuer".
+ */
+/**
+ * Affiche le résultat de fin de partie (message + overlay) après un délai de 3 secondes, laissant
+ * au joueur le temps de voir la dernière carte posée avant de révéler victoire/défaite/nul.
+ */
+function showGameOverOverlay(title, scoreText, messageText) {
+  setTimeout(() => {
+    if (messageText !== undefined) document.getElementById('gameMessage').textContent = messageText;
+    document.getElementById('gameOverTitle').textContent = title;
+    document.getElementById('gameOverScore').textContent = scoreText;
+    document.getElementById('gameOverOverlay').classList.remove('hidden');
+  }, 3000);
+}
+document.getElementById('gameOverContinueBtn').addEventListener('click', () => {
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  document.getElementById('chooseCardOverlay').classList.add('hidden');
+});
 
 const RULE_LABELS = {
   open: 'Open', random: 'Aléatoire', same: 'Identique', plus: 'Plus', combo: 'Combo', elemental: 'Élémental',
@@ -844,7 +1080,7 @@ function attemptPlace(cellIndex) {
 // ---------------- Événements solo ----------------
 socket.on('solo:state', (payload) => {
   showView('game');
-  renderGameState(payload);
+  revealGameStart(payload, renderGameState);
 });
 
 socket.on('solo:gameover', ({ score, result, gains, losses, pointsAwarded }) => {
@@ -856,7 +1092,14 @@ socket.on('solo:gameover', ({ score, result, gains, losses, pointsAwarded }) => 
   else if (result === 'losses') msg = `Défaite... (${score.A} - ${score.B})`;
   else msg = `Match nul (${score.A} - ${score.B})`;
   if (pointsAwarded) msg += ` — +${pointsAwarded} points`;
-  document.getElementById('gameMessage').textContent = msg;
+
+  let overlayTitle;
+  if (result === 'wins') overlayTitle = 'Victoire !';
+  else if (result === 'losses') overlayTitle = 'Défaite...';
+  else overlayTitle = 'Match nul';
+  let overlayScore = `Score final : ${score.A} - ${score.B}`;
+  if (pointsAwarded) overlayScore += ` — +${pointsAwarded} points`;
+  showGameOverOverlay(overlayTitle, overlayScore, msg);
 
   const panel = document.getElementById('capturedCardsPanel');
   const gainedList = document.getElementById('gainedCardsList');
@@ -933,7 +1176,7 @@ socket.on('solo:chooseCard', ({ options, count }) => {
   });
 
   document.getElementById('confirmChooseCardBtn').disabled = true;
-  showView('chooseCard');
+  document.getElementById('chooseCardOverlay').classList.remove('hidden');
 });
 
 document.getElementById('confirmChooseCardBtn').addEventListener('click', () => {
@@ -941,6 +1184,7 @@ document.getElementById('confirmChooseCardBtn').addEventListener('click', () => 
   const chosenCardIds = pendingChoice.selected.map(slot =>
     [...grid.children][slot].dataset.cardId
   );
+  document.getElementById('chooseCardOverlay').classList.add('hidden');
   socket.emit('solo:cardChosen', { chosenCardIds });
 });
 
@@ -1125,6 +1369,141 @@ document.getElementById('shopRevealOverlay').addEventListener('click', () => {
   overlay.classList.remove('fading-in');
 });
 
+// ---- Onglet "Cartes légendaires" : achats spéciaux avec conditions (victoires/ratio) ----
+async function buildShopLegendaryGrid() {
+  const grid = document.getElementById('shopLegendaryGrid');
+  grid.innerHTML = '<p class="hint">Chargement...</p>';
+
+  const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/shop/legendary-items`);
+  const { items } = await res.json();
+
+  if (!items.length) {
+    grid.innerHTML = '<p class="hint">Aucun achat spécial disponible pour cet univers pour le moment.</p>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const tile = document.createElement('div');
+    tile.className = 'shop-buy-tile shop-legendary-tile' + (!item.conditionMet && !item.owned ? ' locked' : '');
+
+    let actionHTML;
+    if (item.owned && item.type === 'duel') {
+      actionHTML = `<button type="button" class="buy-btn duel-btn">⚔️ Combattre</button>`;
+    } else if (item.owned) {
+      actionHTML = `<div class="shop-owned-label">✓ Possédé</div>`;
+    } else if (!item.conditionMet) {
+      actionHTML = `<div class="shop-condition-label">🔒 ${item.conditionLabel}</div>`;
+    } else {
+      actionHTML = `<button type="button" class="buy-btn">Acheter</button>`;
+    }
+
+    tile.innerHTML = `
+      <div class="shop-tier-title">${item.label}</div>
+      <div class="shop-tier-cost">${item.cost} pts</div>
+      ${actionHTML}
+    `;
+
+    if (item.owned && item.type === 'duel') {
+      tile.querySelector('.duel-btn').addEventListener('click', () => goToLegendaryDuelSetup(item.cardId, item.label));
+    } else if (item.conditionMet && !item.owned) {
+      tile.querySelector('.buy-btn').addEventListener('click', () => buyLegendaryItem(item));
+    }
+    grid.appendChild(tile);
+  });
+}
+
+async function buyLegendaryItem(item) {
+  if (!confirm(`Acheter "${item.label}" pour ${item.cost} points ?`)) return;
+
+  const endpointByType = {
+    card: 'buy-legendary-card',
+    pass: item.id === 'pass_gf' ? 'buy-gf-pass' : 'buy-legendary-pass',
+    duel: 'buy-lvl9-duel',
+  };
+  const endpoint = endpointByType[item.type];
+  const body = (item.type === 'card' || item.type === 'duel') ? { cardId: item.cardId } : {};
+
+  try {
+    const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/shop/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Achat impossible.');
+    state.save = data.save;
+    document.getElementById('shopPoints').textContent = data.save.points;
+    buildShopLegendaryGrid();
+  } catch (err) {
+    alert('Erreur : ' + err.message);
+  }
+}
+
+// ================= COMBAT UNIQUE NIVEAU 9 =================
+
+function goToLegendaryDuelSetup(cardId, label) {
+  state.legendaryDuelCardId = cardId;
+  document.getElementById('legendaryDuelOpponentLabel').textContent = label.replace('Combat : ', '');
+  buildGroupedDeckPicker({
+    containerId: 'legendaryDuelDeckPicker',
+    countElId: 'legendaryDuelDeckCount',
+    stateKey: 'legendaryDuelDeck',
+    onChange: updateLegendaryDuelStartButton,
+  });
+  updateLegendaryDuelStartButton();
+  showView('legendaryDuelSetup');
+}
+
+function updateLegendaryDuelStartButton() {
+  const ok = state.legendaryDuelDeck && state.legendaryDuelDeck.length === 5;
+  document.getElementById('legendaryDuelStartBtn').disabled = !ok;
+}
+
+document.getElementById('legendaryDuelStartBtn').addEventListener('click', () => {
+  gameEnded = false;
+  coinFlipShown = false;
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  document.getElementById('chooseCardOverlay').classList.add('hidden');
+  document.getElementById('postGameActions').classList.add('hidden');
+  document.getElementById('tournamentMatchActions').classList.add('hidden');
+  document.getElementById('capturedCardsPanel').classList.add('hidden');
+  state.mode = 'legendaryDuel';
+  state.myOwner = 'A';
+  socket.emit('legendaryDuel:start', {
+    set: state.activeSet,
+    name: state.playerName,
+    cardId: state.legendaryDuelCardId,
+    deckCardIds: state.legendaryDuelDeck,
+  });
+});
+
+document.getElementById('legendaryDuelBackBtn').addEventListener('click', async () => {
+  await goToFeature('shop');
+  switchShopTab('legendary');
+});
+
+socket.on('legendaryDuel:state', (payload) => {
+  showView('game');
+  revealGameStart(payload, renderGameState);
+});
+
+socket.on('legendaryDuel:gameover', ({ score, result, cardId }) => {
+  gameEnded = true;
+  renderGameState(currentGame);
+
+  const won = result === 'win';
+  const cardName = CARD_BY_ID.get(cardId)?.name || cardId;
+  const msg = won
+    ? `Victoire ! ${cardName} rejoint votre collection.`
+    : `Défaite... Vous pouvez retenter ce combat plus tard.`;
+  showGameOverOverlay(won ? 'Victoire !' : 'Défaite...', won ? `${cardName} obtenue ! (${score.A} - ${score.B})` : `Score final : ${score.A} - ${score.B}`, `${msg} (${score.A} - ${score.B})`);
+
+  // Pas d'actions "Rejouer"/"Autre adversaire" ici (spécifiques au mode Solo) : la barre de
+  // navigation principale reste accessible pour retourner à la boutique ou ailleurs.
+  refreshSave().then(updateSessionBarPoints);
+});
+
 function buildShopSellGrid() {
   const container = document.getElementById('shopSellGrid');
   container.innerHTML = '';
@@ -1187,7 +1566,6 @@ async function sellCard(cardId, def, price) {
 const PLACEMENT_LABELS = {
   champion: '🏆 Champion (1ère place)',
   second: '🥈 2e place',
-  third: '🥉 3e place',
   eliminated: 'Éliminé',
 };
 function placementLabel(p) { return PLACEMENT_LABELS[p] || p || ''; }
@@ -1195,21 +1573,14 @@ function placementLabel(p) { return PLACEMENT_LABELS[p] || p || ''; }
 function getRoundStatus(t, i) {
   if (i < t.roundIndex) return 'won';
   if (i > t.roundIndex) return 'upcoming';
-  if (t.isDecider) return 'lost'; // cette manche a été perdue, d'où la manche décisive
   if (t.finished) return t.placement === 'champion' ? 'won' : 'lost';
   return 'current';
 }
 
-function getDeciderStatus(t) {
-  if (!t.deciderOpponent) return null; // jamais déclenchée
-  if (t.isDecider && !t.finished) return 'current';
-  if (t.finished) return t.placement === 'third' ? 'won' : 'lost';
-  return 'upcoming';
-}
-
 function buildTournamentBracketHTML(t) {
+  const totalRounds = t.opponents.length; // 4 (base) ou 5 (spécial)
   let html = '<div class="tournament-bracket">';
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < totalRounds; i++) {
     const status = getRoundStatus(t, i);
     const opp = t.opponents[i];
     html += `<div class="tournament-step ${status}">
@@ -1217,68 +1588,203 @@ function buildTournamentBracketHTML(t) {
       <span class="step-label">${opp ? opp.opponentName : ''}</span>
     </div>`;
   }
-  const deciderStatus = getDeciderStatus(t);
-  if (deciderStatus) {
-    html += `<div class="tournament-step decider ${deciderStatus}">
-      <span>D</span>
-      <span class="step-label">${t.deciderOpponent ? t.deciderOpponent.opponentName : ''} (3e place)</span>
-    </div>`;
-  }
   html += '</div>';
   return html;
 }
 
 function updateTournamentStartButton() {
-  const ok = state.selectedTournamentTier !== null && state.tournamentDeck.length === 5;
+  const ok = state.selectedTournamentId !== null && state.tournamentDeck.length === 5;
   document.getElementById('tournamentStartBtn').disabled = !ok;
 }
 
-function buildTournamentTierPicker() {
-  const container = document.getElementById('tournamentTierPicker');
-  container.innerHTML = '';
-  state.selectedTournamentTier = null;
-  TOURNAMENT_TIERS.forEach(tier => {
-    const b = document.createElement('button');
-    b.className = 'tournament-tier-btn';
-    b.innerHTML = `
-      <span class="tier-label">${tier.label}</span>
-      <span class="tier-cost">${tier.cost} pts</span>
-    `;
-    b.addEventListener('click', () => {
-      state.selectedTournamentTier = tier.id;
-      [...container.children].forEach(c => c.classList.remove('selected'));
-      b.classList.add('selected');
-      updateTournamentStartButton();
-    });
-    container.appendChild(b);
-  });
+/** Résume la récompense d'un tournoi de base en une ligne lisible. */
+/** Résume les règles imposées d'un tournoi en une ligne courte ("Open, Élémental"), ou "Vanille" si aucune. */
+function tournamentRulesLabel(t) {
+  if (!t.rules) return '';
+  const active = Object.entries(t.rules)
+    .filter(([key, val]) => val && key !== 'random') // "random" jamais actif en tournoi, inutile à afficher
+    .map(([key]) => RULE_LABELS[key] || key);
+  return active.length ? `Règles : ${active.join(', ')}` : 'Règles : Vanille (aucune)';
 }
 
-function buildTournamentView() {
+function baseTournamentRewardLabel(t) {
+  return `2e : ${t.rewardPoints} pts | 1er : ${t.rewardPoints} pts + carte niveau ${t.rewardCardLevel} au hasard`;
+}
+
+/** Résume la récompense d'un tournoi spécial en une ligne lisible. */
+function specialTournamentRewardLabel(t) {
+  const cardDesc = t.rewardCardPool ? `carte niveau 8 non obtenue` : `carte niveau 10 non obtenue`;
+  return `Victoire : ${cardDesc} | Défaite en dernière manche : ${t.lossReward.points} pts`;
+}
+
+async function buildTournamentTierPicker() {
+  const container = document.getElementById('tournamentTierPicker');
+  container.innerHTML = '<p class="hint">Chargement...</p>';
+  state.selectedTournamentId = null;
+
+  const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/tournament/list`);
+  const { base, special } = await res.json();
+
+  container.innerHTML = '';
+
+  const renderTile = (t, rewardLabel, lockLabel) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tournament-tier-btn' + (!t.unlocked ? ' locked' : '');
+    b.innerHTML = `
+      <span class="tier-label">${t.label}${t.completed ? ' ✓' : ''}</span>
+      <span class="tier-rules">${tournamentRulesLabel(t)}</span>
+      <span class="tier-reward">${t.unlocked ? rewardLabel : `🔒 ${lockLabel}`}</span>
+    `;
+    if (t.unlocked) {
+      b.addEventListener('click', () => {
+        state.selectedTournamentId = t.id;
+        [...container.querySelectorAll('.tournament-tier-btn')].forEach(c => c.classList.remove('selected'));
+        b.classList.add('selected');
+        updateTournamentStartButton();
+      });
+    }
+    container.appendChild(b);
+  };
+
+  const baseTitle = document.createElement('h4');
+  baseTitle.textContent = 'Tournois de base';
+  container.appendChild(baseTitle);
+  base.forEach((t, idx) => {
+    const lockLabel = idx === 0 ? '' : `Remportez "${base[idx - 1].label}" pour débloquer`;
+    renderTile(t, baseTournamentRewardLabel(t), lockLabel);
+  });
+
+  const specialTitle = document.createElement('h4');
+  specialTitle.textContent = 'Tournois spéciaux';
+  container.appendChild(specialTitle);
+  special.forEach(t => {
+    renderTile(t, specialTournamentRewardLabel(t), 'Achetez le pass requis en boutique');
+  });
+
+  updateTournamentStartButton();
+}
+
+// ================= PROFIL JOUEUR =================
+
+function computeRatio(wins, losses) {
+  const total = wins + losses;
+  if (total === 0) return null; // pas encore de match joué, ratio non défini
+  return (wins / total) * 100;
+}
+
+function formatRatio(ratio) {
+  return ratio === null ? '—' : `${ratio.toFixed(1)}%`;
+}
+
+function buildProfileView() {
+  const stats = state.save.stats || { wins: 0, losses: 0, draws: 0 };
+  const ratio = computeRatio(stats.wins, stats.losses);
+
+  document.getElementById('profileStatsDisplay').innerHTML = `
+    <p>Victoires : <strong>${stats.wins}</strong> — Défaites : <strong>${stats.losses}</strong> — Matchs nuls : <strong>${stats.draws}</strong></p>
+    <p>Ratio victoires/défaites : <strong>${formatRatio(ratio)}</strong></p>
+  `;
+
+  const input = document.getElementById('ratioAdjustInput');
+  input.max = Math.min(stats.wins, stats.losses) || 0;
+  updateRatioAdjustPreview();
+}
+
+function updateRatioAdjustPreview() {
+  const stats = state.save.stats || { wins: 0, losses: 0, draws: 0 };
+  const n = Math.floor(Number(document.getElementById('ratioAdjustInput').value)) || 0;
+  const preview = document.getElementById('ratioAdjustPreview');
+  const applyBtn = document.getElementById('ratioAdjustBtn');
+
+  if (n <= 0 || n > stats.wins || n > stats.losses) {
+    preview.textContent = n <= 0
+      ? 'Entrez un nombre supérieur à 0.'
+      : `Impossible : vous n'avez que ${Math.min(stats.wins, stats.losses)} défaite(s)/victoire(s) en commun à retirer.`;
+    applyBtn.disabled = true;
+    return;
+  }
+
+  const newWins = stats.wins - n;
+  const newLosses = stats.losses - n;
+  const newRatio = computeRatio(newWins, newLosses);
+  preview.textContent = `Après application : ${newWins} victoires, ${newLosses} défaites, ratio ${formatRatio(newRatio)}.`;
+  applyBtn.disabled = false;
+}
+
+document.getElementById('ratioAdjustInput').addEventListener('input', updateRatioAdjustPreview);
+
+document.getElementById('ratioAdjustBtn').addEventListener('click', async () => {
+  const n = Math.floor(Number(document.getElementById('ratioAdjustInput').value)) || 0;
+  const stats = state.save.stats || { wins: 0, losses: 0, draws: 0 };
+  const newWins = stats.wins - n;
+  const newLosses = stats.losses - n;
+  const confirmed = confirm(
+    `Retirer ${n} victoire(s) et ${n} défaite(s) ? Action irréversible.\n` +
+    `Nouveau total : ${newWins} victoires, ${newLosses} défaites.\n` +
+    `Attention : cela peut vous faire repasser sous un seuil de victoires minimum requis ailleurs.`
+  );
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/profile/adjust-ratio`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ removeCount: n }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur inconnue.');
+    state.save = data.save;
+    buildProfileView();
+  } catch (err) {
+    alert('Erreur : ' + err.message);
+  }
+});
+
+function tournamentLabelFromId(id) {
+  const all = [...tournament_baseCache, ...tournament_specialCache];
+  return all.find(t => t.id === id)?.label || id;
+}
+let tournament_baseCache = [];
+let tournament_specialCache = [];
+
+async function buildTournamentView() {
   const t = state.save.tournament;
   const resumePanel = document.getElementById('tournamentResumePanel');
   const newPanel = document.getElementById('tournamentNewPanel');
   const lastResultPanel = document.getElementById('tournamentLastResult');
 
+  // rafraîchit le cache des libellés (utilisé pour afficher le nom du tournoi en cours/dernier résultat)
+  const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/tournament/list`);
+  const { base, special } = await res.json();
+  tournament_baseCache = base;
+  tournament_specialCache = special;
+
   if (t && t.active && !t.finished) {
     resumePanel.classList.remove('hidden');
     newPanel.classList.add('hidden');
     lastResultPanel.classList.add('hidden');
-    const tierLabel = TOURNAMENT_TIERS.find(tr => tr.id === t.tierKey)?.label || t.tierKey;
+    const label = tournamentLabelFromId(t.tournamentId);
     document.getElementById('tournamentBracket').innerHTML =
-      `<p style="text-align:center;color:#ffd873;font-weight:bold;">Niveau : ${tierLabel}</p>` + buildTournamentBracketHTML(t);
+      `<p style="text-align:center;color:#ffd873;font-weight:bold;">${label}</p>` + buildTournamentBracketHTML(t);
   } else {
     resumePanel.classList.add('hidden');
     newPanel.classList.remove('hidden');
-    buildTournamentTierPicker();
-    setRuleToggles('tournamentRuleToggles', {});
+    await buildTournamentTierPicker();
     buildGroupedDeckPicker({ containerId: 'tournamentDeckPicker', countElId: 'tournamentDeckCount', stateKey: 'tournamentDeck', onChange: updateTournamentStartButton });
     updateTournamentStartButton();
 
     if (t && t.finished) {
       lastResultPanel.classList.remove('hidden');
-      const tierLabel = TOURNAMENT_TIERS.find(tr => tr.id === t.tierKey)?.label || t.tierKey;
-      document.getElementById('tournamentLastResultText').textContent = `Niveau ${tierLabel} — Résultat : ${placementLabel(t.placement)}`;
+      const label = tournamentLabelFromId(t.tournamentId);
+      let text = `${label} — Résultat : ${placementLabel(t.placement)}`;
+      if (t.reward) {
+        const parts = [];
+        if (t.reward.points) parts.push(`${t.reward.points} points`);
+        if (t.reward.cardId) parts.push(`1 carte gagnée`);
+        if (parts.length) text += ` (${parts.join(' + ')})`;
+      }
+      document.getElementById('tournamentLastResultText').textContent = text;
       document.getElementById('tournamentLastResultBracket').innerHTML = buildTournamentBracketHTML(t);
     } else {
       lastResultPanel.classList.add('hidden');
@@ -1287,12 +1793,11 @@ function buildTournamentView() {
 }
 
 document.getElementById('tournamentStartBtn').addEventListener('click', async () => {
-  const rules = readRuleToggles('tournamentRuleToggles');
   try {
     const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/tournament/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deckCardIds: state.tournamentDeck, rules, tierKey: state.selectedTournamentTier }),
+      body: JSON.stringify({ deckCardIds: state.tournamentDeck, tournamentId: state.selectedTournamentId }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -1308,7 +1813,7 @@ document.getElementById('tournamentStartBtn').addEventListener('click', async ()
 });
 
 document.getElementById('tournamentAbandonBtn').addEventListener('click', async () => {
-  if (!confirm('Abandonner ce tournoi ? Les points d\'entrée déjà payés ne seront pas remboursés.')) return;
+  if (!confirm('Abandonner ce tournoi ?')) return;
   const res = await fetch(`/api/${state.activeSet}/save/${encodeURIComponent(state.playerName)}/tournament/abandon`, { method: 'POST' });
   const { save } = await res.json();
   state.save = save;
@@ -1319,6 +1824,9 @@ document.getElementById('tournamentContinueBtn').addEventListener('click', () =>
   state.mode = 'tournament';
   state.myOwner = 'A';
   gameEnded = false;
+  coinFlipShown = false;
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  document.getElementById('chooseCardOverlay').classList.add('hidden');
   currentGame.tradeRule = null;
   document.getElementById('postGameActions').classList.add('hidden');
   document.getElementById('tournamentMatchActions').classList.add('hidden');
@@ -1330,7 +1838,7 @@ document.getElementById('tournamentBackBtn').addEventListener('click', () => goT
 
 socket.on('tournament:state', (payload) => {
   showView('game');
-  renderGameState(payload);
+  revealGameStart(payload, renderGameState);
 });
 
 socket.on('tournament:matchOver', (data) => {
@@ -1338,8 +1846,8 @@ socket.on('tournament:matchOver', (data) => {
   renderGameState(currentGame);
   let msg = data.result === 'win' ? 'Manche remportée !' : 'Manche perdue.';
   if (data.finished) msg += ` — Tournoi terminé : ${placementLabel(data.placement)}`;
-  document.getElementById('gameMessage').textContent = msg;
   document.getElementById('tournamentMatchActions').classList.remove('hidden');
+  showGameOverOverlay(data.result === 'win' ? 'Manche remportée !' : 'Manche perdue.', data.finished ? `Tournoi terminé : ${placementLabel(data.placement)}` : '', msg);
   refreshSave().then(updateSessionBarPoints);
 });
 
@@ -1348,17 +1856,24 @@ socket.on('tournament:matchOver', (data) => {
 function switchShopTab(tab) {
   const buySellBtn = document.getElementById('shopTabBuySell');
   const tradeBtn = document.getElementById('shopTabTrade');
+  const legendaryBtn = document.getElementById('shopTabLegendary');
   const buySellPanel = document.getElementById('shopBuySellPanel');
   const tradePanel = document.getElementById('shopTradePanel');
+  const legendaryPanel = document.getElementById('shopLegendaryPanel');
 
   buySellBtn.classList.toggle('selected', tab === 'buysell');
   tradeBtn.classList.toggle('selected', tab === 'trade');
+  legendaryBtn.classList.toggle('selected', tab === 'legendary');
   buySellPanel.classList.toggle('hidden', tab !== 'buysell');
   tradePanel.classList.toggle('hidden', tab !== 'trade');
+  legendaryPanel.classList.toggle('hidden', tab !== 'legendary');
+
+  if (tab === 'legendary') buildShopLegendaryGrid();
 }
 
 document.getElementById('shopTabBuySell').addEventListener('click', () => switchShopTab('buysell'));
 document.getElementById('shopTabTrade').addEventListener('click', () => switchShopTab('trade'));
+document.getElementById('shopTabLegendary').addEventListener('click', () => switchShopTab('legendary'));
 
 // ================= ÉCHANGE ENTRE JOUEURS =================
 

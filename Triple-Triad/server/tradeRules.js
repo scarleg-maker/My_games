@@ -10,7 +10,7 @@
  * Retourne { winnerGains: [cardId...], loserGains: [cardId...] }
  * (loserGains reste vide sauf égalité gérée ailleurs)
  */
-function applyTradeRule(tradeRule, { winnerOriginalDeck, loserOriginalDeck, scoreWinner, scoreLoser }) {
+function applyTradeRule(tradeRule, { winnerOriginalDeck, loserOriginalDeck, scoreWinner, scoreLoser, boardCardIds }) {
   const result = { winnerGains: [], loserGains: [] };
 
   switch (tradeRule) {
@@ -40,7 +40,18 @@ function applyTradeRule(tradeRule, { winnerOriginalDeck, loserOriginalDeck, scor
     }
 
     case 'all': {
-      result.winnerGains.push(...loserOriginalDeck);
+      // Uniquement les cartes du perdant réellement POSÉES sur le plateau (5 au maximum, parfois 4
+      // si le perdant a joué en second — une carte de départ peut rester non jouée en main).
+      // Comptage (pas juste présence) pour gérer correctement les decks avec doublons.
+      const inPlay = boardCardIds || loserOriginalDeck; // repli si non fourni : ancien comportement
+      const availableCounts = {};
+      for (const id of inPlay) availableCounts[id] = (availableCounts[id] || 0) + 1;
+      for (const id of loserOriginalDeck) {
+        if (availableCounts[id] > 0) {
+          result.winnerGains.push(id);
+          availableCounts[id]--;
+        }
+      }
       break;
     }
 

@@ -5,5 +5,19 @@
     "includes": [
       "ffviii"
     ]
+  },
+  {
+    "id": "ffix",
+    "label": "Final Fantasy IX",
+    "includes": [
+      "ffix"
+    ]
+  },
+  {
+    "id": "dsbb",
+    "label": "Dark Souls / Bloodborne",
+    "includes": [
+      "dsbb"
+    ]
   }
 ]

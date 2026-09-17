@@ -6,5 +6,6 @@
   { "name": "Poison",  "icon": "☠️", "image": "images/elements/Poison.png" },
   { "name": "Vent",    "icon": "🌪️", "image": "images/elements/Vent.png" },
   { "name": "Eau",     "icon": "💧", "image": "images/elements/Eau.png" },
-  { "name": "Sacré",   "icon": "✨", "image": "images/elements/Sacre.png" }
+  { "name": "Sacré",   "icon": "✨", "image": "images/elements/Sacre.png" },
+  { "name": "Ténèbres","icon": "🌑", "image": "images/elements/Tenebres.png" }
 ]

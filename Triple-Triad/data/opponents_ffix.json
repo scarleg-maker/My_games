@@ -1,0 +1,866 @@
+[
+  {
+    "tier": 1,
+    "label": "Palier 1",
+    "opponents": [
+      {
+        "name": "Frank, marchand de Dali",
+        "ai": "random",
+        "deck": [
+          "fantome_ffix",
+          "python_ffix",
+          "araneide_ffix",
+          "shaman_ffix",
+          "mammouth_ffix",
+          "jayrfo_ffix",
+          "eskuriax_ffix",
+          "peligon_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Paysan d'Alexandrie",
+        "ai": "random",
+        "deck": [
+          "gobelin_ffix",
+          "flambos_ffix",
+          "eskuriax_ffix",
+          "araneide_ffix",
+          "python_ffix",
+          "shaman_ffix",
+          "meiden_ffix",
+          "dragonfly_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Mousse du Prima Vista",
+        "ai": "random",
+        "deck": [
+          "meiden_ffix",
+          "gobelin_ffix",
+          "shaman_ffix",
+          "eskuriax_ffix",
+          "jayrfo_ffix",
+          "fantome_ffix",
+          "python_ffix",
+          "grododo_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Étudiant de Lindblum",
+        "ai": "random",
+        "deck": [
+          "nelembo_ffix",
+          "araneide_ffix",
+          "meiden_ffix",
+          "mammouth_ffix",
+          "fantome_ffix",
+          "gobelin_ffix",
+          "eskuriax_ffix",
+          "moinosor_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Apprenti Forgeron",
+        "ai": "random",
+        "deck": [
+          "mammouth_ffix",
+          "gobelin_ffix",
+          "nelembo_ffix",
+          "jayrfo_ffix",
+          "flambos_ffix",
+          "python_ffix",
+          "fantome_ffix",
+          "moinosor_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Serveur du Chat Noir",
+        "ai": "random",
+        "deck": [
+          "shaman_ffix",
+          "fantome_ffix",
+          "jayrfo_ffix",
+          "mammouth_ffix",
+          "python_ffix",
+          "gobelin_ffix",
+          "araneide_ffix",
+          "mimic_ffix"
+        ],
+        "set": "ffix"
+      }
+    ]
+  },
+  {
+    "tier": 2,
+    "label": "Palier 2",
+    "opponents": [
+      {
+        "name": "Bagarreur de Treno",
+        "ai": "greedy",
+        "deck": [
+          "eskuriax_ffix",
+          "mammouth_ffix",
+          "gobelin_ffix",
+          "mimic_ffix",
+          "maidor_ffix",
+          "moskira_ffix",
+          "grododo_ffix",
+          "axolotl_ffix",
+          "sahagin_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Marin de Lindblum",
+        "ai": "greedy",
+        "deck": [
+          "flambos_ffix",
+          "mammouth_ffix",
+          "jayrfo_ffix",
+          "moskira_ffix",
+          "basilic_ffix",
+          "mandragore_ffix",
+          "mimic_ffix",
+          "dragonfly_ffix",
+          "sahagin_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Chasseur de la Forêt",
+        "ai": "greedy",
+        "deck": [
+          "eskuriax_ffix",
+          "gobelin_ffix",
+          "araneide_ffix",
+          "dragonfly_ffix",
+          "mimic_ffix",
+          "grododo_ffix",
+          "peligon_ffix",
+          "basilic_ffix",
+          "cocatrix_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Voleur des Faubourgs",
+        "ai": "greedy",
+        "deck": [
+          "eskuriax_ffix",
+          "python_ffix",
+          "flambos_ffix",
+          "basilic_ffix",
+          "dragonfly_ffix",
+          "maidor_ffix",
+          "axolotl_ffix",
+          "peligon_ffix",
+          "pyrale_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Négociant de Dali",
+        "ai": "greedy",
+        "deck": [
+          "mammouth_ffix",
+          "shaman_ffix",
+          "python_ffix",
+          "mandragore_ffix",
+          "basilic_ffix",
+          "mimic_ffix",
+          "moskira_ffix",
+          "maidor_ffix",
+          "nymphe_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Garde Royal d'Alexandrie",
+        "ai": "greedy",
+        "deck": [
+          "jayrfo_ffix",
+          "python_ffix",
+          "flambos_ffix",
+          "mandragore_ffix",
+          "dragonfly_ffix",
+          "moinosor_ffix",
+          "moskira_ffix",
+          "maidor_ffix",
+          "diabolik_ffix"
+        ],
+        "set": "ffix"
+      }
+    ]
+  },
+  {
+    "tier": 3,
+    "label": "Palier 3",
+    "opponents": [
+      {
+        "name": "Soldat de Burmecia",
+        "ai": "greedy",
+        "deck": [
+          "mimic_ffix",
+          "axolotl_ffix",
+          "moskira_ffix",
+          "grododo_ffix",
+          "bombo_ffix",
+          "pyrale_ffix",
+          "golem_ffix",
+          "crowler_ffix",
+          "kaimahn_ffix",
+          "phacoche_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Éclaireur de Cleyra",
+        "ai": "greedy",
+        "deck": [
+          "mimic_ffix",
+          "mandragore_ffix",
+          "maidor_ffix",
+          "grododo_ffix",
+          "diabolik_ffix",
+          "bombo_ffix",
+          "kaimahn_ffix",
+          "ramya_ffix",
+          "nymphe_ffix",
+          "griffon_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Duelliste de Treno",
+        "ai": "greedy",
+        "deck": [
+          "moskira_ffix",
+          "peligon_ffix",
+          "moinosor_ffix",
+          "maidor_ffix",
+          "diabolik_ffix",
+          "squelette_ffix",
+          "sahagin_ffix",
+          "kaimahn_ffix",
+          "nymphe_ffix",
+          "bertha_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Mercenaire du Désert",
+        "ai": "greedy",
+        "deck": [
+          "grododo_ffix",
+          "moskira_ffix",
+          "dragonfly_ffix",
+          "mandragore_ffix",
+          "ramya_ffix",
+          "squelette_ffix",
+          "pyrale_ffix",
+          "sahagin_ffix",
+          "kaimahn_ffix",
+          "phacoche_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Chevalier Novice",
+        "ai": "greedy",
+        "deck": [
+          "dragonfly_ffix",
+          "basilic_ffix",
+          "mimic_ffix",
+          "maidor_ffix",
+          "sahagin_ffix",
+          "diabolik_ffix",
+          "cocatrix_ffix",
+          "pyrale_ffix",
+          "squelette_ffix",
+          "trogiidae_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Garde de Lindblum",
+        "ai": "greedy",
+        "deck": [
+          "teratosor_ffix",
+          "grododo_ffix",
+          "dragonfly_ffix",
+          "mandragore_ffix",
+          "nymphe_ffix",
+          "ramya_ffix",
+          "diabolik_ffix",
+          "pyrale_ffix",
+          "crowler_ffix",
+          "griffon_ffix"
+        ],
+        "set": "ffix"
+      }
+    ]
+  },
+  {
+    "tier": 4,
+    "label": "Palier 4",
+    "opponents": [
+      {
+        "name": "Ruby, actrice de Tantalus",
+        "ai": "greedy",
+        "deck": [
+          "ramya_ffix",
+          "nymphe_ffix",
+          "sahagin_ffix",
+          "epitaf_ffix",
+          "troll_ffix",
+          "gimme_cat_ffix",
+          "griffon_ffix",
+          "dracozombie_ffix",
+          "poupzilla_ffix",
+          "baskerville_ffix",
+          "ahriman_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Cinna, voleur de Tantalus",
+        "ai": "greedy",
+        "deck": [
+          "nymphe_ffix",
+          "squelette_ffix",
+          "diabolik_ffix",
+          "phacoche_ffix",
+          "griffon_ffix",
+          "trogiidae_ffix",
+          "gimme_cat_ffix",
+          "epitaf_ffix",
+          "ateuchus_ffix",
+          "baskerville_ffix",
+          "cerbere_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Prêtre d'Esto Gaza",
+        "ai": "greedy",
+        "deck": [
+          "kaimahn_ffix",
+          "golem_ffix",
+          "bombo_ffix",
+          "troll_ffix",
+          "gimme_cat_ffix",
+          "rataime_ffix",
+          "griffon_ffix",
+          "epitaf_ffix",
+          "geanvers_ffix",
+          "nohl_ffix",
+          "cerbere_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Chevalier de Burmecia",
+        "ai": "greedy",
+        "deck": [
+          "ramya_ffix",
+          "kaimahn_ffix",
+          "cocatrix_ffix",
+          "phacoche_ffix",
+          "bandsnatch_ffix",
+          "rataime_ffix",
+          "griffon_ffix",
+          "pavoris_ffix",
+          "poupzilla_ffix",
+          "ahriman_ffix",
+          "baskerville_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Marchand de Treno",
+        "ai": "greedy",
+        "deck": [
+          "pyrale_ffix",
+          "sahagin_ffix",
+          "cocatrix_ffix",
+          "rataime_ffix",
+          "trogiidae_ffix",
+          "epitaf_ffix",
+          "phacoche_ffix",
+          "pavoris_ffix",
+          "nohl_ffix",
+          "geanvers_ffix",
+          "sda_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Garde d'Élite d'Alexandrie",
+        "ai": "greedy",
+        "deck": [
+          "squelette_ffix",
+          "pyrale_ffix",
+          "kaimahn_ffix",
+          "rataime_ffix",
+          "bandsnatch_ffix",
+          "dracozombie_ffix",
+          "troll_ffix",
+          "pavoris_ffix",
+          "poupzilla_ffix",
+          "ateuchus_ffix",
+          "sda_ffix"
+        ],
+        "set": "ffix"
+      }
+    ]
+  },
+  {
+    "tier": 5,
+    "label": "Palier 5",
+    "opponents": [
+      {
+        "name": "Marcus, voleur de Tantalus",
+        "ai": "smart",
+        "deck": [
+          "bandsnatch_ffix",
+          "dracozombie_ffix",
+          "troll_ffix",
+          "pavoris_ffix",
+          "tanksgivin_ffix",
+          "nohl_ffix",
+          "ahriman_ffix",
+          "baskerville_ffix",
+          "ateuchus_ffix",
+          "geanvers_ffix",
+          "ekarissor_ffix",
+          "ao_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Blank, voleur de Tantalus",
+        "ai": "smart",
+        "deck": [
+          "troll_ffix",
+          "gimme_cat_ffix",
+          "trogiidae_ffix",
+          "bandsnatch_ffix",
+          "baskerville_ffix",
+          "cerbere_ffix",
+          "nohl_ffix",
+          "geanvers_ffix",
+          "sda_ffix",
+          "blindragon_ffix",
+          "amduscias_ffix",
+          "tomberry_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Capitaine de la Garde",
+        "ai": "smart",
+        "deck": [
+          "pavoris_ffix",
+          "gimme_cat_ffix",
+          "griffon_ffix",
+          "phacoche_ffix",
+          "ahriman_ffix",
+          "xylomid_ffix",
+          "ateuchus_ffix",
+          "cerbere_ffix",
+          "baskerville_ffix",
+          "tanksgivin_ffix",
+          "chimaira_ffix",
+          "ao_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Sentinelle d'Oeilvert",
+        "ai": "smart",
+        "deck": [
+          "bertha_ffix",
+          "troll_ffix",
+          "phacoche_ffix",
+          "trogiidae_ffix",
+          "ateuchus_ffix",
+          "tanksgivin_ffix",
+          "ahriman_ffix",
+          "geanvers_ffix",
+          "sda_ffix",
+          "nohl_ffix",
+          "tomberry_ffix",
+          "catoblepas_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Dresseur de Chocobos",
+        "ai": "smart",
+        "deck": [
+          "phacoche_ffix",
+          "rataime_ffix",
+          "gimme_cat_ffix",
+          "pavoris_ffix",
+          "baskerville_ffix",
+          "cerbere_ffix",
+          "sda_ffix",
+          "geanvers_ffix",
+          "nohl_ffix",
+          "tanksgivin_ffix",
+          "catoblepas_ffix",
+          "grand_dragon_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Noble de Treno",
+        "ai": "smart",
+        "deck": [
+          "bertha_ffix",
+          "trogiidae_ffix",
+          "pavoris_ffix",
+          "gimme_cat_ffix",
+          "sda_ffix",
+          "xylomid_ffix",
+          "poupzilla_ffix",
+          "tanksgivin_ffix",
+          "cerbere_ffix",
+          "ateuchus_ffix",
+          "catoblepas_ffix",
+          "grimlock_ffix"
+        ],
+        "set": "ffix"
+      }
+    ]
+  },
+  {
+    "tier": 6,
+    "label": "Palier 6",
+    "opponents": [
+      {
+        "name": "Baku, chef de Tantalus",
+        "ai": "smart",
+        "deck": [
+          "nohl_ffix",
+          "blindragon_ffix",
+          "xylomid_ffix",
+          "sda_ffix",
+          "ekarissor_ffix",
+          "pampa_ffix",
+          "coeurl_ffix",
+          "grimlock_ffix",
+          "fourmilion_ffix",
+          "chimaira_ffix",
+          "blambourine_ffix",
+          "valseur_n_1_2_3_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Régent Cid de Lindblum",
+        "ai": "smart",
+        "deck": [
+          "baskerville_ffix",
+          "cerbere_ffix",
+          "nohl_ffix",
+          "ahriman_ffix",
+          "coeurl_ffix",
+          "grand_dragon_ffix",
+          "ao_ffix",
+          "ekarissor_ffix",
+          "catoblepas_ffix",
+          "grimlock_ffix",
+          "valseur_n_1_2_3_ffix",
+          "pile_face_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Général de Burmecia",
+        "ai": "smart",
+        "deck": [
+          "nohl_ffix",
+          "tanksgivin_ffix",
+          "geanvers_ffix",
+          "xylomid_ffix",
+          "ao_ffix",
+          "tomberry_ffix",
+          "ekarissor_ffix",
+          "amduscias_ffix",
+          "fourmilion_ffix",
+          "coeurl_ffix",
+          "hornet_ffix",
+          "gisamark_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Grand Prêtre de Madain Sari",
+        "ai": "smart",
+        "deck": [
+          "tanksgivin_ffix",
+          "geanvers_ffix",
+          "xylomid_ffix",
+          "sda_ffix",
+          "fourmilion_ffix",
+          "catoblepas_ffix",
+          "ekarissor_ffix",
+          "tomberry_ffix",
+          "chimaira_ffix",
+          "grimlock_ffix",
+          "blambourine_ffix",
+          "valseur_n_1_2_3_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Duelliste Légendaire de Treno",
+        "ai": "smart",
+        "deck": [
+          "ateuchus_ffix",
+          "baskerville_ffix",
+          "ahriman_ffix",
+          "blindragon_ffix",
+          "amduscias_ffix",
+          "grimlock_ffix",
+          "grand_dragon_ffix",
+          "pampa_ffix",
+          "catoblepas_ffix",
+          "coeurl_ffix",
+          "larvalar_ffix",
+          "lovecraft_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Garde d'Honneur d'Alexandrie",
+        "ai": "smart",
+        "deck": [
+          "blindragon_ffix",
+          "cerbere_ffix",
+          "ateuchus_ffix",
+          "poupzilla_ffix",
+          "tomberry_ffix",
+          "pampa_ffix",
+          "ekarissor_ffix",
+          "ao_ffix",
+          "grimlock_ffix",
+          "chimaira_ffix",
+          "lovecraft_ffix",
+          "larvalar_ffix"
+        ],
+        "set": "ffix"
+      }
+    ]
+  },
+  {
+    "tier": 7,
+    "label": "Palier 7",
+    "opponents": [
+      {
+        "name": "Reine Brahne",
+        "ai": "smart",
+        "deck": [
+          "grand_dragon_ffix",
+          "tomberry_ffix",
+          "grimlock_ffix",
+          "amduscias_ffix",
+          "chimaira_ffix",
+          "hornet_ffix",
+          "valseur_n_1_2_3_ffix",
+          "lamie_ffix",
+          "hectoculus_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Générale Beatrix",
+        "ai": "smart",
+        "deck": [
+          "chimaira_ffix",
+          "grimlock_ffix",
+          "fourmilion_ffix",
+          "pampa_ffix",
+          "tomberry_ffix",
+          "lovecraft_ffix",
+          "larvalar_ffix",
+          "belhamel_ffix",
+          "lamie_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Capitaine Adelbert Steiner",
+        "ai": "smart",
+        "deck": [
+          "ao_ffix",
+          "grimlock_ffix",
+          "chimaira_ffix",
+          "amduscias_ffix",
+          "pampa_ffix",
+          "larvalar_ffix",
+          "lamie_ffix",
+          "hornet_ffix",
+          "gisamark_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Freya, Chevalier Dragon de Burmecia",
+        "ai": "smart",
+        "deck": [
+          "fourmilion_ffix",
+          "ekarissor_ffix",
+          "grimlock_ffix",
+          "tomberry_ffix",
+          "coeurl_ffix",
+          "belhamel_ffix",
+          "valseur_n_1_2_3_ffix",
+          "lamie_ffix",
+          "pile_face_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Gardien d'Oeilvert",
+        "ai": "smart",
+        "deck": [
+          "catoblepas_ffix",
+          "tomberry_ffix",
+          "grimlock_ffix",
+          "chimaira_ffix",
+          "grand_dragon_ffix",
+          "hectoculus_ffix",
+          "gisamark_ffix",
+          "belhamel_ffix",
+          "behemoth_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Kuja",
+        "ai": "smart",
+        "deck": [
+          "ao_ffix",
+          "tomberry_ffix",
+          "fourmilion_ffix",
+          "amduscias_ffix",
+          "chimaira_ffix",
+          "behemoth_ffix",
+          "gisamark_ffix",
+          "lovecraft_ffix",
+          "lamie_ffix"
+        ],
+        "set": "ffix"
+      }
+    ]
+  },
+  {
+    "tier": 9,
+    "label": "Palier 9 (Tournoi Personnage)",
+    "opponents": [
+      {
+        "name": "Adversaire Personnage 1 (à renommer)",
+        "ai": "expert",
+        "deck": [
+          "chimaira_ffix",
+          "fourmilion_ffix",
+          "tomberry_ffix",
+          "grimlock_ffix",
+          "ao_ffix",
+          "gisamark_ffix",
+          "hornet_ffix",
+          "valseur_n_1_2_3_ffix",
+          "belhamel_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Adversaire Personnage 2 (à renommer)",
+        "ai": "expert",
+        "deck": [
+          "grimlock_ffix",
+          "chimaira_ffix",
+          "amduscias_ffix",
+          "pampa_ffix",
+          "coeurl_ffix",
+          "blambourine_ffix",
+          "pile_face_ffix",
+          "gisamark_ffix",
+          "lamie_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Adversaire Personnage 3 (à renommer)",
+        "ai": "expert",
+        "deck": [
+          "catoblepas_ffix",
+          "ekarissor_ffix",
+          "pampa_ffix",
+          "fourmilion_ffix",
+          "ao_ffix",
+          "behemoth_ffix",
+          "valseur_n_1_2_3_ffix",
+          "pile_face_ffix",
+          "larvalar_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Adversaire Personnage 4 (à renommer)",
+        "ai": "expert",
+        "deck": [
+          "coeurl_ffix",
+          "chimaira_ffix",
+          "grimlock_ffix",
+          "amduscias_ffix",
+          "grand_dragon_ffix",
+          "hornet_ffix",
+          "behemoth_ffix",
+          "lamie_ffix",
+          "larvalar_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Adversaire Personnage 5 (à renommer)",
+        "ai": "expert",
+        "deck": [
+          "grimlock_ffix",
+          "fourmilion_ffix",
+          "catoblepas_ffix",
+          "ekarissor_ffix",
+          "chimaira_ffix",
+          "pile_face_ffix",
+          "hectoculus_ffix",
+          "lovecraft_ffix",
+          "larvalar_ffix"
+        ],
+        "set": "ffix"
+      },
+      {
+        "name": "Adversaire Personnage 6 (à renommer)",
+        "ai": "expert",
+        "deck": [
+          "chimaira_ffix",
+          "tomberry_ffix",
+          "amduscias_ffix",
+          "catoblepas_ffix",
+          "grimlock_ffix",
+          "belhamel_ffix",
+          "lamie_ffix",
+          "behemoth_ffix",
+          "lovecraft_ffix"
+        ],
+        "set": "ffix"
+      }
+    ]
+  }
+]

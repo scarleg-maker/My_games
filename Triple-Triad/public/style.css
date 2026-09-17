@@ -21,17 +21,28 @@ nav button { margin: 6px; }
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
   gap: 18px;
   background: rgba(19, 22, 54, 0.7);
   border: 1px solid #4a4fa8;
   border-radius: 10px;
-  padding: 14px 26px;
-  max-width: 560px;
+  padding: 16px 32px;
+  max-width: 820px;
   margin: 0 auto 12px;
   font-size: 19px;
 }
 #sessionBar strong { color: #ffd873; }
 #sessionBar button { padding: 8px 16px; font-size: 16px; }
+#sessionBar .nowrap-group { white-space: nowrap; }
+#milestoneTitleRow {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 42px;
+  color: #ffd873;
+  font-weight: bold;
+  margin-top: 8px;
+}
 
 #setBar {
   display: flex;
@@ -71,12 +82,19 @@ input, select {
 }
 
 .view { max-width: 700px; margin: 0 auto; }
-#view-game { max-width: 1200px; }
+#view-game { max-width: 1200px; position: relative; }
 .hidden { display: none !important; }
 
 .setup-block { margin: 18px 0; padding: 12px; background: #131636; border-radius: 8px; }
 .pill-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .pill-list button.selected, .card-tile.selected { outline: 3px solid #ffd873; }
+
+/* Décale légèrement vers le haut la carte sélectionnée dans la main du joueur avant de la poser */
+#handPlayerCards .card-tile.selected {
+  transform: translateY(-14px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
 
 .rule-toggle {
   background: #1c1f3f;
@@ -115,7 +133,7 @@ input, select {
   position: relative;
   min-height: 120px;
   overflow: hidden;
-  transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.2s ease;
 }
 .card-tile .card-art {
   position: absolute;
@@ -227,6 +245,7 @@ input, select {
 .deck-picker-item { display: flex; flex-direction: column; align-items: stretch; }
 .deck-picker-item .card-tile { width: 100%; }
 .deck-picker-item .card-tile.selected { outline: 3px solid #ffd873; }
+.deck-picker-level-tabs { margin-bottom: 12px; }
 
 #board-frame {
   position: relative;
@@ -340,9 +359,11 @@ button.danger-btn { background: linear-gradient(180deg, #b83a3a, #6e1f1f); borde
   flex-wrap: wrap;
 }
 #capturedCardsPanel .captured-col { text-align: center; }
-#capturedCardsPanel h4 { margin: 0 0 8px; color: #ffd873; font-size: 14px; }
+#capturedCardsPanel h4 { margin: 0 0 8px; color: #ffd873; font-size: 28px; }
 #capturedCardsPanel .hand-cards { flex-direction: row; flex-wrap: wrap; justify-content: center; }
 #capturedCardsPanel .card-tile { width: 270px; min-height: 228px; font-size: 18px; }
+#capturedCardsPanel .card-tile .name { font-size: 12px; padding: 4px 4px; }
+#capturedCardsPanel .card-tile .stats { width: 54px; height: 54px; font-size: 13px; margin-top: 4px; }
 #capturedCardsPanel.hidden { display: none; }
 
 /* ================= Boutique (Commerce) ================= */
@@ -366,6 +387,23 @@ button.danger-btn { background: linear-gradient(180deg, #b83a3a, #6e1f1f); borde
   font-weight: bold;
 }
 .buy-btn:disabled { opacity: 0.4; }
+
+.shop-legendary-tile.locked {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+.shop-condition-label {
+  font-size: 12px;
+  color: #ff9d9d;
+  font-weight: bold;
+  padding: 6px 4px;
+}
+.shop-owned-label {
+  font-size: 14px;
+  color: #7CFC7C;
+  font-weight: bold;
+  padding: 6px 4px;
+}
 
 .sell-btn {
   margin-top: 6px;
@@ -399,6 +437,46 @@ button.danger-btn { background: linear-gradient(180deg, #b83a3a, #6e1f1f); borde
   align-items: center;
   gap: 16px;
 }
+
+/* ================= Overlay des jalons de progression ================= */
+#milestonesOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 105;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#milestonesOverlay.hidden { display: none; }
+#milestonesContent {
+  background: #131636;
+  border: 2px solid #ffd873;
+  border-radius: 12px;
+  padding: 24px 30px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+#milestonesContent h2 { color: #ffd873; text-align: center; margin-top: 0; }
+#milestonesCurrentSummary { text-align: center; font-size: 15px; margin-bottom: 16px; }
+.milestone-tier-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  background: rgba(74, 79, 168, 0.15);
+}
+.milestone-tier-row.reached { background: rgba(255, 216, 115, 0.18); color: #ffd873; font-weight: bold; }
+.milestone-tier-row.current { border: 1px solid #ffd873; }
+#milestonesBadges { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.milestone-badge { padding: 8px 12px; border-radius: 6px; background: rgba(74, 79, 168, 0.15); }
+.milestone-badge-icon { font-size: 18px; }
+.milestone-badge.earned { background: rgba(63, 174, 92, 0.25); color: #7CFC7C; font-weight: bold; }
+#milestonesCloseBtn { display: block; margin: 20px auto 0; }
 
 #shopRevealCard {
   width: 110px;
@@ -434,22 +512,26 @@ button.danger-btn { background: linear-gradient(180deg, #b83a3a, #6e1f1f); borde
 
 /* Overlay générique de zoom sur une carte (Encyclopédie...) */
 #cardZoomOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1000 !important;
   background: rgba(0,0,0,0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   cursor: pointer;
 }
-#cardZoomOverlay.hidden { display: none; }
+#cardZoomOverlay.hidden { display: none !important; }
 #cardZoomContent {
-  width: 140px;
-  min-height: 160px;
+  width: 60vw !important;
+  max-height: 85vh;
+  aspect-ratio: 703 / 945;
+  margin: 0 auto;
 }
-#cardZoomContent .card-tile { width: 100%; min-height: 160px; font-size: 10px; }
-#cardZoomContent .name { display: none; }
+#cardZoomContent .card-tile { width: 100% !important; height: 100%; min-height: unset; font-size: 34px; }
+#cardZoomContent .card-art { max-width: 100% !important; max-height: 100% !important; object-fit: contain; }
+#cardZoomContent .name { display: block; font-size: 28px; padding: 10px 8px; }
+#cardZoomContent .stats { width: 30%; height: auto; aspect-ratio: 1 / 1; font-size: 32px; margin: 10px auto 0; }
 
 /* Étiquette d'élément affichée sur les cases vides du plateau (règle Élémental) */
 .cell { position: relative; }
@@ -599,17 +681,22 @@ button.danger-btn { background: linear-gradient(180deg, #b83a3a, #6e1f1f); borde
 }
 
 /* Sélecteur de palier de tournoi (Facile / Medium / Expert / ???) */
+#tournamentTierPicker { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
 .tournament-tier-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  min-width: 120px;
+  min-width: 200px;
   padding: 12px 16px;
+  text-align: center;
 }
 .tournament-tier-btn .tier-label { font-weight: 900; font-size: 15px; }
-.tournament-tier-btn .tier-cost { font-size: 13px; color: #b7bcf5; }
-.tournament-tier-btn.selected .tier-cost { color: #1b1e3a; }
+.tournament-tier-btn .tier-rules { font-size: 12px; color: #ffd873; font-style: italic; }
+.tournament-tier-btn .tier-reward { font-size: 13px; color: #b7bcf5; }
+.tournament-tier-btn.selected .tier-rules,
+.tournament-tier-btn.selected .tier-reward { color: #1b1e3a; }
+.tournament-tier-btn.locked { opacity: 0.5; filter: grayscale(0.5); cursor: default; }
 
 /* ================= Échange entre joueurs ================= */
 #shopTabs { margin-bottom: 16px; }
@@ -688,3 +775,151 @@ select.rules-locked {
   pointer-events: none;
   opacity: 0.55;
 }
+
+/* ================= Pièce de démarrage (bleu = joueur, rouge = IA) ================= */
+#coinFlipOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(6, 8, 20, 0.94);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  perspective: 800px;
+}
+#coinFlipOverlay.hidden { display: none; }
+
+#coinFlipLegend {
+  display: flex;
+  gap: 30px;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.coin-legend-item { font-size: 15px; font-weight: bold; color: #b7bcf5; display: flex; align-items: center; gap: 6px; }
+.coin-legend-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.coin-legend-blue { background: #1b4fd6; }
+.coin-legend-red { background: #c21b1b; }
+
+/* Pièce unique à deux faces (bleu = vous, rouge = adversaire), tournant sur son axe vertical
+   comme une vraie pièce, grâce à backface-visibility (chaque face n'est visible que de son côté). */
+#singleCoin {
+  width: 252px;
+  height: 252px;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);
+}
+.coin-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 8px solid #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  backface-visibility: hidden;
+}
+.coin-face-blue { background: radial-gradient(circle at 35% 30%, #6fa8ff, #1b4fd6 70%); }
+.coin-face-red {
+  background: radial-gradient(circle at 35% 30%, #ff8f8f, #c21b1b 70%);
+  transform: rotateY(180deg);
+}
+
+#singleCoin.spinning {
+  animation: coinSpin3D 0.5s linear infinite;
+}
+@keyframes coinSpin3D {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+
+#singleCoin.landed {
+  box-shadow: 0 0 26px 8px rgba(255, 216, 115, 0.75);
+}
+
+#coinFlipResultText {
+  width: 100%;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 900;
+  color: #ffd873;
+  margin-top: 10px;
+  min-height: 28px;
+}
+
+/* ================= Écran de fin de partie (reste affiché jusqu'au clic sur "Continuer") ================= */
+#gameOverOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: rgba(6, 8, 20, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#gameOverOverlay.hidden { display: none; }
+
+#gameOverContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  padding: 30px 50px;
+  background: rgba(19, 22, 54, 0.85);
+  border: 2px solid #ffd873;
+  border-radius: 14px;
+  box-shadow: 0 0 40px rgba(255, 216, 115, 0.35);
+}
+#gameOverTitle {
+  font-size: 42px;
+  font-weight: 900;
+  color: #ffd873;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+#gameOverScore {
+  font-size: 22px;
+  color: #e8eaff;
+}
+#gameOverContinueBtn {
+  padding: 12px 32px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* ================= Choix de la carte gagnée (overlay, reste sur le plateau/musique du duel) ========== */
+#chooseCardOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 55;
+  background: rgba(6, 8, 20, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px;
+}
+#chooseCardOverlay.hidden { display: none; }
+
+#chooseCardContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 1100px;
+  width: 100%;
+}
+#chooseCardContent h2 { color: #ffd873; margin: 0; }
+#chooseCardContent p { color: #e8eaff; margin: 0; text-align: center; }
+
+/* Cartes deux fois plus grandes que la taille de base (115px / 120px / 13px -> doublé) */
+#chooseCardOverlay .card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+#chooseCardOverlay .card-tile { min-height: 240px; font-size: 26px; }
+#chooseCardOverlay .card-tile .name { font-size: 24px; padding: 8px 8px; }
+#chooseCardOverlay .card-tile .stats { width: 108px; height: 108px; font-size: 26px; margin-top: 8px; }

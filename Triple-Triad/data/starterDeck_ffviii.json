@@ -1,11 +1,28 @@
 {
   "ffviii": [
-    "bogomile",
-    "fungus",
-    "elmidea",
-    "nocturnus",
-    "incube",
-    "larva",
-    "gallus"
+    {
+      "id": "bogomile_ffviii",
+      "quantity": 3
+    },
+    {
+      "id": "fungus_ffviii",
+      "quantity": 3
+    },
+    {
+      "id": "elmidea_ffviii",
+      "quantity": 3
+    },
+    {
+      "id": "nocturnus_ffviii",
+      "quantity": 3
+    },
+    {
+      "id": "incube_ffviii",
+      "quantity": 3
+    },
+    {
+      "id": "larva_ffviii",
+      "quantity": 3
+    }
   ]
 }

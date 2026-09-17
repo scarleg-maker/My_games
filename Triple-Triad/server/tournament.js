@@ -1,102 +1,226 @@
 'use strict';
 const sets = require('./sets');
 
-/**
- * Paliers de tournoi disponibles. Chaque palier définit :
- * - cost : points requis pour participer
- * - opponentTierRange : [min, max] des paliers d'adversaires IA dans lesquels les 5 manches sont tirées
- * - rewardScale : multiplicateur indicatif pour calibrer les récompenses (une fois définies)
- * - hidden : si true, le palier n'apparaît dans aucune liste tant que sa condition de déblocage
- *   (à définir plus tard, voir isTierUnlocked) n'est pas remplie.
- */
-const TOURNAMENT_TIERS = {
-  easy:    { id: 'easy',    label: 'Facile',  cost: 0,    opponentTierRange: [1, 3], rewardScale: 1 },
-  medium:  { id: 'medium',  label: 'Medium',  cost: 200,  opponentTierRange: [2, 5], rewardScale: 2 },
-  expert:  { id: 'expert',  label: 'Expert',  cost: 500,  opponentTierRange: [4, 6], rewardScale: 4 },
-  // 4e palier caché : sa condition de déblocage sera définie plus tard (ex: avoir été Champion en Expert).
-  mystery: { id: 'mystery', label: '???',     cost: 1000, opponentTierRange: [6, 6], rewardScale: 8, hidden: true },
+// ============================================================================================
+// Règles imposées PAR TOURNOI (aucune personnalisation par le joueur — le serveur applique
+// toujours les règles définies ci-dessous pour chaque tournoi, quoi que le client envoie).
+// La fonction rules(...) part d'un socle où tout est désactivé : ne précisez que les règles à
+// ACTIVER pour ce tournoi. Modifiez ces objets directement pour changer les règles d'un tournoi.
+// Trade rule toujours "none" au sens propre : aucune carte ne change de main pendant les manches
+// de tournoi (seule la récompense finale compte), quel que soit le tournoi et ses règles.
+// ============================================================================================
+const RULES_BASE = {
+  same: false, plus: false, combo: false, suddenDeath: false,
+  elemental: false, wallAce: false, open: false, random: false,
+};
+function rules(overrides = {}) {
+  return { ...RULES_BASE, ...overrides };
+}
+
+// ============================================================================================
+// Tournois de base : Classique -> Bronze -> Argent -> Or, débloqués en cascade (il faut avoir
+// REMPORTÉ le précédent). 4 manches à paliers d'adversaires fixes (pas de tirage aléatoire de
+// plage). Aucune influence sur les statistiques victoires/défaites (comme tous les tournois).
+// ============================================================================================
+const BASE_TOURNAMENTS = [
+  { id: 'classique', label: 'Classique', opponentTiers: [1, 2, 3, 4], rewardPoints: 150, rewardCardLevel: 4, rules: rules({ open: true, elemental: true }) },
+  { id: 'bronze',    label: 'Bronze',    opponentTiers: [2, 3, 4, 5], rewardPoints: 200, rewardCardLevel: 5, rules: rules({ plus: true, same: true, combo: true }) },
+  { id: 'argent',    label: 'Argent',    opponentTiers: [3, 4, 5, 6], rewardPoints: 250, rewardCardLevel: 6, rules: rules({}) }, // à définir manuellement
+  { id: 'or',        label: 'Or',        opponentTiers: [4, 5, 6, 7], rewardPoints: 300, rewardCardLevel: 7, rules: rules({}) }, // à définir manuellement
+];
+
+// ============================================================================================
+// Tournois spéciaux : débloqués par l'achat d'un pass en boutique (voir server/shop.js), pas par
+// une progression séquentielle. 5 manches. Récompense = 1 carte du niveau indiqué, non encore
+// obtenue. Si toutes les cartes de la récompense normale sont déjà obtenues, la récompense devient
+// 250 points + 1 carte niveau 7 aléatoire (non obtenue) à la place.
+// ============================================================================================
+const SPECIAL_TOURNAMENTS = {
+  ffviii: {
+    gforces: {
+      id: 'gforces',
+      label: 'G-Forces',
+      passKey: 'pass_gf',
+      rounds: 5,
+      rules: rules({}), // à définir manuellement
+      // paliers 6 ou 7 tirés au hasard à chaque manche, sauf la 5e toujours palier 7
+      pickRoundTier: (roundIndex) => (roundIndex === 4 ? 7 : (Math.random() < 0.5 ? 6 : 7)),
+      rewardCardPool: [
+        'golgotha_ffviii', 'shiva_ffviii', 'ifrit_ffviii',
+        'ondine_ffviii', 'tauros_ffviii', 'taurux_ffviii',
+      ],
+      lossReward: { points: 300 }, // uniquement si défaite à la DERNIÈRE manche (5e)
+      fallbackReward: { points: 250, cardLevel: 7 }, // si les 7 cartes ci-dessus sont déjà toutes obtenues
+    },
+    legende: {
+      id: 'legende',
+      label: 'Légende',
+      rules: rules({}), // à définir manuellement
+      passKey: 'pass_legendaire',
+      rounds: 5,
+      pickRoundTier: () => 9,
+      rewardCardLevelPool: 10, // n'importe quelle carte niveau 10 non obtenue (tirée dynamiquement)
+      lossReward: { points: 500 },
+      fallbackReward: { points: 250, cardLevel: 7 },
+    },
+  },
+  ffix: {
+    boss: {
+      id: 'boss',
+      label: 'Tournoi Boss',
+      passKey: 'pass_boss_ffix',
+      rounds: 5,
+      rules: rules({}), // à définir manuellement
+      // paliers 6 ou 7 tirés au hasard à chaque manche, sauf la 5e toujours palier 7
+      pickRoundTier: (roundIndex) => (roundIndex === 4 ? 7 : (Math.random() < 0.5 ? 6 : 7)),
+      // toutes les 11 cartes niveau 8 (aucun achat direct pour ce set, contrairement à FFVIII)
+      rewardCardLevelPool: 8,
+      lossReward: { points: 300 },
+      fallbackReward: { points: 250, cardLevel: 7 },
+    },
+    personnage: {
+      id: 'personnage',
+      label: 'Tournoi Personnage',
+      rules: rules({}), // à définir manuellement
+      passKey: 'pass_personnage_ffix',
+      rounds: 5,
+      pickRoundTier: () => 9,
+      rewardCardLevelPool: 10,
+      lossReward: { points: 500 },
+      fallbackReward: { points: 250, cardLevel: 7 },
+    },
+  },
+  dsbb: {
+    ame: {
+      id: 'ame',
+      label: 'Tournoi Âme',
+      passKey: 'pass_ame_dsbb',
+      rounds: 5,
+      rules: rules({}), // à définir manuellement
+      pickRoundTier: (roundIndex) => (roundIndex === 4 ? 7 : (Math.random() < 0.5 ? 6 : 7)),
+      rewardCardLevelPool: 8,
+      lossReward: { points: 300 },
+      fallbackReward: { points: 250, cardLevel: 7 },
+    },
+    seigneur: {
+      id: 'seigneur',
+      label: 'Tournoi Seigneur',
+      rules: rules({}), // à définir manuellement
+      passKey: 'pass_seigneur_dsbb',
+      rounds: 5,
+      pickRoundTier: () => 9,
+      rewardCardLevelPool: 10,
+      lossReward: { points: 500 },
+      fallbackReward: { points: 250, cardLevel: 7 },
+    },
+  },
 };
 
-/**
- * Détermine si un palier caché est débloqué pour un joueur donné. Toujours faux pour l'instant :
- * remplacez ce corps quand la condition de déblocage du 4e tournoi sera définie, par exemple :
- *   return (save.stats.wins || 0) >= 50;
- */
-function isTierUnlocked(tierDef, save) {
-  if (!tierDef.hidden) return true;
-  return false; // TODO : condition de déblocage à définir plus tard
+function getBaseTournamentDef(id) {
+  return BASE_TOURNAMENTS.find(t => t.id === id) || null;
 }
 
-/** Liste des paliers de tournoi visibles pour un joueur (les paliers cachés non débloqués sont exclus). */
-function getVisibleTiers(save) {
-  return Object.values(TOURNAMENT_TIERS).filter(t => isTierUnlocked(t, save));
-}
-
-function getTierDef(tierKey) {
-  return TOURNAMENT_TIERS[tierKey] || null;
+function getSpecialTournamentDef(setId, id) {
+  return (SPECIAL_TOURNAMENTS[setId] && SPECIAL_TOURNAMENTS[setId][id]) || null;
 }
 
 /**
- * Choisit 5 adversaires de plus en plus forts pour un nouveau tournoi, à l'intérieur de la plage de
- * paliers du tournoi choisi (Facile/Medium/Expert/...). Si la plage compte moins de 5 paliers, les
- * dernières manches répètent le palier le plus élevé disponible dans cette plage (toujours 5 manches).
+ * Liste les tournois de base avec leur état de déblocage pour ce joueur (le premier est toujours
+ * débloqué ; chaque suivant nécessite d'avoir REMPORTÉ le précédent).
  */
-function pickTournamentOpponents(setId, tierDef) {
-  const [minTier, maxTier] = tierDef.opponentTierRange;
-  const tiersForSet = sets.getOpponentsForSet(setId).filter(t => t.tier >= minTier && t.tier <= maxTier);
-  const sortedTiers = [...tiersForSet].sort((a, b) => a.tier - b.tier);
-  if (sortedTiers.length === 0) throw new Error('Aucun adversaire disponible pour ce palier de tournoi.');
+function getBaseTournamentsWithStatus(save) {
+  const won = save.tournamentsWon || [];
+  return BASE_TOURNAMENTS.map((t, idx) => ({
+    ...t,
+    unlocked: idx === 0 || won.includes(BASE_TOURNAMENTS[idx - 1].id),
+    completed: won.includes(t.id),
+  }));
+}
 
+/**
+ * Liste les tournois spéciaux avec leur état (débloqué = pass possédé en boutique).
+ */
+function getSpecialTournamentsWithStatus(setId, save) {
+  const unlocks = save.unlocks || [];
+  return Object.values(SPECIAL_TOURNAMENTS[setId] || {}).map(t => ({
+    ...t,
+    unlocked: unlocks.includes(t.passKey),
+  }));
+}
+
+/** Choisit un adversaire au hasard dans un palier donné pour ce set. Lève une erreur si vide. */
+function pickOpponentInTier(setId, tier) {
+  const tiersForSet = sets.getOpponentsForSet(setId);
+  const tierData = tiersForSet.find(t => t.tier === tier);
+  if (!tierData || !tierData.opponents.length) {
+    throw new Error(`Aucun adversaire défini pour le palier ${tier} de ce set — tournoi indisponible pour le moment.`);
+  }
+  const opponentIndex = Math.floor(Math.random() * tierData.opponents.length);
+  return { tier, opponentIndex, opponentName: tierData.opponents[opponentIndex].name };
+}
+
+/** Prépare les manches (adversaires fixes, tirés une fois) d'un tournoi de base. */
+function pickBaseTournamentRounds(setId, tournamentDef) {
+  return tournamentDef.opponentTiers.map(tier => pickOpponentInTier(setId, tier));
+}
+
+/** Prépare les manches d'un tournoi spécial (paliers déterminés manche par manche). */
+function pickSpecialTournamentRounds(setId, specialDef) {
   const rounds = [];
-  for (let i = 0; i < 5; i++) {
-    const tierIdx = Math.min(i, sortedTiers.length - 1);
-    const tierData = sortedTiers[tierIdx];
-    const opponentIndex = Math.floor(Math.random() * tierData.opponents.length);
-    rounds.push({
-      tier: tierData.tier,
-      opponentIndex,
-      opponentName: tierData.opponents[opponentIndex].name,
-    });
+  for (let i = 0; i < specialDef.rounds; i++) {
+    rounds.push(pickOpponentInTier(setId, specialDef.pickRoundTier(i)));
   }
   return rounds;
 }
 
-/**
- * Choisit l'adversaire de la manche décisive (place de 3e) : même palier que la 4e manche perdue,
- * si possible différent de l'adversaire déjà affronté à cette manche.
- */
-function pickDeciderOpponent(setId, tier, excludeOpponentIndex) {
-  const tiersForSet = sets.getOpponentsForSet(setId);
-  const tierData = tiersForSet.find(t => t.tier === tier);
-  if (!tierData) throw new Error('Palier introuvable pour la manche décisive.');
-  const indices = tierData.opponents.map((o, idx) => idx).filter(idx => idx !== excludeOpponentIndex);
-  const pool = indices.length ? indices : tierData.opponents.map((o, idx) => idx);
-  const opponentIndex = pool[Math.floor(Math.random() * pool.length)];
-  return { tier, opponentIndex, opponentName: tierData.opponents[opponentIndex].name };
+/** Cartes d'un pool donné non encore obtenues par le joueur (jamais présentes dans discovered). */
+function unclaimedFromPool(save, cardIds) {
+  const discovered = save.discovered || [];
+  return cardIds.filter(id => !discovered.includes(id));
+}
+
+/** Toutes les cartes d'un niveau donné pour ce set, non encore obtenues. */
+function unclaimedByLevel(setId, save, level) {
+  const discovered = save.discovered || [];
+  return sets.getCardsForSet(setId).filter(c => c.level === level && !discovered.includes(c.id)).map(c => c.id);
 }
 
 /**
- * Attribution de la récompense finale selon le classement ET le palier de tournoi joué (tierKey).
- * Les récompenses n'ont pas encore été définies par le créateur du jeu : cette fonction est un point
- * d'ancrage prêt à l'emploi, à compléter plus tard (ex: saveManager.addCardsToSave / addPoints selon
- * le "placement" ET le rewardScale du palier pour calibrer des récompenses de plus en plus importantes).
+ * Calcule la récompense de victoire finale d'un tournoi SPÉCIAL. Retourne { points, cardId } (l'un
+ * des deux peut être absent). Si le pool normal est épuisé (toutes déjà obtenues), applique la
+ * récompense de repli (fallbackReward : points + carte niveau 7 aléatoire non obtenue).
  */
-function grantTournamentReward(placement, { name, setId, tierKey }, saveManager) {
-  const tierDef = getTierDef(tierKey);
-  const scale = tierDef ? tierDef.rewardScale : 1;
-  // TODO : définir les vraies récompenses ici, par exemple :
-  // if (placement === 'champion') saveManager.addPoints(name, setId, 1000 * scale);
-  // if (placement === 'second') saveManager.addPoints(name, setId, 500 * scale);
-  // if (placement === 'third') saveManager.addPoints(name, setId, 250 * scale);
-  return null;
+function computeSpecialWinReward(setId, save, specialDef) {
+  let pool;
+  if (specialDef.rewardCardPool) {
+    pool = unclaimedFromPool(save, specialDef.rewardCardPool);
+  } else {
+    pool = unclaimedByLevel(setId, save, specialDef.rewardCardLevelPool);
+  }
+
+  if (pool.length > 0) {
+    const cardId = pool[Math.floor(Math.random() * pool.length)];
+    return { cardId };
+  }
+
+  // Repli : toutes les cartes de la récompense normale sont déjà obtenues.
+  const fallbackPool = unclaimedByLevel(setId, save, specialDef.fallbackReward.cardLevel);
+  const reward = { points: specialDef.fallbackReward.points };
+  if (fallbackPool.length > 0) {
+    reward.cardId = fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+  }
+  return reward;
 }
 
 module.exports = {
-  TOURNAMENT_TIERS,
-  isTierUnlocked,
-  getVisibleTiers,
-  getTierDef,
-  pickTournamentOpponents,
-  pickDeciderOpponent,
-  grantTournamentReward,
+  BASE_TOURNAMENTS,
+  SPECIAL_TOURNAMENTS,
+  getBaseTournamentDef,
+  getSpecialTournamentDef,
+  getBaseTournamentsWithStatus,
+  getSpecialTournamentsWithStatus,
+  pickBaseTournamentRounds,
+  pickSpecialTournamentRounds,
+  computeSpecialWinReward,
+  unclaimedByLevel,
 };

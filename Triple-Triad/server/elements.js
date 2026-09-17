@@ -22,7 +22,12 @@ function assignRandomElements() {
 }
 
 function clamp(value) {
-  return Math.max(0, Math.min(10, value));
+  // Plafond à 11 (et non 10) : une carte "As" (valeur 10) avec un élément correspondant à la case
+  // doit effectivement valoir 11 en jeu pour la capture — sinon l'élément n'a aucun intérêt sur les
+  // cartes de valeur maximale (niveaux 9 et 10 notamment). L'affichage de la carte (illustration
+  // "A") ne change jamais : seul l'indicateur +1/-1 (elementalDelta) signale l'ajustement, comme pour
+  // toute autre carte.
+  return Math.max(0, Math.min(11, value));
 }
 
 /**
