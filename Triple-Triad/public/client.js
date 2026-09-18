@@ -312,17 +312,18 @@ async function openMilestonesOverlay() {
 
   const badgesEl = document.getElementById('milestonesBadges');
   const badgeDefs = [
-    { key: 'maitreDesGForces', label: 'Maître des G-Forces (toutes les cartes niveau 8 et 9)' },
-    { key: 'celebrite', label: 'Célébrité (toutes les cartes niveau 10)' },
-    { key: 'herosLegendaire', label: 'Héros légendaire (collection complète — remplace tous les autres titres)' },
+    { key: 'maitreDesGForces', suffix: '(toutes les cartes niveau 8 et 9)' },
+    { key: 'celebrite', suffix: '(toutes les cartes niveau 10)' },
+    { key: 'herosLegendaire', suffix: '(collection complète — remplace tous les autres titres)' },
   ];
   badgesEl.innerHTML = '<h3>Jalons spéciaux</h3>';
   badgeDefs.forEach(b => {
     const earned = data.badges[b.key];
     const icon = data.badgeIcons[b.key];
+    const title = data.badgeLabels[b.key];
     const div = document.createElement('div');
     div.className = 'milestone-badge' + (earned ? ' earned' : '');
-    div.innerHTML = `<span class="milestone-badge-icon">${icon}</span> ${earned ? '✅ Obtenu' : '🔒 Non obtenu'} — ${b.label}`;
+    div.innerHTML = `<span class="milestone-badge-icon">${icon}</span> ${earned ? '✅ Obtenu' : '🔒 Non obtenu'} — ${title} ${b.suffix}`;
     badgesEl.appendChild(div);
   });
 
@@ -342,21 +343,58 @@ function deactivateSession() {
 
 document.getElementById('logoutBtn').addEventListener('click', deactivateSession);
 
+/**
+ * Écrit `content` dans un fichier nommé `suggestedName`. Sur les navigateurs compatibles
+ * (Chrome/Edge/Opera), ouvre le sélecteur natif "Enregistrer sous" : l'utilisateur choisit
+ * l'emplacement et peut remplacer directement un fichier existant. Sur les autres navigateurs
+ * (Firefox, Safari), repli sur un téléchargement classique vers le dossier par défaut.
+ */
+async function saveContentToFile(content, suggestedName) {
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [{ description: 'Sauvegarde Triple Triad', accept: { 'text/plain': ['.txt'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      return;
+    } catch (pickerErr) {
+      if (pickerErr.name === 'AbortError') return; // l'utilisateur a annulé la boîte de dialogue
+      // toute autre erreur (ex: API présente mais indisponible dans ce contexte) : repli silencieux
+    }
+  }
+  const blob = new Blob([content], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = suggestedName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 document.getElementById('downloadSaveBtn').addEventListener('click', async () => {
   try {
     // récupère toujours la version la plus fraîche avant de télécharger, pour ne jamais exporter
     // une progression périmée (ex: après un gain de carte non encore reflété localement)
     const save = await refreshSave();
     const content = JSON.stringify(save, null, 2);
-    const blob = new Blob([content], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${state.playerName}_${state.activeSet}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
+    await saveContentToFile(content, `${state.playerName}_${state.activeSet}.txt`);
   } catch (err) {
     alert('Impossible de télécharger la sauvegarde : ' + err.message);
+  }
+});
+
+document.getElementById('downloadAllSavesBtn').addEventListener('click', async () => {
+  try {
+    const res = await fetch(`/api/save-all/${encodeURIComponent(state.playerName)}`);
+    if (!res.ok) throw new Error('Échec de la récupération des sauvegardes.');
+    const data = await res.json();
+    const content = JSON.stringify(data, null, 2);
+    await saveContentToFile(content, `${state.playerName}_tous_univers.txt`);
+  } catch (err) {
+    alert('Impossible de télécharger la sauvegarde combinée : ' + err.message);
   }
 });
 
@@ -435,6 +473,32 @@ document.getElementById('importSaveFileInput').addEventListener('change', async 
     await staticDataReady;
     const text = await file.text();
     const data = JSON.parse(text);
+
+    // Fichier combiné (tous univers, via "⬇️ Tous mes univers") : répartit chaque univers vers sa
+    // propre sauvegarde, puis recharge l'univers actuellement actif si sa progression en fait partie.
+    if (data && typeof data === 'object' && data.universes && typeof data.universes === 'object') {
+      const res = await fetch('/api/save-all/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Fichier invalide.');
+      }
+      const result = await res.json();
+      const importedSets = Object.keys(result.imported || {});
+      const failedSets = Object.keys(result.errors || {});
+      let msg = `Sauvegarde combinée importée : ${importedSets.length} univers restauré(s)`;
+      if (failedSets.length) msg += `, échec pour ${failedSets.join(', ')}`;
+      alert(msg);
+      if (result.imported && result.imported[state.activeSet]) {
+        activateSession(result.imported[state.activeSet]);
+        enterFeature(state.pendingTarget || 'solo');
+      }
+      return;
+    }
+
     const res = await fetch(`/api/${state.activeSet}/save/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -858,6 +922,15 @@ let coinFlipShown = false; // évite de rejouer l'animation de pièce à chaque 
 let pendingGameState = null; // dernier état reçu du serveur, utilisé même si l'animation de pièce est en cours
 
 function revealGameStart(payload, renderFn) {
+  // Réaffiche le plateau et les mains (masqués en fin de partie précédente une fois le résultat
+  // des cartes gagnées/perdues affiché) — chaque nouvelle partie repart avec l'écran de jeu normal.
+  document.getElementById('board-frame').classList.remove('hidden');
+  document.getElementById('handPlayer').classList.remove('hidden');
+  document.getElementById('handOpponent').classList.remove('hidden');
+  document.getElementById('turnIndicator').classList.remove('hidden');
+  document.getElementById('scoreIndicator').classList.remove('hidden');
+  document.getElementById('capturedCardsPanel').classList.add('hidden');
+
   // mémorise toujours le DERNIER état reçu, même si une animation de pièce est déjà en cours et
   // qu'on ne l'affiche pas immédiatement — évite qu'un état plus ancien (plateau vide) n'écrase par
   // erreur un état plus récent (ex: le coup d'ouverture de l'IA) une fois l'animation terminée.
@@ -1123,6 +1196,14 @@ socket.on('solo:gameover', ({ score, result, gains, losses, pointsAwarded }) => 
     lostList.appendChild(tile);
   });
   panel.classList.toggle('hidden', !(gains?.length || losses?.length));
+  // Une fois le résultat connu (et les cartes gagnées/perdues affichées), le plateau et les mains
+  // n'ont plus d'utilité : on les masque pour ne laisser que ce panneau à l'écran.
+  const hasCapturedCards = gains?.length || losses?.length;
+  document.getElementById('board-frame').classList.toggle('hidden', hasCapturedCards);
+  document.getElementById('handPlayer').classList.toggle('hidden', hasCapturedCards);
+  document.getElementById('handOpponent').classList.toggle('hidden', hasCapturedCards);
+  document.getElementById('turnIndicator').classList.toggle('hidden', hasCapturedCards);
+  document.getElementById('scoreIndicator').classList.toggle('hidden', hasCapturedCards);
 
   document.getElementById('postGameActions').classList.remove('hidden');
 
@@ -1141,6 +1222,11 @@ function cardGainNameClass(cardId) {
   if (collection.includes(cardId)) return null;
   return discovered.includes(cardId) ? 'name-yellow' : 'name-green';
 }
+
+socket.on('solo:roundResult', ({ score }) => {
+  // Annonce immédiate du résultat (le choix de carte n'arrivera que 2s plus tard, côté serveur).
+  document.getElementById('gameMessage').textContent = `Victoire ! (${score.A} - ${score.B})`;
+});
 
 socket.on('solo:chooseCard', ({ options, count }) => {
   pendingChoice = { count, selected: [] };

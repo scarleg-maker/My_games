@@ -247,6 +247,17 @@ input, select {
 .deck-picker-item .card-tile.selected { outline: 3px solid #ffd873; }
 .deck-picker-level-tabs { margin-bottom: 12px; }
 
+/* Sélecteurs de deck (Solo/PvP/Tournoi/Combat niveau 9) : onglets de niveau en haut (flux normal du
+   conteneur, plus de classe card-grid sur le conteneur externe), cartes en grille fixe 4 colonnes en
+   dessous — contrairement aux autres grilles du jeu (Encyclopédie, boutique...) qui restent en
+   auto-fill responsive. */
+#deckPicker .card-grid,
+#pvpDeckPicker .card-grid,
+#tournamentDeckPicker .card-grid,
+#legendaryDuelDeckPicker .card-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 #board-frame {
   position: relative;
   width: min(80vw, 768px);

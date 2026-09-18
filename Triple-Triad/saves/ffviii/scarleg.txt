@@ -3,23 +3,54 @@
   "set": "ffviii",
   "createdAt": "2026-08-31T16:51:07.325Z",
   "collection": [
-    "bogomile_ffviii",
-    "elmidea_ffviii",
-    "nocturnus_ffviii",
-    "incube_ffviii",
-    "larva_ffviii",
-    "gallus_ffviii",
-    "fungus_ffviii",
-    "elastos_ffviii",
-    "diodon_ffviii",
-    "bogomile_ffviii",
-    "elastos_ffviii",
-    "elmidea_ffviii",
-    "nocturnus_ffviii",
-    "larva_ffviii",
-    "incube_ffviii",
-    "diodon_ffviii",
-    "feng_ffviii"
+    {
+      "id": "bogomile_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "elmidea_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "nocturnus_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "incube_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "larva_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "gallus_ffviii",
+      "quantity": 1
+    },
+    {
+      "id": "fungus_ffviii",
+      "quantity": 1
+    },
+    {
+      "id": "elastos_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "diodon_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "feng_ffviii",
+      "quantity": 1
+    },
+    {
+      "id": "selek_ffviii",
+      "quantity": 1
+    },
+    {
+      "id": "orchida_ffviii",
+      "quantity": 1
+    }
   ],
   "discovered": [
     "bogomile_ffviii",
@@ -31,10 +62,12 @@
     "gallus_ffviii",
     "elastos_ffviii",
     "diodon_ffviii",
-    "feng_ffviii"
+    "feng_ffviii",
+    "selek_ffviii",
+    "orchida_ffviii"
   ],
   "stats": {
-    "wins": 2,
+    "wins": 4,
     "losses": 0,
     "draws": 0
   },
@@ -47,8 +80,8 @@
     "larva_ffviii",
     "gallus_ffviii"
   ],
-  "points": 950,
-  "tournament": null,
+  "points": 1050,
   "unlocks": [],
-  "tournamentsWon": []
+  "tournamentsWon": [],
+  "tournament": null
 }

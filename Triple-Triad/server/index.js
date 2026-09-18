@@ -108,6 +108,37 @@ app.post('/api/:set/save/import', (req, res) => {
   }
 });
 
+// Sauvegarde combinée : réunit la progression d'un même joueur sur tous les univers en un seul
+// fichier téléchargeable, pour éviter d'avoir à gérer/perdre plusieurs fichiers séparés.
+app.get('/api/save-all/:name', (req, res) => {
+  const name = req.params.name;
+  const universes = {};
+  for (const setDef of sets.getSets()) {
+    if (saveManager.saveExists(name, setDef.id)) {
+      universes[setDef.id] = saveManager.loadOrCreateSave(name, setDef.id);
+    }
+  }
+  res.json({ name, universes });
+});
+
+app.post('/api/save-all/import', (req, res) => {
+  const data = req.body;
+  if (!data || typeof data !== 'object' || !data.universes || typeof data.universes !== 'object') {
+    return res.status(400).json({ error: 'Fichier de sauvegarde combinée invalide.' });
+  }
+  const imported = {};
+  const errors = {};
+  for (const [setId, universeSave] of Object.entries(data.universes)) {
+    if (!sets.isValidSet(setId)) continue; // ignore un univers inconnu (ex: ancien set retiré)
+    try {
+      imported[setId] = saveManager.importSave(universeSave, setId);
+    } catch (e) {
+      errors[setId] = e.message;
+    }
+  }
+  res.json({ name: data.name, imported, errors });
+});
+
 app.post('/api/:set/save/:name/shop/buy', (req, res) => {
   const setId = requireValidSet(req, res);
   if (!setId) return;
@@ -455,7 +486,8 @@ io.on('connection', (socket) => {
       // migré chez un autre adversaire suite à une défaite passée) est remplacée par un substitut,
       // PUIS 5 cartes sont tirées au hasard dans ce pool résolu (peut contenir plus de 5 cartes).
       const resolvedDeckB = legendaryRegistry.resolveOpponentDeck(set, opponent.deck, tier, opponentIndex, save.discovered || []);
-      const handB = buildHand(pickRandomOpponentHand(resolvedDeckB), 'B');     // IA
+      const dealtHandB = pickRandomOpponentHand(resolvedDeckB); // les 5 cartes réellement distribuées à l'IA pour cette partie
+      const handB = buildHand(dealtHandB, 'B');     // IA
       const startingPlayer = Math.random() < 0.5 ? 'A' : 'B';
       const cellElements = parsedRules.elemental ? assignRandomElements() : Array(9).fill(null);
 
@@ -466,7 +498,7 @@ io.on('connection', (socket) => {
         opponentIndex,
         board: engine.createEmptyBoard(),
         hands: { A: handA, B: handB },
-        originalDeck: { A: [...actualDeckCardIds], B: [...resolvedDeckB] },
+        originalDeck: { A: [...actualDeckCardIds], B: [...dealtHandB] },
         rules: parsedRules,
         cellElements,
         tradeRule: effectiveTradeRule,
@@ -486,7 +518,7 @@ io.on('connection', (socket) => {
         cellElements: session.cellElements,
       });
 
-      if (startingPlayer === 'B') aiPlaySolo(socket, session, 2000);
+      if (startingPlayer === 'B') aiPlaySolo(socket, session, 4500);
     } catch (e) {
       socket.emit('error:msg', e.message);
     }
@@ -513,11 +545,11 @@ io.on('connection', (socket) => {
   socket.on('solo:cardChosen', ({ chosenCardIds }) => {
     const session = soloSessions.get(socket.id);
     if (!session || !session.pendingWin) return socket.emit('error:msg', 'Aucun choix en attente.');
-    const { score, n } = session.pendingWin;
+    const { score, n, options } = session.pendingWin;
     if (!Array.isArray(chosenCardIds) || chosenCardIds.length !== n) {
       return socket.emit('error:msg', `Choisissez exactement ${n} carte(s).`);
     }
-    const pool = [...session.originalDeck.B];
+    const pool = [...options]; // uniquement les cartes réellement posées par l'adversaire (voir finishIfBoardFull)
     for (const id of chosenCardIds) {
       const idx = pool.indexOf(id);
       if (idx === -1) return socket.emit('error:msg', 'Sélection invalide.');
@@ -581,7 +613,7 @@ io.on('connection', (socket) => {
         opponentName: session.opponentName,
       });
 
-      if (startingPlayer === 'B') aiPlayLegendaryDuel(socket, session, 2000);
+      if (startingPlayer === 'B') aiPlayLegendaryDuel(socket, session, 4500);
     } catch (e) {
       socket.emit('error:msg', e.message);
     }
@@ -661,7 +693,7 @@ io.on('connection', (socket) => {
         bracket: t,
       });
 
-      if (startingPlayer === 'B') aiPlayTournament(socket, session, 2000);
+      if (startingPlayer === 'B') aiPlayTournament(socket, session, 4500);
     } catch (e) {
       socket.emit('error:msg', e.message);
     }
@@ -1038,14 +1070,21 @@ function finishIfBoardFull(socket, session, triggeredByPlayer) {
   else if (score.A < score.B) result = 'losses';
   else result = 'draws';
 
-  // Victoire du joueur avec une règle de mise "One" ou "Diff" : on lui laisse choisir sa carte.
+  // Victoire du joueur avec une règle de mise "One" ou "Diff" : on lui laisse choisir sa carte
+  // parmi les 5 cartes de départ de l'adversaire pour cette partie (la main réellement distribuée),
+  // qu'elles aient été posées sur le plateau ou non. Le vainqueur est annoncé immédiatement, puis un
+  // délai de 2s s'écoule avant d'afficher l'écran de choix (le temps de voir le résultat).
   if (result === 'wins' && (session.tradeRule === 'one' || session.tradeRule === 'diff')) {
     const n = session.tradeRule === 'one' ? 1 : Math.max(1, Math.min(5, score.A - score.B));
-    session.pendingWin = { score, n };
-    socket.emit('solo:chooseCard', {
-      options: session.originalDeck.B,
-      count: n,
-    });
+    const options = [...session.originalDeck.B];
+    session.pendingWin = { score, n, options };
+    socket.emit('solo:roundResult', { score, result });
+    setTimeout(() => {
+      socket.emit('solo:chooseCard', {
+        options,
+        count: n,
+      });
+    }, 2000);
     return true; // la partie n'est pas terminée tant que le choix n'est pas fait
   }
 
@@ -1066,7 +1105,6 @@ function finalizeSoloResult(socket, session, score, result, chosenGains) {
         loserOriginalDeck: session.originalDeck.B,
         scoreWinner: score.A,
         scoreLoser: score.B,
-        boardCardIds: session.board.filter(c => c).map(c => c.cardId),
       });
       if (trade.mode === 'direct') {
         gains = session.board.filter(c => c && c.owner === 'A' && session.originalDeck.B.includes(c.cardId)).map(c => c.cardId);
@@ -1085,7 +1123,6 @@ function finalizeSoloResult(socket, session, score, result, chosenGains) {
       loserOriginalDeck: session.originalDeck.A,
       scoreWinner: score.B,
       scoreLoser: score.A,
-      boardCardIds: session.board.filter(c => c).map(c => c.cardId),
     });
     if (trade.mode === 'direct') {
       losses = session.board.filter(c => c && c.owner === 'B' && session.originalDeck.A.includes(c.cardId)).map(c => c.cardId);

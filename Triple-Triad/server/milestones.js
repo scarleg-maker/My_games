@@ -33,7 +33,7 @@ const MILESTONE_TIERS = {
     { threshold: 120, label: 'Acteur de Tantalus', icon: '🎪' },
     { threshold: 200, label: 'Voleur de Lindblum', icon: '🗡️' },
     { threshold: 300, label: 'Vedette de la Troupe', icon: '💫' },
-    { threshold: 420, label: 'Bras Droit de Baku', icon: '🏅' },
+    { threshold: 420, label: 'Bras Droit de Bach', icon: '🏅' },
     { threshold: 550, label: 'Légende de Gaia', icon: '🌍' },
   ],
   dsbb: [
@@ -65,6 +65,36 @@ const SPECIAL_BADGE_ICONS = {
   celebrite: '⭐',
   herosLegendaire: '👑',
 };
+
+// Titres des 3 jalons spéciaux par set — à adapter à la terminologie propre à chaque univers (par
+// exemple : pas de "G-Forces" dans DSBB, qui a ses propres tournois "Âme" et "Seigneur").
+const SPECIAL_BADGE_LABELS = {
+  ffviii: {
+    maitreDesGForces: 'Maître des G-Forces',
+    celebrite: 'Célébrité',
+    herosLegendaire: 'Héros légendaire',
+  },
+  ffix: {
+    maitreDesGForces: 'Maître des Boss',
+    celebrite: 'Vedette de Gaia',
+    herosLegendaire: 'Héros légendaire',
+  },
+  dsbb: {
+    maitreDesGForces: 'Porteur d\'Âmes',
+    celebrite: 'Élu des Seigneurs',
+    herosLegendaire: 'Héros légendaire',
+  },
+  // Libellés génériques utilisés pour tout set sans thème dédié défini ci-dessus.
+  default: {
+    maitreDesGForces: 'Maître Absolu',
+    celebrite: 'Célébrité',
+    herosLegendaire: 'Héros légendaire',
+  },
+};
+
+function getSpecialBadgeLabels(setId) {
+  return SPECIAL_BADGE_LABELS[setId] || SPECIAL_BADGE_LABELS.default;
+}
 
 function getMilestoneTiers(setId) {
   return MILESTONE_TIERS[setId] || MILESTONE_TIERS.default;
@@ -135,6 +165,7 @@ function getMilestoneSummary(setId, save) {
       herosLegendaire: badges.hasAllCards,
     },
     badgeIcons: SPECIAL_BADGE_ICONS,
+    badgeLabels: getSpecialBadgeLabels(setId),
     allTiers: tiers.map(t => ({ ...t, reached: points >= t.threshold })),
   };
 }
@@ -144,5 +175,6 @@ module.exports = {
   getMilestoneTiers,
   computeMilestonePoints,
   getSpecialBadges,
+  getSpecialBadgeLabels,
   getMilestoneSummary,
 };

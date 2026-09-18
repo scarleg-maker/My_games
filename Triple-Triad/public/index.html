@@ -22,6 +22,7 @@
       <span class="nowrap-group">Connecté : <strong id="sessionPlayerName"></strong></span>
       <span class="nowrap-group">— <span id="sessionPoints"></span> points</span>
       <button id="downloadSaveBtn">⬇️ Télécharger ma sauvegarde</button>
+      <button id="downloadAllSavesBtn" title="Réunit la progression de tous vos univers en un seul fichier">⬇️ Tous mes univers</button>
       <button id="logoutBtn" class="danger-btn">Déconnecter</button>
       <div id="milestoneTitleRow"><span id="milestoneIcon"></span> <span id="milestoneTitle"></span></div>
     </div>
@@ -182,7 +183,7 @@
 
     <div class="setup-block">
       <h3>5. Choisissez vos 5 cartes</h3>
-      <div id="deckPicker" class="card-grid"></div>
+      <div id="deckPicker"></div>
       <p>Sélectionnées: <span id="deckCount">0</span> / 5</p>
     </div>
 
@@ -225,7 +226,7 @@
 
     <div class="setup-block">
       <h3>Choisissez vos 5 cartes (issues de votre collection)</h3>
-      <div id="pvpDeckPicker" class="card-grid"></div>
+      <div id="pvpDeckPicker"></div>
       <p>Sélectionnées: <span id="pvpDeckCount">0</span> / 5</p>
     </div>
 
@@ -457,7 +458,7 @@
       <div id="tournamentTierPicker"></div>
 
       <h4>2. Vos 5 cartes (utilisées pour tout le tournoi)</h4>
-      <div id="tournamentDeckPicker" class="card-grid"></div>
+      <div id="tournamentDeckPicker"></div>
       <p>Sélectionnées: <span id="tournamentDeckCount">0</span> / 5</p>
 
       <button id="tournamentStartBtn" disabled>Commencer le tournoi</button>
@@ -475,7 +476,7 @@
     Aucune influence sur vos statistiques victoires/défaites.</p>
 
     <h4>Vos 5 cartes</h4>
-    <div id="legendaryDuelDeckPicker" class="card-grid"></div>
+    <div id="legendaryDuelDeckPicker"></div>
     <p>Sélectionnées: <span id="legendaryDuelDeckCount">0</span> / 5</p>
 
     <button id="legendaryDuelStartBtn" disabled>Combattre</button>

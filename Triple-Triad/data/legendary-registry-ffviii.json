@@ -10,14 +10,14 @@
   "ondine_ffviii": null,
   "tauros_ffviii": null,
   "taurux_ffviii": null,
-  "ahuri_ffviii": null,
-  "nosferatu_ffviii": null,
+  "carbuncle_ffviii": null,
+  "diablos_ffviii": null,
   "leviathan_ffviii": null,
   "odin_ffviii": null,
   "zephyr_ffviii": null,
-  "cerberes_ffviii": null,
+  "cerberus_ffviii": null,
   "alexander_ffviii": null,
-  "phenix_ffviii": null,
+  "phoenix_ffviii": null,
   "bahamut_ffviii": null,
   "helltrain_ffviii": null,
   "orbital_ffviii": null,
@@ -29,11 +29,13 @@
   "irvine_ffviii": null,
   "zell_ffviii": null,
   "linoa_ffviii": null,
-  "edea_ffviii": null,
-  "seifer_ffviii": null,
-  "squall_ffviii": null,
-  "carbuncle_ffviii": null,
-  "diablos_ffviii": null,
-  "cerberus_ffviii": null,
-  "phoenix_ffviii": null
+  "edea_ffviii": {
+    "tier": 1,
+    "opponentIndex": 4
+  },
+  "seifer_ffviii": {
+    "tier": 1,
+    "opponentIndex": 2
+  },
+  "squall_ffviii": null
 }
