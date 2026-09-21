@@ -1,0 +1,87 @@
+{
+  "name": "Scarleg",
+  "set": "ffviii",
+  "createdAt": "2026-08-31T16:51:07.325Z",
+  "collection": [
+    {
+      "id": "bogomile_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "elmidea_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "nocturnus_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "incube_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "larva_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "gallus_ffviii",
+      "quantity": 1
+    },
+    {
+      "id": "fungus_ffviii",
+      "quantity": 1
+    },
+    {
+      "id": "elastos_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "diodon_ffviii",
+      "quantity": 2
+    },
+    {
+      "id": "feng_ffviii",
+      "quantity": 1
+    },
+    {
+      "id": "selek_ffviii",
+      "quantity": 1
+    },
+    {
+      "id": "orchida_ffviii",
+      "quantity": 1
+    }
+  ],
+  "discovered": [
+    "bogomile_ffviii",
+    "fungus_ffviii",
+    "elmidea_ffviii",
+    "nocturnus_ffviii",
+    "incube_ffviii",
+    "larva_ffviii",
+    "gallus_ffviii",
+    "elastos_ffviii",
+    "diodon_ffviii",
+    "feng_ffviii",
+    "selek_ffviii",
+    "orchida_ffviii"
+  ],
+  "stats": {
+    "wins": 4,
+    "losses": 0,
+    "draws": 0
+  },
+  "lastDeck": [
+    "bogomile_ffviii",
+    "fungus_ffviii",
+    "elmidea_ffviii",
+    "nocturnus_ffviii",
+    "incube_ffviii",
+    "larva_ffviii",
+    "gallus_ffviii"
+  ],
+  "points": 1050,
+  "unlocks": [],
+  "tournamentsWon": [],
+  "tournament": null
+}
