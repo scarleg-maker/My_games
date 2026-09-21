@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Duo-Master</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="offline" id="offline">Connexion perdue — reconnexion en cours…</div>
+
+  <main class="wrap">
+    <section class="card me-card" id="me" hidden></section>
+
+    <header class="top">
+      <span class="logo">
+        <svg viewBox="0 0 46 30" aria-hidden="true">
+          <circle cx="16" cy="15" r="12" fill="#ffd60a" stroke="#0a1f44" stroke-width="3"/>
+          <circle cx="30" cy="15" r="12" fill="#ff4d6d" stroke="#0a1f44" stroke-width="3"/>
+          <path d="M23 5.2a12 12 0 0 1 0 19.6a12 12 0 0 1 0-19.6z" fill="#fff" stroke="#0a1f44" stroke-width="2"/>
+        </svg>
+        <b>Duo-Master</b>
+      </span>
+      <span class="tag" id="themeTag"></span>
+    </header>
+
+    <section class="card" id="stage">
+      <div id="draw" class="draw"></div>
+      <p class="status" id="status" aria-live="polite"></p>
+    </section>
+
+    <div class="banner" id="over" hidden></div>
+
+    <section class="card" id="boardCard">
+      <h2 id="boardTitle">Scores</h2>
+      <div class="rows" id="board"></div>
+    </section>
+  </main>
+
+  <script src="/common.js"></script>
+  <script src="/joueur.js"></script>
+</body>
+</html>

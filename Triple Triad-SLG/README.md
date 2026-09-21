@@ -266,8 +266,10 @@ persiste même après une Remise à zéro.
 ## Logo et fonds d'écran
 
 - **Logo** : `public/images/logo.png` remplace le titre texte "Triple Triad" en haut de chaque page.
-- **Fond principal** : `public/images/background-main.jpg` s'affiche en fond sur tous les écrans, sauf
-  pendant une partie.
+- **Fond principal** : `public/images/backgrounds/background-main_XXX.jpg` (remplacez `XXX` par
+  l'identifiant du set en MAJUSCULES, ex: `FFVIII`) s'affiche en fond sur tous les écrans, sauf pendant
+  une partie. Un fond différent par univers : le jeu recharge l'image au bon nom à chaque changement
+  d'univers. Tant qu'un univers n'a pas son fichier, l'ancien fond reste affiché (pas d'écran cassé).
 - **Fond du plateau** : dès que la vue de jeu s'affiche, le fond bascule automatiquement sur un dégradé
   radial `#C4944A` (centre) → `#341814` (bords), défini dans `public/style.css` (règle `body.in-game`).
   Pour changer ces couleurs, modifiez les valeurs dans cette règle.
@@ -652,16 +654,22 @@ contenu quand vous aurez choisi vos récompenses.
 
 ## Musiques et bruitages
 
-Déposez vos 3 fichiers dans **`public/audio/`**, avec ces noms exacts :
+Déposez vos fichiers dans **`public/audio/`**, avec ces noms exacts (remplacez `XXX` par l'identifiant
+du set en MAJUSCULES, ex: `FFVIII`, `FFIX`, `DSBB`) :
 
 | Fichier | Rôle |
 |---|---|
-| `Menu_TT.mp3` | Musique de fond sur le menu principal et tous les écrans hors-duel (en boucle) |
-| `Duel_TT.mp3` | Musique de fond pendant un affrontement — Solo, PvP ou Tournoi (en boucle) |
-| `Bouton_TT.mp3` | Bruit joué à chaque clic sur un bouton |
+| `Menu_TT_XXX.mp3` | Musique de fond sur le menu principal et tous les écrans hors-duel de cet univers (en boucle) |
+| `Duel_TT_XXX.mp3` | Musique de fond pendant un affrontement de cet univers — Solo, PvP ou Tournoi (en boucle) |
+| `Bouton_TT.mp3` | Bruit joué à chaque clic sur un bouton (commun à tous les univers, un seul fichier) |
+
+Chaque univers a donc son propre jeu de musiques. Tant qu'un univers n'a pas ses fichiers, aucun son ne
+joue pour lui (échec silencieux, sans erreur) — il suffit d'ajouter les fichiers plus tard pour que ça
+fonctionne, sans toucher au code.
 
 Aucune autre configuration n'est nécessaire : le jeu détecte automatiquement l'écran affiché et bascule
-entre "Menu" et "Duel" au bon moment (basé sur la vue active), et joue le bruit de bouton sur tout clic.
+entre "Menu" et "Duel" au bon moment (basé sur la vue active), recharge les bonnes pistes à chaque
+changement d'univers, et joue le bruit de bouton sur tout clic.
 
 **Fonctionnement technique** :
 - La musique change automatiquement à chaque navigation (`showView()`), sans redémarrer si vous restez

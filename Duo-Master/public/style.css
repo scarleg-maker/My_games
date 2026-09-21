@@ -1,0 +1,283 @@
+:root {
+  --ink: #0a1f44;
+  --paper: #fff;
+  --cyan: #00e5ff;
+  --sun: #ffd60a;
+  --coral: #ff4d6d;
+  --mint: #19c37d;
+  --bw: 3px;
+  --font: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", "Trebuchet MS", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: var(--font);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fond : blanc → cyan (au centre) → blanc, fixe par rapport à l'écran */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, #ffffff 0%, var(--cyan) 50%, #ffffff 100%);
+}
+
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 14px 14px 60px;
+  display: grid;
+  gap: 18px;
+}
+.wrap.wide { max-width: 1000px; }
+
+:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* ---------- En-tête ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.logo { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+.logo svg { width: 46px; height: 30px; flex: none; }
+.logo b { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; }
+.tag {
+  background: var(--paper);
+  border: var(--bw) solid var(--ink);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-weight: 800;
+  font-size: .95rem;
+  white-space: nowrap;
+}
+
+/* ---------- Cartes ---------- */
+.card {
+  background: var(--paper);
+  border: var(--bw) solid var(--ink);
+  border-radius: 20px;
+  box-shadow: 0 6px 0 var(--ink);
+  padding: 16px;
+}
+.card h2 { margin: 0 0 10px; font-size: 1.15rem; font-weight: 900; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.card-head h2 { margin: 0; }
+.muted { opacity: .7; font-weight: 600; }
+
+/* ---------- Boutons ---------- */
+.btn {
+  font: inherit;
+  font-weight: 900;
+  color: var(--ink);
+  background: var(--sun);
+  border: var(--bw) solid var(--ink);
+  border-radius: 999px;
+  padding: 10px 18px;
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+  transition: transform .06s, box-shadow .06s;
+}
+.btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: 0 2px 0 var(--ink); }
+.btn.big { font-size: 1.3rem; padding: 14px 26px; width: 100%; }
+.btn.small { padding: 5px 12px; font-size: .9rem; box-shadow: 0 3px 0 var(--ink); }
+.btn.white { background: #fff; }
+.btn.coral { background: var(--coral); color: #fff; }
+.btn.mint { background: var(--mint); }
+.btn.icon { padding: 5px 0; width: 42px; font-size: 1.05rem; text-align: center; }
+
+/* ---------- Tirage (le moment fort) ---------- */
+.draw {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+.slot {
+  min-height: 150px;
+  border: var(--bw) solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 0 6px 0 var(--ink);
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  background: #e8eef8;
+  color: var(--ink);
+  transition: background-color .08s;
+}
+.slot-label { font-size: .85rem; font-weight: 800; opacity: .8; }
+.slot-value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .18);
+}
+.slot-value .emo { margin-right: .3em; }
+/* Taille du texte proportionnelle à la largeur de la carte (unités de conteneur) */
+.slot { container-type: inline-size; }
+.slot-value { overflow-wrap: break-word; }
+.s-1 { font-size: clamp(1.3rem, 24cqw, 3.6rem); }
+.s-2 { font-size: clamp(1.2rem, 17cqw, 3.2rem); }
+.s-3 { font-size: clamp(1.1rem, 14cqw, 2.8rem); }
+.s-4 { font-size: clamp(1.1rem, 12cqw, 2.2rem); }
+.s-5 { font-size: clamp(.95rem, 9.5cqw, 1.7rem); }
+.slot.empty .slot-value { font-size: 3.4rem; opacity: .35; text-shadow: none; }
+
+.is-rolling .slot { animation: jitter .16s linear infinite; }
+.is-rolling .slot-value { filter: blur(.7px); }
+@keyframes jitter {
+  0% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(-2px, 1px) rotate(-.5deg); }
+  50% { transform: translate(2px, -1px) rotate(.5deg); }
+  75% { transform: translate(-1px, -2px) rotate(-.3deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+.slot.pop { animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes pop {
+  0% { transform: scale(.82); }
+  60% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.status { margin: 14px 2px 0; font-weight: 800; font-size: 1.05rem; text-align: center; min-height: 1.4em; }
+.actions { margin-top: 12px; display: grid; gap: 10px; }
+
+/* ---------- Bannière victoire ---------- */
+.banner {
+  background: var(--sun);
+  border: var(--bw) solid var(--ink);
+  border-radius: 20px;
+  box-shadow: 0 6px 0 var(--ink);
+  padding: 14px;
+  text-align: center;
+  font-size: clamp(1.3rem, 5vw, 1.9rem);
+  font-weight: 900;
+  animation: pop .6s cubic-bezier(.2, 1.6, .4, 1);
+}
+.banner .btn { margin-top: 10px; }
+
+/* ---------- Joueurs & scores ---------- */
+.badge {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--pc, var(--sun));
+  border: var(--bw) solid var(--ink);
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: var(--ink);
+}
+.pips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pip { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; }
+.pip.on { background: var(--sun); }
+
+.rows { display: grid; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-top: 2px dashed rgba(10, 31, 68, .18);
+}
+.row:first-child { border-top: 0; padding-top: 0; }
+.row:last-child { padding-bottom: 0; }
+.row-main { flex: 1 1 130px; min-width: 0; }
+.row-name { font-weight: 900; font-size: 1.1rem; overflow-wrap: anywhere; }
+.row-score { font-weight: 900; font-size: 1.6rem; min-width: 2.2ch; text-align: right; }
+.row-score small { font-size: .55em; opacity: .6; }
+.row.me { background: rgba(255, 214, 10, .28); margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-radius: 12px; border-top-color: transparent; }
+.row.win .row-name::after { content: " 🏆"; }
+.row-btns { display: flex; gap: 6px; align-items: center; }
+
+/* Carte « mon score » côté joueur */
+.me-card { display: flex; align-items: center; gap: 14px; }
+.me-card .badge { width: 48px; height: 48px; font-size: 1.3rem; }
+.me-info { flex: 1; min-width: 0; }
+.me-name { font-size: 1.4rem; font-weight: 900; overflow-wrap: anywhere; }
+.me-score { font-size: clamp(3.6rem, 19vw, 6rem); font-weight: 900; line-height: .9; letter-spacing: -0.04em; text-align: right; }
+.me-score small { font-size: .3em; opacity: .6; letter-spacing: 0; }
+
+/* Écran commun : gros scores */
+.board-xl .row-name { font-size: 1.6rem; }
+.board-xl .row-score { font-size: 2.6rem; }
+.board-xl .badge { width: 46px; height: 46px; font-size: 1.2rem; }
+.board-xl .pip { width: 16px; height: 16px; }
+
+/* ---------- Réponses (arbitre) ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 280px; overflow: auto; padding: 2px; }
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 3px 9px;
+  font-weight: 800;
+}
+.chip small { font-weight: 700; font-size: .72em; opacity: .55; }
+details.more { margin-top: 10px; }
+details.more summary { cursor: pointer; font-weight: 800; }
+details.more .chips { margin-top: 8px; }
+
+/* ---------- Réglages ---------- */
+details.card > summary { cursor: pointer; font-weight: 900; font-size: 1.15rem; list-style: none; }
+details.card > summary::-webkit-details-marker { display: none; }
+details.card > summary::after { content: "▾"; float: right; transition: transform .15s; }
+details.card[open] > summary::after { transform: rotate(180deg); }
+.settings { display: grid; gap: 14px; margin-top: 14px; }
+.field { display: grid; gap: 5px; }
+.field > span { font-weight: 800; }
+input[type=text], select {
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  width: 100%;
+  border: var(--bw) solid var(--ink);
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: #fff;
+}
+.names { display: grid; gap: 8px; }
+.name-line { display: flex; align-items: center; gap: 10px; }
+.stepper { display: inline-flex; align-items: center; gap: 12px; }
+.stepper output { min-width: 2.2ch; text-align: center; font-weight: 900; font-size: 1.4rem; }
+.links { display: grid; gap: 4px; font-size: .92rem; word-break: break-all; }
+.links a { color: var(--ink); }
+.saved { font-size: .85rem; opacity: .7; min-height: 1.2em; }
+
+/* ---------- Divers ---------- */
+.offline {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+  background: var(--coral); color: #fff; text-align: center;
+  padding: 6px; font-weight: 800; display: none;
+}
+.toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  background: var(--ink); color: #fff; padding: 10px 20px; border-radius: 999px;
+  font-weight: 800; z-index: 20; max-width: 90vw; text-align: center;
+  animation: toast 3.2s ease forwards;
+}
+.toast.err { background: var(--coral); }
+@keyframes toast {
+  0% { opacity: 0; transform: translate(-50%, 12px); }
+  8%, 88% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, 0); }
+}
+.empty-seat { text-align: center; font-weight: 800; }
+
+@media (prefers-reduced-motion: reduce) {
+  .is-rolling .slot, .slot.pop, .banner { animation: none; }
+  .is-rolling .slot-value { filter: none; }
+}

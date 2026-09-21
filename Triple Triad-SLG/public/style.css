@@ -1,7 +1,7 @@
 * { box-sizing: border-box; }
 body {
   font-family: 'Segoe UI', Roboto, sans-serif;
-  background: #0a0c1a url('images/background-main.jpg') center / cover no-repeat fixed;
+  background: #0a0c1a var(--universe-bg, url('images/backgrounds/background-main_FFVIII.jpg')) center / cover no-repeat fixed;
   color: #eae6ff;
   margin: 0;
   padding: 16px;

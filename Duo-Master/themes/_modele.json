@@ -1,0 +1,28 @@
+{
+  "name": "Mon thème (copier ce fichier, le renommer sans le « _ » initial)",
+  "emoji": "🎲",
+  "description": "Phrase affichée dans les réglages pour expliquer la règle du thème.",
+
+  "answerMode": "slots",
+  "skipEmpty": true,
+
+  "lists": {
+    "couleurs": [
+      { "name": "Rouge", "color": "#E63946", "emoji": "🍎" },
+      { "name": "Jaune", "color": "#FFD60A", "emoji": "🍌" },
+      { "name": "Vert",  "color": "#2E9E5B", "emoji": "🥝" }
+    ],
+    "formes": ["Rond", "Long", "Petit"]
+  },
+
+  "slots": [
+    { "id": "couleur", "label": "Couleur", "list": "couleurs" },
+    { "id": "forme",   "label": "Forme",   "list": "formes" }
+  ],
+
+  "answers": [
+    { "name": "Pomme",   "couleur": ["Rouge", "Vert"], "forme": "Rond" },
+    { "name": "Banane",  "couleur": "Jaune",           "forme": "Long" },
+    { "name": "Cerise",  "couleur": "Rouge",           "forme": "Petit" }
+  ]
+}

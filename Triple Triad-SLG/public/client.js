@@ -32,13 +32,16 @@ let state = {
 
 // ---------------- Navigation ----------------
 // ================= AUDIO (musiques d'ambiance + bruit de bouton) =================
-// Placez vos fichiers dans public/audio/ avec ces noms exacts :
-//   Menu_TT.mp3   -> musique du menu principal et des écrans hors-duel
-//   Duel_TT.mp3   -> musique jouée pendant un affrontement (Solo/PvP/Tournoi)
-//   Bouton_TT.mp3 -> bruit joué à chaque clic sur un bouton
+// Un jeu de pistes par univers, nommées avec le suffixe du set en MAJUSCULES. Placez vos fichiers
+// dans public/audio/ avec ces noms exacts (remplacez XXX par l'id du set, ex: FFVIII, FFIX, DSBB) :
+//   Menu_TT_XXX.mp3   -> musique du menu principal et des écrans hors-duel, pour cet univers
+//   Duel_TT_XXX.mp3   -> musique jouée pendant un affrontement (Solo/PvP/Tournoi), pour cet univers
+//   Bouton_TT.mp3     -> bruit joué à chaque clic sur un bouton (commun à tous les univers)
+// Tant qu'un univers n'a pas ses propres fichiers, aucun son ne joue pour lui (échec silencieux,
+// pas d'erreur visible) — il suffit d'ajouter les fichiers plus tard pour que ça fonctionne.
 const musicTracks = {
-  menu: new Audio('/audio/Menu_TT.mp3'),
-  duel: new Audio('/audio/Duel_TT.mp3'),
+  menu: new Audio(),
+  duel: new Audio(),
 };
 musicTracks.menu.loop = true;
 musicTracks.duel.loop = true;
@@ -47,6 +50,31 @@ musicTracks.duel.volume = 0.5;
 
 const buttonSound = new Audio('/audio/Bouton_TT.mp3');
 buttonSound.volume = 0.6;
+
+/**
+ * Applique le fond d'écran et recharge les pistes de musique pour l'univers donné. Le fond
+ * d'écran est pré-chargé via un objet Image avant application : si le fichier spécifique à cet
+ * univers n'existe pas encore, l'ancien fond reste affiché (pas d'écran vide/cassé). Les pistes
+ * audio, elles, échouent silencieusement si le fichier n'existe pas (comportement natif de
+ * l'élément <audio>) : c'est acceptable tant qu'aucun fichier n'a été fourni pour cet univers.
+ */
+function applyUniverseTheme(setId) {
+  const suffix = setId.toUpperCase();
+
+  const bgUrl = `/images/backgrounds/background-main_${suffix}.jpg`;
+  const preload = new Image();
+  preload.onload = () => { document.documentElement.style.setProperty('--universe-bg', `url('${bgUrl}')`); };
+  preload.onerror = () => { /* fichier pas encore fourni pour cet univers : on garde le fond actuel */ };
+  preload.src = bgUrl;
+
+  const wasPlayingKey = currentTrackKey; // mémorise pour relancer la lecture après rechargement
+  musicTracks.menu.pause();
+  musicTracks.duel.pause();
+  musicTracks.menu.src = `/audio/Menu_TT_${suffix}.mp3`;
+  musicTracks.duel.src = `/audio/Duel_TT_${suffix}.mp3`;
+  currentTrackKey = null; // force playTrack() à relancer la lecture même si la clé n'a pas changé
+  if (wasPlayingKey) playTrack(wasPlayingKey);
+}
 
 let audioUnlocked = false;
 let musicMuted = localStorage.getItem('musicMuted') === 'true';
@@ -182,6 +210,7 @@ async function loadStaticData(setId) {
 async function selectSet(setId) {
   state.activeSet = setId;
   localStorage.setItem('activeSet', setId);
+  applyUniverseTheme(setId);
   staticDataReady = loadStaticData(setId);
   await staticDataReady;
   const setDef = AVAILABLE_SETS.find(s => s.id === setId);

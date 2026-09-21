@@ -1,0 +1,9 @@
+{
+  "name": "duo-master",
+  "version": "1.0.0",
+  "description": "Jeu de quiz à deux tirages (Pokémon, Dragon Ball…) avec arbitre, joueurs en temps réel — sans dépendance.",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=16" },
+  "license": "MIT"
+}
