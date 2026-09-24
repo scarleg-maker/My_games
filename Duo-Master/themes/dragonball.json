@@ -20,7 +20,11 @@
       {"name":"Tournoi du Pouvoir","color":"#1D4ED8","emoji":"🏆"},
       {"name":"Saga Broly","color":"#2ECC71","emoji":"💥"},
       {"name":"Saga Granolah","color":"#B7791F","emoji":"👁️"},
-      {"name":"Super Hero","color":"#E63946","emoji":"🦸"}
+      {"name":"Super Hero","color":"#E63946","emoji":"🦸"},
+      {"name":"Saga Moro","color":"#6A0DAD","emoji":"🌙"},
+      {"name":"Saga Dragon Ball GT","color":"#FF5722","emoji":"🚀"},
+      {"name":"Films / OAV","color":"#009688","emoji":"🎬"},
+      {"name":"Daima","color":"#C2185B","emoji":"🧸"}
     ],
     "races": [
       {"name":"Saiyan","color":"#F29F05","emoji":"🐒"},
@@ -40,7 +44,7 @@
     { "id": "race", "label": "Race", "list": "races" }
   ],
   "answers": [
-    {"name":"Son Goku","info":"Kakarot","arc":["Saga Pilaf","Armée Red Ribbon","Piccolo Daimaô","Saga des Saiyans","Saga Namek / Freezer","Saga des Androïdes","Cell Game","Saga Majin Buu","Dieux & Résurrection de F","Tournoi Univers 6","Trunks du futur / Black","Tournoi du Pouvoir","Saga Broly","Saga Granolah","Super Hero"],"race":["Saiyan"]},
+ 	{"name":"Son Goku","info":"Kakarot","arc":["Saga Pilaf","Armée Red Ribbon","Piccolo Daimaô","Saga des Saiyans","Saga Namek / Freezer","Saga des Androïdes","Cell Game","Saga Majin Buu","Dieux & Résurrection de F","Tournoi Univers 6","Trunks du futur / Black","Tournoi du Pouvoir","Saga Broly","Saga Granolah","Super Hero"],"race":["Saiyan"]},
     {"name":"Vegeta","info":"Prince des Saiyans","arc":["Saga des Saiyans","Saga Namek / Freezer","Saga des Androïdes","Cell Game","Saga Majin Buu","Dieux & Résurrection de F","Tournoi Univers 6","Trunks du futur / Black","Tournoi du Pouvoir","Saga Broly","Saga Granolah","Super Hero"],"race":["Saiyan"]},
     {"name":"Son Gohan","info":"Demi-Saiyan","arc":["Saga des Saiyans","Saga Namek / Freezer","Saga des Androïdes","Cell Game","Saga Majin Buu","Dieux & Résurrection de F","Tournoi du Pouvoir","Super Hero"],"race":["Saiyan"]},
     {"name":"Son Goten","info":"Demi-Saiyan","arc":["Saga Majin Buu","Dieux & Résurrection de F","Saga Broly","Super Hero"],"race":["Saiyan"]},
@@ -135,6 +139,41 @@
     {"name":"Gas","info":"Chasseur de primes","arc":["Saga Granolah"],"race":["Alien / Autre"]},
     {"name":"Monaito","info":"Cérealien","arc":["Saga Granolah"],"race":["Alien / Autre"]},
     {"name":"Elec","info":"Chasseur de primes","arc":["Saga Granolah"],"race":["Alien / Autre"]},
-    {"name":"Oatmeal","info":"Chasseur de primes","arc":["Saga Granolah"],"race":["Alien / Autre"]}
-  ]
+    {"name":"Oatmeal","info":"Chasseur de primes","arc":["Saga Granolah"],"race":["Alien / Autre"]},
+  {"name":"Neva","info":"Namek du Monde des Démons","arc":["Daima"],"race":["Namek"]},
+  {"name":"King Gomah","info":"Nouveau Roi du Monde des Démons","arc":["Daima"],"race":["Démon"]},
+  {"name":"Urbus","info":"Monstre du Monde des Démons","arc":["Daima"],"race":["Démon"]},
+  {"name":"Oopz","info":"Habitant du Monde des Démons","arc":["Daima"],"race":["Démon"]},
+  {"name":"Goku (GT)","info":"Goku petit (GT)","arc":["Saga Dragon Ball GT"],"race":["Saiyan"]},
+  {"name":"Pan (GT)","info":"Petite-fille de Goku (GT)","arc":["Saga Dragon Ball GT"],"race":["Terrien","Saiyan"]},
+  {"name":"Uub","info":"Réincarnation de Buu","arc":["Saga Majin Buu","Saga Moro","Saga Dragon Ball GT"],"race":["Terrien"]},
+  {"name":"Majuub","info":"Fusion Uub + Buu","arc":["Saga Dragon Ball GT"],"race":["Terrien","Majin"]},
+  {"name":"Baby","info":"Parasite Tsufur","arc":["Saga Dragon Ball GT"],"race":["Alien / Autre"]},
+  {"name":"Super C17","info":"Fusion C17 + Hell C17","arc":["Saga Dragon Ball GT"],"race":["Androïde / Cyborg"]},
+  {"name":"Li Shenron (Omega)","info":"Dragon Noir à 1 étoile","arc":["Saga Dragon Ball GT"],"race":["Démon","Alien / Autre"]},
+  {"name":"Giru","info":"Robot accompagnateur","arc":["Saga Dragon Ball GT"],"race":["Androïde / Cyborg"]},
+  {"name":"Broly (Z)","info":"Super Saiyan Légendaire original","arc":["Films / OAV"],"race":["Saiyan"]},
+  {"name":"Janemba","info":"Incarnation du mal","arc":["Films / OAV"],"race":["Démon"]},
+  {"name":"Gogeta (SSJ4 / Z)","info":"Fusion Goku + Vegeta (Films/GT)","arc":["Films / OAV","Saga Dragon Ball GT"],"race":["Saiyan"]},
+  {"name":"Bojack","info":"Héraut du Boucan","arc":["Films / OAV"],"race":["Alien / Autre"]},
+  {"name":"Tapion","info":"Héros à la ocarina","arc":["Films / OAV"],"race":["Alien / Autre"]},
+  {"name":"Minotia","info":"Frère de Tapion","arc":["Films / OAV"],"race":["Alien / Autre"]},
+  {"name":"Hildegarn","info":"Monstre illusionniste","arc":["Films / OAV"],"race":["Démon","Alien / Autre"]},
+  {"name":"C13","info":"Androïde ultime du Dr. Gero","arc":["Films / OAV"],"race":["Androïde / Cyborg"]},
+  {"name":"C14","info":"Androïde","arc":["Films / OAV"],"race":["Androïde / Cyborg"]},
+  {"name":"C15","info":"Androïde","arc":["Films / OAV"],"race":["Androïde / Cyborg"]},
+  {"name":"Garlic Jr.","info":"Tyran du Royaume des Démons","arc":["Films / OAV"],"race":["Démon"]},
+  {"name":"Dr. Willow","info":"Cerveau dans un robot","arc":["Films / OAV"],"race":["Terrien","Androïde / Cyborg"]},
+  {"name":"Thalès (Turles)","info":"Saiyan pirate","arc":["Films / OAV"],"race":["Saiyan"]},
+  {"name":"Lord Slug","info":"Super Namek maléfique","arc":["Films / OAV"],"race":["Namek"]},
+  {"name":"Gokua","info":"Guerrier de Bojack","arc":["Films / OAV"],"race":["Alien / Autre"]},
+  {"name":"Zangya","info":"Guerrière de Bojack","arc":["Films / OAV"],"race":["Alien / Autre"]},
+  {"name":"Bido","info":"Guerrier de Bojack","arc":["Films / OAV"],"race":["Alien / Autre"]},
+  {"name":"Kogu","info":"Guerrier de Bojack","arc":["Films / OAV"],"race":["Alien / Autre"]},
+  {"name":"Mora","info":"Habitante de la planète Yardrat","arc":["Saga Moro"],"race":["Alien / Autre"]},
+  {"name":"Pybara","info":"Aîné des Yardrats","arc":["Saga Moro"],"race":["Alien / Autre"]},
+  {"name":"Jacqui Chun","info":"Maître Kamé incognito","arc":["Saga Pilaf","Armée Red Ribbon"],"race":["Terrien"]},
+  {"name":"Grand-père Gohan","info":"Père adoptif de Goku","arc":["Saga Pilaf"],"race":["Terrien"]},
+  {"name":"Baba la Voyante","info":"Sœur de Maître Kamé","arc":["Saga Pilaf","Saga des Saiyans","Saga Majin Buu","Tournoi du Pouvoir"],"race":["Terrien","Divinité"]}
+]
 }

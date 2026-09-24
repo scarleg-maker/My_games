@@ -348,6 +348,7 @@ async function handleApi(req, res, p) {
 
   if (p === '/api/start') {
     S.started = true;
+    S.round = 0;
     resetRound();
     setEvent('start');
     commit();
@@ -424,6 +425,7 @@ async function handleApi(req, res, p) {
     if (b.themeId != null && b.themeId !== S.themeId) {
       if (!readThemeFile(String(b.themeId))) throw new HttpError(404, 'Thème introuvable');
       S.themeId = String(b.themeId);
+      S.round = 0;
       resetRound();
     }
     checkGameOver();
