@@ -10,6 +10,10 @@
   const view = new DM.DrawView($('#draw'));
   let seenEvent; // id du dernier événement déjà notifié (undefined = pas encore d'état reçu)
   let chain = Promise.resolve();
+  let stopCountdown = null;
+  let lockedRound = null;  // numéro de tour pour lequel ma réponse est déjà validée (correcte)
+  let shownRound = null;   // numéro de tour pour lequel le champ a déjà été vidé
+  let submitting = false;
 
   DM.connect(
     (st) => { chain = chain.then(() => render(st)).catch(console.error); },
@@ -32,6 +36,7 @@
     renderMe(S);
     renderStatus(S);
     renderBoard(S);
+    renderAnswer(S);
   }
 
   /* --- mes points (en haut) --- */
@@ -90,4 +95,78 @@
         <div class="row-score">${p.score}<small>/${S.target}</small></div>
       </div>`).join('');
   }
+
+  /* --- zone de réponse (mode Réponse) --- */
+  function renderAnswer(S) {
+    const form = $('#answerForm');
+    const eligible = me > 0 && S.mode === 'answer';
+    if (!eligible) {
+      form.hidden = true;
+      if (stopCountdown) { stopCountdown(); stopCountdown = null; }
+      return;
+    }
+
+    if (shownRound !== S.round) { // nouveau tour : on repart d'une feuille blanche
+      shownRound = S.round;
+      lockedRound = null;
+      $('#answerInput').value = '';
+      $('#answerFeedback').textContent = '';
+      $('#answerFeedback').className = 'answer-feedback';
+    }
+
+    const active = S.phase === 'drawn' && !S.gameOver;
+    form.hidden = !active;
+    if (!active) { if (stopCountdown) { stopCountdown(); stopCountdown = null; } return; }
+
+    const locked = lockedRound === S.round;
+    const input = $('#answerInput');
+    const btn = $('#answerBtn');
+
+    if (stopCountdown) { stopCountdown(); stopCountdown = null; }
+    if (S.answerDeadline) {
+      stopCountdown = DM.countdown(S.answerDeadline, S.answerMs, (secs, frac) => {
+        $('#ansBarFill').style.width = `${Math.max(0, Math.min(1, frac)) * 100}%`;
+        const timeUp = secs <= 0;
+        input.disabled = locked || timeUp || submitting;
+        btn.disabled = input.disabled;
+        if (timeUp && !locked && !$('#answerFeedback').textContent) {
+          $('#answerFeedback').textContent = 'Temps écoulé — en attente du tour suivant.';
+        }
+      });
+    }
+  }
+
+  $('#answerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!me || submitting) return;
+    const input = $('#answerInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const fb = $('#answerFeedback');
+    submitting = true;
+    input.disabled = true;
+    $('#answerBtn').disabled = true;
+    try {
+      const r = await DM.api('/api/answer', { playerId: me, text });
+      if (r.correct === true) {
+        lockedRound = shownRound;
+        fb.textContent = '✅ Bonne réponse !';
+        fb.className = 'answer-feedback ok';
+      } else if (r.correct === false) {
+        fb.textContent = '❌ Ce n\'est pas ça, réessayez !';
+        fb.className = 'answer-feedback bad';
+      } else {
+        fb.textContent = 'Réponse envoyée : en attente de correction par l\'arbitre.';
+        fb.className = 'answer-feedback';
+      }
+    } catch (err) {
+      DM.toast(err.message, true);
+    } finally {
+      submitting = false;
+      const locked = lockedRound === shownRound;
+      input.disabled = locked;
+      $('#answerBtn').disabled = locked;
+      if (!locked) input.select();
+    }
+  });
 })();

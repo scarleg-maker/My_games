@@ -10,6 +10,7 @@ const os = require('os');
 
 const PORT = Number(process.env.PORT) || 13000;
 const ROLL_MS = 2000; // durée du défilement avant révélation du tirage
+const ANSWER_MS = 10000; // durée laissée aux joueurs pour écrire leur réponse (mode « Réponse »)
 const MAX_PLAYERS = 6;
 const MIN_PLAYERS = 2;
 const MIN_TARGET = 3;
@@ -27,6 +28,9 @@ class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 const norm = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+// Comparaison joueur ↔ réponse : accents/casse ignorés, ponctuation et espaces multiples aussi
+// (« méga dracaufeu-x » == « Méga-Dracaufeu X »), pour rester tolérant sans faire de correction floue.
+const normLoose = (s) => norm(s).replace(/[^a-z0-9]+/g, ' ').trim();
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const toInt = (v, what) => {
   const n = Math.round(Number(v));
@@ -166,6 +170,7 @@ const S = {
   target: 10,
   themeId: 'pokemon',
   started: false, // false = salon (réglages), true = partie lancée par l'arbitre
+  mode: 'speed', // 'speed' = Rapidité (l'arbitre désigne le vainqueur) | 'answer' = Réponse (les joueurs écrivent, vérif auto)
   phase: 'idle', // idle | rolling | drawn
   draw: null,
   round: 0,
@@ -173,9 +178,13 @@ const S = {
   winnerId: null,
   lastEvent: null,
   eventSeq: 0,
+  submissions: {}, // mode "answer" : playerId -> { text, correct, awarded, at } pour le tour en cours
+  answerDeadline: null, // mode "answer" : horodatage (ms) de fin du minuteur du tour en cours
+  subRev: 0, // incrémenté à chaque réponse reçue, pour rafraîchir la vue arbitre
 };
 let rollTimer = null;
 let pendingDraw = null;
+let answerTimer = null; // mode "answer" : clôture officielle du tour à la fin du délai de réponse
 
 function loadState() {
   try {
@@ -185,6 +194,7 @@ function loadState() {
     S.playerCount = clamp(Math.round(Number(j.playerCount)) || 2, MIN_PLAYERS, MAX_PLAYERS);
     S.target = clamp(Math.round(Number(j.target)) || 10, MIN_TARGET, MAX_TARGET);
     if (typeof j.themeId === 'string') S.themeId = j.themeId;
+    S.mode = j.mode === 'answer' ? 'answer' : 'speed';
     S.round = Math.max(0, Math.round(Number(j.round)) || 0);
     S.started = j.started === undefined ? (S.round > 0 || S.scores.some((n) => n > 0)) : !!j.started;
   } catch { /* premier lancement */ }
@@ -200,7 +210,7 @@ function saveState() {
     fs.mkdirSync(DIR_DATA, { recursive: true });
     fs.writeFileSync(FILE_STATE, JSON.stringify({
       names: S.names, scores: S.scores, playerCount: S.playerCount, target: S.target,
-      themeId: S.themeId, round: S.round, started: S.started,
+      themeId: S.themeId, round: S.round, started: S.started, mode: S.mode,
     }, null, 2));
   } catch (e) {
     console.warn('Sauvegarde impossible :', e.message);
@@ -208,13 +218,27 @@ function saveState() {
 }
 
 function checkGameOver() {
-  let best = -1;
-  let idx = -1;
-  for (let i = 0; i < S.playerCount; i++) {
-    if (S.scores[i] >= S.target && S.scores[i] > best) { best = S.scores[i]; idx = i; }
+  if (S.mode === 'answer') {
+    // Mode Réponse : les points peuvent tomber simultanément, donc une égalité au sommet
+    // (même au-delà de l'objectif) ne termine pas la partie — il faut être seul en tête.
+    let best = -1;
+    let idx = -1;
+    let tie = false;
+    for (let i = 0; i < S.playerCount; i++) {
+      if (S.scores[i] > best) { best = S.scores[i]; idx = i; tie = false; }
+      else if (S.scores[i] === best) { tie = true; }
+    }
+    S.gameOver = idx >= 0 && best >= S.target && !tie;
+    S.winnerId = S.gameOver ? idx + 1 : null;
+  } else {
+    let best = -1;
+    let idx = -1;
+    for (let i = 0; i < S.playerCount; i++) {
+      if (S.scores[i] >= S.target && S.scores[i] > best) { best = S.scores[i]; idx = i; }
+    }
+    S.gameOver = idx >= 0;
+    S.winnerId = idx >= 0 ? idx + 1 : null;
   }
-  S.gameOver = idx >= 0;
-  S.winnerId = idx >= 0 ? idx + 1 : null;
   if (S.gameOver && S.phase !== 'idle') stopRound();
 }
 
@@ -222,13 +246,29 @@ function stopRound() {
   clearTimeout(rollTimer);
   rollTimer = null;
   pendingDraw = null;
+  clearTimeout(answerTimer);
+  answerTimer = null;
   S.phase = 'idle';
+}
+
+/**
+ * Mode Réponse : décide du sort du tour en cours (victoire ou égalité, on continue).
+ * Appelé à la fin du délai de réponse, ou juste avant de lancer le tirage suivant
+ * si l'arbitre avance la main avant l'échéance — jamais au fil des réponses reçues,
+ * pour laisser sa chance à chaque joueur jusqu'à la fin du tour.
+ */
+function closeAnswerRound() {
+  clearTimeout(answerTimer);
+  answerTimer = null;
+  checkGameOver();
 }
 
 function resetRound() {
   stopRound();
   S.draw = null;
   S.lastEvent = null;
+  S.submissions = {};
+  S.answerDeadline = null;
 }
 
 function setEvent(type, playerId) {
@@ -248,12 +288,16 @@ function publicState() {
     themeId: S.themeId,
     themeRev: theme ? theme.rev : 0,
     started: S.started,
+    mode: S.mode,
     phase: S.phase,
     draw: S.draw,
     round: S.round,
     gameOver: S.gameOver,
     winnerId: S.winnerId,
     lastEvent: S.lastEvent,
+    answerDeadline: S.answerDeadline,
+    answerMs: ANSWER_MS,
+    subRev: S.subRev,
   };
 }
 
@@ -334,12 +378,27 @@ async function handleApi(req, res, p) {
     const theme = readThemeFile(S.themeId);
     if (!theme) throw new HttpError(404, 'Thème introuvable');
     const hasAnswers = theme.answers.length > 0;
-    if (!S.draw || S.phase === 'rolling' || !hasAnswers) {
-      return json(res, 200, { hasAnswers, exact: [], also: [], alsoLabel: '' });
+    const submissions = () => S.mode === 'answer' ? Array.from({ length: S.playerCount }, (_, i) => {
+      const sub = S.submissions[i + 1];
+      return {
+        id: i + 1,
+        name: S.names[i],
+        text: sub ? sub.text : '',
+        correct: sub ? sub.correct : null,
+        awarded: sub ? !!sub.awarded : false,
+      };
+    }) : undefined;
+    if (!S.draw || S.phase === 'rolling') {
+      return json(res, 200, { hasAnswers, exact: [], also: [], alsoLabel: '', submissions: submissions() });
+    }
+    if (!hasAnswers) {
+      return json(res, 200, { hasAnswers, exact: [], also: [], alsoLabel: '', submissions: submissions() });
     }
     const r = findAnswers(theme, S.draw);
     const pub = (a) => ({ name: a.name, info: a.info, detail: theme.answerMode === 'set' ? a.raw.join(' / ') : '' });
-    return json(res, 200, { hasAnswers, exact: r.exact.map(pub), also: r.also.map(pub), alsoLabel: r.alsoLabel });
+    return json(res, 200, {
+      hasAnswers, exact: r.exact.map(pub), also: r.also.map(pub), alsoLabel: r.alsoLabel, submissions: submissions(),
+    });
   }
 
   // --- actions ---
@@ -357,6 +416,9 @@ async function handleApi(req, res, p) {
 
   if (p === '/api/draw') {
     if (!S.started) throw new HttpError(409, 'La partie n\'est pas lancée.');
+    // Mode Réponse : si l'arbitre avance la main avant la fin du délai, on tranche
+    // maintenant le sort du tour qui vient de se jouer (au lieu d'attendre le minuteur).
+    if (S.mode === 'answer' && S.phase === 'drawn') { closeAnswerRound(); if (S.gameOver) commit(); }
     if (S.gameOver) throw new HttpError(409, 'La partie est terminée : lancez une nouvelle partie.');
     if (S.phase === 'rolling') throw new HttpError(409, 'Tirage déjà en cours.');
     const theme = readThemeFile(S.themeId);
@@ -366,12 +428,21 @@ async function handleApi(req, res, p) {
     S.draw = null;
     S.round += 1;
     S.lastEvent = null;
+    S.submissions = {};
+    S.answerDeadline = null;
     commit();
     rollTimer = setTimeout(() => {
       rollTimer = null;
       S.draw = pendingDraw;
       pendingDraw = null;
       S.phase = 'drawn';
+      S.submissions = {};
+      if (S.mode === 'answer') {
+        S.answerDeadline = Date.now() + ANSWER_MS;
+        answerTimer = setTimeout(() => { closeAnswerRound(); commit(); }, ANSWER_MS + 50);
+      } else {
+        S.answerDeadline = null;
+      }
       commit();
     }, ROLL_MS);
     return json(res, 200, { ok: true });
@@ -382,12 +453,50 @@ async function handleApi(req, res, p) {
     if (S.gameOver) throw new HttpError(409, 'La partie est terminée.');
     if (S.phase !== 'drawn') throw new HttpError(409, 'Aucun tirage en attente d\'un vainqueur.');
     const i = playerIndex(b);
+    if (S.submissions[i + 1] && S.submissions[i + 1].awarded) throw new HttpError(409, 'Ce joueur a déjà son point pour ce tour.');
     S.scores[i] += 1;
-    S.phase = 'idle';
+    S.submissions[i + 1] = { ...(S.submissions[i + 1] || { text: '', correct: null, at: Date.now() }), awarded: true };
+    if (S.mode === 'answer') S.subRev += 1; // rafraîchit la vue « Réponses des joueurs » côté arbitre
+    // Mode Rapidité : un seul point par tour, on referme aussitôt.
+    // Mode Réponse : plusieurs joueurs peuvent encore marquer, le tour reste ouvert.
+    if (S.mode !== 'answer') {
+      S.phase = 'idle';
+      checkGameOver();
+    } // en mode Réponse : le tour reste ouvert, la victoire se tranche à sa clôture (closeAnswerRound)
     setEvent('point', i + 1);
-    checkGameOver();
     commit();
     return json(res, 200, { ok: true });
+  }
+
+  if (p === '/api/answer') {
+    if (!S.started) throw new HttpError(409, 'La partie n\'est pas lancée.');
+    if (S.mode !== 'answer') throw new HttpError(409, 'Ce mode n\'accepte pas de réponse écrite.');
+    if (S.gameOver) throw new HttpError(409, 'La partie est terminée.');
+    if (S.phase !== 'drawn' || !S.draw) throw new HttpError(409, 'Aucun tirage en cours.');
+    if (!S.answerDeadline || Date.now() > S.answerDeadline + 400) throw new HttpError(409, 'Le temps est écoulé pour ce tour.');
+    const i = playerIndex(b);
+    const prev = S.submissions[i + 1];
+    if (prev && prev.awarded) throw new HttpError(409, 'Votre point est déjà validé pour ce tour.');
+    const text = String(b.text ?? '').replace(/\s+/g, ' ').trim().slice(0, 60);
+    if (!text) throw new HttpError(400, 'Réponse vide.');
+
+    const theme = readThemeFile(S.themeId);
+    let correct = null; // null = thème sans liste de réponses : l'arbitre jugera
+    if (theme && theme.answers.length) {
+      const r = findAnswers(theme, S.draw);
+      const target = normLoose(text);
+      correct = r.exact.some((a) => normLoose(a.name) === target);
+    }
+    S.submissions[i + 1] = { text, correct, awarded: !!correct, at: Date.now() };
+    S.subRev += 1;
+    if (correct) {
+      S.scores[i] += 1;
+      setEvent('answer', i + 1);
+      // On ne tranche pas la victoire ici : un autre joueur peut encore répondre
+      // dans le même tour (closeAnswerRound s'en charge à la fin du délai).
+    }
+    commit();
+    return json(res, 200, { ok: true, correct });
   }
 
   if (p === '/api/adjust') {
@@ -397,6 +506,10 @@ async function handleApi(req, res, p) {
     const next = clamp(S.scores[i] + delta, 0, S.target);
     if (next === S.scores[i]) return json(res, 200, { ok: true });
     S.scores[i] = next;
+    if (delta < 0 && S.submissions[i + 1] && S.submissions[i + 1].awarded) {
+      S.submissions[i + 1].awarded = false;
+      if (S.mode === 'answer') S.subRev += 1;
+    }
     setEvent(delta < 0 ? 'remove' : 'add', i + 1);
     checkGameOver();
     commit();
@@ -427,6 +540,10 @@ async function handleApi(req, res, p) {
       S.themeId = String(b.themeId);
       S.round = 0;
       resetRound();
+    }
+    if (b.mode != null) {
+      const m = b.mode === 'answer' ? 'answer' : 'speed';
+      if (m !== S.mode) { S.mode = m; S.round = 0; resetRound(); }
     }
     checkGameOver();
     commit();

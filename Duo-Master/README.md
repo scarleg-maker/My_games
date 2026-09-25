@@ -96,6 +96,20 @@ Les comparaisons ignorent majuscules et accents. Sans `answers`, le thème fonct
 - `themes/dragonball.json` : tirage d'un **arc** et d'une **race**, une centaine de personnages de départ.
   Les associations sont à compléter / corriger à votre goût (une ligne = un personnage).
 
+## Mode de jeu : Rapidité ou Réponse
+
+En haut de la page arbitre, un sélecteur permet de choisir le mode, à tout moment :
+
+- **⚡ Rapidité** (comportement historique) : l'arbitre écoute les joueurs à l'oral et désigne
+  lui-même qui a gagné le point. Un seul point par tour.
+- **✍️ Réponse** : chaque joueur écrit sa réponse sur sa page, avec 10 secondes pour la taper.
+  Elle est comparée automatiquement à la liste de réponses du thème (accents, majuscules et
+  ponctuation ignorés). Plusieurs joueurs peuvent marquer sur le même tour. L'arbitre voit en
+  direct ce que chacun a tapé et peut attribuer le point à la main si la réponse était juste
+  mais mal orthographiée (ou si le thème n'a pas de liste de réponses).
+  En cas d'égalité au sommet une fois l'objectif atteint (ex. 10 à 10), la partie continue :
+  il faut finir seul en tête pour gagner, comme demandé (« la 11ᵉ réponse la plus rapide »).
+
 ## Structure
 
 ```

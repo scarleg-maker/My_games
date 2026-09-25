@@ -42,6 +42,23 @@
   DM.pips = (score, target) =>
     `<div class="pips" aria-hidden="true">${Array.from({ length: target }, (_, i) => `<span class="pip${i < score ? ' on' : ''}"></span>`).join('')}</div>`;
 
+  /**
+   * Compte à rebours synchronisé sur une échéance serveur (horodatage ms).
+   * onTick(secondesRestantes, fraction 0→1) est appelé ~8x/s ; onDone() une fois à 0.
+   * Renvoie une fonction stop() à appeler pour arrêter proprement.
+   */
+  DM.countdown = (deadline, totalMs, onTick, onDone) => {
+    let done = false;
+    const step = () => {
+      const left = Math.max(0, deadline - Date.now());
+      onTick(Math.ceil(left / 1000), totalMs ? left / totalMs : 0);
+      if (left <= 0 && !done) { done = true; onDone && onDone(); }
+    };
+    step();
+    const id = setInterval(step, 120);
+    return () => clearInterval(id);
+  };
+
   DM.toast = (text, isError = false) => {
     const el = document.createElement('div');
     el.className = `toast${isError ? ' err' : ''}`;
@@ -54,6 +71,7 @@
     if (!ev) return '';
     switch (ev.type) {
       case 'point': return `🎉 Point pour ${ev.name}`;
+      case 'answer': return `✅ Bonne réponse de ${ev.name} !`;
       case 'remove': return `Point retiré à ${ev.name}`;
       case 'add': return `+1 point pour ${ev.name}`;
       case 'start': return '🚀 La partie commence !';

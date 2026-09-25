@@ -23,8 +23,8 @@
     ]
   },
   "slots": [
-    { "id": "factions", "label": "Factions", "list": "factions" },
-    { "id": "natures", "label": "Natures", "list": "natures" }
+    { "id": "faction", "label": "Faction", "list": "factions" },
+    { "id": "nature", "label": "Nature", "list": "natures" }
   ],
   "answers": [
     {"name": "Monkey D. Luffy", "info": "Capitaine des Chapeaux de Paille", "factions": ["Pirate"], "natures": ["Fruit Paramecia", "Fruit Zoan"]},

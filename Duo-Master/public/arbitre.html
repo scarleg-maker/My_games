@@ -23,6 +23,12 @@
       <span class="tag" id="themeTag"></span>
     </header>
 
+    <div class="modebar" id="modeBar" role="group" aria-label="Mode de jeu">
+      <button class="mode-btn" data-mode="speed" type="button">⚡ Rapidité</button>
+      <button class="mode-btn" data-mode="answer" type="button">✍️ Réponse</button>
+    </div>
+    <p class="mode-desc muted" id="modeDesc"></p>
+
     <section class="card" id="stage">
       <div id="draw" class="draw"></div>
       <p class="status" id="status" aria-live="polite"></p>
@@ -35,6 +41,15 @@
       <div id="overText"></div>
       <button class="btn white" id="overNew" type="button">Nouvelle partie</button>
     </div>
+
+    <section class="card" id="submissionsCard" hidden>
+      <div class="card-head">
+        <h2>Réponses des joueurs</h2>
+        <span class="countdown-txt" id="subTimer"></span>
+      </div>
+      <div class="countdown-bar" id="subBar" hidden><span id="subBarFill"></span></div>
+      <div class="rows" id="submissions"></div>
+    </section>
 
     <section class="card" id="answersCard" hidden>
       <div class="card-head">

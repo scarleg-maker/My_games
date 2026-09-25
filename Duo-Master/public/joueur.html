@@ -28,6 +28,14 @@
     <section class="card" id="stage">
       <div id="draw" class="draw"></div>
       <p class="status" id="status" aria-live="polite"></p>
+      <form class="answer-box" id="answerForm" hidden>
+        <div class="countdown-bar" id="ansBar"><span id="ansBarFill"></span></div>
+        <div class="answer-row">
+          <input type="text" id="answerInput" maxlength="60" placeholder="Votre réponse…" autocomplete="off" inputmode="text" aria-label="Votre réponse">
+          <button class="btn mint" id="answerBtn" type="submit">Valider</button>
+        </div>
+        <p class="answer-feedback" id="answerFeedback" aria-live="polite"></p>
+      </form>
     </section>
 
     <div class="banner" id="over" hidden></div>
