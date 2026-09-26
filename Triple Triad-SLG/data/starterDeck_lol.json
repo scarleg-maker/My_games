@@ -1,0 +1,28 @@
+{
+  "lol": [
+    {
+      "id": "ziggs_lol",
+      "quantity": 3
+    },
+    {
+      "id": "annie_lol",
+      "quantity": 3
+    },
+    {
+      "id": "elise_lol",
+      "quantity": 3
+    },
+    {
+      "id": "cassiopeia_lol",
+      "quantity": 3
+    },
+    {
+      "id": "quinn_lol",
+      "quantity": 3
+    },
+    {
+      "id": "karthus_lol",
+      "quantity": 3
+    }
+  ]
+}

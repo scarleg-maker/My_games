@@ -1,0 +1,68 @@
+{
+  "name": "Scarleg",
+  "set": "lol",
+  "createdAt": "2026-09-26T08:18:17.330Z",
+  "collection": [
+    {
+      "id": "ziggs_lol",
+      "quantity": 3
+    },
+    {
+      "id": "annie_lol",
+      "quantity": 3
+    },
+    {
+      "id": "elise_lol",
+      "quantity": 3
+    },
+    {
+      "id": "cassiopeia_lol",
+      "quantity": 3
+    },
+    {
+      "id": "quinn_lol",
+      "quantity": 3
+    },
+    {
+      "id": "karthus_lol",
+      "quantity": 3
+    }
+  ],
+  "discovered": [
+    "ziggs_lol",
+    "annie_lol",
+    "elise_lol",
+    "cassiopeia_lol",
+    "quinn_lol",
+    "karthus_lol"
+  ],
+  "stats": {
+    "wins": 0,
+    "losses": 0,
+    "draws": 0
+  },
+  "lastDeck": [
+    "ziggs_lol",
+    "ziggs_lol",
+    "ziggs_lol",
+    "annie_lol",
+    "annie_lol",
+    "annie_lol",
+    "elise_lol",
+    "elise_lol",
+    "elise_lol",
+    "cassiopeia_lol",
+    "cassiopeia_lol",
+    "cassiopeia_lol",
+    "quinn_lol",
+    "quinn_lol",
+    "quinn_lol",
+    "karthus_lol",
+    "karthus_lol",
+    "karthus_lol"
+  ],
+  "points": 1000,
+  "unlocks": [],
+  "tournamentsWon": [],
+  "tournament": null
+}

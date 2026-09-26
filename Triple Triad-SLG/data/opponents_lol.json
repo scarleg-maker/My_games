@@ -1,0 +1,908 @@
+[
+  {
+    "tier": 1,
+    "label": "Palier 1",
+    "opponents": [
+      {
+        "name": "Recrue de la Faille",
+        "ai": "random",
+        "deck": [
+          "heimerdinger_lol",
+          "maokai_lol",
+          "ziggs_lol",
+          "taric_lol",
+          "karthus_lol",
+          "skarner_lol",
+          "cassiopeia_lol",
+          "corki_lol",
+          "kog_maw_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Invocateur Novice",
+        "ai": "random",
+        "deck": [
+          "quinn_lol",
+          "heimerdinger_lol",
+          "elise_lol",
+          "skarner_lol",
+          "annie_lol",
+          "maokai_lol",
+          "cassiopeia_lol",
+          "taric_lol",
+          "anivia_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Garde de Piltover",
+        "ai": "random",
+        "deck": [
+          "rumble_lol",
+          "maokai_lol",
+          "heimerdinger_lol",
+          "cassiopeia_lol",
+          "corki_lol",
+          "karthus_lol",
+          "ziggs_lol",
+          "quinn_lol",
+          "xin_zhao_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Éclaireur de Demacia",
+        "ai": "random",
+        "deck": [
+          "rumble_lol",
+          "annie_lol",
+          "heimerdinger_lol",
+          "maokai_lol",
+          "quinn_lol",
+          "cassiopeia_lol",
+          "ziggs_lol",
+          "taric_lol",
+          "nunu_et_willump_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Apprenti Mage",
+        "ai": "random",
+        "deck": [
+          "corki_lol",
+          "karthus_lol",
+          "maokai_lol",
+          "heimerdinger_lol",
+          "annie_lol",
+          "skarner_lol",
+          "quinn_lol",
+          "rumble_lol",
+          "anivia_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Soldat de Noxus",
+        "ai": "random",
+        "deck": [
+          "corki_lol",
+          "maokai_lol",
+          "annie_lol",
+          "elise_lol",
+          "taric_lol",
+          "rumble_lol",
+          "quinn_lol",
+          "cassiopeia_lol",
+          "gragas_lol"
+        ],
+        "set": "lol"
+      }
+    ]
+  },
+  {
+    "tier": 2,
+    "label": "Palier 2",
+    "opponents": [
+      {
+        "name": "Chasseur de Primes",
+        "ai": "greedy",
+        "deck": [
+          "elise_lol",
+          "rumble_lol",
+          "heimerdinger_lol",
+          "anivia_lol",
+          "kennen_lol",
+          "gragas_lol",
+          "riven_lol",
+          "trundle_lol",
+          "singed_lol",
+          "rammus_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Marchande de Bandle",
+        "ai": "greedy",
+        "deck": [
+          "ziggs_lol",
+          "rumble_lol",
+          "corki_lol",
+          "kog_maw_lol",
+          "fiddlesticks_lol",
+          "kennen_lol",
+          "trundle_lol",
+          "nunu_et_willump_lol",
+          "xin_zhao_lol",
+          "kayle_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Sentinelle de Freljord",
+        "ai": "greedy",
+        "deck": [
+          "karthus_lol",
+          "cassiopeia_lol",
+          "heimerdinger_lol",
+          "kog_maw_lol",
+          "gragas_lol",
+          "poppy_lol",
+          "xin_zhao_lol",
+          "kennen_lol",
+          "singed_lol",
+          "nidalee_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Voleur de Zaun",
+        "ai": "greedy",
+        "deck": [
+          "karthus_lol",
+          "maokai_lol",
+          "taric_lol",
+          "kog_maw_lol",
+          "trundle_lol",
+          "kennen_lol",
+          "poppy_lol",
+          "nunu_et_willump_lol",
+          "riven_lol",
+          "zilean_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Prêtresse de Targon",
+        "ai": "greedy",
+        "deck": [
+          "corki_lol",
+          "cassiopeia_lol",
+          "karthus_lol",
+          "poppy_lol",
+          "singed_lol",
+          "udyr_lol",
+          "anivia_lol",
+          "gragas_lol",
+          "kennen_lol",
+          "urgot_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Garde-Frontière",
+        "ai": "greedy",
+        "deck": [
+          "corki_lol",
+          "quinn_lol",
+          "heimerdinger_lol",
+          "riven_lol",
+          "udyr_lol",
+          "xin_zhao_lol",
+          "poppy_lol",
+          "anivia_lol",
+          "gragas_lol",
+          "urgot_lol"
+        ],
+        "set": "lol"
+      }
+    ]
+  },
+  {
+    "tier": 3,
+    "label": "Palier 3",
+    "opponents": [
+      {
+        "name": "Chevalier Errant",
+        "ai": "greedy",
+        "deck": [
+          "kennen_lol",
+          "nunu_et_willump_lol",
+          "trundle_lol",
+          "singed_lol",
+          "sona_lol",
+          "rammus_lol",
+          "zilean_lol",
+          "zac_lol",
+          "olaf_lol",
+          "kayle_lol",
+          "dr_mundo_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Duelliste de la Faille",
+        "ai": "greedy",
+        "deck": [
+          "kennen_lol",
+          "poppy_lol",
+          "xin_zhao_lol",
+          "singed_lol",
+          "kayle_lol",
+          "sejuani_lol",
+          "nidalee_lol",
+          "rammus_lol",
+          "varus_lol",
+          "olaf_lol",
+          "amumu_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Éclaireuse Ionienne",
+        "ai": "greedy",
+        "deck": [
+          "kog_maw_lol",
+          "trundle_lol",
+          "udyr_lol",
+          "poppy_lol",
+          "sona_lol",
+          "urgot_lol",
+          "sejuani_lol",
+          "kayle_lol",
+          "rammus_lol",
+          "kassadin_lol",
+          "sion_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Mercenaire de Bilgewater",
+        "ai": "greedy",
+        "deck": [
+          "fiddlesticks_lol",
+          "trundle_lol",
+          "poppy_lol",
+          "anivia_lol",
+          "olaf_lol",
+          "sejuani_lol",
+          "varus_lol",
+          "evelynn_lol",
+          "rammus_lol",
+          "urgot_lol",
+          "diana_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Chasseuse d'Ombres",
+        "ai": "greedy",
+        "deck": [
+          "nunu_et_willump_lol",
+          "xin_zhao_lol",
+          "singed_lol",
+          "fiddlesticks_lol",
+          "rammus_lol",
+          "kayle_lol",
+          "zilean_lol",
+          "sona_lol",
+          "kassadin_lol",
+          "sejuani_lol",
+          "sion_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Garde d'Élite",
+        "ai": "greedy",
+        "deck": [
+          "riven_lol",
+          "poppy_lol",
+          "gragas_lol",
+          "anivia_lol",
+          "kassadin_lol",
+          "zilean_lol",
+          "sejuani_lol",
+          "urgot_lol",
+          "nidalee_lol",
+          "varus_lol",
+          "sion_lol"
+        ],
+        "set": "lol"
+      }
+    ]
+  },
+  {
+    "tier": 4,
+    "label": "Palier 4",
+    "opponents": [
+      {
+        "name": "Capitaine de Piltover",
+        "ai": "bluff",
+        "deck": [
+          "zilean_lol",
+          "zac_lol",
+          "urgot_lol",
+          "kayle_lol",
+          "dr_mundo_lol",
+          "vel_koz_lol",
+          "brand_lol_lol",
+          "orianna_lol",
+          "diana_lol",
+          "gnar_lol",
+          "tryndamere_lol",
+          "draven_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Sorcière de Shadow Isles",
+        "ai": "bluff",
+        "deck": [
+          "olaf_lol",
+          "kayle_lol",
+          "sejuani_lol",
+          "sona_lol",
+          "dr_mundo_lol",
+          "sion_lol",
+          "amumu_lol",
+          "brand_lol_lol",
+          "diana_lol",
+          "zyra_lol",
+          "tryndamere_lol",
+          "sivir_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Champion en Devenir",
+        "ai": "bluff",
+        "deck": [
+          "urgot_lol",
+          "zac_lol",
+          "olaf_lol",
+          "rammus_lol",
+          "amumu_lol",
+          "sion_lol",
+          "volibear_lol",
+          "dr_mundo_lol",
+          "gnar_lol",
+          "diana_lol",
+          "draven_lol",
+          "rengar_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Vétéran de Noxus",
+        "ai": "bluff",
+        "deck": [
+          "zilean_lol",
+          "olaf_lol",
+          "sejuani_lol",
+          "sona_lol",
+          "brand_lol_lol",
+          "sion_lol",
+          "zyra_lol",
+          "yorick_lol",
+          "dr_mundo_lol",
+          "diana_lol",
+          "sivir_lol",
+          "pantheon_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Maîtresse des Runes",
+        "ai": "bluff",
+        "deck": [
+          "evelynn_lol",
+          "urgot_lol",
+          "zac_lol",
+          "rammus_lol",
+          "brand_lol_lol",
+          "dr_mundo_lol",
+          "ryze_lol",
+          "sion_lol",
+          "volibear_lol",
+          "orianna_lol",
+          "vladimir_lol",
+          "draven_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Gardien de Targon",
+        "ai": "bluff",
+        "deck": [
+          "varus_lol",
+          "olaf_lol",
+          "urgot_lol",
+          "evelynn_lol",
+          "ryze_lol",
+          "gnar_lol",
+          "volibear_lol",
+          "diana_lol",
+          "dr_mundo_lol",
+          "zyra_lol",
+          "vladimir_lol",
+          "fiora_lol"
+        ],
+        "set": "lol"
+      }
+    ]
+  },
+  {
+    "tier": 5,
+    "label": "Palier 5",
+    "opponents": [
+      {
+        "name": "Grand Duelliste",
+        "ai": "smart",
+        "deck": [
+          "orianna_lol",
+          "brand_lol_lol",
+          "yorick_lol",
+          "amumu_lol",
+          "vayne_lol",
+          "swain_lol",
+          "fiora_lol",
+          "rengar_lol",
+          "pantheon_lol",
+          "galio_lol",
+          "soraka_lol",
+          "xerath_lol",
+          "twisted_fate_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Archimage de la Faille",
+        "ai": "smart",
+        "deck": [
+          "diana_lol",
+          "gnar_lol",
+          "orianna_lol",
+          "vel_koz_lol",
+          "pantheon_lol",
+          "vayne_lol",
+          "sivir_lol",
+          "rengar_lol",
+          "fiora_lol",
+          "shen_lol",
+          "irelia_lol",
+          "vi_lol",
+          "hecarim_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Seigneur de Guerre",
+        "ai": "smart",
+        "deck": [
+          "sion_lol",
+          "dr_mundo_lol",
+          "vel_koz_lol",
+          "orianna_lol",
+          "vladimir_lol",
+          "draven_lol",
+          "sivir_lol",
+          "swain_lol",
+          "shen_lol",
+          "tryndamere_lol",
+          "veigar_lol",
+          "braum_lol",
+          "soraka_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Prophétesse Céleste",
+        "ai": "smart",
+        "deck": [
+          "ryze_lol",
+          "volibear_lol",
+          "diana_lol",
+          "brand_lol_lol",
+          "swain_lol",
+          "draven_lol",
+          "shen_lol",
+          "galio_lol",
+          "pantheon_lol",
+          "tryndamere_lol",
+          "alistar_lol",
+          "braum_lol",
+          "irelia_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Chasseur d'Élite",
+        "ai": "smart",
+        "deck": [
+          "volibear_lol",
+          "diana_lol",
+          "sion_lol",
+          "dr_mundo_lol",
+          "janna_lol",
+          "draven_lol",
+          "vladimir_lol",
+          "fiora_lol",
+          "sivir_lol",
+          "shen_lol",
+          "soraka_lol",
+          "alistar_lol",
+          "hecarim_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Gardienne Ancienne",
+        "ai": "smart",
+        "deck": [
+          "zyra_lol",
+          "orianna_lol",
+          "gnar_lol",
+          "volibear_lol",
+          "draven_lol",
+          "pantheon_lol",
+          "rengar_lol",
+          "tryndamere_lol",
+          "swain_lol",
+          "shen_lol",
+          "soraka_lol",
+          "warwick_lol",
+          "twisted_fate_lol"
+        ],
+        "set": "lol"
+      }
+    ]
+  },
+  {
+    "tier": 6,
+    "label": "Palier 6",
+    "opponents": [
+      {
+        "name": "Champion de Demacia",
+        "ai": "smart",
+        "deck": [
+          "rengar_lol",
+          "vayne_lol",
+          "fiora_lol",
+          "vladimir_lol",
+          "alistar_lol",
+          "veigar_lol",
+          "xerath_lol",
+          "braum_lol",
+          "warwick_lol",
+          "vi_lol",
+          "cho_gath_lol",
+          "renekton_lol",
+          "talon_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Maître Assassin",
+        "ai": "smart",
+        "deck": [
+          "rengar_lol",
+          "pantheon_lol",
+          "tryndamere_lol",
+          "fiora_lol",
+          "irelia_lol",
+          "soraka_lol",
+          "jayce_lol",
+          "braum_lol",
+          "cho_gath_lol",
+          "alistar_lol",
+          "xerath_lol",
+          "twitch_lol",
+          "jax_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Général de Noxus",
+        "ai": "smart",
+        "deck": [
+          "galio_lol",
+          "janna_lol",
+          "fiora_lol",
+          "rengar_lol",
+          "soraka_lol",
+          "cho_gath_lol",
+          "veigar_lol",
+          "irelia_lol",
+          "alistar_lol",
+          "twisted_fate_lol",
+          "jayce_lol",
+          "jarvan_iv_lol",
+          "talon_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Voyante de Targon",
+        "ai": "smart",
+        "deck": [
+          "rengar_lol",
+          "janna_lol",
+          "vladimir_lol",
+          "swain_lol",
+          "soraka_lol",
+          "irelia_lol",
+          "alistar_lol",
+          "warwick_lol",
+          "braum_lol",
+          "vi_lol",
+          "veigar_lol",
+          "jarvan_iv_lol",
+          "kha_zix_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Titan de Freljord",
+        "ai": "smart",
+        "deck": [
+          "janna_lol",
+          "vayne_lol",
+          "rengar_lol",
+          "sivir_lol",
+          "irelia_lol",
+          "warwick_lol",
+          "vi_lol",
+          "veigar_lol",
+          "cho_gath_lol",
+          "xerath_lol",
+          "jayce_lol",
+          "lissandra_lol",
+          "gangplank_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Ombre de Zaun",
+        "ai": "smart",
+        "deck": [
+          "rengar_lol",
+          "sivir_lol",
+          "vladimir_lol",
+          "galio_lol",
+          "alistar_lol",
+          "soraka_lol",
+          "warwick_lol",
+          "veigar_lol",
+          "xerath_lol",
+          "vi_lol",
+          "hecarim_lol",
+          "renekton_lol",
+          "lissandra_lol"
+        ],
+        "set": "lol"
+      }
+    ]
+  },
+  {
+    "tier": 7,
+    "label": "Palier 7",
+    "opponents": [
+      {
+        "name": "Légende de la Faille",
+        "ai": "smart",
+        "deck": [
+          "irelia_lol",
+          "jayce_lol",
+          "warwick_lol",
+          "alistar_lol",
+          "vi_lol",
+          "xerath_lol",
+          "jax_lol",
+          "talon_lol",
+          "fizz_lol",
+          "aatrox_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Invocateur Suprême",
+        "ai": "smart",
+        "deck": [
+          "twisted_fate_lol",
+          "hecarim_lol",
+          "cho_gath_lol",
+          "irelia_lol",
+          "soraka_lol",
+          "veigar_lol",
+          "kha_zix_lol",
+          "aatrox_lol",
+          "jarvan_iv_lol",
+          "jax_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Gardien Ultime",
+        "ai": "smart",
+        "deck": [
+          "xerath_lol",
+          "twisted_fate_lol",
+          "soraka_lol",
+          "warwick_lol",
+          "irelia_lol",
+          "veigar_lol",
+          "leblanc_lol",
+          "talon_lol",
+          "twitch_lol",
+          "jax_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Champion Ascendant",
+        "ai": "smart",
+        "deck": [
+          "alistar_lol",
+          "irelia_lol",
+          "warwick_lol",
+          "soraka_lol",
+          "jayce_lol",
+          "veigar_lol",
+          "renekton_lol",
+          "fizz_lol",
+          "jax_lol",
+          "aatrox_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Seigneur des Abysses",
+        "ai": "smart",
+        "deck": [
+          "jayce_lol",
+          "cho_gath_lol",
+          "irelia_lol",
+          "twisted_fate_lol",
+          "hecarim_lol",
+          "veigar_lol",
+          "jarvan_iv_lol",
+          "talon_lol",
+          "leblanc_lol",
+          "kha_zix_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Étoile de Runeterra",
+        "ai": "smart",
+        "deck": [
+          "soraka_lol",
+          "cho_gath_lol",
+          "irelia_lol",
+          "veigar_lol",
+          "vi_lol",
+          "xerath_lol",
+          "renekton_lol",
+          "shaco_lol",
+          "twitch_lol",
+          "kha_zix_lol"
+        ],
+        "set": "lol"
+      }
+    ]
+  },
+  {
+    "tier": 9,
+    "label": "Palier 9 (Tournoi Champion)",
+    "opponents": [
+      {
+        "name": "Esprit de la Faille",
+        "ai": "expert",
+        "deck": [
+          "soraka_lol",
+          "irelia_lol",
+          "jayce_lol",
+          "hecarim_lol",
+          "veigar_lol",
+          "lissandra_lol",
+          "talon_lol",
+          "jax_lol",
+          "leblanc_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Voix des Anciens",
+        "ai": "expert",
+        "deck": [
+          "vi_lol",
+          "soraka_lol",
+          "warwick_lol",
+          "hecarim_lol",
+          "xerath_lol",
+          "jarvan_iv_lol",
+          "shaco_lol",
+          "jax_lol",
+          "twitch_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Gardien du Nexus",
+        "ai": "expert",
+        "deck": [
+          "veigar_lol",
+          "alistar_lol",
+          "soraka_lol",
+          "hecarim_lol",
+          "irelia_lol",
+          "fizz_lol",
+          "renekton_lol",
+          "leblanc_lol",
+          "gangplank_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Ombre du Baron",
+        "ai": "expert",
+        "deck": [
+          "warwick_lol",
+          "cho_gath_lol",
+          "jayce_lol",
+          "soraka_lol",
+          "braum_lol",
+          "talon_lol",
+          "lissandra_lol",
+          "jax_lol",
+          "leblanc_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Héraut Ancestral",
+        "ai": "expert",
+        "deck": [
+          "xerath_lol",
+          "soraka_lol",
+          "jayce_lol",
+          "veigar_lol",
+          "alistar_lol",
+          "kha_zix_lol",
+          "jarvan_iv_lol",
+          "lissandra_lol",
+          "renekton_lol"
+        ],
+        "set": "lol"
+      },
+      {
+        "name": "Dernier Invocateur",
+        "ai": "expert",
+        "deck": [
+          "alistar_lol",
+          "hecarim_lol",
+          "irelia_lol",
+          "soraka_lol",
+          "warwick_lol",
+          "leblanc_lol",
+          "talon_lol",
+          "gangplank_lol",
+          "fizz_lol"
+        ],
+        "set": "lol"
+      }
+    ]
+  }
+]

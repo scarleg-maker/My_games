@@ -19,5 +19,12 @@
     "includes": [
       "dsbb"
     ]
+  },
+  {
+  "id": "lol",
+  "label": "League of Legends",
+  "includes": [
+    "lol"
+  ]
   }
 ]

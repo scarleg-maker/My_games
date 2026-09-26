@@ -1,0 +1,68 @@
+{
+  "name": "Scarleg",
+  "set": "ffix",
+  "createdAt": "2026-09-25T07:32:05.312Z",
+  "collection": [
+    {
+      "id": "meiden_ffix",
+      "quantity": 3
+    },
+    {
+      "id": "shaman_ffix",
+      "quantity": 3
+    },
+    {
+      "id": "eskuriax_ffix",
+      "quantity": 3
+    },
+    {
+      "id": "araneide_ffix",
+      "quantity": 3
+    },
+    {
+      "id": "mammouth_ffix",
+      "quantity": 3
+    },
+    {
+      "id": "flambos_ffix",
+      "quantity": 3
+    }
+  ],
+  "discovered": [
+    "meiden_ffix",
+    "shaman_ffix",
+    "eskuriax_ffix",
+    "araneide_ffix",
+    "mammouth_ffix",
+    "flambos_ffix"
+  ],
+  "stats": {
+    "wins": 0,
+    "losses": 0,
+    "draws": 0
+  },
+  "lastDeck": [
+    "meiden_ffix",
+    "meiden_ffix",
+    "meiden_ffix",
+    "shaman_ffix",
+    "shaman_ffix",
+    "shaman_ffix",
+    "eskuriax_ffix",
+    "eskuriax_ffix",
+    "eskuriax_ffix",
+    "araneide_ffix",
+    "araneide_ffix",
+    "araneide_ffix",
+    "mammouth_ffix",
+    "mammouth_ffix",
+    "mammouth_ffix",
+    "flambos_ffix",
+    "flambos_ffix",
+    "flambos_ffix"
+  ],
+  "points": 1000,
+  "unlocks": [],
+  "tournamentsWon": [],
+  "tournament": null
+}
