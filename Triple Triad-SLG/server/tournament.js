@@ -114,6 +114,30 @@ const SPECIAL_TOURNAMENTS = {
       fallbackReward: { points: 250, cardLevel: 7 },
     },
   },
+  lol: {
+    faille: {
+      id: 'faille',
+      label: 'Tournoi Faille',
+      passKey: 'pass_faille_lol',
+      rounds: 5,
+      rules: rules({}), // à définir manuellement
+      pickRoundTier: (roundIndex) => (roundIndex === 4 ? 7 : (Math.random() < 0.5 ? 6 : 7)),
+      rewardCardLevelPool: 8,
+      lossReward: { points: 300 },
+      fallbackReward: { points: 250, cardLevel: 7 },
+    },
+    champion: {
+      id: 'champion',
+      label: 'Tournoi Champion',
+      rules: rules({}), // à définir manuellement
+      passKey: 'pass_champion_lol',
+      rounds: 5,
+      pickRoundTier: () => 9,
+      rewardCardLevelPool: 10,
+      lossReward: { points: 500 },
+      fallbackReward: { points: 250, cardLevel: 7 },
+    },
+  },
 };
 
 function getBaseTournamentDef(id) {

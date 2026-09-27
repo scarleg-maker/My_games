@@ -327,6 +327,55 @@ input, select {
 #gameHeader { display: flex; justify-content: center; max-width: 500px; margin: 0 auto 10px; }
 #gameMessage { text-align: center; font-size: 16px; min-height: 24px; margin-top: 10px; color: #ffd873; }
 
+/* ================= Écran mobile (téléphone) : plateau + mains ================= */
+/* En desktop, les mains sont des colonnes verticales de part et d'autre du plateau (voir
+   .hand-column ci-dessus) — la largeur ne suffit plus en dessous de ~700px (colonne 140px x2 +
+   plateau ne tiennent plus côte à côte), le flex-wrap de #gameArea les empile alors en pleine
+   largeur, ce qui rend chaque main très haute et oblige à beaucoup défiler. Sur mobile, les mains
+   passent donc en rangée horizontale (comme une vraie main de cartes tenue en éventail), les cartes
+   sont réduites en conséquence, et le plateau profite de la largeur libérée par les colonnes. */
+@media (max-width: 700px) {
+  #board-frame { width: min(94vw, 768px); }
+
+  .hand-column {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 6px;
+  }
+  .hand-cards {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+  .hand-cards .card-tile {
+    width: 64px;
+    min-height: 58px;
+    padding: 3px;
+    font-size: 8px;
+  }
+  .hand-cards .card-tile .stats {
+    width: 30px;
+    height: 30px;
+    margin: 2px auto 0;
+    font-size: 8px;
+  }
+  .hand-cards .card-tile .name {
+    font-size: 7px;
+    padding: 2px 2px;
+  }
+
+  /* Sélecteurs de deck (Solo/PvP/Tournoi/Combat niveau 9) : la grille fixe à 4 colonnes déborde sur
+     un écran de téléphone (~390px), on repasse à 3 colonnes pour que chaque carte reste entière. */
+  #deckPicker .card-grid,
+  #pvpDeckPicker .card-grid,
+  #tournamentDeckPicker .card-grid,
+  #legendaryDuelDeckPicker .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 #rulesSummary {
   text-align: center;
   font-size: 24px;

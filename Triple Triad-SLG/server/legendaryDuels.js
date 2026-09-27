@@ -52,6 +52,20 @@ const LVL9_DUEL_OPPONENTS = {
     ludwig_le_maudit_dsbb: { name: 'Ludwig', set: 'BB', deck: ['ludwig_le_maudit_dsbb', 'vieux_roi_de_fer_dsbb', 'chevalier_miroir_dsbb', 'anthropophage_dsbb', 'nourrice_de_mergo_dsbb', 'quatre_rois_dsbb', 'logarius_le_martyr_dsbb', 'vieux_moine_dsbb'] },
     astraea_la_pucelle_et_garl_vinland_dsbb: { name: 'Astraea & Garl', set: 'DeS', deck: ['astraea_la_pucelle_et_garl_vinland_dsbb', 'chevalier_miroir_dsbb', 'logarius_le_martyr_dsbb', 'anthropophage_dsbb', 'elana_la_reine_souillee_dsbb', 'pontife_sulyvahn_dsbb', 'vieux_moine_dsbb', 'aava_l_animal_du_roi_dsbb'] },
   },
+  lol: {
+    graves_lol: { name: 'Graves', deck: ['graves_lol', 'aatrox_lol', 'gangplank_lol', 'twitch_lol', 'talon_lol', 'renekton_lol', 'fizz_lol', 'jax_lol'] },
+    maitre_yi_lol: { name: 'Maître Yi', deck: ['maitre_yi_lol', 'gangplank_lol', 'lissandra_lol', 'kha_zix_lol', 'twitch_lol', 'shaco_lol', 'jarvan_iv_lol', 'renekton_lol'] },
+    garen_lol: { name: 'Garen', deck: ['garen_lol', 'lissandra_lol', 'leblanc_lol', 'talon_lol', 'fizz_lol', 'gangplank_lol', 'jarvan_iv_lol', 'kha_zix_lol'] },
+    blitzcrank_lol: { name: 'Blitzcrank', deck: ['blitzcrank_lol', 'kha_zix_lol', 'jarvan_iv_lol', 'twitch_lol', 'aatrox_lol', 'fizz_lol', 'gangplank_lol', 'talon_lol'] },
+    miss_fortune_lol: { name: 'Miss Fortune', deck: ['miss_fortune_lol', 'aatrox_lol', 'jax_lol', 'lissandra_lol', 'jarvan_iv_lol', 'kha_zix_lol', 'talon_lol', 'twitch_lol'] },
+    ashe_lol: { name: 'Ashe', deck: ['ashe_lol', 'gangplank_lol', 'shaco_lol', 'jarvan_iv_lol', 'aatrox_lol', 'talon_lol', 'lissandra_lol', 'fizz_lol'] },
+    leona_lol: { name: 'Leona', deck: ['leona_lol', 'fizz_lol', 'lissandra_lol', 'talon_lol', 'leblanc_lol', 'jarvan_iv_lol', 'renekton_lol', 'twitch_lol'] },
+    malphite_lol: { name: 'Malphite', deck: ['malphite_lol', 'lissandra_lol', 'renekton_lol', 'jarvan_iv_lol', 'shaco_lol', 'leblanc_lol', 'kha_zix_lol', 'jax_lol'] },
+    darius_lol: { name: 'Darius', deck: ['darius_lol', 'jax_lol', 'kha_zix_lol', 'twitch_lol', 'lissandra_lol', 'leblanc_lol', 'jarvan_iv_lol', 'talon_lol'] },
+    nami_lol: { name: 'Nami', deck: ['nami_lol', 'talon_lol', 'kha_zix_lol', 'jax_lol', 'twitch_lol', 'renekton_lol', 'jarvan_iv_lol', 'leblanc_lol'] },
+    lucian_lol: { name: 'Lucian', deck: ['lucian_lol', 'jax_lol', 'shaco_lol', 'gangplank_lol', 'renekton_lol', 'fizz_lol', 'twitch_lol', 'talon_lol'] },
+    viktor_lol: { name: 'Viktor', deck: ['viktor_lol', 'jax_lol', 'shaco_lol', 'jarvan_iv_lol', 'talon_lol', 'kha_zix_lol', 'leblanc_lol', 'lissandra_lol'] },
+  },
 };
 
 const IMPOSED_RULES = {

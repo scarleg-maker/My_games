@@ -100,6 +100,39 @@ const LEGENDARY_SHOP_CONFIG = {
       ],
     },
   },
+  lol: {
+    gfPass: {
+      cost: 500,
+      minWins: 20,
+      key: 'pass_faille_lol',
+      label: 'Pass Tournoi Faille',
+    },
+    legendaryPass: {
+      cost: 750,
+      minWins: 50,
+      minRatio: 75,
+      key: 'pass_champion_lol',
+      label: 'Pass Tournoi Champion',
+    },
+    lvl9Duels: {
+      cost: 400,
+      minWins: 40,
+      cardIds: [
+        'graves_lol',
+        'maitre_yi_lol',
+        'garen_lol',
+        'blitzcrank_lol',
+        'miss_fortune_lol',
+        'ashe_lol',
+        'leona_lol',
+        'malphite_lol',
+        'darius_lol',
+        'nami_lol',
+        'lucian_lol',
+        'viktor_lol',
+      ],
+    },
+  },
 };
 
 function getLegendaryShopConfig(setId) {

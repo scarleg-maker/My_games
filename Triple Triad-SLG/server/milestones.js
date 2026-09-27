@@ -46,6 +46,16 @@ const MILESTONE_TIERS = {
     { threshold: 470, label: 'Grand Veilleur', icon: '👁️' },
     { threshold: 620, label: 'Chasseur des Cendres', icon: '💀' },
   ],
+  lol: [
+    { threshold: 0, label: 'Fer', icon: '🔩' },
+    { threshold: 25, label: 'Bronze', icon: '🥉' },
+    { threshold: 70, label: 'Argent', icon: '🥈' },
+    { threshold: 140, label: 'Or', icon: '🥇' },
+    { threshold: 230, label: 'Platine', icon: '💠' },
+    { threshold: 340, label: 'Diamant', icon: '💎' },
+    { threshold: 460, label: 'Maître', icon: '🔥' },
+    { threshold: 600, label: 'Challenger', icon: '🏆' },
+  ],
   // Paliers génériques utilisés pour tout set sans thème dédié défini ci-dessus.
   default: [
     { threshold: 0, label: 'Novice', icon: '⚪' },
@@ -82,6 +92,11 @@ const SPECIAL_BADGE_LABELS = {
   dsbb: {
     maitreDesGForces: 'Porteur d\'Âmes',
     celebrite: 'Élu des Seigneurs',
+    herosLegendaire: 'Héros légendaire',
+  },
+  lol: {
+    maitreDesGForces: 'Maître de la Faille',
+    celebrite: 'Champion Ultime',
     herosLegendaire: 'Héros légendaire',
   },
   // Libellés génériques utilisés pour tout set sans thème dédié défini ci-dessus.
