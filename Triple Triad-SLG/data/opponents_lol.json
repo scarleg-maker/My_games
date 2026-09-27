@@ -465,7 +465,18 @@
           "xerath_lol",
           "twisted_fate_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Archimage de la Faille",
@@ -485,7 +496,18 @@
           "vi_lol",
           "hecarim_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Seigneur de Guerre",
@@ -505,7 +527,18 @@
           "braum_lol",
           "soraka_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Prophétesse Céleste",
@@ -525,7 +558,18 @@
           "braum_lol",
           "irelia_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": true,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Chasseur d'Élite",
@@ -545,7 +589,18 @@
           "alistar_lol",
           "hecarim_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": true,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Gardienne Ancienne",
@@ -565,7 +620,18 @@
           "warwick_lol",
           "twisted_fate_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       }
     ]
   },
@@ -591,7 +657,18 @@
           "renekton_lol",
           "talon_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Maître Assassin",
@@ -611,7 +688,18 @@
           "twitch_lol",
           "jax_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Général de Noxus",
@@ -631,7 +719,18 @@
           "jarvan_iv_lol",
           "talon_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Voyante de Targon",
@@ -651,7 +750,18 @@
           "jarvan_iv_lol",
           "kha_zix_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Titan de Freljord",
@@ -671,7 +781,18 @@
           "lissandra_lol",
           "gangplank_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Ombre de Zaun",
@@ -691,7 +812,18 @@
           "renekton_lol",
           "lissandra_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       }
     ]
   },
@@ -714,7 +846,18 @@
           "fizz_lol",
           "aatrox_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": true,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Invocateur Suprême",
@@ -731,7 +874,18 @@
           "jarvan_iv_lol",
           "jax_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Gardien Ultime",
@@ -748,7 +902,18 @@
           "twitch_lol",
           "jax_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Champion Ascendant",
@@ -765,7 +930,18 @@
           "jax_lol",
           "aatrox_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": true
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Seigneur des Abysses",
@@ -782,7 +958,18 @@
           "leblanc_lol",
           "kha_zix_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Étoile de Runeterra",
@@ -799,7 +986,18 @@
           "twitch_lol",
           "kha_zix_lol"
         ],
-        "set": "lol"
+        "set": "lol",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       }
     ]
   },

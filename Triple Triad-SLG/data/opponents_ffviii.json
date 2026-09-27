@@ -374,7 +374,18 @@
           "iguanor_ffviii",
           "krystal_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Sorcière itinérante",
@@ -393,7 +404,18 @@
           "sulfura_ffviii",
           "flotix_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Général de Galbadia",
@@ -412,7 +434,18 @@
           "sulfura_ffviii",
           "ecorche_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Paladin d'Edea",
@@ -431,7 +464,18 @@
           "cyanide_ffviii",
           "fujin_raijin_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Commandant Galbadien",
@@ -450,7 +494,18 @@
           "norg_ffviii",
           "lygus_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       }
     ]
   },
@@ -475,7 +530,18 @@
           "omniborg_ffviii",
           "mithra_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": true
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Reine du Tournoi",
@@ -494,7 +560,18 @@
           "tiamat_ffviii",
           "attila_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Gardien d'Ultimecia",
@@ -513,7 +590,18 @@
           "pampa_sr._ffviii",
           "acron_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "L'Arme Ultime",
@@ -532,7 +620,18 @@
           "anokronox_ffviii",
           "mithra_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Chevalier Séraphique",
@@ -551,7 +650,18 @@
           "mithra_ffviii",
           "acron_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       }
     ]
   },
@@ -573,7 +683,18 @@
           "catoblepas_ffviii",
           "omniborg_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": true,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Griffonne du Néant",
@@ -589,7 +710,18 @@
           "monarch_ffviii",
           "catoblepas_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": true
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Chevalier de Centra",
@@ -605,7 +737,18 @@
           "mithra_ffviii",
           "tiamat_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Envoyé du Temps",
@@ -621,7 +764,18 @@
           "pampa_sr._ffviii",
           "agamemnon_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Gardien du Sceau",
@@ -637,7 +791,18 @@
           "pampa_sr._ffviii",
           "attila_ffviii"
         ],
-        "set": "ffviii"
+        "set": "ffviii",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": true,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       }
     ]
   },

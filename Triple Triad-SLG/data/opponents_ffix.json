@@ -440,7 +440,18 @@
           "ekarissor_ffix",
           "ao_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Blank, voleur de Tantalus",
@@ -459,7 +470,18 @@
           "amduscias_ffix",
           "tomberry_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Capitaine de la Garde",
@@ -478,7 +500,18 @@
           "chimaira_ffix",
           "ao_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": true
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Sentinelle d'Oeilvert",
@@ -497,7 +530,18 @@
           "tomberry_ffix",
           "catoblepas_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": true
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Dresseur de Chocobos",
@@ -516,7 +560,18 @@
           "catoblepas_ffix",
           "grand_dragon_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Noble de Treno",
@@ -535,7 +590,18 @@
           "catoblepas_ffix",
           "grimlock_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       }
     ]
   },
@@ -560,7 +626,18 @@
           "blambourine_ffix",
           "valseur_n_1_2_3_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Régent Cid de Lindblum",
@@ -579,7 +656,18 @@
           "valseur_n_1_2_3_ffix",
           "pile_face_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Général de Burmecia",
@@ -598,7 +686,18 @@
           "hornet_ffix",
           "gisamark_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": true,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Grand Prêtre de Madain Sari",
@@ -617,7 +716,18 @@
           "blambourine_ffix",
           "valseur_n_1_2_3_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Duelliste Légendaire de Treno",
@@ -636,7 +746,18 @@
           "larvalar_ffix",
           "lovecraft_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Garde d'Honneur d'Alexandrie",
@@ -655,7 +776,18 @@
           "lovecraft_ffix",
           "larvalar_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       }
     ]
   },
@@ -677,7 +809,18 @@
           "lamie_ffix",
           "hectoculus_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": true
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Générale Beatrix",
@@ -693,7 +836,18 @@
           "belhamel_ffix",
           "lamie_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": true
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Capitaine Adelbert Steiner",
@@ -709,7 +863,18 @@
           "hornet_ffix",
           "gisamark_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": true,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Freya, Chevalier Dragon de Burmecia",
@@ -725,7 +890,18 @@
           "lamie_ffix",
           "pile_face_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": true
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Gardien d'Oeilvert",
@@ -741,7 +917,18 @@
           "belhamel_ffix",
           "behemoth_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Kuja",
@@ -757,7 +944,18 @@
           "lovecraft_ffix",
           "lamie_ffix"
         ],
-        "set": "ffix"
+        "set": "ffix",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       }
     ]
   },

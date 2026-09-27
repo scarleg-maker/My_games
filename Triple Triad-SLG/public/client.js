@@ -58,13 +58,22 @@ buttonSound.volume = 0.6;
  * audio, elles, échouent silencieusement si le fichier n'existe pas (comportement natif de
  * l'élément <audio>) : c'est acceptable tant qu'aucun fichier n'a été fourni pour cet univers.
  */
+/**
+ * Applique le fond d'écran et recharge les pistes de musique pour l'univers donné. Le fond
+ * d'écran est pré-chargé via un objet Image avant application : si le fichier spécifique à cet
+ * univers n'existe pas encore, on retombe sur le fond commun (background-main_commun.webp) plutôt
+ * que de garder l'ancien fond affiché. Les pistes audio, elles, échouent silencieusement si le
+ * fichier n'existe pas (comportement natif de l'élément <audio>) : c'est acceptable tant qu'aucun
+ * fichier n'a été fourni pour cet univers.
+ */
 function applyUniverseTheme(setId) {
   const suffix = setId.toUpperCase();
+  const commonBgUrl = '/images/backgrounds/background-main_commun.webp';
 
-  const bgUrl = `/images/backgrounds/background-main_${suffix}.jpg`;
+  const bgUrl = `/images/backgrounds/background-main_${suffix}.webp`;
   const preload = new Image();
   preload.onload = () => { document.documentElement.style.setProperty('--universe-bg', `url('${bgUrl}')`); };
-  preload.onerror = () => { /* fichier pas encore fourni pour cet univers : on garde le fond actuel */ };
+  preload.onerror = () => { document.documentElement.style.setProperty('--universe-bg', `url('${commonBgUrl}')`); };
   preload.src = bgUrl;
 
   const wasPlayingKey = currentTrackKey; // mémorise pour relancer la lecture après rechargement

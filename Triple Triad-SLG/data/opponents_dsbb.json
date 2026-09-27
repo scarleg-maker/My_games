@@ -465,7 +465,18 @@
           "pere_gascoigne_dsbb",
           "prince_demon_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Seigneur Déchu",
@@ -485,7 +496,18 @@
           "penetrateur_dsbb",
           "pere_gascoigne_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": true
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Maître Chasseur",
@@ -505,7 +527,18 @@
           "pere_gascoigne_dsbb",
           "penetrateur_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Sorcière des Abysses",
@@ -525,7 +558,18 @@
           "quelaag_sorciere_du_chaos_dsbb",
           "velstadt_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Chevalier d'Argent",
@@ -545,7 +589,18 @@
           "demon_du_chant_dsbb",
           "dragon_ancien_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Prélat Sanguinaire",
@@ -565,7 +620,18 @@
           "penetrateur_dsbb",
           "demon_du_chant_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       }
     ]
   },
@@ -591,7 +657,18 @@
           "vieux_roi_de_fer_dsbb",
           "vieux_moine_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Champion Cendré",
@@ -611,7 +688,18 @@
           "armure_pourfendeuse_de_dragons_dsbb",
           "anthropophage_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": true,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Grand Veilleur",
@@ -631,7 +719,18 @@
           "vieux_roi_de_fer_dsbb",
           "nourrice_de_mergo_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Chasseur d'Élite",
@@ -651,7 +750,18 @@
           "elana_la_reine_souillee_dsbb",
           "vieux_roi_de_fer_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       },
       {
         "name": "Chevalier Immaculé",
@@ -671,7 +781,18 @@
           "aava_l_animal_du_roi_dsbb",
           "logarius_le_martyr_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Gardien du Feu",
@@ -691,7 +812,18 @@
           "nourrice_de_mergo_dsbb",
           "elana_la_reine_souillee_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       }
     ]
   },
@@ -714,7 +846,18 @@
           "elana_la_reine_souillee_dsbb",
           "pontife_sulyvahn_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": false,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Veilleur Ultime",
@@ -731,7 +874,18 @@
           "kalameet_le_dragon_noir_dsbb",
           "sif_le_grand_loup_gris_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": false,
+          "open": true,
+          "random": true
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Chasseur de l'Aube Sanglante",
@@ -748,7 +902,18 @@
           "kalameet_le_dragon_noir_dsbb",
           "vieux_roi_de_fer_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "all"
       },
       {
         "name": "Archi-Gardien",
@@ -765,7 +930,18 @@
           "vieux_moine_dsbb",
           "anthropophage_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": true,
+          "combo": false,
+          "suddenDeath": false,
+          "elemental": true,
+          "wallAce": true,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "one"
       },
       {
         "name": "Dernier Paladin",
@@ -782,7 +958,18 @@
           "kalameet_le_dragon_noir_dsbb",
           "aava_l_animal_du_roi_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": false,
+          "plus": false,
+          "combo": true,
+          "suddenDeath": false,
+          "elemental": false,
+          "wallAce": true,
+          "open": true,
+          "random": false
+        },
+        "imposedTradeRule": "direct"
       },
       {
         "name": "Prophète Déchu",
@@ -799,7 +986,18 @@
           "anthropophage_dsbb",
           "chevalier_miroir_dsbb"
         ],
-        "set": "dsbb"
+        "set": "dsbb",
+        "imposedRules": {
+          "same": true,
+          "plus": false,
+          "combo": false,
+          "suddenDeath": true,
+          "elemental": true,
+          "wallAce": false,
+          "open": false,
+          "random": false
+        },
+        "imposedTradeRule": "diff"
       }
     ]
   },

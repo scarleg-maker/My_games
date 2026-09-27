@@ -5,31 +5,31 @@
   "collection": [
     {
       "id": "bogomile_ffviii",
-      "quantity": 2
+      "quantity": 3
     },
     {
       "id": "elmidea_ffviii",
-      "quantity": 2
+      "quantity": 3
     },
     {
       "id": "nocturnus_ffviii",
-      "quantity": 2
+      "quantity": 3
     },
     {
       "id": "incube_ffviii",
-      "quantity": 2
+      "quantity": 3
     },
     {
       "id": "larva_ffviii",
-      "quantity": 2
+      "quantity": 3
     },
     {
       "id": "gallus_ffviii",
-      "quantity": 1
+      "quantity": 3
     },
     {
       "id": "fungus_ffviii",
-      "quantity": 1
+      "quantity": 3
     },
     {
       "id": "elastos_ffviii",
@@ -37,7 +37,7 @@
     },
     {
       "id": "diodon_ffviii",
-      "quantity": 2
+      "quantity": 3
     },
     {
       "id": "feng_ffviii",
@@ -45,10 +45,6 @@
     },
     {
       "id": "selek_ffviii",
-      "quantity": 1
-    },
-    {
-      "id": "orchida_ffviii",
       "quantity": 1
     }
   ],
@@ -68,7 +64,7 @@
   ],
   "stats": {
     "wins": 4,
-    "losses": 0,
+    "losses": 1,
     "draws": 0
   },
   "lastDeck": [

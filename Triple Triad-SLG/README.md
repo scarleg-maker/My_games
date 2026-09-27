@@ -266,10 +266,13 @@ persiste même après une Remise à zéro.
 ## Logo et fonds d'écran
 
 - **Logo** : `public/images/logo.png` remplace le titre texte "Triple Triad" en haut de chaque page.
-- **Fond principal** : `public/images/backgrounds/background-main_XXX.jpg` (remplacez `XXX` par
+- **Fond principal** : `public/images/backgrounds/background-main_XXX.webp` (remplacez `XXX` par
   l'identifiant du set en MAJUSCULES, ex: `FFVIII`) s'affiche en fond sur tous les écrans, sauf pendant
   une partie. Un fond différent par univers : le jeu recharge l'image au bon nom à chaque changement
-  d'univers. Tant qu'un univers n'a pas son fichier, l'ancien fond reste affiché (pas d'écran cassé).
+  d'univers. Tant qu'un univers n'a pas son propre fichier, le jeu retombe automatiquement sur
+  `public/images/backgrounds/background-main_commun.webp` (pas d'écran cassé). Format WebP choisi pour
+  son poids bien plus léger qu'un JPEG à qualité équivalente (environ 85-90% de réduction en pratique) —
+  n'importe quel éditeur d'image récent peut exporter dans ce format.
 - **Fond du plateau** : dès que la vue de jeu s'affiche, le fond bascule automatiquement sur un dégradé
   radial `#C4944A` (centre) → `#341814` (bords), défini dans `public/style.css` (règle `body.in-game`).
   Pour changer ces couleurs, modifiez les valeurs dans cette règle.
