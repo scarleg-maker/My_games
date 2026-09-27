@@ -1,0 +1,9 @@
+{
+  "name": "puis-theme-4",
+  "version": "1.0.0",
+  "description": "Puissance 4 multijoueur avec modes Classique, Renversé et Thématique",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=16" },
+  "license": "MIT"
+}

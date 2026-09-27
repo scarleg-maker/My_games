@@ -1,0 +1,23 @@
+{
+  "titre": "Pays (exemple lignes/colonnes séparées)",
+  "description": "Lignes = continent, colonnes = initiale. Réponse : un pays du continent qui commence par la lettre.",
+  "lignes": {
+    "Europe": ["Albanie","Allemagne","Andorre","Autriche","Belgique","Biélorussie","Bosnie-Herzégovine","Bulgarie","Croatie","Danemark","Espagne","Estonie","Finlande","France","Grèce","Hongrie","Irlande","Islande","Italie","Lettonie","Liechtenstein","Lituanie","Luxembourg","Macédoine du Nord","Malte","Moldavie","Monaco","Monténégro","Norvège","Pays-Bas","Pologne","Portugal","Roumanie","Royaume-Uni","Saint-Marin","Serbie","Slovaquie","Slovénie","Suède","Suisse","Tchéquie","Ukraine","Vatican"],
+    "Afrique": ["Afrique du Sud","Algérie","Angola","Bénin","Botswana","Burkina Faso","Burundi","Cameroun","Cap-Vert","Comores","Congo","Côte d'Ivoire","Djibouti","Égypte","Érythrée","Eswatini","Éthiopie","Gabon","Gambie","Ghana","Guinée","Guinée-Bissau","Guinée équatoriale","Kenya","Lesotho","Liberia","Libye","Madagascar","Malawi","Mali","Maroc","Maurice","Mauritanie","Mozambique","Namibie","Niger","Nigeria","Ouganda","Rwanda","Sénégal","Seychelles","Sierra Leone","Somalie","Soudan","Soudan du Sud","Tanzanie","Tchad","Togo","Tunisie","Zambie","Zimbabwe"],
+    "Asie": ["Afghanistan","Arabie saoudite","Arménie","Azerbaïdjan","Bahreïn","Bangladesh","Bhoutan","Birmanie","Brunei","Cambodge","Chine","Corée du Nord","Corée du Sud","Émirats arabes unis","Géorgie","Inde","Indonésie","Irak","Iran","Israël","Japon","Jordanie","Kazakhstan","Kirghizistan","Koweït","Laos","Liban","Malaisie","Maldives","Mongolie","Népal","Oman","Ouzbékistan","Pakistan","Philippines","Qatar","Singapour","Sri Lanka","Syrie","Tadjikistan","Thaïlande","Timor oriental","Turkménistan","Turquie","Vietnam","Yémen"],
+    "Amériques": ["Antigua-et-Barbuda","Argentine","Bahamas","Barbade","Belize","Bolivie","Brésil","Canada","Chili","Colombie","Costa Rica","Cuba","Dominique","Équateur","États-Unis","Grenade","Guatemala","Guyana","Haïti","Honduras","Jamaïque","Mexique","Nicaragua","Panama","Paraguay","Pérou","Salvador","Suriname","Trinité-et-Tobago","Uruguay","Venezuela"],
+    "Océanie": ["Australie","Fidji","Kiribati","Marshall","Micronésie","Nauru","Nouvelle-Zélande","Palaos","Papouasie-Nouvelle-Guinée","Salomon","Samoa","Tonga","Tuvalu","Vanuatu"],
+    "Pays insulaire": ["Islande","Irlande","Malte","Royaume-Uni","Cap-Vert","Comores","Madagascar","Maurice","Seychelles","Japon","Indonésie","Philippines","Sri Lanka","Maldives","Singapour","Bahreïn","Cuba","Jamaïque","Haïti","Bahamas","Barbade","Dominique","Grenade","Trinité-et-Tobago","Australie","Nouvelle-Zélande","Fidji","Samoa","Tonga","Tuvalu","Vanuatu","Nauru","Kiribati","Palaos","Salomon","Marshall","Micronésie","Chypre","Timor oriental","Brunei"]
+  },
+  "colonnes": {
+    "Commence par A": ["Albanie","Allemagne","Andorre","Autriche","Afrique du Sud","Algérie","Angola","Afghanistan","Arabie saoudite","Arménie","Azerbaïdjan","Antigua-et-Barbuda","Argentine","Australie"],
+    "Commence par B": ["Belgique","Biélorussie","Bosnie-Herzégovine","Bulgarie","Bénin","Botswana","Burkina Faso","Burundi","Bahreïn","Bangladesh","Bhoutan","Birmanie","Brunei","Bahamas","Barbade","Belize","Bolivie","Brésil"],
+    "Commence par C": ["Croatie","Cameroun","Cap-Vert","Comores","Congo","Côte d'Ivoire","Cambodge","Chine","Corée du Nord","Corée du Sud","Canada","Chili","Colombie","Costa Rica","Cuba","Chypre"],
+    "Commence par M": ["Macédoine du Nord","Malte","Moldavie","Monaco","Monténégro","Madagascar","Malawi","Mali","Maroc","Maurice","Mauritanie","Mozambique","Malaisie","Maldives","Mongolie","Mexique","Marshall","Micronésie"],
+    "Commence par S": ["Saint-Marin","Serbie","Slovaquie","Slovénie","Suède","Suisse","Sénégal","Seychelles","Sierra Leone","Somalie","Soudan","Soudan du Sud","Singapour","Sri Lanka","Syrie","Salvador","Suriname","Salomon","Samoa"],
+    "Commence par T": ["Tchéquie","Tanzanie","Tchad","Togo","Tunisie","Tadjikistan","Thaïlande","Timor oriental","Turkménistan","Turquie","Trinité-et-Tobago","Tonga","Tuvalu"],
+    "Commence par G": ["Grèce","Gabon","Gambie","Ghana","Guinée","Guinée-Bissau","Guinée équatoriale","Géorgie","Grenade","Guatemala","Guyana"],
+    "Commence par P": ["Pays-Bas","Pologne","Portugal","Pakistan","Philippines","Panama","Paraguay","Pérou","Palaos","Papouasie-Nouvelle-Guinée"],
+    "Commence par N": ["Norvège","Namibie","Niger","Nigeria","Népal","Nicaragua","Nauru","Nouvelle-Zélande"]
+  }
+}

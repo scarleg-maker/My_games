@@ -26,6 +26,10 @@
     {
       "id": "karthus_lol",
       "quantity": 3
+    },
+    {
+      "id": "heimerdinger_lol",
+      "quantity": 1
     }
   ],
   "discovered": [
@@ -34,10 +38,11 @@
     "elise_lol",
     "cassiopeia_lol",
     "quinn_lol",
-    "karthus_lol"
+    "karthus_lol",
+    "heimerdinger_lol"
   ],
   "stats": {
-    "wins": 0,
+    "wins": 1,
     "losses": 0,
     "draws": 0
   },
@@ -61,7 +66,7 @@
     "karthus_lol",
     "karthus_lol"
   ],
-  "points": 1000,
+  "points": 1050,
   "unlocks": [],
   "tournamentsWon": [],
   "tournament": null

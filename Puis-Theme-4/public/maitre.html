@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puis-thème 4 — Arbitre</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  header.top { display: flex; align-items: center; gap: 1rem; padding: .8rem 1.4rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header.top .meta { color: var(--muted); }
+  header.top .actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
+  main { padding: 1.2rem 1.4rem 3rem; max-width: 1500px; margin: 0 auto; }
+
+  /* configuration */
+  .setup { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+  .setup section + section { margin-top: 1.2rem; }
+  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+  .mode { text-align: left; border: 2px solid var(--line); background: var(--felt-2); border-radius: 14px; padding: .8rem .9rem; }
+  .mode strong { font-family: var(--display); font-size: 1.2rem; display: block; margin-bottom: .2rem; }
+  .mode span { color: var(--muted); font-size: .88rem; line-height: 1.35; display: block; }
+  .mode[aria-pressed=true] { border-color: var(--brass); background: #2b4a3c; }
+  .counter { display: flex; gap: .4rem; }
+  .counter button { width: 2.8rem; height: 2.8rem; border-radius: 50%; border: 2px solid var(--line); background: var(--felt-2); font-weight: 700; font-size: 1.1rem; }
+  .counter button[aria-pressed=true] { border-color: var(--brass); background: var(--brass); color: #2b2000; }
+  .counter button:disabled { opacity: .35; cursor: not-allowed; }
+  .theme-row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; margin-bottom: .8rem; }
+  .theme-row select { flex: 1; min-width: 12rem; }
+  .preview { --cell: clamp(28px, 3.6vw, 46px); overflow-x: auto; padding-bottom: .8rem; }
+  .err { color: var(--bad); font-weight: 700; }
+  .slots { display: grid; gap: .7rem; }
+  .slot { border: 1px solid var(--line); border-radius: 14px; padding: .7rem .8rem; background: var(--felt-2); display: grid; gap: .55rem; }
+  .slot.ready { border-color: #3f7d62; }
+  .slot-head { display: flex; align-items: center; gap: .6rem; }
+  .slot-head a { font-size: .85rem; }
+  .kind { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; font-size: .8rem; }
+  .kind button { border: 0; background: none; padding: .2rem .6rem; color: var(--muted); }
+  .kind button[aria-pressed=true] { background: var(--brass); color: #2b2000; font-weight: 700; }
+  .slot-head .btn { margin-left: auto; padding: .25em .7em; font-size: .85rem; }
+  .slot input { width: 100%; }
+  .slot .swatch { width: 1.9rem; height: 1.9rem; }
+  .start-bar { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+  .urls { margin-top: 1rem; font-size: .88rem; color: var(--muted); }
+  .urls code { color: var(--ink); }
+
+  /* partie */
+  .play { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 1.4rem; align-items: start; }
+  .stage { display: grid; justify-items: center; gap: 1rem; }
+  .stage .bwrap { --cell: clamp(36px, min(calc((100vw - 560px) / 9.6), calc((100vh - 260px) / 7.6)), 90px); max-width: 100%; overflow-x: auto; padding: .4rem .4rem 1.4rem; }
+  .actionbar { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; justify-content: center; min-height: 2.6rem; }
+  .toggles { display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: .88rem; color: var(--muted); }
+  .toggles label { display: flex; gap: .4rem; align-items: center; cursor: pointer; }
+  aside { display: grid; gap: 1rem; }
+  .result { text-align: center; }
+  .result h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); margin-bottom: .6rem; }
+  .result .btns { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+
+  .arb { border-color: var(--brass); }
+  .steal { margin: 0 0 .5rem; font-weight: 700; color: var(--brass); }
+  .cellq { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-bottom: .6rem; }
+  .cellq .tag { background: var(--felt-3); border-radius: 6px; padding: .05rem .45rem; font-size: .85rem; }
+  .cellq strong { font-family: var(--display); font-size: 1.45rem; }
+  .answer { font-size: 1.35rem; font-weight: 700; margin: .4rem 0; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+  .badge { font-size: .8rem; padding: .15rem .55rem; border-radius: 999px; font-weight: 700; }
+  .badge.ok { background: #2c7a4f; }
+  .badge.used { background: #8e3527; }
+  .badge.unknown { background: #6b5a24; }
+  .arb .btns { display: flex; gap: .5rem; flex-wrap: wrap; margin: .6rem 0 .8rem; }
+  .cands { display: flex; flex-wrap: wrap; gap: .35rem; max-height: 17rem; overflow: auto; padding: .1rem; }
+  .cand { border: 1px solid var(--line); background: #0f231d; border-radius: 999px; padding: .25rem .7rem; font-size: .92rem; }
+  .cand:hover { border-color: var(--ok); background: #1d4a33; }
+  .cand.match { border-color: var(--ok); background: #2c7a4f; }
+  .cited { margin-top: .6rem; font-size: .85rem; color: var(--muted); }
+  .cited s { margin-right: .4rem; }
+  #filter { width: 100%; margin-bottom: .5rem; }
+
+  .choice2 { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+  .themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .7rem; margin-bottom: .8rem; }
+  .theme-card { text-align: left; border: 2px solid var(--line); background: var(--felt-2); border-radius: 14px; padding: .75rem .9rem; }
+  .theme-card strong { font-family: var(--display); font-size: 1.15rem; display: block; }
+  .theme-card span { color: var(--muted); font-size: .85rem; display: block; }
+  .theme-card[aria-pressed=true] { border-color: var(--brass); background: #2b4a3c; }
+  .theme-card:disabled { opacity: .5; cursor: not-allowed; }
+  .roster { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .9rem; align-items: center; }
+  .rchip { display: inline-flex; align-items: center; border: 1px solid var(--line); background: #0f231d; border-radius: 999px; overflow: hidden; }
+  .rchip button { background: none; border: 0; padding: .3rem .4rem .3rem .7rem; display: flex; gap: .4rem; align-items: center; }
+  .rchip button.x { padding: .3rem .6rem .3rem .3rem; color: var(--muted); }
+  .rchip button.x:hover { color: var(--bad); }
+  .rchip.seated { opacity: .45; }
+  .cand-wrap { display: inline-flex; border: 1px solid var(--line); background: #0f231d; border-radius: 999px; overflow: hidden; }
+  .cand-wrap .cand { border: 0; border-radius: 0; background: none; }
+  .cand-wrap .cand:hover { background: #1d4a33; }
+  .cand-wrap.match { border-color: var(--ok); background: #2c7a4f; }
+  .cand-x { border: 0; border-left: 1px solid var(--line); background: none; color: var(--muted); padding: 0 .55rem; }
+  .cand-x:hover { background: #8e3527; color: #fff; }
+  .exres { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+  .exres button { border: 1px solid var(--line); background: #0f231d; border-radius: 999px; padding: .2rem .65rem; font-size: .9rem; }
+  .exres button:hover { border-color: var(--bad); background: #4a1f18; }
+  .exlist { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+  .exlist button { border: 1px dashed #8e3527; background: none; border-radius: 999px; padding: .15rem .6rem; font-size: .88rem; color: var(--muted); text-decoration: line-through; }
+  .exlist button:hover { text-decoration: none; color: var(--ink); border-style: solid; }
+  #exSearch { width: 100%; }
+  .single .status { font-size: clamp(1.4rem, 3vw, 2.2rem); }
+
+  @media (max-width: 600px) {
+    header.top { padding: .6rem .8rem; gap: .5rem; }
+    header.top .meta { display: none; }
+    header.top .actions .btn { padding: .45em .7em; font-size: .85rem; }
+    main { padding: .8rem .5rem 3rem; }
+    .play, .setup { gap: .9rem; }
+  }
+  @media (max-width: 1000px) {
+    .setup, .play { grid-template-columns: minmax(0, 1fr); }
+    .stage .bwrap { --cell: clamp(32px, min(10vw, 9vh), 72px); }
+    .modes, .choice2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">Puis-thème <span class="four">4</span></div>
+  <span class="meta" id="meta">Page arbitre</span>
+  <div class="actions" id="topActions"></div>
+</header>
+<main id="app"></main>
+
+<datalist id="rosterList"></datalist>
+<script src="/static/common.js"></script>
+<script>
+const app = document.getElementById('app');
+let playHere = true, showCounts = false;
+const pickedColor = {};   // couleur choisie pour un siège avant inscription
+
+function render(s) {
+  document.getElementById('meta').textContent = s.phase === 'setup' ? 'Page arbitre — configuration'
+    : `Mode ${P4.modeName(s.mode)}${s.singleScreen ? ' · un seul écran' : ''}${s.mode === 'thematique' && s.themeTitle ? ' · ' + s.themeTitle : ''}`;
+  document.getElementById('rosterList').innerHTML = s.roster.map(r => `<option value="${P4.esc(r.name)}">`).join('');
+  const ta = document.getElementById('topActions');
+  if (s.phase === 'setup') { ta.innerHTML = ''; renderSetup(s); }
+  else {
+    ta.innerHTML = `${s.phase === 'playing' ? '<button class="btn ghost" data-a="skip">Passer le tour</button>' : ''}
+      <button class="btn" data-a="rematch">Nouvelle manche</button>
+      <button class="btn ghost" data-a="reset">Configuration</button>`;
+    renderPlay(s);
+  }
+}
+P4.redraw = () => P4.keepInputs(() => render(P4.state));
+
+// ------------------------------------------------------------------ configuration
+function takenColors(s, exceptSeat) {
+  const t = {};
+  for (let j = 0; j < s.nbActive; j++) if (j !== exceptSeat && s.seats[j].color) t[s.seats[j].color] = j;
+  return t;
+}
+function renderSetup(s) {
+  const n = s.nbActive, them = s.mode === 'thematique';
+  const modes = [
+    ['classique', 'Classique', 'Deux joueurs, chacun son tour. Le premier qui aligne 4 pions gagne.'],
+    ['renverse', 'Renversé', 'En début de tour, on peut retourner une colonne : ses pions s\'inversent de haut en bas.'],
+    ['thematique', 'Thématique', 'Chaque ligne et chaque colonne a un thème. Pour poser son pion, il faut une réponse qui colle aux deux.'],
+  ];
+  let h = '<div class="setup"><div>';
+  h += '<section class="panel"><h2>Mode de jeu</h2><div class="modes">' + modes.map(([id, t, d]) =>
+    `<button class="mode" aria-pressed="${s.mode === id}" data-mode="${id}"><strong>${t}</strong><span>${d}</span></button>`).join('') + '</div></section>';
+
+  if (!them) {
+    h += `<section class="panel"><h2>Écrans</h2><div class="choice2">
+      <button class="mode" aria-pressed="${s.singleScreen}" data-single="1"><strong>Un seul écran</strong><span>Tout le monde joue ici, à tour de rôle. Aucune autre page n'est nécessaire.</span></button>
+      <button class="mode" aria-pressed="${!s.singleScreen}" data-single="0"><strong>Un écran par joueur</strong><span>Chacun joue depuis sa page /joueur1, /joueur2… sur son téléphone ou son ordinateur.</span></button>
+    </div></section>`;
+  }
+
+  if (s.mode === 'renverse') {
+    h += `<section class="panel"><h2>Renversement</h2><div class="choice2">
+      <button class="mode" aria-pressed="${!s.randomFlip}" data-rflip="0"><strong>Toujours</strong><span>La colonne choisie se retourne à coup sûr (animation de 2 secondes).</span></button>
+      <button class="mode" aria-pressed="${s.randomFlip}" data-rflip="1"><strong>Aléatoire</strong><span>La colonne fait 3 tours rapides sur elle-même : une chance sur deux qu'elle finisse renversée.</span></button>
+    </div></section>`;
+  }
+
+  h += '<section class="panel"><h2>Nombre de joueurs</h2><div class="counter">';
+  for (let k = 2; k <= 6; k++) h += `<button data-nb="${k}" aria-pressed="${n === k}" ${s.mode === 'classique' && k > 2 ? 'disabled' : ''}>${k}</button>`;
+  h += `</div>${s.mode === 'classique' ? '<p class="muted small">Le mode Classique se joue à deux.</p>' : ''}</section>`;
+
+  if (them) {
+    h += '<section class="panel"><h2>Thématique</h2>';
+    if (!s.themeFiles.length) h += '<p class="err">Aucun fichier .json dans le dossier thematiques.</p>';
+    h += '<div class="themes">' + s.themeFiles.map(f => `<button class="theme-card" data-theme="${P4.esc(f.file)}" aria-pressed="${f.file === s.themeFile}" ${f.ok ? '' : 'disabled'}>
+        <strong>${f.emoji ? f.emoji + ' ' : ''}${P4.esc(f.titre)}</strong><span>${f.ok ? `${f.nbThemes} thèmes · ${f.nbReponses} réponses` : 'Fichier invalide'}</span></button>`).join('') + '</div>';
+    const bad = s.themeFiles.filter(f => !f.ok);
+    if (bad.length) h += bad.map(f => `<p class="err small">${P4.esc(f.file)} : ${P4.esc(f.error)}</p>`).join('');
+    if (s.themeError) h += `<p class="err">${P4.esc(s.themeError)}</p>`;
+    const cur = s.themeFiles.find(f => f.file === s.themeFile);
+    if (cur && cur.description) h += `<p class="theme-desc">${P4.esc(cur.description)}</p>`;
+    h += `<div class="theme-row"><span class="muted small">Case sans réponse possible :</span>
+      <div class="counter" style="gap:.4rem"><button class="btn ${s.freeEmpty ? 'primary' : ''}" data-free="1" style="width:auto;height:auto;border-radius:10px;font-size:.88rem;padding:.35em .8em">✦ Pion libre</button>
+      <button class="btn ${s.freeEmpty ? '' : 'primary'}" data-free="0" style="width:auto;height:auto;border-radius:10px;font-size:.88rem;padding:.35em .8em">Réponse hors liste à l'arbitre</button></div></div>`;
+    const rules = [
+      ['give', 'L\'adversaire prend la case', 'À 2 joueurs, l\'adversaire y pose son pion puis joue son tour. À 3 joueurs ou plus, le joueur passe son tour.'],
+      ['steal', 'Le suivant peut voler la case', 'Le joueur suivant peut tenter de répondre pour la même case (s\'il a juste, il y pose son pion). Qu\'il réussisse, se trompe ou renonce, il joue ensuite son tour.'],
+      ['pass', 'Passe son tour', 'La case reste libre, on passe simplement au joueur suivant.'],
+    ];
+    h += `<h3 style="font-size:1rem;margin:1rem 0 .5rem">En cas de mauvaise réponse</h3><div class="modes">` + rules.map(([id, t, d]) =>
+      `<button class="mode" aria-pressed="${s.wrongRule === id}" data-wrong="${id}"><strong style="font-size:1rem">${t}</strong><span>${d}</span></button>`).join('') + '</div><div style="height:.8rem"></div>';
+    if (s.grid) {
+      h += `<div class="theme-row"><span class="muted small" style="flex:1">Nombre de réponses possibles par case : ${s.grid.filled}/42 cases avec au moins une réponse${s.grid.filled < 42 ? (s.freeEmpty ? ' — les autres (✦) sont des cases libres' : ' — les autres ne se prennent qu\'avec une réponse hors liste acceptée par l\'arbitre') : ''}.</span>
+        <button class="btn" data-a="redraw">Nouveau tirage des thèmes</button></div><div class="preview" id="preview"></div>`;
+    }
+    h += '</section>';
+  }
+  h += '</div><div>';
+
+  // joueurs
+  h += '<section class="panel"><h2>Joueurs</h2>';
+  const seated = new Set(s.seats.slice(0, n).filter(x => x.name).map(x => x.name.toLowerCase()));
+  if (s.roster.length) {
+    h += '<div class="roster"><span class="muted small">Joueurs habituels :</span>' + s.roster.map(r => `<span class="rchip ${seated.has(r.name.toLowerCase()) ? 'seated' : ''}">
+      <button data-roster="${P4.esc(r.name)}" title="Placer ${P4.esc(r.name)} dans le premier siège libre"><span class="chip" style="--c:${P4.hex(s, r.color)}"></span>${P4.esc(r.name)}</button>
+      <button class="x" data-forget="${P4.esc(r.name)}" title="Oublier ce joueur" aria-label="Oublier ${P4.esc(r.name)}">✕</button></span>`).join('') + '</div>';
+  }
+  h += '<div class="slots">';
+  for (let i = 0; i < n; i++) {
+    const seat = s.seats[i];
+    const chosen = pickedColor[i] || seat.color;
+    const takenBy = takenColors(s, i);
+    h += `<div class="slot ${seat.name ? 'ready' : ''}">
+      <div class="slot-head">${seat.name ? P4.chip(s, i) : ''}<strong>Joueur ${i + 1}</strong>
+        <span class="kind"><button data-kind="human" data-seat="${i}" aria-pressed="${!seat.ai}">Humain</button><button data-kind="ai" data-seat="${i}" aria-pressed="${!!seat.ai}">🤖 IA</button></span>
+        ${s.singleScreen || seat.ai ? '' : `<span class="dot${seat.online ? ' on' : ''}" title="${seat.online ? 'Écran connecté' : 'Écran non connecté'}"></span><a href="/joueur${i + 1}" target="_blank">/joueur${i + 1}</a>`}
+        ${seat.name ? `<button class="btn ghost" data-unreg="${i}">Retirer</button>` : ''}</div>
+      <input type="text" id="name-${i}" data-seat="${i}" maxlength="20" placeholder="Nom du joueur" value="${P4.esc(seat.name || '')}" list="rosterList" autocomplete="off">
+      <div class="swatches">${s.colors.map(c => `<button class="swatch ${chosen === c.id ? 'sel' : ''}" style="--c:${c.hex}" data-seat="${i}" data-color="${c.id}"
+        title="${c.nom}${c.id in takenBy ? ' — prise par ' + P4.esc(P4.pname(s, takenBy[c.id])) : ''}" aria-label="${c.nom}" ${c.id in takenBy ? 'disabled' : ''}></button>`).join('')}</div>
+    </div>`;
+  }
+  h += '</div>';
+  const ready = s.seats.slice(0, n).every(x => x.name) && (!them || s.grid);
+  const missing = s.seats.slice(0, n).filter(x => !x.name).length;
+  h += `<div class="start-bar"><button class="btn primary big" data-a="start" ${ready ? '' : 'disabled'}>Lancer la partie</button>
+    <span class="muted small">${missing ? `${missing} joueur${missing > 1 ? 's' : ''} à inscrire${s.singleScreen ? '' : ' (ici ou depuis sa page)'}.` : (ready ? 'Tout le monde est prêt.' : 'Choisis une thématique.')}</span></div>`;
+  if (!s.singleScreen && s.lanUrls && s.lanUrls.length) h += `<p class="urls">Depuis un autre appareil du même réseau : ${s.lanUrls.map(u => `<code>${u}/joueur1</code>`).join(', ')} (puis /joueur2, /joueur3…)</p>`;
+  h += '</section></div></div>';
+  app.innerHTML = h;
+
+  const pv = document.getElementById('preview');
+  if (pv) P4.renderBoard(pv, { ...s, phase: 'setup', pending: null }, { showCounts: true });
+}
+
+function registerSeat(seat, color) {
+  const s = P4.state, input = document.getElementById('name-' + seat);
+  const name = (input ? input.value : '').trim() || s.seats[seat].name;
+  if (!color) return;
+  if (!name) { P4.toast('Indique d\'abord le nom du joueur', 'bad'); input && input.focus(); return; }
+  P4.act('register', { seat, name, color, ai: s.seats[seat].ai }).then(r => { if (r.ok) { delete pickedColor[seat]; P4.clearDraft('name-' + seat); } });
+}
+function freeColor(s, seat, wanted) {
+  const taken = takenColors(s, seat);
+  if (wanted && !(wanted in taken)) return wanted;
+  return (s.colors.find(c => !(c.id in taken)) || {}).id;
+}
+const AI_NAMES = ['Robotik', 'Pixel', 'Circuit', 'Bip-Bop', 'Octet', 'Nova'];
+function makeAI(seat) {
+  const s = P4.state, used = new Set(s.seats.map(x => x.name));
+  const name = AI_NAMES.find(n => !used.has(n)) || `IA ${seat + 1}`;
+  P4.act('register', { seat, name, color: freeColor(s, seat, s.seats[seat].color), ai: true }).then(r => r.ok && P4.clearDraft('name-' + seat));
+}
+function placeFromRoster(name) {
+  const s = P4.state;
+  if (s.seats.slice(0, s.nbActive).some(x => x.name && x.name.toLowerCase() === name.toLowerCase())) return P4.toast(`${name} est déjà inscrit·e`);
+  const seat = s.seats.slice(0, s.nbActive).findIndex(x => !x.name);
+  if (seat < 0) return P4.toast('Tous les sièges sont occupés : retire un joueur ou augmente le nombre de joueurs', 'bad');
+  const r = s.roster.find(x => x.name === name);
+  P4.act('register', { seat, name, color: freeColor(s, seat, r && r.color) }).then(res => res.ok && P4.clearDraft('name-' + seat));
+}
+
+// ------------------------------------------------------------------ partie
+function statusText(s) {
+  const n = P4.esc(P4.pname(s, s.current)), chip = P4.chip(s, s.current);
+  let sub = {
+    flip: 'peut renverser une colonne avant de jouer',
+    anim: s.randomFlip ? 'fait tourner une colonne…' : 'renverse une colonne…',
+    drop: s.mode === 'thematique' ? 'choisit une case' : (s.singleScreen ? 'à toi de jouer !' : 'place un pion'),
+    answer: s.pending && s.pending.answer ? 'attend ta décision' : (s.pending && s.pending.steal ? 'tente de voler la case' : 'cherche une réponse'),
+  }[s.turnPhase] || '';
+  if (s.seats[s.current]?.ai) {
+    if (s.turnPhase === 'flip' || s.turnPhase === 'drop') sub = '🤖 réfléchit…';
+    if (s.turnPhase === 'answer') sub = s.pending && s.pending.answer ? `🤖 propose « ${P4.esc(s.pending.answer)} »` : '🤖 cherche une réponse…';
+  }
+  return `<div class="status">${chip}${n} <span class="sub">${sub}</span></div>`;
+}
+
+function renderPlay(s) {
+  const them = s.mode === 'thematique', single = s.singleScreen;
+  const aiTurn = s.phase === 'playing' && s.seats[s.current]?.ai;
+  const acting = (single || playHere) && !aiTurn;
+  let h = `<div class="play ${single ? 'single' : ''}"><div class="stage">`;
+  if (s.phase === 'over') {
+    h += `<div class="panel result"><h2>${s.draw ? 'Match nul' : `${P4.chip(s, s.winner)} ${P4.esc(P4.pname(s, s.winner))} gagne !`}</h2>
+      <div class="btns"><button class="btn primary" data-a="rematch">Rejouer une manche</button><button class="btn" data-a="reset">Changer la configuration</button></div></div>`;
+  } else h += statusText(s);
+  h += '<div class="bwrap" id="board"></div><div class="actionbar">';
+  if (s.phase === 'playing' && acting) {
+    if (s.turnPhase === 'flip') h += '<span class="muted">Clique sur une colonne ⟲ pour la renverser</span><button class="btn" data-a="noflip">Ne pas renverser</button>';
+    if (s.turnPhase === 'answer' && s.pending && !s.pending.answer && s.pending.steal) h += '<button class="btn ghost" data-a="declineSteal">Renoncer au vol et jouer son tour</button>';
+    if (s.turnPhase === 'answer' && s.pending && !s.pending.answer && !s.pending.steal) h += '<button class="btn ghost" data-a="cancel">Choisir une autre case</button>';
+  }
+  h += '</div>';
+  if (!single) {
+    h += `<div class="toggles"><label><input type="checkbox" id="playHere" ${playHere ? 'checked' : ''}> Jouer depuis cet écran pour le joueur actif</label>`;
+    if (them) h += `<label><input type="checkbox" id="showCounts" ${showCounts ? 'checked' : ''}> Afficher le nombre de réponses restantes</label>`;
+    h += '</div>';
+  }
+  h += '</div><aside>';
+
+  if (them && s.phase === 'playing') h += arbitrage(s);
+  h += `<div class="panel"><h2>Joueurs</h2>${P4.playersList(s, { showOnline: !single })}</div>`;
+  if (them) {
+    h += `<div class="panel"><h2>Réponses validées (${s.used.length})</h2>${P4.usedList(s)}</div>`;
+    if (s.phase === 'playing') h += exclusionPanel(s);
+  }
+  h += `<div class="panel"><h2>Journal</h2><ul class="log">${s.log.map(l => `<li>${P4.esc(l.text)}</li>`).join('')}</ul></div>`;
+  h += '</aside></div>';
+  app.innerHTML = h;
+
+  P4.renderBoard(document.getElementById('board'), s, {
+    canAct: acting, showCounts: them && showCounts, fit: { bottom: single ? 24 : 70, minH: 0.55 },
+    onDrop: c => P4.act('drop', { col: c }),
+    onFlip: c => P4.act('flip', { col: c }),
+  });
+  const ph = document.getElementById('playHere'); if (ph) ph.onchange = () => { playHere = ph.checked; P4.redraw(); };
+  const sc = document.getElementById('showCounts'); if (sc) sc.onchange = () => { showCounts = sc.checked; P4.redraw(); };
+  const f = document.getElementById('filter'); if (f) { f.oninput = applyFilter; applyFilter(); }
+  const ex = document.getElementById('exSearch'); if (ex) { ex.oninput = renderExResults; renderExResults(); }
+}
+
+function arbitrage(s) {
+  const p = s.pending, name = P4.esc(P4.pname(s, s.current));
+  let h = '<div class="panel arb"><h2>Arbitrage</h2>';
+  if (!p) return h + `<p class="muted">${s.turnPhase === 'anim' ? 'Renversement en cours…' : `${name} choisit une case.`}</p></div>`;
+  if (p.steal) h += `<p class="steal">⚡ Vol de case : ${name} répond à la place de ${P4.esc(P4.pname(s, p.from))}</p>`;
+  h += `<div class="cellq"><span class="tag">Case ${P4.cellLabel(s, p.row, p.col)}</span><strong>${P4.esc(p.rowTheme)} × ${P4.esc(p.colTheme)}</strong></div>`;
+  if (s.themeDescription) h += `<p class="theme-desc">${P4.esc(s.themeDescription)}</p>`;
+  if (p.answer) {
+    const m = p.match || { status: 'unknown' };
+    const badge = { ok: ['ok', 'Dans la liste'], used: ['used', 'Déjà citée ou exclue'], unknown: ['unknown', 'Hors liste'] }[m.status];
+    h += `<div class="answer">« ${P4.esc(p.answer)} » <span class="badge ${badge[0]}">${badge[1]}</span></div><div class="btns">`;
+    if (m.status === 'ok') h += `<button class="btn good" data-validate="${P4.esc(m.key)}">Valider</button>`;
+    if (m.status === 'unknown') h += `<button class="btn" data-a="accept">Accepter quand même</button>`;
+    h += `<button class="btn bad" data-a="reject">${rejectLabel(s)}</button>`;
+    if (m.status !== 'used') h += '<button class="btn bad" data-a="rejectx" title="Refuser et empêcher cette réponse d\'être redonnée">Refuser et exclure</button>';
+    h += '</div>';
+  } else {
+    h += `<p class="muted">Réponse orale, ou en cours de saisie par ${name}. Clique sur un nom pour le valider, ou sur ✕ pour l'exclure du reste de la partie.</p>
+      <div class="btns"><button class="btn bad" data-a="reject">${rejectLabel(s)}</button></div>`;
+  }
+  h += `<input type="text" id="filter" placeholder="Filtrer les réponses possibles (${p.cands.length})…" autocomplete="off">`;
+  if (p.cands.length) h += '<div class="cands">' + p.cands.map(c =>
+    `<span class="cand-wrap ${p.match && p.match.key === c.key ? 'match' : ''}" data-n="${P4.esc(c.nom.toLowerCase())}"><button class="cand" data-validate="${P4.esc(c.key)}" title="${c.info ? P4.esc(c.info) + ' — ' : ''}Valider ${P4.esc(c.nom)} et poser le pion">${P4.esc(c.nom)}</button><button class="cand-x" data-exclude="${P4.esc(c.key)}" title="Exclure ${P4.esc(c.nom)} pour le reste de la partie" aria-label="Exclure ${P4.esc(c.nom)}">✕</button></span>`).join('') + '</div>';
+  else h += '<p class="err small">Plus aucune réponse disponible dans la liste pour cette case.</p>';
+  if (p.cited.length) h += `<div class="cited">Déjà citées ou exclues : ${p.cited.map(n => `<s>${P4.esc(n)}</s>`).join(' ')}</div>`;
+  return h + '</div>';
+}
+function rejectLabel(s) {
+  const n = s.nbActive, next = P4.esc(P4.pname(s, (s.current + 1) % n));
+  if (s.pending && s.pending.steal) return `Refuser — ${P4.esc(P4.pname(s, s.current))} joue son tour`;
+  if (s.wrongRule === 'give' && n === 2) return `Refuser — ${next} prend la case`;
+  if (s.wrongRule === 'steal') return `Refuser — ${next} peut voler`;
+  return 'Refuser — tour suivant';
+}
+function exclusionPanel(s) {
+  let h = `<div class="panel"><h2>Réponses exclues (${s.excluded.length})</h2>
+    <p class="muted small" style="margin:0 0 .5rem">Une réponse donnée (même fausse ou hors case) peut être retirée du jeu : plus personne ne pourra la donner.</p>
+    <input type="text" id="exSearch" placeholder="Chercher une réponse à exclure…" autocomplete="off"><div class="exres" id="exResults"></div>`;
+  if (s.excluded.length) h += '<div class="exlist">' + s.excluded.map(x => `<button data-unexclude="${P4.esc(x.key)}" title="Cliquer pour rendre « ${P4.esc(x.nom)} » à nouveau disponible">${P4.esc(x.nom)}</button>`).join('') + '</div>';
+  return h + '</div>';
+}
+const fold = t => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function applyFilter() {
+  const q = fold(document.getElementById('filter').value || '');
+  document.querySelectorAll('.cand-wrap').forEach(b => { b.hidden = q && !fold(b.dataset.n).includes(q); });
+}
+function renderExResults() {
+  const s = P4.state, box = document.getElementById('exResults'), inp = document.getElementById('exSearch');
+  if (!box) return;
+  const q = fold(inp.value.trim());
+  if (!q) { box.innerHTML = ''; return; }
+  const blocked = new Set(s.excluded.map(x => x.key));
+  s.used.forEach(u => blocked.add(u.key));
+  const hits = (s.allAnswers || []).filter(a => !blocked.has(a.key) && fold(a.nom).includes(q)).slice(0, 24);
+  box.innerHTML = hits.map(a => `<button data-exclude="${P4.esc(a.key)}" title="${a.info ? P4.esc(a.info) + ' — ' : ''}Exclure ${P4.esc(a.nom)}">⊘ ${P4.esc(a.nom)}</button>`).join('')
+    + (hits.length ? '' : `<button data-exclude-text="${P4.esc(inp.value.trim())}">⊘ Exclure « ${P4.esc(inp.value.trim())} » (hors liste)</button>`);
+}
+
+// ------------------------------------------------------------------ événements
+document.addEventListener('click', e => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  const s = P4.state;
+  if (t.dataset.mode) return P4.act('config', { mode: t.dataset.mode });
+  if (t.dataset.free) return P4.act('config', { freeEmpty: t.dataset.free === '1' });
+  if (t.dataset.wrong) return P4.act('config', { wrongRule: t.dataset.wrong });
+  if (t.dataset.rflip) return P4.act('config', { randomFlip: t.dataset.rflip === '1' });
+  if (t.dataset.kind) {
+    const seat = +t.dataset.seat, cur = P4.state.seats[seat];
+    if (t.dataset.kind === 'ai') return cur.ai ? null : makeAI(seat);
+    return cur.ai ? P4.act('unregister', { seat }) : null;
+  }
+  if (t.dataset.single) return P4.act('config', { singleScreen: t.dataset.single === '1' });
+  if (t.dataset.nb) return P4.act('config', { nbJoueurs: +t.dataset.nb });
+  if (t.dataset.theme) return P4.act('config', { themeFile: t.dataset.theme });
+  if (t.dataset.unreg) return P4.act('unregister', { seat: +t.dataset.unreg });
+  if (t.dataset.roster) return placeFromRoster(t.dataset.roster);
+  if (t.dataset.forget) return confirm(`Oublier ${t.dataset.forget} dans la liste des joueurs habituels ?`) && P4.act('forget', { name: t.dataset.forget });
+  if (t.dataset.color) {
+    const seat = +t.dataset.seat;
+    pickedColor[seat] = t.dataset.color;
+    registerSeat(seat, t.dataset.color);
+    return P4.redraw();
+  }
+  if (t.dataset.validate) { P4.draft('filter', ''); return P4.act('validate', { key: t.dataset.validate }); }
+  if (t.dataset.exclude) { P4.draft('exSearch', ''); return P4.act('exclude', { key: t.dataset.exclude }); }
+  if (t.dataset.excludeText) { P4.draft('exSearch', ''); return P4.act('exclude', { text: t.dataset.excludeText }); }
+  if (t.dataset.unexclude) return P4.act('unexclude', { key: t.dataset.unexclude });
+  const a = t.dataset.a;
+  if (!a) return;
+  if (a === 'reset' && s.phase === 'playing' && !confirm('Abandonner la partie en cours et revenir à la configuration ?')) return;
+  if (a === 'rematch' && s.phase === 'playing' && !confirm('Recommencer une nouvelle manche ?')) return;
+  if (a === 'accept' || a === 'reject' || a === 'rejectx') P4.draft('filter', '');
+  if (a === 'rejectx') return P4.act('reject', { exclude: true });
+  P4.act(a);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('input[id^="name-"]')) {
+    const seat = +t.dataset.seat, s = P4.state, name = t.value.trim();
+    const known = s.roster.find(r => r.name.toLowerCase() === name.toLowerCase());
+    const color = pickedColor[seat] || s.seats[seat].color || (known && freeColor(s, seat, known.color));
+    if (color && name) registerSeat(seat, color);
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('input[id^="name-"]')) e.target.blur();
+});
+
+P4.connect('master', render);
+</script>
+</body>
+</html>

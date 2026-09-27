@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puis-thème 4 — Joueur</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  header.top { display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header.top .logo { font-size: 1.3rem; }
+  header.top .me { margin-left: auto; display: flex; align-items: center; gap: .5rem; font-weight: 700; }
+  main { padding: 1rem; max-width: 1200px; margin: 0 auto; }
+  .reg { max-width: 34rem; margin: 1.5rem auto; display: grid; gap: 1rem; }
+  .reg h1 { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+  .reg label { font-weight: 700; display: block; margin-bottom: .35rem; }
+  .reg input { width: 100%; font-size: 1.15rem; }
+  .reg .swatch { width: 2.8rem; height: 2.8rem; }
+  .reg .ok { color: var(--ok); font-weight: 700; }
+
+  .play { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 320px); gap: 1.2rem; align-items: start; }
+  .stage { display: grid; justify-items: center; gap: .9rem; }
+  .bwrap { --cell: clamp(34px, min(calc((100vw - 420px) / 9.2), calc((100vh - 260px) / 7.6)), 86px); max-width: 100%; overflow-x: auto; padding: .3rem .3rem 1.4rem; }
+  .bwrap.them { --cell: clamp(30px, min(calc((100vw - 500px) / 9), calc((100vh - 290px) / 7.6)), 80px); }
+  .turnbox { width: min(100%, 36rem); text-align: center; }
+  .turnbox.mine { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass), 0 0 30px rgba(217,173,79,.15); }
+  .turnbox .big { font-family: var(--display); font-weight: 800; font-size: clamp(1.4rem, 4vw, 2rem); display: flex; gap: .5rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .turnbox p { margin: .4rem 0 0; color: var(--muted); }
+  .q { font-family: var(--display); font-weight: 800; font-size: clamp(1.3rem, 4.5vw, 1.9rem); margin: .3rem 0 .7rem; }
+  .ansrow { display: flex; gap: .5rem; }
+  .ansrow input { flex: 1; font-size: 1.1rem; min-width: 0; }
+  .row-btns { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; margin-top: .7rem; }
+  aside { display: grid; gap: 1rem; }
+  /* téléphone à l'horizontale : consignes à gauche, plateau à droite */
+  @media (orientation: landscape) and (max-height: 540px) {
+    header.top { padding: .35rem .8rem; }
+    main { padding: .4rem .6rem 2rem; }
+    .stage { grid-template-columns: minmax(180px, 34%) minmax(0, 1fr); align-items: start; }
+    .turnbox { width: 100%; }
+    .turnbox .big { font-size: 1.15rem; }
+    .q { font-size: 1.1rem; }
+  }
+  @media (max-width: 600px) {
+    header.top { padding: .5rem .7rem; }
+    main { padding: .6rem .4rem 2rem; }
+    .play { gap: .8rem; }
+    .turnbox { padding: .7rem .8rem; }
+    .turnbox .big { font-size: 1.3rem; }
+    .q { font-size: 1.25rem; margin: .2rem 0 .5rem; }
+  }
+  @media (max-width: 860px) {
+    .play { grid-template-columns: minmax(0, 1fr); }
+    .bwrap { --cell: min(calc((100vw - 60px) / 8.2), 9.5vh); }
+    .bwrap.them { --cell: min(calc((100vw - 96px) / 7.9), 8.6vh); }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">Puis-thème <span class="four">4</span></div>
+  <div class="me" id="me"></div>
+</header>
+<main id="app"></main>
+<datalist id="rosterList"></datalist>
+
+<script src="/static/common.js"></script>
+<script>
+const seat = +(location.pathname.match(/joueur(\d)/) || [0, 1])[1] - 1;
+const app = document.getElementById('app');
+let myColor = null;
+document.title = `Puis-thème 4 — Joueur ${seat + 1}`;
+
+function render(s) {
+  const me = s.seats[seat];
+  document.getElementById('me').innerHTML = me.name ? `${P4.chip(s, seat)}${P4.esc(me.name)}` : `Joueur ${seat + 1}`;
+  if (seat >= s.nbActive) {
+    app.innerHTML = `<div class="reg panel"><h1>Joueur ${seat + 1}</h1><p>Ce poste n'est pas utilisé : la partie est prévue pour ${s.nbActive} joueurs.
+      Utilise une des pages <strong>/joueur1</strong> à <strong>/joueur${s.nbActive}</strong>, ou demande à l'arbitre d'ajouter des joueurs.</p></div>`;
+    return;
+  }
+  if (me.ai) {
+    if (s.phase === 'setup') {
+      app.innerHTML = `<div class="reg panel"><h1>🤖 ${P4.esc(me.name)}</h1><p>Ce siège est joué par l'IA. Utilise une autre page joueur, ou demande à l'arbitre de repasser ce siège en « Humain ».</p></div>`;
+      return;
+    }
+    return renderPlay(s, true);
+  }
+  if (s.singleScreen) {
+    if (s.phase === 'setup') {
+      app.innerHTML = `<div class="reg panel"><h1>Un seul écran</h1><p>Cette partie de ${P4.modeName(s.mode)} se joue entièrement sur l'écran de l'arbitre : les joueurs y placent leurs pions à tour de rôle.</p>
+        <p class="muted">Cette page affichera le plateau en direct une fois la partie lancée.</p></div>`;
+      return;
+    }
+    return renderPlay(s, true);
+  }
+  if (s.phase === 'setup') return renderReg(s);
+  renderPlay(s);
+}
+P4.redraw = () => P4.keepInputs(() => render(P4.state));
+
+// ------------------------------------------------------------------ inscription
+function renderReg(s) {
+  document.getElementById('rosterList').innerHTML = s.roster.map(r => `<option value="${P4.esc(r.name)}">`).join('');
+  const me = s.seats[seat];
+  const chosen = myColor || me.color;
+  const takenBy = {};
+  for (let j = 0; j < s.nbActive; j++) if (j !== seat && s.seats[j].color) takenBy[s.seats[j].color] = j;
+  app.innerHTML = `<div class="reg panel">
+    <h1>Joueur ${seat + 1}</h1>
+    <div><label for="myname">Ton nom</label><input type="text" id="myname" maxlength="20" value="${P4.esc(me.name || '')}" placeholder="Ex. Camille" list="rosterList" autocomplete="off"></div>
+    <div><label>Ta couleur</label><div class="swatches">${s.colors.map(c => `<button class="swatch ${chosen === c.id ? 'sel' : ''}" style="--c:${c.hex}" data-color="${c.id}"
+      aria-label="${c.nom}" title="${c.nom}${c.id in takenBy ? ' — prise par ' + P4.esc(P4.pname(s, takenBy[c.id])) : ''}" ${c.id in takenBy ? 'disabled' : ''}></button>`).join('')}</div></div>
+    <div><button class="btn primary big" id="save">${me.name ? 'Mettre à jour' : 'Je m\'inscris'}</button></div>
+    ${me.name ? `<p class="ok">Tu es inscrit·e. La partie commencera quand l'arbitre la lancera.</p>` : '<p class="muted">Choisis un nom et une couleur, puis inscris-toi.</p>'}
+    <p class="muted small">Mode ${P4.modeName(s.mode)} · ${s.nbActive} joueurs</p>
+  </div>`;
+}
+function save() {
+  const s = P4.state, name = document.getElementById('myname').value.trim();
+  const known = s.roster.find(r => r.name.toLowerCase() === name.toLowerCase());
+  const taken = new Set(s.seats.filter((x, j) => j !== seat && j < s.nbActive).map(x => x.color));
+  const color = myColor || s.seats[seat].color || (known && !taken.has(known.color) ? known.color : null);
+  if (!name) return P4.toast('Indique ton nom', 'bad');
+  if (!color) return P4.toast('Choisis une couleur', 'bad');
+  P4.act('register', { name, color }).then(r => { if (r.ok) { myColor = null; P4.clearDraft('myname'); } });
+}
+
+// ------------------------------------------------------------------ partie
+function renderPlay(s, viewOnly) {
+  const them = s.mode === 'thematique';
+  const mine = !viewOnly && s.phase === 'playing' && s.current === seat;
+  const cur = P4.esc(P4.pname(s, s.current));
+  let box = '';
+  if (s.phase === 'over') {
+    box = `<div class="panel turnbox ${s.winner === seat ? 'mine' : ''}"><div class="big">${s.draw ? 'Match nul !' : s.winner === seat ? '🏆 Tu as gagné !' : `${P4.chip(s, s.winner)} ${P4.esc(P4.pname(s, s.winner))} gagne`}</div>
+      <p>L'arbitre peut lancer une nouvelle manche.</p></div>`;
+  } else if (mine) {
+    let body = '';
+    const p = s.pending;
+    if (s.turnPhase === 'flip') body = `<p>${s.randomFlip ? 'Tu peux faire tourner une colonne (⟲) : une chance sur deux qu\'elle se renverse.' : 'Tu peux renverser une colonne (⟲) avant de jouer.'}</p><div class="row-btns"><button class="btn" data-a="noflip">Ne pas renverser</button></div>`;
+    else if (s.turnPhase === 'anim') body = '<p>Renversement en cours…</p>';
+    else if (s.turnPhase === 'drop') body = them ? `<p>Choisis une colonne : ton pion ira dans la case la plus basse, et il faudra une réponse qui correspond à ses deux thèmes.${s.freeEmpty ? ' Une case ✦ se prend sans répondre.' : ''}</p>`
+      : '<p>Choisis une colonne pour y lâcher ton pion.</p>';
+    else if (s.turnPhase === 'answer' && p) {
+      body = `<div class="q">${P4.esc(p.rowTheme)} × ${P4.esc(p.colTheme)}</div>`;
+      if (s.themeDescription) body += `<p class="small" style="margin:-.3rem 0 .7rem">${P4.esc(s.themeDescription)}</p>`;
+      if (p.steal && !p.answer) body += '<p class="small" style="margin:0 0 .6rem">Bonne réponse : ton pion prend la case. Dans tous les cas, tu joues ensuite ton tour.</p>';
+      if (!p.answer) body += `<div class="ansrow"><input type="text" id="ans" maxlength="60" placeholder="Ta réponse (ou à l'oral)" autocomplete="off"><button class="btn primary" id="send">Envoyer</button></div>
+        <div class="row-btns">${p.steal ? '<button class="btn ghost" data-a="declineSteal">Renoncer et jouer mon tour</button>' : '<button class="btn ghost" data-a="cancel">Choisir une autre case</button>'}</div>`;
+      else body += `<p>Réponse envoyée : <strong>« ${P4.esc(p.answer)} »</strong> — l'arbitre décide…</p>`;
+    }
+    const title = p && p.steal ? `⚡ Vole la case de ${P4.esc(P4.pname(s, p.from))} !` : 'À toi de jouer !';
+    box = `<div class="panel turnbox mine"><div class="big">${P4.chip(s, seat)} ${title}</div>${body}</div>`;
+  } else {
+    let sub = s.turnPhase === 'flip' ? 'hésite à renverser une colonne…' : s.turnPhase === 'anim' ? (s.randomFlip ? 'fait tourner une colonne…' : 'renverse une colonne !') : 'réfléchit…';
+    let extra = '';
+    if (s.turnPhase === 'answer' && s.pending) {
+      sub = s.pending.answer ? `propose « ${P4.esc(s.pending.answer)} »` : (s.pending.steal ? '⚡ tente de voler la case' : 'cherche une réponse pour');
+      extra = `<div class="q">${P4.esc(s.pending.rowTheme)} × ${P4.esc(s.pending.colTheme)}</div>`;
+    }
+    box = `<div class="panel turnbox"><div class="big">${P4.chip(s, s.current)} ${cur}</div><p>${sub}</p>${extra}</div>`;
+  }
+  let h = `<div class="play"><div class="stage">${box}<div class="bwrap ${them ? 'them' : ''}" id="board"></div></div><aside>`;
+  h += `<div class="panel"><h2>Joueurs · mode ${P4.modeName(s.mode)}</h2>${P4.playersList(s)}</div>`;
+  if (them) h += `<div class="panel"><h2>Réponses déjà citées</h2>${P4.usedList(s)}${s.excluded.length ? `<p class="muted small" style="margin:.7rem 0 0">Exclues par l'arbitre : ${s.excluded.map(x => `<s>${P4.esc(x.nom)}</s>`).join(', ')}</p>` : ''}</div>`;
+  h += '</aside></div>';
+  app.innerHTML = h;
+  P4.renderBoard(document.getElementById('board'), s, {
+    canAct: mine, fit: { bottom: 16, minH: 0.5 },
+    onDrop: c => P4.act('drop', { col: c }),
+    onFlip: c => P4.act('flip', { col: c }),
+  });
+}
+function sendAnswer() {
+  const i = document.getElementById('ans');
+  const text = i ? i.value.trim() : '';
+  if (!text) return P4.toast('Écris ta réponse, ou donne-la à voix haute à l\'arbitre', 'bad');
+  P4.clearDraft('ans');
+  P4.act('answer', { text });
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.dataset.color) { myColor = t.dataset.color; return P4.redraw(); }
+  if (t.id === 'save') return save();
+  if (t.id === 'send') return sendAnswer();
+  if (t.dataset.a) P4.act(t.dataset.a);
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (e.target.id === 'ans') sendAnswer();
+  if (e.target.id === 'myname') save();
+});
+
+P4.connect('p' + (seat + 1), render);
+</script>
+</body>
+</html>

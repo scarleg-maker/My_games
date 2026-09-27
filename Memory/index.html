@@ -650,25 +650,54 @@
       : "Chargez au moins 2 images pour commencer.";
   }
 
-  // ---------- Grid layout (equitable rows/cols) ----------
+  // ---------- Grid layout: maximize card size within the visible screen ----------
   function computeGrid(totalCards){
-    let best = {rows: 1, cols: totalCards};
-    let bestDiff = Infinity;
-    for (let rows = 1; rows <= totalCards; rows++){
-      if (totalCards % rows !== 0) continue;
-      const cols = totalCards / rows;
-      const diff = Math.abs(cols - rows);
-      if (diff < bestDiff){
-        bestDiff = diff;
-        best = {rows, cols};
+    const gapGuess = 8;
+    // usable width: viewport minus page padding, capped so it stays reasonable on big screens
+    const availWidth = Math.max(240, Math.min(window.innerWidth - 40, 1300));
+    // usable height: viewport minus header/hud/margins already on screen
+    const hud = document.querySelector('.hud');
+    const reserved = (hud ? hud.offsetHeight : 70) + 120;
+    const availHeight = Math.max(220, window.innerHeight - reserved);
+
+    let best = {cols: totalCards, rows: 1, size: 0};
+    for (let cols = 1; cols <= totalCards; cols++){
+      const rows = Math.ceil(totalCards / cols);
+      const cardW = (availWidth - gapGuess * (cols - 1)) / cols;
+      const cardH = (availHeight - gapGuess * (rows - 1)) / rows;
+      const size = Math.min(cardW, cardH);
+      if (size > best.size){
+        best = {cols, rows, size};
       }
-    }
-    // prefer wider-than-tall orientation (cols >= rows)
-    if (best.rows > best.cols){
-      best = {rows: best.cols, cols: best.rows};
     }
     return best;
   }
+
+  function applyBoardSizing(grid){
+    const size = grid.size;
+    let gap, borderPx;
+    if (size >= 90){ gap = 10; borderPx = 4; }
+    else if (size >= 70){ gap = 8; borderPx = 3; }
+    else if (size >= 50){ gap = 6; borderPx = 2; }
+    else { gap = 4; borderPx = 1; }
+
+    board.style.setProperty('--card-border', borderPx + 'px');
+    board.style.gap = gap + 'px';
+    board.style.gridTemplateColumns = `repeat(${grid.cols}, minmax(0,1fr))`;
+    board.style.gridTemplateRows = `repeat(${grid.rows}, minmax(0,1fr))`;
+    board.style.maxWidth = `${Math.round(grid.cols * size + gap * Math.max(0, grid.cols - 1))}px`;
+  }
+
+  function debounce(fn, wait){
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+  }
+
+  window.addEventListener('resize', debounce(() => {
+    if (gameScreen.classList.contains('show') && cards.length){
+      applyBoardSizing(computeGrid(cards.length));
+    }
+  }, 200));
 
   // ---------- Start game ----------
   btnStart.addEventListener('click', startGame);
@@ -729,20 +758,7 @@
   }
 
   function renderBoard(grid){
-    const totalCards = cards.length;
-    // scale target card size, gap and border down as the board gets denser
-    let target, gap, borderPx;
-    if (totalCards <= 12){ target = 110; gap = 10; borderPx = 4; }
-    else if (totalCards <= 24){ target = 95; gap = 8; borderPx = 3; }
-    else if (totalCards <= 40){ target = 80; gap = 6; borderPx = 2; }
-    else if (totalCards <= 60){ target = 68; gap = 5; borderPx = 2; }
-    else { target = 56; gap = 4; borderPx = 1; }
-
-    board.style.setProperty('--card-border', borderPx + 'px');
-    board.style.gap = gap + 'px';
-    board.style.gridTemplateColumns = `repeat(${grid.cols}, minmax(0,1fr))`;
-    board.style.gridTemplateRows = `repeat(${grid.rows}, minmax(0,1fr))`;
-    board.style.maxWidth = `${grid.cols * target}px`;
+    applyBoardSizing(grid);
     board.innerHTML = '';
     cards.forEach(card => {
       const el = document.createElement('div');
