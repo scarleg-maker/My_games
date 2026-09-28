@@ -25,7 +25,7 @@ Les autres appareils du même réseau (téléphones, tablettes) utilisent l'adre
 
 **Un seul écran** (Classique et Renversé) : dans la configuration, choisir « Un seul écran ». Tout se joue sur la page principale, à tour de rôle ; les pages /joueurN ne servent plus qu'à suivre le plateau.
 
-**Joueurs mémorisés** : les joueurs inscrits et les réglages (mode, nombre de joueurs, thématique) sont enregistrés dans `sauvegarde.json` et restent en place pour la partie suivante, même après un redémarrage du serveur. Les « joueurs habituels » s'affichent en pastilles : un clic place le joueur dans le premier siège libre, avec sa couleur habituelle si elle est disponible. Le ✕ retire un nom de cette liste.
+**Joueurs et noms** : sur la page arbitre, le nom tapé dans un siège s'enregistre tout seul (une couleur libre est choisie si besoin). « Retirer » libère un siège, « Vider tous les sièges » les libère tous. Au démarrage du serveur, les sièges sont vides ; les joueurs ayant déjà lancé une partie sont proposés en pastilles « Joueurs habituels » (un clic les replace, ✕ ou « Oublier tous les joueurs habituels » pour nettoyer la liste). Sur sa page, un joueur peut aussi « libérer ce siège » s'il y trouve un ancien nom.
 
 Le plateau s'adapte à l'écran (téléphone, tablette, ordinateur, portrait ou paysage) et se recalcule quand on tourne l'appareil.
 

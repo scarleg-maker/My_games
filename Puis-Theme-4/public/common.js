@@ -53,7 +53,13 @@
     const a = document.activeElement, id = a && a.id;
     const sel = id && 'selectionStart' in a ? [a.selectionStart, a.selectionEnd] : null;
     render();
-    for (const [k, v] of Object.entries(drafts)) { const el = document.getElementById(k); if (el && el.tagName === 'INPUT' && el.type === 'text') el.value = v; }
+    for (const [k, v] of Object.entries(drafts)) {
+      const el = document.getElementById(k);
+      if (!el || el.tagName !== 'INPUT' || el.type !== 'text') continue;
+      // champ lié au serveur (data-server) : hors saisie en cours, on affiche la valeur enregistrée
+      if ('server' in el.dataset && k !== id) { delete drafts[k]; continue; }
+      el.value = v;
+    }
     if (id) { const el = document.getElementById(id); if (el) { el.focus(); if (sel) try { el.setSelectionRange(...sel); } catch { } } }
   };
 

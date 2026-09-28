@@ -110,7 +110,8 @@ function renderReg(s) {
     <div><label>Ta couleur</label><div class="swatches">${s.colors.map(c => `<button class="swatch ${chosen === c.id ? 'sel' : ''}" style="--c:${c.hex}" data-color="${c.id}"
       aria-label="${c.nom}" title="${c.nom}${c.id in takenBy ? ' — prise par ' + P4.esc(P4.pname(s, takenBy[c.id])) : ''}" ${c.id in takenBy ? 'disabled' : ''}></button>`).join('')}</div></div>
     <div><button class="btn primary big" id="save">${me.name ? 'Mettre à jour' : 'Je m\'inscris'}</button></div>
-    ${me.name ? `<p class="ok">Tu es inscrit·e. La partie commencera quand l'arbitre la lancera.</p>` : '<p class="muted">Choisis un nom et une couleur, puis inscris-toi.</p>'}
+    ${me.name ? `<p class="ok">Inscrit·e sous le nom ${P4.chip(s, seat)} ${P4.esc(me.name)}. La partie commencera quand l'arbitre la lancera.</p>
+      <p class="muted small">Pas toi ? Modifie le nom puis « Mettre à jour », ou <button class="btn ghost" id="notme" style="padding:.2em .7em;font-size:.85rem">libère ce siège</button></p>` : '<p class="muted">Choisis un nom et une couleur, puis inscris-toi.</p>'}
     <p class="muted small">Mode ${P4.modeName(s.mode)} · ${s.nbActive} joueurs</p>
   </div>`;
 }
@@ -183,6 +184,7 @@ document.addEventListener('click', e => {
   if (!t) return;
   if (t.dataset.color) { myColor = t.dataset.color; return P4.redraw(); }
   if (t.id === 'save') return save();
+  if (t.id === 'notme') { myColor = null; P4.clearDraft('myname'); return P4.act('unregister'); }
   if (t.id === 'send') return sendAnswer();
   if (t.dataset.a) P4.act(t.dataset.a);
 });

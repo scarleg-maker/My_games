@@ -415,7 +415,6 @@ function handle(who, a) {
       need(taken < 0, `Couleur déjà prise par ${pname(taken)}`);
       const ai = isMaster && !!a.ai;
       state.seats[seat] = { name, color: a.color, ai };
-      if (!ai) remember(name, a.color);
       save();
       break;
     }
@@ -423,6 +422,7 @@ function handle(who, a) {
       const seat = isMaster ? a.seat | 0 : mySeat;
       need(seat !== null, 'Siège invalide');
       need(state.phase === 'setup', 'Impossible pendant la partie');
+      need(isMaster || !state.seats[seat]?.ai, "Ce siège est joué par l'IA");
       state.seats[seat] = null; save(); break;
     }
     case 'start': {
@@ -435,8 +435,15 @@ function handle(who, a) {
         need(state.themeFile, 'Choisis une thématique');
         try { thematique = loadThematique(state.themeFile); } catch (e) { throw new Error('Thématique invalide : ' + e.message); }
       }
+      // les joueurs humains qui démarrent une partie rejoignent les « joueurs habituels »
+      for (let i = n - 1; i >= 0; i--) if (!state.seats[i].ai) remember(state.seats[i].name, state.seats[i].color);
       newGame(false); save(); break;
     }
+    case 'clearSeats': {
+      masterOnly(); need(state.phase === 'setup', 'Impossible pendant la partie');
+      state.seats = Array(MAX_PLAYERS).fill(null); save(); break;
+    }
+    case 'clearRoster': { masterOnly(); state.roster = []; save(); break; }
     case 'forget': {
       masterOnly();
       state.roster = state.roster.filter(r => norm(r.name) !== norm(a.name || ''));
@@ -710,7 +717,7 @@ const server = http.createServer((req, res) => {
 // reprise des joueurs et réglages de la dernière session
 try {
   const d = JSON.parse(fs.readFileSync(SAVE_FILE, 'utf8'));
-  if (Array.isArray(d.seats)) d.seats.slice(0, MAX_PLAYERS).forEach((x, i) => { if (x && x.name && COLORS.some(c => c.id === x.color)) state.seats[i] = { name: String(x.name), color: x.color, ai: !!x.ai }; });
+  // les sièges repartent vides à chaque démarrage : les anciens joueurs restent proposés dans « Joueurs habituels »
   if (Array.isArray(d.roster)) state.roster = d.roster.filter(r => r && r.name).slice(0, 30);
   if (MODES.includes(d.mode)) state.mode = d.mode;
   if (d.nbJoueurs) state.nbJoueurs = Math.max(2, Math.min(MAX_PLAYERS, d.nbJoueurs | 0));

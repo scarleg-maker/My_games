@@ -28,6 +28,8 @@
   .preview { --cell: clamp(28px, 3.6vw, 46px); overflow-x: auto; padding-bottom: .8rem; }
   .err { color: var(--bad); font-weight: 700; }
   .slots { display: grid; gap: .7rem; }
+  .slot-tools { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .7rem; }
+  .slot-tools .btn { font-size: .85rem; padding: .35em .8em; }
   .slot { border: 1px solid var(--line); border-radius: 14px; padding: .7rem .8rem; background: var(--felt-2); display: grid; gap: .55rem; }
   .slot.ready { border-color: #3f7d62; }
   .slot-head { display: flex; align-items: center; gap: .6rem; }
@@ -216,6 +218,8 @@ function renderSetup(s) {
       <button data-roster="${P4.esc(r.name)}" title="Placer ${P4.esc(r.name)} dans le premier siège libre"><span class="chip" style="--c:${P4.hex(s, r.color)}"></span>${P4.esc(r.name)}</button>
       <button class="x" data-forget="${P4.esc(r.name)}" title="Oublier ce joueur" aria-label="Oublier ${P4.esc(r.name)}">✕</button></span>`).join('') + '</div>';
   }
+  h += `<div class="slot-tools"><button class="btn ghost" data-a="clearSeats" ${s.seats.slice(0, 6).some(x => x.name) ? '' : 'disabled'}>Vider tous les sièges</button>
+    ${s.roster.length ? '<button class="btn ghost" data-a="clearRoster">Oublier tous les joueurs habituels</button>' : ''}</div>`;
   h += '<div class="slots">';
   for (let i = 0; i < n; i++) {
     const seat = s.seats[i];
@@ -226,7 +230,7 @@ function renderSetup(s) {
         <span class="kind"><button data-kind="human" data-seat="${i}" aria-pressed="${!seat.ai}">Humain</button><button data-kind="ai" data-seat="${i}" aria-pressed="${!!seat.ai}">🤖 IA</button></span>
         ${s.singleScreen || seat.ai ? '' : `<span class="dot${seat.online ? ' on' : ''}" title="${seat.online ? 'Écran connecté' : 'Écran non connecté'}"></span><a href="/joueur${i + 1}" target="_blank">/joueur${i + 1}</a>`}
         ${seat.name ? `<button class="btn ghost" data-unreg="${i}">Retirer</button>` : ''}</div>
-      <input type="text" id="name-${i}" data-seat="${i}" maxlength="20" placeholder="Nom du joueur" value="${P4.esc(seat.name || '')}" list="rosterList" autocomplete="off">
+      <input type="text" id="name-${i}" data-seat="${i}" data-server maxlength="20" placeholder="Nom du joueur (enregistré automatiquement)" value="${P4.esc(seat.name || '')}" list="rosterList" autocomplete="off">
       <div class="swatches">${s.colors.map(c => `<button class="swatch ${chosen === c.id ? 'sel' : ''}" style="--c:${c.hex}" data-seat="${i}" data-color="${c.id}"
         title="${c.nom}${c.id in takenBy ? ' — prise par ' + P4.esc(P4.pname(s, takenBy[c.id])) : ''}" aria-label="${c.nom}" ${c.id in takenBy ? 'disabled' : ''}></button>`).join('')}</div>
     </div>`;
@@ -247,8 +251,11 @@ function renderSetup(s) {
 function registerSeat(seat, color) {
   const s = P4.state, input = document.getElementById('name-' + seat);
   const name = (input ? input.value : '').trim() || s.seats[seat].name;
-  if (!color) return;
   if (!name) { P4.toast('Indique d\'abord le nom du joueur', 'bad'); input && input.focus(); return; }
+  if (!color) {
+    const known = s.roster.find(r => r.name.toLowerCase() === name.toLowerCase());
+    color = freeColor(s, seat, known && known.color);
+  }
   P4.act('register', { seat, name, color, ai: s.seats[seat].ai }).then(r => { if (r.ok) { delete pickedColor[seat]; P4.clearDraft('name-' + seat); } });
 }
 function freeColor(s, seat, wanted) {
@@ -421,23 +428,29 @@ document.addEventListener('click', e => {
   if (t.dataset.unexclude) return P4.act('unexclude', { key: t.dataset.unexclude });
   const a = t.dataset.a;
   if (!a) return;
+  if (a === 'clearSeats' && !confirm('Vider tous les sièges ? Les joueurs restent proposés dans « Joueurs habituels ».')) return;
+  if (a === 'clearRoster' && !confirm('Oublier tous les joueurs habituels ?')) return;
   if (a === 'reset' && s.phase === 'playing' && !confirm('Abandonner la partie en cours et revenir à la configuration ?')) return;
   if (a === 'rematch' && s.phase === 'playing' && !confirm('Recommencer une nouvelle manche ?')) return;
   if (a === 'accept' || a === 'reject' || a === 'rejectx') P4.draft('filter', '');
   if (a === 'rejectx') return P4.act('reject', { exclude: true });
   P4.act(a);
 });
-document.addEventListener('change', e => {
+// le nom est enregistré tout seul : pendant la frappe (après une courte pause), en quittant le champ ou avec Entrée
+const nameTimers = {};
+function saveName(t) {
+  clearTimeout(nameTimers[t.id]);
+  const seat = +t.dataset.seat, s = P4.state, name = t.value.trim();
+  if (!name || name === s.seats[seat].name) return;
+  registerSeat(seat, pickedColor[seat] || s.seats[seat].color);
+}
+document.addEventListener('input', e => {
   const t = e.target;
-  if (t.matches('input[id^="name-"]')) {
-    const seat = +t.dataset.seat, s = P4.state, name = t.value.trim();
-    const known = s.roster.find(r => r.name.toLowerCase() === name.toLowerCase());
-    const color = pickedColor[seat] || s.seats[seat].color || (known && freeColor(s, seat, known.color));
-    if (color && name) registerSeat(seat, color);
-  }
+  if (t.matches('input[id^="name-"]')) { clearTimeout(nameTimers[t.id]); nameTimers[t.id] = setTimeout(() => saveName(t), 700); }
 });
+document.addEventListener('change', e => { if (e.target.matches('input[id^="name-"]')) saveName(e.target); });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && e.target.matches('input[id^="name-"]')) e.target.blur();
+  if (e.key === 'Enter' && e.target.matches('input[id^="name-"]')) { saveName(e.target); e.target.blur(); }
 });
 
 P4.connect('master', render);
