@@ -135,7 +135,7 @@ const pickedColor = {};   // couleur choisie pour un siège avant inscription
 function render(s) {
   document.getElementById('meta').textContent = s.phase === 'setup' ? 'Page arbitre — configuration'
     : `Mode ${P4.modeName(s.mode)}${s.singleScreen ? ' · un seul écran' : ''}${s.mode === 'thematique' && s.themeTitle ? ' · ' + s.themeTitle : ''}`;
-  document.getElementById('rosterList').innerHTML = s.roster.map(r => `<option value="${P4.esc(r.name)}">`).join('');
+  P4.setOptions(document.getElementById('rosterList'), s.roster.map(r => r.name));
   const ta = document.getElementById('topActions');
   if (s.phase === 'setup') { ta.innerHTML = ''; renderSetup(s); }
   else {
@@ -242,7 +242,7 @@ function renderSetup(s) {
     <span class="muted small">${missing ? `${missing} joueur${missing > 1 ? 's' : ''} à inscrire${s.singleScreen ? '' : ' (ici ou depuis sa page)'}.` : (ready ? 'Tout le monde est prêt.' : 'Choisis une thématique.')}</span></div>`;
   if (!s.singleScreen && s.lanUrls && s.lanUrls.length) h += `<p class="urls">Depuis un autre appareil du même réseau : ${s.lanUrls.map(u => `<code>${u}/joueur1</code>`).join(', ')} (puis /joueur2, /joueur3…)</p>`;
   h += '</section></div></div>';
-  app.innerHTML = h;
+  P4.setHTML(app, h);
 
   const pv = document.getElementById('preview');
   if (pv) P4.renderBoard(pv, { ...s, phase: 'setup', pending: null }, { showCounts: true });
@@ -325,7 +325,7 @@ function renderPlay(s) {
   }
   h += `<div class="panel"><h2>Journal</h2><ul class="log">${s.log.map(l => `<li>${P4.esc(l.text)}</li>`).join('')}</ul></div>`;
   h += '</aside></div>';
-  app.innerHTML = h;
+  P4.setHTML(app, h);
 
   P4.renderBoard(document.getElementById('board'), s, {
     canAct: acting, showCounts: them && showCounts, fit: { bottom: single ? 24 : 70, minH: 0.55 },

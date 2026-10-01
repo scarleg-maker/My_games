@@ -73,21 +73,21 @@ function render(s) {
   const me = s.seats[seat];
   document.getElementById('me').innerHTML = me.name ? `${P4.chip(s, seat)}${P4.esc(me.name)}` : `Joueur ${seat + 1}`;
   if (seat >= s.nbActive) {
-    app.innerHTML = `<div class="reg panel"><h1>Joueur ${seat + 1}</h1><p>Ce poste n'est pas utilisé : la partie est prévue pour ${s.nbActive} joueurs.
-      Utilise une des pages <strong>/joueur1</strong> à <strong>/joueur${s.nbActive}</strong>, ou demande à l'arbitre d'ajouter des joueurs.</p></div>`;
+    P4.setHTML(app, `<div class="reg panel"><h1>Joueur ${seat + 1}</h1><p>Ce poste n'est pas utilisé : la partie est prévue pour ${s.nbActive} joueurs.
+      Utilise une des pages <strong>/joueur1</strong> à <strong>/joueur${s.nbActive}</strong>, ou demande à l'arbitre d'ajouter des joueurs.</p></div>`);
     return;
   }
   if (me.ai) {
     if (s.phase === 'setup') {
-      app.innerHTML = `<div class="reg panel"><h1>🤖 ${P4.esc(me.name)}</h1><p>Ce siège est joué par l'IA. Utilise une autre page joueur, ou demande à l'arbitre de repasser ce siège en « Humain ».</p></div>`;
+      P4.setHTML(app, `<div class="reg panel"><h1>🤖 ${P4.esc(me.name)}</h1><p>Ce siège est joué par l'IA. Utilise une autre page joueur, ou demande à l'arbitre de repasser ce siège en « Humain ».</p></div>`);
       return;
     }
     return renderPlay(s, true);
   }
   if (s.singleScreen) {
     if (s.phase === 'setup') {
-      app.innerHTML = `<div class="reg panel"><h1>Un seul écran</h1><p>Cette partie de ${P4.modeName(s.mode)} se joue entièrement sur l'écran de l'arbitre : les joueurs y placent leurs pions à tour de rôle.</p>
-        <p class="muted">Cette page affichera le plateau en direct une fois la partie lancée.</p></div>`;
+      P4.setHTML(app, `<div class="reg panel"><h1>Un seul écran</h1><p>Cette partie de ${P4.modeName(s.mode)} se joue entièrement sur l'écran de l'arbitre : les joueurs y placent leurs pions à tour de rôle.</p>
+        <p class="muted">Cette page affichera le plateau en direct une fois la partie lancée.</p></div>`);
       return;
     }
     return renderPlay(s, true);
@@ -99,12 +99,12 @@ P4.redraw = () => P4.keepInputs(() => render(P4.state));
 
 // ------------------------------------------------------------------ inscription
 function renderReg(s) {
-  document.getElementById('rosterList').innerHTML = s.roster.map(r => `<option value="${P4.esc(r.name)}">`).join('');
+  P4.setOptions(document.getElementById('rosterList'), s.roster.map(r => r.name));
   const me = s.seats[seat];
   const chosen = myColor || me.color;
   const takenBy = {};
   for (let j = 0; j < s.nbActive; j++) if (j !== seat && s.seats[j].color) takenBy[s.seats[j].color] = j;
-  app.innerHTML = `<div class="reg panel">
+  P4.setHTML(app, `<div class="reg panel">
     <h1>Joueur ${seat + 1}</h1>
     <div><label for="myname">Ton nom</label><input type="text" id="myname" maxlength="20" value="${P4.esc(me.name || '')}" placeholder="Ex. Camille" list="rosterList" autocomplete="off"></div>
     <div><label>Ta couleur</label><div class="swatches">${s.colors.map(c => `<button class="swatch ${chosen === c.id ? 'sel' : ''}" style="--c:${c.hex}" data-color="${c.id}"
@@ -113,7 +113,7 @@ function renderReg(s) {
     ${me.name ? `<p class="ok">Inscrit·e sous le nom ${P4.chip(s, seat)} ${P4.esc(me.name)}. La partie commencera quand l'arbitre la lancera.</p>
       <p class="muted small">Pas toi ? Modifie le nom puis « Mettre à jour », ou <button class="btn ghost" id="notme" style="padding:.2em .7em;font-size:.85rem">libère ce siège</button></p>` : '<p class="muted">Choisis un nom et une couleur, puis inscris-toi.</p>'}
     <p class="muted small">Mode ${P4.modeName(s.mode)} · ${s.nbActive} joueurs</p>
-  </div>`;
+  </div>`);
 }
 function save() {
   const s = P4.state, name = document.getElementById('myname').value.trim();
@@ -164,7 +164,7 @@ function renderPlay(s, viewOnly) {
   h += `<div class="panel"><h2>Joueurs · mode ${P4.modeName(s.mode)}</h2>${P4.playersList(s)}</div>`;
   if (them) h += `<div class="panel"><h2>Réponses déjà citées</h2>${P4.usedList(s)}${s.excluded.length ? `<p class="muted small" style="margin:.7rem 0 0">Exclues par l'arbitre : ${s.excluded.map(x => `<s>${P4.esc(x.nom)}</s>`).join(', ')}</p>` : ''}</div>`;
   h += '</aside></div>';
-  app.innerHTML = h;
+  P4.setHTML(app, h);
   P4.renderBoard(document.getElementById('board'), s, {
     canAct: mine, fit: { bottom: 16, minH: 0.5 },
     onDrop: c => P4.act('drop', { col: c }),

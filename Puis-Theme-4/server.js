@@ -667,7 +667,7 @@ function aiAnswer() {
     else aiAct('reject');
   }, 1800);
 }
-setInterval(() => { for (const c of clients) c.res.write(': ping\n\n'); }, 20000);
+setInterval(() => { for (const c of clients) c.res.write(': ping\n\n'); }, 15000);
 
 // ---------------------------------------------------------------- HTTP
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
@@ -691,11 +691,21 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && p === '/events') {
     const who = url.searchParams.get('who');
     if (who !== 'master' && !/^p[1-6]$/.test(who)) { res.writeHead(400); return res.end(); }
-    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+    // en-têtes adaptés aux hébergeurs derrière un proxy (Render…) : pas de mise en tampon ni de compression
+    res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
+    res.write('retry: 2000\n\n');
+    req.socket.setKeepAlive(true); req.socket.setNoDelay(true); req.socket.setTimeout(0);
+    const presence = () => state.seats.map((_, i) => online(i)).join();
+    const before = presence();
     const c = { res, who };
     clients.add(c);
-    broadcast();
-    req.on('close', () => { clients.delete(c); broadcast(); });
+    // on ne prévient tout le monde que si la présence d'un joueur change ; sinon seul le nouveau venu reçoit l'état
+    if (presence() !== before) broadcast(); else send(c);
+    req.on('close', () => {
+      const b = presence();
+      clients.delete(c);
+      if (presence() !== b) broadcast();
+    });
     return;
   }
   if (req.method === 'POST' && p === '/api') {

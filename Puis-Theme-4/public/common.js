@@ -49,6 +49,65 @@
   document.addEventListener('input', e => { if (e.target.id) drafts[e.target.id] = e.target.value; });
   P4.draft = (id, v) => (v === undefined ? drafts[id] : (drafts[id] = v));
   P4.clearDraft = id => { delete drafts[id]; };
+  // ---------- mise à jour de la page sans la reconstruire
+  // Compare le nouveau HTML avec la page affichée et ne modifie que ce qui a changé :
+  // un champ de saisie en cours d'utilisation n'est jamais recréé (pas de perte de focus,
+  // de clavier mobile ou de lettre en cours de frappe).
+  function syncAttrs(o, n) {
+    for (const a of [...o.attributes]) if (!n.hasAttribute(a.name)) o.removeAttribute(a.name);
+    for (const a of [...n.attributes]) if (o.getAttribute(a.name) !== a.value) o.setAttribute(a.name, a.value);
+  }
+  function morph(o, n) {
+    const focused = o === document.activeElement;
+    if (o.tagName === 'INPUT') {
+      // on ne touche pas aux attributs d'un champ en cours de saisie
+      if (!focused) {
+        syncAttrs(o, n);
+        if (o.type === 'checkbox' || o.type === 'radio') o.checked = n.hasAttribute('checked');
+        else if (o.value !== (n.getAttribute('value') ?? '')) o.value = n.getAttribute('value') ?? '';
+      }
+      return;
+    }
+    syncAttrs(o, n);
+    morphChildren(o, n);
+  }
+  function sameKind(o, n) {
+    return o.nodeType === n.nodeType && (o.nodeType !== 1 || (o.tagName === n.tagName && (o.id || '') === (n.id || '')));
+  }
+  function morphChildren(from, to) {
+    const olds = [...from.childNodes], news = [...to.childNodes];
+    const byId = new Map();
+    for (const o of olds) if (o.nodeType === 1 && o.id) byId.set(o.id, o);
+    let i = 0;
+    for (const n of news) {
+      let o = from.childNodes[i];
+      // un élément avec un identifiant garde son nœud, même s'il a changé de place
+      if (n.nodeType === 1 && n.id && byId.has(n.id) && byId.get(n.id) !== o) {
+        const kept = byId.get(n.id);
+        if (kept.contains(document.activeElement)) {
+          // on déplace plutôt les autres nœuds pour ne pas faire perdre le focus
+          while (from.childNodes[i] && from.childNodes[i] !== kept) from.removeChild(from.childNodes[i]);
+        } else from.insertBefore(kept, o || null);
+        o = kept;
+      }
+      if (!o) from.appendChild(n);
+      else if (!sameKind(o, n)) from.replaceChild(n, o);
+      else if (o.nodeType === 3 || o.nodeType === 8) { if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue; }
+      else morph(o, n);
+      i++;
+    }
+    while (from.childNodes.length > i) from.removeChild(from.lastChild);
+  }
+  P4.setHTML = function (el, html) {
+    const tpl = document.createElement(el.tagName);
+    tpl.innerHTML = html;
+    morphChildren(el, tpl);
+  };
+  P4.setOptions = function (list, names) {   // liste de suggestions, mise à jour seulement si elle change
+    const html = names.map(n => `<option value="${P4.esc(n)}">`).join('');
+    if (list && list.dataset.h !== html) { list.innerHTML = html; list.dataset.h = html; }
+  };
+
   P4.keepInputs = function (render) {
     const a = document.activeElement, id = a && a.id;
     const sel = id && 'selectionStart' in a ? [a.selectionStart, a.selectionEnd] : null;
@@ -58,9 +117,12 @@
       if (!el || el.tagName !== 'INPUT' || el.type !== 'text') continue;
       // champ lié au serveur (data-server) : hors saisie en cours, on affiche la valeur enregistrée
       if ('server' in el.dataset && k !== id) { delete drafts[k]; continue; }
-      el.value = v;
+      if (el.value !== v) el.value = v;
     }
-    if (id) { const el = document.getElementById(id); if (el) { el.focus(); if (sel) try { el.setSelectionRange(...sel); } catch { } } }
+    if (id) {
+      const el = document.getElementById(id);
+      if (el && el !== document.activeElement) { el.focus(); if (sel) try { el.setSelectionRange(...sel); } catch { } }
+    }
   };
 
   // ---------- plateau
