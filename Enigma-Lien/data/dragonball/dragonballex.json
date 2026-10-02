@@ -1,9 +1,9 @@
 [
-{ "_comment_arc": "1ere apparition du personnage, 0: Passé, 1: Arc Enfant, 2: Piccolo Daimao + Tournois, 3: Arc Saiyan, 4: Arc Namek, 5: Arc Cyborg + Cell, 6: Arc Boo, 7: Arcs GT",
-  "_comment_power": "Puissance du personnage de 1 à 10",
-  "_comment_form": "Niveau de transformation du personnage de 1 à 4",
-  "_comment_race": "Race du personnage",
-  "_comment_age": "1: enfant, 2: ado, 3: adulte, 4: ancien/indetermine" },
+// arc   : 1ere apparition du personnage, 0: Passé, 1: Arc Enfant, 2: Piccolo Daimao + Tournois, 3: Arc Saiyan, 4: Arc Namek, 5: Arc Cyborg + Cell, 6: Arc Boo, 7: Arcs GT
+// power : Puissance du personnage de 1 à 10
+// form  : Niveau de transformation du personnage de 1 à 4
+// race  : Race du personnage
+// age   : 1: enfant, 2: ado, 3: adulte, 4: ancien/indéterminé
   
 { "name": "Goku (Enfant)",          "image": "Goku (Enfant).png",          "age": 1, "arc": 2, "form": 1, "power": 1,  "race": "Saiyan" },
 { "name": "Goku",                   "image": "Goku.png",                   "age": 3, "arc": 2, "form": 1, "power": 4,  "race": "Saiyan" },

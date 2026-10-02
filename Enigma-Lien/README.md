@@ -171,26 +171,47 @@ Légende des codes utilisés dans `dragonballex.json` :
 - `race` : race du personnage (texte libre, comparé par égalité).
 - `age` : 1 = enfant, 2 = ado, 3 = adulte, 4 = ancien/indéterminé.
 
-⚠️ Important : `dragonballex.json` (comme tous les fichiers de `data/`) doit
-rester un JSON strictement valide — un simple tableau d'objets, chacun
-représentant un personnage. Le JSON n'accepte pas les commentaires : n'y
-ajoute pas d'objet "légende" du genre `{ "_comment_xxx": "..." }` au
-début du tableau, même pour documenter les codes ci-dessus — le moteur le
-traiterait comme un personnage à part entière (sans `name` ni image, ça
-casse la génération d'énigmes), et surtout une seule virgule manquante ou
-en trop dans ce fichier empêche TOUS les thèmes de se charger, pas
-seulement Dragon Ball (c'est exactement ce qui s'est produit : une virgule
-manquante dans `data/themes.json` et une virgule en trop dans
-`dragonballex.json`). Pour documenter un format, ajoute plutôt tes notes
-ici, dans le README, ou dans le champ `"note"` du thème dans
-`data/themes.json`. Après toute modification manuelle, tu peux vérifier
-qu'un fichier reste valide avec :
+Cette légende est recopiée en premier dans `dragonballex.json` lui-même,
+sous forme de vrais commentaires, pour l'avoir sous les yeux en ajoutant
+des personnages :
 
-```
-node -e "JSON.parse(require('fs').readFileSync('data/dragonball/dragonballex.json','utf8'))"
+```json
+[
+// arc   : 1ere apparition du personnage, 0: Passé, 1: Arc Enfant, ...
+// power : Puissance du personnage de 1 à 10
+// form  : Niveau de transformation du personnage de 1 à 4
+// race  : Race du personnage
+// age   : 1: enfant, 2: ado, 3: adulte, 4: ancien/indetermine
+{ "name": "Goku (Enfant)", "image": "Goku.png", "age": 1, "arc": 2, "form": 1, "power": 1, "race": "Saiyan" },
+...
 ```
 
-Si la commande ne renvoie aucune erreur, le fichier est valide.
+Le JSON standard n'admet pas les commentaires, mais tous les fichiers de
+`data/` (y compris `themes.json`) sont lus par un petit analyseur tolérant
+(`lib/jsonc.js`) qui accepte :
+
+- les commentaires `// comme ceci` jusqu'à la fin de la ligne ;
+- les commentaires `/* comme ceci, sur plusieurs lignes */` ;
+- une virgule en trop juste avant une accolade ou un crochet fermant
+  (`{ ... },  }` ou `{ ... },  ]`).
+
+Tout le reste doit rester du JSON strict (guillemets doubles autour des
+clés et des textes, virgule entre chaque élément). Ces trois tolérances
+suffisent à couvrir les deux erreurs qui avaient cassé le choix de thème
+(une virgule manquante dans `themes.json`, une virgule en trop dans
+`dragonballex.json`) — mais une erreur plus grave (accolade non fermée,
+guillemet oublié...) reste possible. Après toute modification manuelle,
+tu peux vérifier qu'un fichier reste valide avec :
+
+```
+node -e "console.log(require('./lib/jsonc').parseLenientJSON(require('fs').readFileSync('data/dragonball/dragonballex.json','utf8')).length)"
+```
+
+Si la commande affiche un nombre (le nombre de personnages) sans erreur,
+le fichier est valide. Rappel : une erreur dans `data/themes.json` ou dans
+le fichier de données d'UN thème empêche ce thème-là de se charger ;
+mais une erreur dans `data/themes.json` lui-même empêche TOUS les thèmes
+de se charger, puisque c'est la liste qui les référence tous.
 
 Pour créer ton propre thème :
 

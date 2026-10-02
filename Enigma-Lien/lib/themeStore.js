@@ -1,13 +1,44 @@
 const fs = require("fs");
 const path = require("path");
+const { parseLenientJSON } = require("./jsonc");
 
 const DATA_DIR = path.join(__dirname, "..", "data");
 const THEMES_FILE = path.join(DATA_DIR, "themes.json");
 
+/**
+ * Lit un fichier JSON de data/. On accepte les commentaires `// ...` et
+ * `/* ... *\/` ainsi que les virgules en trop avant une fermeture
+ * (voir lib/jsonc.js) : ce sont des fichiers édités à la main, donc assez
+ * tolérant pour éviter qu'une virgule oubliée casse tout le jeu, tout en
+ * restant du JSON normal pour le reste.
+ */
 function readJSON(relPath) {
   const full = path.join(DATA_DIR, relPath);
   const raw = fs.readFileSync(full, "utf8");
-  return JSON.parse(raw);
+  return parseLenientJSON(raw);
+}
+
+/**
+ * Le JSON n'a pas de syntaxe de commentaire. Pour permettre malgré tout
+ * d'ajouter des notes/légendes directement dans un fichier de données
+ * (ex. data/dragonball/dragonballex.json), toute entrée du tableau qui n'a
+ * pas de champ "name" (texte non vide) est traitée comme une annotation et
+ * ignorée : elle ne compte pas dans le roster jouable et ne peut jamais
+ * sortir dans une énigme. Un vrai personnage doit toujours avoir un "name".
+ */
+function isPlayableEntry(entry) {
+  return !!entry && typeof entry.name === "string" && entry.name.trim().length > 0;
+}
+
+function loadDataset(relPath) {
+  const raw = readJSON(relPath);
+  if (!Array.isArray(raw)) return raw;
+  const dataset = raw.filter(isPlayableEntry);
+  const skipped = raw.length - dataset.length;
+  if (skipped > 0) {
+    console.log(`[themeStore] ${relPath} : ${skipped} entrée(s) sans "name" ignorée(s) (annotations/légende).`);
+  }
+  return dataset;
 }
 
 /**
@@ -19,14 +50,14 @@ function readJSON(relPath) {
 function loadThemes() {
   let list;
   try {
-    list = JSON.parse(fs.readFileSync(THEMES_FILE, "utf8"));
+    list = parseLenientJSON(fs.readFileSync(THEMES_FILE, "utf8"));
   } catch (e) {
     throw new Error(`Impossible de lire ${THEMES_FILE} : ${e.message}`);
   }
   const themes = {};
   for (const t of list) {
     try {
-      const dataset = readJSON(t.dataFile);
+      const dataset = loadDataset(t.dataFile);
       const battleTable = t.battleFile ? readJSON(t.battleFile) : {};
       themes[t.id] = { ...t, dataset, battleTable };
     } catch (e) {
