@@ -23,27 +23,28 @@ function imgUrl(imageFolder, filename) {
 }
 
 /**
- * Affiche le plateau (6 cartes) dans `container`.
- * display: [{name, types?, image}]
- * onMove(index, dir) : appelé quand on clique ◀ / ▶
+ * Affiche le plateau (6 cartes) dans `container`. Seuls l'image et le nom
+ * sont visibles — aucune information de type/critère n'est révélée sur la
+ * carte elle-même, quel que soit le thème.
+ * display: [{name, image?}]
+ * onMove(index, dir) : appelé quand on clique ◀ / ▶ (échange avec le voisin)
+ * onSwap(fromIndex, toIndex) : appelé quand on dépose une carte glissée sur
+ *   une autre — échange simplement les deux positions (ex : la carte en
+ *   position 4 déposée en position 2 échange sa place avec celle en 2).
  */
-function renderBoard(container, display, imageFolder, onMove, disabled) {
+function renderBoard(container, display, imageFolder, onMove, onSwap, disabled) {
   container.innerHTML = "";
   display.forEach((p, i) => {
     const card = document.createElement("div");
     card.className = "card";
+    card.dataset.idx = String(i);
     const initials = p.name.slice(0, 2).toUpperCase();
-    const mainTag = p.types && p.types[0];
-    const iconBg = mainTag ? tagColor(mainTag) : hashColor(p.name);
-    const badges = (p.types || [])
-      .map((t) => `<span class="badge" style="background:${tagColor(t)}">${t}</span>`)
-      .join("");
+    const iconBg = hashColor(p.name);
     card.innerHTML = `
       <div class="icon" style="background:${iconBg}" data-fallback="${initials}">
-        ${p.image ? `<img src="${imgUrl(imageFolder, p.image)}" alt="" onerror="this.parentElement.innerHTML=this.parentElement.dataset.fallback;">` : initials}
+        ${p.image ? `<img src="${imgUrl(imageFolder, p.image)}" alt="" draggable="false" onerror="this.parentElement.innerHTML=this.parentElement.dataset.fallback;">` : initials}
       </div>
       <div class="name">${p.name}</div>
-      <div class="types">${badges}</div>
       <div class="movebtns">
         <button ${i === 0 || disabled ? "disabled" : ""} data-dir="-1" data-idx="${i}">◀</button>
         <button ${i === display.length - 1 || disabled ? "disabled" : ""} data-dir="1" data-idx="${i}">▶</button>
@@ -53,6 +54,74 @@ function renderBoard(container, display, imageFolder, onMove, disabled) {
   });
   container.querySelectorAll("button[data-dir]").forEach((btn) => {
     btn.addEventListener("click", () => onMove(parseInt(btn.dataset.idx, 10), parseInt(btn.dataset.dir, 10)));
+  });
+  if (!disabled && onSwap) enableCardDragAndDrop(container, onSwap);
+}
+
+/**
+ * Glisser-déposer (souris ET tactile, via Pointer Events) pour échanger deux
+ * cartes. Poser la carte source sur une autre carte échange leurs positions ;
+ * un simple clic/tap (sans déplacement notable) ne déclenche rien.
+ */
+function enableCardDragAndDrop(container, onSwap) {
+  let drag = null; // {pointerId, sourceIdx, cardEl, moved, startX, startY}
+
+  function clearDropHighlight() {
+    container.querySelectorAll(".card.drop-target").forEach((c) => c.classList.remove("drop-target"));
+  }
+
+  function targetCardAt(clientX, clientY, exceptEl) {
+    const el = document.elementFromPoint(clientX, clientY);
+    const card = el && el.closest ? el.closest(".card") : null;
+    if (!card || !container.contains(card) || card === exceptEl) return null;
+    return card;
+  }
+
+  container.querySelectorAll(".card").forEach((card) => {
+    card.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("button")) return;
+      if (e.button !== undefined && e.button !== 0) return; // clic gauche / tactile uniquement
+      drag = {
+        pointerId: e.pointerId,
+        sourceIdx: parseInt(card.dataset.idx, 10),
+        cardEl: card,
+        moved: false,
+        startX: e.clientX,
+        startY: e.clientY,
+      };
+      card.setPointerCapture(e.pointerId);
+    });
+
+    card.addEventListener("pointermove", (e) => {
+      if (!drag || drag.pointerId !== e.pointerId) return;
+      if (!drag.moved) {
+        const dx = e.clientX - drag.startX;
+        const dy = e.clientY - drag.startY;
+        if (Math.hypot(dx, dy) < 8) return;
+        drag.moved = true;
+        drag.cardEl.classList.add("dragging");
+      }
+      clearDropHighlight();
+      const target = targetCardAt(e.clientX, e.clientY, drag.cardEl);
+      if (target) target.classList.add("drop-target");
+    });
+
+    function finishDrag(e) {
+      if (!drag || drag.pointerId !== e.pointerId) return;
+      drag.cardEl.classList.remove("dragging");
+      clearDropHighlight();
+      if (drag.moved) {
+        const target = targetCardAt(e.clientX, e.clientY, drag.cardEl);
+        if (target) {
+          const targetIdx = parseInt(target.dataset.idx, 10);
+          if (targetIdx !== drag.sourceIdx) onSwap(drag.sourceIdx, targetIdx);
+        }
+      }
+      drag = null;
+    }
+
+    card.addEventListener("pointerup", finishDrag);
+    card.addEventListener("pointercancel", finishDrag);
   });
 }
 

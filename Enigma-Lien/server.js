@@ -8,7 +8,7 @@ const playerStats = require("./lib/playerStats");
 const { generatePuzzle, validateArrangement } = require("./lib/puzzleEngine");
 const { Tournament, MAX_SLOTS } = require("./lib/tournament");
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 9500;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8500;
 
 const app = express();
 app.use(express.json());
@@ -71,7 +71,7 @@ app.post("/api/solo/start", (req, res) => {
       player: playerName,
       livesMax,
       livesLeft: livesMax,
-      display: display.map((c) => ({ name: c.name, types: c.types, image: c.image })),
+      display: display.map((c) => ({ name: c.name, image: c.image })),
       links,
       imageFolder: theme.imageFolder,
       criteria: theme.criteria,

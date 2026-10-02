@@ -1,5001 +1,651 @@
 [
-  {
-    "name": "Bulbizarre",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Bulbizarre.png"
-  },
-  {
-    "name": "Herbizarre",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Herbizarre.png"
-  },
-  {
-    "name": "Florizarre",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Florizarre.png"
-  },
-  {
-    "name": "Salamèche",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Salamèche.png"
-  },
-  {
-    "name": "Reptincel",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Reptincel.png"
-  },
-  {
-    "name": "Dracaufeu",
-    "types": [
-      "Feu",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Orange",
-    "image": "Dracaufeu.png"
-  },
-  {
-    "name": "Carapuce",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Carapuce.png"
-  },
-  {
-    "name": "Carabaffe",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Carabaffe.png"
-  },
-  {
-    "name": "Tortank",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Tortank.png"
-  },
-  {
-    "name": "Pikachu",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Pikachu.png"
-  },
-  {
-    "name": "Raichu",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Jaune",
-    "image": "Raichu.png"
-  },
-  {
-    "name": "Nidoran F",
-    "types": [
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Nidoran F.png"
-  },
-  {
-    "name": "Nidorina",
-    "types": [
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Nidorina.png"
-  },
-  {
-    "name": "Nidoqueen",
-    "types": [
-      "Poison",
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Nidoqueen.png"
-  },
-  {
-    "name": "Nidoran M",
-    "types": [
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Nidoran M.png"
-  },
-  {
-    "name": "Nidorino",
-    "types": [
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Nidorino.png"
-  },
-  {
-    "name": "Nidoking",
-    "types": [
-      "Poison",
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Violet",
-    "image": "Nidoking.png"
-  },
-  {
-    "name": "Mélofée",
-    "types": [
-      "Fée"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Mélofée.png"
-  },
-  {
-    "name": "Mélodelfe",
-    "types": [
-      "Fée"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Rose",
-    "image": "Mélodelfe.png"
-  },
-  {
-    "name": "Goupix",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Goupix.png"
-  },
-  {
-    "name": "Feunard",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Feunard.png"
-  },
-  {
-    "name": "Rondoudou",
-    "types": [
-      "Normal",
-      "Fée"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Rondoudou.png"
-  },
-  {
-    "name": "Grodoudou",
-    "types": [
-      "Normal",
-      "Fée"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Rose",
-    "image": "Grodoudou.png"
-  },
-  {
-    "name": "Nosferapti",
-    "types": [
-      "Poison",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Nosferapti.png"
-  },
-  {
-    "name": "Nosferalto",
-    "types": [
-      "Poison",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Nosferalto.png"
-  },
-  {
-    "name": "Mystherbe",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Mystherbe.png"
-  },
-  {
-    "name": "Ortide",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Ortide.png"
-  },
-  {
-    "name": "Rafflesia",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Rouge",
-    "image": "Rafflesia.png"
-  },
-  {
-    "name": "Paras",
-    "types": [
-      "Insecte",
-      "Plante"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Paras.png"
-  },
-  {
-    "name": "Parasect",
-    "types": [
-      "Insecte",
-      "Plante"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Parasect.png"
-  },
-  {
-    "name": "Mimitoss",
-    "types": [
-      "Insecte",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Mimitoss.png"
-  },
-  {
-    "name": "Aéromite",
-    "types": [
-      "Insecte",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Aéromite.png"
-  },
-  {
-    "name": "Taupiqueur",
-    "types": [
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Taupiqueur.png"
-  },
-  {
-    "name": "Triopikeur",
-    "types": [
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Triopikeur.png"
-  },
-  {
-    "name": "Miaouss",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Miaouss.png"
-  },
-  {
-    "name": "Persian",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Persian.png"
-  },
-  {
-    "name": "Psykokwak",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Psykokwak.png"
-  },
-  {
-    "name": "Akwakwak",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Akwakwak.png"
-  },
-  {
-    "name": "Ferosinge",
-    "types": [
-      "Combat"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Ferosinge.png"
-  },
-  {
-    "name": "Colossinge",
-    "types": [
-      "Combat"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Colossinge.png"
-  },
-  {
-    "name": "Caninos",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Orange",
-    "image": "Caninos.png"
-  },
-  {
-    "name": "Arcanin",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Orange",
-    "image": "Arcanin.png"
-  },
-  {
-    "name": "Ptitard",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Ptitard.png"
-  },
-  {
-    "name": "Têtarte",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Têtarte.png"
-  },
-  {
-    "name": "Tartard",
-    "types": [
-      "Eau",
-      "Combat"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Tartard.png"
-  },
-  {
-    "name": "Abra",
-    "types": [
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Abra.png"
-  },
-  {
-    "name": "Kadabra",
-    "types": [
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Kadabra.png"
-  },
-  {
-    "name": "Alakazam",
-    "types": [
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Jaune",
-    "image": "Alakazam.png"
-  },
-  {
-    "name": "Machoc",
-    "types": [
-      "Combat"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Machoc.png"
-  },
-  {
-    "name": "Machopeur",
-    "types": [
-      "Combat"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Gris",
-    "image": "Machopeur.png"
-  },
-  {
-    "name": "Mackogneur",
-    "types": [
-      "Combat"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Gris",
-    "image": "Mackogneur.png"
-  },
-  {
-    "name": "Chétiflor",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Chétiflor.png"
-  },
-  {
-    "name": "Boustiflor",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Boustiflor.png"
-  },
-  {
-    "name": "Empiflor",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Empiflor.png"
-  },
-  {
-    "name": "Tentacool",
-    "types": [
-      "Eau",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Tentacool.png"
-  },
-  {
-    "name": "Tentacruel",
-    "types": [
-      "Eau",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Tentacruel.png"
-  },
-  {
-    "name": "Racaillou",
-    "types": [
-      "Roche",
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Racaillou.png"
-  },
-  {
-    "name": "Gravalanch",
-    "types": [
-      "Roche",
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Gravalanch.png"
-  },
-  {
-    "name": "Grolem",
-    "types": [
-      "Roche",
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Marron",
-    "image": "Grolem.png"
-  },
-  {
-    "name": "Ponyta",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Ponyta.png"
-  },
-  {
-    "name": "Galopa",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Galopa.png"
-  },
-  {
-    "name": "Ramoloss",
-    "types": [
-      "Eau",
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Ramoloss.png"
-  },
-  {
-    "name": "Flagadoss",
-    "types": [
-      "Eau",
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Flagadoss.png"
-  },
-  {
-    "name": "Magnéti",
-    "types": [
-      "Électrik",
-      "Acier"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Magnéti.png"
-  },
-  {
-    "name": "Magnéton",
-    "types": [
-      "Électrik",
-      "Acier"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Gris",
-    "image": "Magnéton.png"
-  },
-  {
-    "name": "Canarticho",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Canarticho.png"
-  },
-  {
-    "name": "Doduo",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Doduo.png"
-  },
-  {
-    "name": "Dodrio",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Dodrio.png"
-  },
-  {
-    "name": "Otaria",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Otaria.png"
-  },
-  {
-    "name": "Lamantine",
-    "types": [
-      "Eau",
-      "Glace"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Lamantine.png"
-  },
-  {
-    "name": "Tadmorv",
-    "types": [
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Tadmorv.png"
-  },
-  {
-    "name": "Grotadmorv",
-    "types": [
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Grotadmorv.png"
-  },
-  {
-    "name": "Kokiyas",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Kokiyas.png"
-  },
-  {
-    "name": "Crustabri",
-    "types": [
-      "Eau",
-      "Glace"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Crustabri.png"
-  },
-  {
-    "name": "Fantominus",
-    "types": [
-      "Spectre",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Fantominus.png"
-  },
-  {
-    "name": "Spectrum",
-    "types": [
-      "Spectre",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Spectrum.png"
-  },
-  {
-    "name": "Ectoplasma",
-    "types": [
-      "Spectre",
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Violet",
-    "image": "Ectoplasma.png"
-  },
-  {
-    "name": "Onix",
-    "types": [
-      "Roche",
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Onix.png"
-  },
-  {
-    "name": "Soporifik",
-    "types": [
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Soporifik.png"
-  },
-  {
-    "name": "Hypnomade",
-    "types": [
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Hypnomade.png"
-  },
-  {
-    "name": "Krabby",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Krabby.png"
-  },
-  {
-    "name": "Krabboss",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Krabboss.png"
-  },
-  {
-    "name": "Voltorbe",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Voltorbe.png"
-  },
-  {
-    "name": "Électrode",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Électrode.png"
-  },
-  {
-    "name": "Noeunoeuf",
-    "types": [
-      "Plante",
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Noeunoeuf.png"
-  },
-  {
-    "name": "Noadkoko",
-    "types": [
-      "Plante",
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Noadkoko.png"
-  },
-  {
-    "name": "Osselait",
-    "types": [
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Osselait.png"
-  },
-  {
-    "name": "Ossatueur",
-    "types": [
-      "Sol"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Ossatueur.png"
-  },
-  {
-    "name": "Kicklee",
-    "types": [
-      "Combat"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Kicklee.png"
-  },
-  {
-    "name": "Tygnon",
-    "types": [
-      "Combat"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Tygnon.png"
-  },
-  {
-    "name": "Excelangue",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Excelangue.png"
-  },
-  {
-    "name": "Smogo",
-    "types": [
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Smogo.png"
-  },
-  {
-    "name": "Smogogo",
-    "types": [
-      "Poison"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Smogogo.png"
-  },
-  {
-    "name": "Rhinocorne",
-    "types": [
-      "Sol",
-      "Roche"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Rhinocorne.png"
-  },
-  {
-    "name": "Rhinoféros",
-    "types": [
-      "Sol",
-      "Roche"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Gris",
-    "image": "Rhinoféros.png"
-  },
-  {
-    "name": "Leveinard",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Leveinard.png"
-  },
-  {
-    "name": "Saquedeneu",
-    "types": [
-      "Plante"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Saquedeneu.png"
-  },
-  {
-    "name": "Kangourex",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Kangourex.png"
-  },
-  {
-    "name": "Hypotrempe",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Hypotrempe.png"
-  },
-  {
-    "name": "Hypocéan",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Hypocéan.png"
-  },
-  {
-    "name": "Poissirène",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Poissirène.png"
-  },
-  {
-    "name": "Poissoroy",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Poissoroy.png"
-  },
-  {
-    "name": "Stari",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Stari.png"
-  },
-  {
-    "name": "Staross",
-    "types": [
-      "Eau",
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Staross.png"
-  },
-  {
-    "name": "Insécateur",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Insécateur.png"
-  },
-  {
-    "name": "Lippoutou",
-    "types": [
-      "Glace",
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Lippoutou.png"
-  },
-  {
-    "name": "Élektek",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Élektek.png"
-  },
-  {
-    "name": "Magmar",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Magmar.png"
-  },
-  {
-    "name": "Scarabrute",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Scarabrute.png"
-  },
-  {
-    "name": "Tauros",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Tauros.png"
-  },
-  {
-    "name": "Magicarpe",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Magicarpe.png"
-  },
-  {
-    "name": "Léviator",
-    "types": [
-      "Eau",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Léviator.png"
-  },
-  {
-    "name": "Lokhlass",
-    "types": [
-      "Eau",
-      "Glace"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Lokhlass.png"
-  },
-  {
-    "name": "Métamorph",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Métamorph.png"
-  },
-  {
-    "name": "Évoli",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Évoli.png"
-  },
-  {
-    "name": "Aquali",
-    "types": [
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Aquali.png"
-  },
-  {
-    "name": "Voltali",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Voltali.png"
-  },
-  {
-    "name": "Pyroli",
-    "types": [
-      "Feu"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Pyroli.png"
-  },
-  {
-    "name": "Porygon",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Porygon.png"
-  },
-  {
-    "name": "Amonita",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Amonita.png"
-  },
-  {
-    "name": "Amonistar",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Amonistar.png"
-  },
-  {
-    "name": "Kabuto",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Kabuto.png"
-  },
-  {
-    "name": "Kabutops",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Kabutops.png"
-  },
-  {
-    "name": "Ptéra",
-    "types": [
-      "Roche",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Ptéra.png"
-  },
-  {
-    "name": "Ronflex",
-    "types": [
-      "Normal"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Ronflex.png"
-  },
-  {
-    "name": "Artikodin",
-    "types": [
-      "Glace",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Artikodin.png"
-  },
-  {
-    "name": "Électhor",
-    "types": [
-      "Électrik",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Électhor.png"
-  },
-  {
-    "name": "Sulfura",
-    "types": [
-      "Feu",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Orange",
-    "image": "Sulfura.png"
-  },
-  {
-    "name": "Minidraco",
-    "types": [
-      "Dragon"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Minidraco.png"
-  },
-  {
-    "name": "Draco",
-    "types": [
-      "Dragon"
-    ],
-    "gen": 1,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Draco.png"
-  },
-  {
-    "name": "Dracolosse",
-    "types": [
-      "Dragon",
-      "Vol"
-    ],
-    "gen": 1,
-    "stage": 3,
-    "color": "Orange",
-    "image": "Dracolosse.png"
-  },
-  {
-    "name": "Mewtwo",
-    "types": [
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Mewtwo.png"
-  },
-  {
-    "name": "Mew",
-    "types": [
-      "Psy"
-    ],
-    "gen": 1,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Mew.png"
-  },
-  {
-    "name": "Germignon",
-    "types": [
-      "Plante"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Germignon.png"
-  },
-  {
-    "name": "Macronium",
-    "types": [
-      "Plante"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Macronium.png"
-  },
-  {
-    "name": "Méganium",
-    "types": [
-      "Plante"
-    ],
-    "gen": 2,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Méganium.png"
-  },
-  {
-    "name": "Héricendre",
-    "types": [
-      "Feu"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Héricendre.png"
-  },
-  {
-    "name": "Feurisson",
-    "types": [
-      "Feu"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Feurisson.png"
-  },
-  {
-    "name": "Typhlosion",
-    "types": [
-      "Feu"
-    ],
-    "gen": 2,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Typhlosion.png"
-  },
-  {
-    "name": "Kaiminus",
-    "types": [
-      "Eau"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Kaiminus.png"
-  },
-  {
-    "name": "Crocrodil",
-    "types": [
-      "Eau"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Crocrodil.png"
-  },
-  {
-    "name": "Aligatueur",
-    "types": [
-      "Eau"
-    ],
-    "gen": 2,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Aligatueur.png"
-  },
-  {
-    "name": "Fouinette",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Fouinette.png"
-  },
-  {
-    "name": "Fouinar",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Fouinar.png"
-  },
-  {
-    "name": "Hoothoot",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Hoothoot.png"
-  },
-  {
-    "name": "Noarfang",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Noarfang.png"
-  },
-  {
-    "name": "Cornèbre",
-    "types": [
-      "Ténèbres",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Cornèbre.png"
-  },
-  {
-    "name": "Corboss",
-    "types": [
-      "Ténèbres",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Noir",
-    "image": "Corboss.png"
-  },
-  {
-    "name": "Lippouti",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Lippouti.png"
-  },
-  {
-    "name": "Lipperousse",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Lipperousse.png"
-  },
-  {
-    "name": "Wattouat",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Wattouat.png"
-  },
-  {
-    "name": "Wattapik",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Wattapik.png"
-  },
-  {
-    "name": "Pashmilla",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 3,
-    "color": "Blanc",
-    "image": "Pashmilla.png"
-  },
-  {
-    "name": "Nosepass",
-    "types": [
-      "Roche"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Nosepass.png"
-  },
-  {
-    "name": "Tarinor",
-    "types": [
-      "Roche"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Tarinor.png"
-  },
-  {
-    "name": "Chinchidou",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Chinchidou.png"
-  },
-  {
-    "name": "Racchipeur",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Racchipeur.png"
-  },
-  {
-    "name": "Farfuret",
-    "types": [
-      "Ténèbres",
-      "Glace"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Farfuret.png"
-  },
-  {
-    "name": "Teddiursa",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Teddiursa.png"
-  },
-  {
-    "name": "Ursaring",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Ursaring.png"
-  },
-  {
-    "name": "Limagma",
-    "types": [
-      "Feu"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Limagma.png"
-  },
-  {
-    "name": "Volcaropod",
-    "types": [
-      "Feu",
-      "Roche"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Volcaropod.png"
-  },
-  {
-    "name": "Cadoizo",
-    "types": [
-      "Acier",
-      "Sol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Cadoizo.png"
-  },
-  {
-    "name": "Cadoizor",
-    "types": [
-      "Acier",
-      "Sol"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Gris",
-    "image": "Cadoizor.png"
-  },
-  {
-    "name": "Simularbre",
-    "types": [
-      "Plante"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Simularbre.png"
-  },
-  {
-    "name": "Granivol",
-    "types": [
-      "Insecte",
-      "Poison"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Granivol.png"
-  },
-  {
-    "name": "Charmillon",
-    "types": [
-      "Insecte",
-      "Poison"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Charmillon.png"
-  },
-  {
-    "name": "Aéromite Y",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 3,
-    "color": "Violet",
-    "image": "Aéromite Y.png"
-  },
-  {
-    "name": "Wobbuffet",
-    "types": [
-      "Psy"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Wobbuffet.png"
-  },
-  {
-    "name": "Girafarig",
-    "types": [
-      "Normal",
-      "Psy"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Girafarig.png"
-  },
-  {
-    "name": "Phanpy",
-    "types": [
-      "Sol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Phanpy.png"
-  },
-  {
-    "name": "Ossatoro",
-    "types": [
-      "Sol"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Ossatoro.png"
-  },
-  {
-    "name": "Cheniti",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Cheniti.png"
-  },
-  {
-    "name": "Armulys",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Armulys.png"
-  },
-  {
-    "name": "Insolourdo",
-    "types": [
-      "Insecte",
-      "Roche"
-    ],
-    "gen": 2,
-    "stage": 3,
-    "color": "Jaune",
-    "image": "Insolourdo.png"
-  },
-  {
-    "name": "Ferosinge Deux",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Ferosinge Deux.png"
-  },
-  {
-    "name": "Lentilente",
-    "types": [
-      "Eau",
-      "Psy"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Lentilente.png"
-  },
-  {
-    "name": "Lenteime",
-    "types": [
-      "Eau",
-      "Psy"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Lenteime.png"
-  },
-  {
-    "name": "Cabosse",
-    "types": [
-      "Eau"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Cabosse.png"
-  },
-  {
-    "name": "Debugant",
-    "types": [
-      "Bug"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Debugant.png"
-  },
-  {
-    "name": "Elekid",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Elekid.png"
-  },
-  {
-    "name": "Magby",
-    "types": [
-      "Feu"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Magby.png"
-  },
-  {
-    "name": "Mantyke",
-    "types": [
-      "Eau",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Mantyke.png"
-  },
-  {
-    "name": "Malosse",
-    "types": [
-      "Ténèbres",
-      "Feu"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Malosse.png"
-  },
-  {
-    "name": "Démolosse",
-    "types": [
-      "Ténèbres",
-      "Feu"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Noir",
-    "image": "Démolosse.png"
-  },
-  {
-    "name": "Scorplane",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Scorplane.png"
-  },
-  {
-    "name": "Skelenox",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Skelenox.png"
-  },
-  {
-    "name": "Léviator Deux",
-    "types": [
-      "Eau",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Léviator Deux.png"
-  },
-  {
-    "name": "Airmure",
-    "types": [
-      "Acier",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Airmure.png"
-  },
-  {
-    "name": "Sucroquin",
-    "types": [
-      "Fée"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Sucroquin.png"
-  },
-  {
-    "name": "Sucreine",
-    "types": [
-      "Fée"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Sucreine.png"
-  },
-  {
-    "name": "Kapoera",
-    "types": [
-      "Combat",
-      "Psy"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Kapoera.png"
-  },
-  {
-    "name": "Skitty",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Skitty.png"
-  },
-  {
-    "name": "Delcatty",
-    "types": [
-      "Normal"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Delcatty.png"
-  },
-  {
-    "name": "Tyranocif",
-    "types": [
-      "Roche",
-      "Ténèbres"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Tyranocif.png"
-  },
-  {
-    "name": "Diamat",
-    "types": [
-      "Ténèbres",
-      "Dragon"
-    ],
-    "gen": 2,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Diamat.png"
-  },
-  {
-    "name": "Tyranocif Roi",
-    "types": [
-      "Roche",
-      "Ténèbres"
-    ],
-    "gen": 2,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Tyranocif Roi.png"
-  },
-  {
-    "name": "Lugia",
-    "types": [
-      "Psy",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Lugia.png"
-  },
-  {
-    "name": "Ho-Oh",
-    "types": [
-      "Feu",
-      "Vol"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Ho-Oh.png"
-  },
-  {
-    "name": "Célébi",
-    "types": [
-      "Psy",
-      "Plante"
-    ],
-    "gen": 2,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Célébi.png"
-  },
-  {
-    "name": "Arcko",
-    "types": [
-      "Plante"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Arcko.png"
-  },
-  {
-    "name": "Massko",
-    "types": [
-      "Plante"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Massko.png"
-  },
-  {
-    "name": "Jungko",
-    "types": [
-      "Plante",
-      "Combat"
-    ],
-    "gen": 3,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Jungko.png"
-  },
-  {
-    "name": "Poussifeu",
-    "types": [
-      "Feu"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Poussifeu.png"
-  },
-  {
-    "name": "Galifeu",
-    "types": [
-      "Feu",
-      "Combat"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Galifeu.png"
-  },
-  {
-    "name": "Braségali",
-    "types": [
-      "Feu",
-      "Combat"
-    ],
-    "gen": 3,
-    "stage": 3,
-    "color": "Rouge",
-    "image": "Braségali.png"
-  },
-  {
-    "name": "Gobou",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Gobou.png"
-  },
-  {
-    "name": "Flobio",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Flobio.png"
-  },
-  {
-    "name": "Laggron",
-    "types": [
-      "Eau",
-      "Sol"
-    ],
-    "gen": 3,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Laggron.png"
-  },
-  {
-    "name": "Zigzaton",
-    "types": [
-      "Normal"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Zigzaton.png"
-  },
-  {
-    "name": "Linéon",
-    "types": [
-      "Normal"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Linéon.png"
-  },
-  {
-    "name": "Nirondelle",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Nirondelle.png"
-  },
-  {
-    "name": "Hélédelle",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Hélédelle.png"
-  },
-  {
-    "name": "Mysdibule",
-    "types": [
-      "Ténèbres",
-      "Psy"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Mysdibule.png"
-  },
-  {
-    "name": "Zubat Trois",
-    "types": [
-      "Poison",
-      "Vol"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Zubat Trois.png"
-  },
-  {
-    "name": "Marisson",
-    "types": [
-      "Insecte",
-      "Poison"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Marisson.png"
-  },
-  {
-    "name": "Batravers",
-    "types": [
-      "Insecte",
-      "Poison"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Batravers.png"
-  },
-  {
-    "name": "Doufeu",
-    "types": [
-      "Feu"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Doufeu.png"
-  },
-  {
-    "name": "Écayon",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Écayon.png"
-  },
-  {
-    "name": "Écrapince",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Écrapince.png"
-  },
-  {
-    "name": "Mustebouée",
-    "types": [
-      "Normal"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Mustebouée.png"
-  },
-  {
-    "name": "Balbuto",
-    "types": [
-      "Normal"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Balbuto.png"
-  },
-  {
-    "name": "Rentaline",
-    "types": [
-      "Normal"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Rentaline.png"
-  },
-  {
-    "name": "Nénucrabe",
-    "types": [
-      "Eau",
-      "Herbe"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Nénucrabe.png"
-  },
-  {
-    "name": "Nostenfer",
-    "types": [
-      "Poison",
-      "Vol"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Nostenfer.png"
-  },
-  {
-    "name": "Tarsal",
-    "types": [
-      "Psy"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Tarsal.png"
-  },
-  {
-    "name": "Kirlia",
-    "types": [
-      "Psy"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Kirlia.png"
-  },
-  {
-    "name": "Gardevoir",
-    "types": [
-      "Psy",
-      "Fée"
-    ],
-    "gen": 3,
-    "stage": 3,
-    "color": "Blanc",
-    "image": "Gardevoir.png"
-  },
-  {
-    "name": "Rongourmand",
-    "types": [
-      "Normal"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Rongourmand.png"
-  },
-  {
-    "name": "Nanméouïe",
-    "types": [
-      "Normal"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Nanméouïe.png"
-  },
-  {
-    "name": "Vibraninf",
-    "types": [
-      "Sol",
-      "Dragon"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Vibraninf.png"
-  },
-  {
-    "name": "Libégon",
-    "types": [
-      "Sol",
-      "Dragon"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Libégon.png"
-  },
-  {
-    "name": "Cheniselle",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Cheniselle.png"
-  },
-  {
-    "name": "Cheniripe",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Cheniripe.png"
-  },
-  {
-    "name": "Papilord",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 3,
-    "stage": 3,
-    "color": "Rouge",
-    "image": "Papilord.png"
-  },
-  {
-    "name": "Aventurine",
-    "types": [
-      "Roche"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Aventurine.png"
-  },
-  {
-    "name": "Solaroc",
-    "types": [
-      "Roche"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Solaroc.png"
-  },
-  {
-    "name": "Cavagrotte",
-    "types": [
-      "Sol"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Cavagrotte.png"
-  },
-  {
-    "name": "Chamallot",
-    "types": [
-      "Sol",
-      "Fée"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Chamallot.png"
-  },
-  {
-    "name": "Anorith",
-    "types": [
-      "Insecte",
-      "Roche"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Anorith.png"
-  },
-  {
-    "name": "Armaldo",
-    "types": [
-      "Insecte",
-      "Roche"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Armaldo.png"
-  },
-  {
-    "name": "Lilia",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Lilia.png"
-  },
-  {
-    "name": "Vacilys",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Vacilys.png"
-  },
-  {
-    "name": "Torterra Feu",
-    "types": [
-      "Feu"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Torterra Feu.png"
-  },
-  {
-    "name": "Bekipan",
-    "types": [
-      "Eau",
-      "Vol"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Bekipan.png"
-  },
-  {
-    "name": "Rocabot",
-    "types": [
-      "Roche"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Rocabot.png"
-  },
-  {
-    "name": "Absol",
-    "types": [
-      "Ténèbres"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Absol.png"
-  },
-  {
-    "name": "Vipélierre",
-    "types": [
-      "Poison"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Vipélierre.png"
-  },
-  {
-    "name": "Vibromega",
-    "types": [
-      "Poison"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Vibromega.png"
-  },
-  {
-    "name": "Aquali Trois",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Aquali Trois.png"
-  },
-  {
-    "name": "Kaorine",
-    "types": [
-      "Fée"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Kaorine.png"
-  },
-  {
-    "name": "Coquiperl",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Coquiperl.png"
-  },
-  {
-    "name": "Coquillasse",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Coquillasse.png"
-  },
-  {
-    "name": "Relicanth Deux",
-    "types": [
-      "Eau",
-      "Roche"
-    ],
-    "gen": 3,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Relicanth Deux.png"
-  },
-  {
-    "name": "Anchwatt",
-    "types": [
-      "Eau",
-      "Électrik"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Anchwatt.png"
-  },
-  {
-    "name": "Milobellus",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Milobellus.png"
-  },
-  {
-    "name": "Rayquaza",
-    "types": [
-      "Dragon",
-      "Vol"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Rayquaza.png"
-  },
-  {
-    "name": "Kyogre",
-    "types": [
-      "Eau"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Kyogre.png"
-  },
-  {
-    "name": "Groudon",
-    "types": [
-      "Sol"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Groudon.png"
-  },
-  {
-    "name": "Jirachi",
-    "types": [
-      "Acier",
-      "Psy"
-    ],
-    "gen": 3,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Jirachi.png"
-  },
-  {
-    "name": "Tortipouss",
-    "types": [
-      "Plante"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Tortipouss.png"
-  },
-  {
-    "name": "Boskara",
-    "types": [
-      "Plante"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Boskara.png"
-  },
-  {
-    "name": "Torterra",
-    "types": [
-      "Plante",
-      "Sol"
-    ],
-    "gen": 4,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Torterra.png"
-  },
-  {
-    "name": "Ouisticram",
-    "types": [
-      "Feu"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Ouisticram.png"
-  },
-  {
-    "name": "Chimpenfeu",
-    "types": [
-      "Feu",
-      "Combat"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Chimpenfeu.png"
-  },
-  {
-    "name": "Simiabraz",
-    "types": [
-      "Feu",
-      "Combat"
-    ],
-    "gen": 4,
-    "stage": 3,
-    "color": "Rouge",
-    "image": "Simiabraz.png"
-  },
-  {
-    "name": "Tiplouf",
-    "types": [
-      "Eau"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Tiplouf.png"
-  },
-  {
-    "name": "Prinplouf",
-    "types": [
-      "Eau"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Prinplouf.png"
-  },
-  {
-    "name": "Pingoléon",
-    "types": [
-      "Eau",
-      "Acier"
-    ],
-    "gen": 4,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Pingoléon.png"
-  },
-  {
-    "name": "Étourmi",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Étourmi.png"
-  },
-  {
-    "name": "Étourvol",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Étourvol.png"
-  },
-  {
-    "name": "Étouraptor",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 4,
-    "stage": 3,
-    "color": "Marron",
-    "image": "Étouraptor.png"
-  },
-  {
-    "name": "Keunotor",
-    "types": [
-      "Normal"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Keunotor.png"
-  },
-  {
-    "name": "Castorno",
-    "types": [
-      "Eau"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Castorno.png"
-  },
-  {
-    "name": "Coudlangue",
-    "types": [
-      "Normal"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Coudlangue.png"
-  },
-  {
-    "name": "Ramboum",
-    "types": [
-      "Combat"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Ramboum.png"
-  },
-  {
-    "name": "Charmillon Quatre",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Charmillon Quatre.png"
-  },
-  {
-    "name": "Ptiravi",
-    "types": [
-      "Normal"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Ptiravi.png"
-  },
-  {
-    "name": "Charmante",
-    "types": [
-      "Normal",
-      "Fée"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Charmante.png"
-  },
-  {
-    "name": "Mélomanie",
-    "types": [
-      "Normal",
-      "Fée"
-    ],
-    "gen": 4,
-    "stage": 3,
-    "color": "Rose",
-    "image": "Mélomanie.png"
-  },
-  {
-    "name": "Cheniti Bis",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Cheniti Bis.png"
-  },
-  {
-    "name": "Ouaouh",
-    "types": [
-      "Eau"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Ouaouh.png"
-  },
-  {
-    "name": "Aquarouah",
-    "types": [
-      "Eau"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Aquarouah.png"
-  },
-  {
-    "name": "Skelenox Deux",
-    "types": [
-      "Ténèbres"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Skelenox Deux.png"
-  },
-  {
-    "name": "Racchok",
-    "types": [
-      "Normal"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Racchok.png"
-  },
-  {
-    "name": "Ombrelively",
-    "types": [
-      "Ténèbres",
-      "Vol"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Ombrelively.png"
-  },
-  {
-    "name": "Manzaï",
-    "types": [
-      "Combat"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Manzaï.png"
-  },
-  {
-    "name": "Archéomire",
-    "types": [
-      "Acier",
-      "Psy"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Archéomire.png"
-  },
-  {
-    "name": "Archéotech",
-    "types": [
-      "Acier",
-      "Psy"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Archéotech.png"
-  },
-  {
-    "name": "Rapasdepic Q",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Rapasdepic Q.png"
-  },
-  {
-    "name": "Griknot",
-    "types": [
-      "Combat"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Griknot.png"
-  },
-  {
-    "name": "Générou",
-    "types": [
-      "Combat"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Générou.png"
-  },
-  {
-    "name": "Mimigal",
-    "types": [
-      "Combat"
-    ],
-    "gen": 4,
-    "stage": 3,
-    "color": "Marron",
-    "image": "Mimigal.png"
-  },
-  {
-    "name": "Mustéflott",
-    "types": [
-      "Eau",
-      "Sol"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Mustéflott.png"
-  },
-  {
-    "name": "Bargantua",
-    "types": [
-      "Eau"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Bargantua.png"
-  },
-  {
-    "name": "Lucario",
-    "types": [
-      "Combat",
-      "Acier"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Lucario.png"
-  },
-  {
-    "name": "Magnézone",
-    "types": [
-      "Électrik",
-      "Acier"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Gris",
-    "image": "Magnézone.png"
-  },
-  {
-    "name": "Empiflor Q",
-    "types": [
-      "Plante",
-      "Sol"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Empiflor Q.png"
-  },
-  {
-    "name": "Corvaillus",
-    "types": [
-      "Ténèbres",
-      "Vol"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Corvaillus.png"
-  },
-  {
-    "name": "Corboeil",
-    "types": [
-      "Ténèbres",
-      "Vol"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Noir",
-    "image": "Corboeil.png"
-  },
-  {
-    "name": "Élecsprint",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Élecsprint.png"
-  },
-  {
-    "name": "Boguerisse",
-    "types": [
-      "Insecte",
-      "Acier"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Boguerisse.png"
-  },
-  {
-    "name": "Massko Bis",
-    "types": [
-      "Plante"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Massko Bis.png"
-  },
-  {
-    "name": "Momartik",
-    "types": [
-      "Roche",
-      "Spectre"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Momartik.png"
-  },
-  {
-    "name": "Tutafeh",
-    "types": [
-      "Spectre"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Tutafeh.png"
-  },
-  {
-    "name": "Tutankafer",
-    "types": [
-      "Spectre"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Noir",
-    "image": "Tutankafer.png"
-  },
-  {
-    "name": "Cradopaud",
-    "types": [
-      "Poison"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Cradopaud.png"
-  },
-  {
-    "name": "Coatox",
-    "types": [
-      "Poison"
-    ],
-    "gen": 4,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Coatox.png"
-  },
-  {
-    "name": "Nanméouïe Q",
-    "types": [
-      "Sol",
-      "Roche"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Nanméouïe Q.png"
-  },
-  {
-    "name": "Dialga",
-    "types": [
-      "Acier",
-      "Dragon"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Dialga.png"
-  },
-  {
-    "name": "Palkia",
-    "types": [
-      "Eau",
-      "Dragon"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Palkia.png"
-  },
-  {
-    "name": "Giratina",
-    "types": [
-      "Spectre",
-      "Dragon"
-    ],
-    "gen": 4,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Giratina.png"
-  },
-  {
-    "name": "Vipenfeu",
-    "types": [
-      "Feu"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Vipenfeu.png"
-  },
-  {
-    "name": "Choatermine",
-    "types": [
-      "Feu",
-      "Combat"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Choatermine.png"
-  },
-  {
-    "name": "Torchidéal",
-    "types": [
-      "Feu",
-      "Combat"
-    ],
-    "gen": 5,
-    "stage": 3,
-    "color": "Rouge",
-    "image": "Torchidéal.png"
-  },
-  {
-    "name": "Moustillon",
-    "types": [
-      "Eau"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Moustillon.png"
-  },
-  {
-    "name": "Aquapouce",
-    "types": [
-      "Eau"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Aquapouce.png"
-  },
-  {
-    "name": "Clamiral",
-    "types": [
-      "Eau"
-    ],
-    "gen": 5,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Clamiral.png"
-  },
-  {
-    "name": "Vipélierre Cinq",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Vipélierre Cinq.png"
-  },
-  {
-    "name": "Vipoisel",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Vipoisel.png"
-  },
-  {
-    "name": "Vertigone",
-    "types": [
-      "Plante",
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Vertigone.png"
-  },
-  {
-    "name": "Chacripan",
-    "types": [
-      "Ténèbres"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Chacripan.png"
-  },
-  {
-    "name": "Cybugor",
-    "types": [
-      "Ténèbres"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Cybugor.png"
-  },
-  {
-    "name": "Nucléos",
-    "types": [
-      "Psy"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Nucléos.png"
-  },
-  {
-    "name": "Nucleos Deux",
-    "types": [
-      "Psy"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Rose",
-    "image": "Nucleos Deux.png"
-  },
-  {
-    "name": "Zoroark Bis",
-    "types": [
-      "Psy"
-    ],
-    "gen": 5,
-    "stage": 3,
-    "color": "Violet",
-    "image": "Zoroark Bis.png"
-  },
-  {
-    "name": "Gruikui",
-    "types": [
-      "Feu",
-      "Sol"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Gruikui.png"
-  },
-  {
-    "name": "Cochignon",
-    "types": [
-      "Feu",
-      "Sol"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Cochignon.png"
-  },
-  {
-    "name": "Groinfeu",
-    "types": [
-      "Feu",
-      "Sol"
-    ],
-    "gen": 5,
-    "stage": 3,
-    "color": "Rouge",
-    "image": "Groinfeu.png"
-  },
-  {
-    "name": "Charpenti",
-    "types": [
-      "Combat"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Charpenti.png"
-  },
-  {
-    "name": "Gurdurr",
-    "types": [
-      "Combat"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Gris",
-    "image": "Gurdurr.png"
-  },
-  {
-    "name": "Bétochef",
-    "types": [
-      "Combat"
-    ],
-    "gen": 5,
-    "stage": 3,
-    "color": "Gris",
-    "image": "Bétochef.png"
-  },
-  {
-    "name": "Tadmorv Cinq",
-    "types": [
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Tadmorv Cinq.png"
-  },
-  {
-    "name": "Enroclum",
-    "types": [
-      "Poison",
-      "Sol"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Enroclum.png"
-  },
-  {
-    "name": "Chetiflor Cinq",
-    "types": [
-      "Plante"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Chetiflor Cinq.png"
-  },
-  {
-    "name": "Voplume",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Voplume.png"
-  },
-  {
-    "name": "Aéropteryx Cinq",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Aéropteryx Cinq.png"
-  },
-  {
-    "name": "Ducklett",
-    "types": [
-      "Eau",
-      "Vol"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Ducklett.png"
-  },
-  {
-    "name": "Swanna",
-    "types": [
-      "Eau",
-      "Vol"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Swanna.png"
-  },
-  {
-    "name": "Chapignon",
-    "types": [
-      "Poison",
-      "Plante"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Chapignon.png"
-  },
-  {
-    "name": "Trompignon",
-    "types": [
-      "Poison",
-      "Plante"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Trompignon.png"
-  },
-  {
-    "name": "Ossecru",
-    "types": [
-      "Sol"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Ossecru.png"
-  },
-  {
-    "name": "Ninpetit",
-    "types": [
-      "Insecte",
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Ninpetit.png"
-  },
-  {
-    "name": "Ninjask",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Ninjask.png"
-  },
-  {
-    "name": "Statitik",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Statitik.png"
-  },
-  {
-    "name": "Voltmartien",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Voltmartien.png"
-  },
-  {
-    "name": "Sinistrail",
-    "types": [
-      "Ténèbres",
-      "Vol"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Sinistrail.png"
-  },
-  {
-    "name": "Enterprodigus",
-    "types": [
-      "Ténèbres",
-      "Vol"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Noir",
-    "image": "Enterprodigus.png"
-  },
-  {
-    "name": "Miamiasme",
-    "types": [
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Miamiasme.png"
-  },
-  {
-    "name": "Miasmax",
-    "types": [
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Miasmax.png"
-  },
-  {
-    "name": "Rustripot",
-    "types": [
-      "Acier"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Rustripot.png"
-  },
-  {
-    "name": "Charibari",
-    "types": [
-      "Acier"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Gris",
-    "image": "Charibari.png"
-  },
-  {
-    "name": "Kramoflor",
-    "types": [
-      "Plante"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Kramoflor.png"
-  },
-  {
-    "name": "Solochi",
-    "types": [
-      "Ténèbres",
-      "Dragon"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Solochi.png"
-  },
-  {
-    "name": "Diamat Cinq",
-    "types": [
-      "Ténèbres",
-      "Dragon"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Diamat Cinq.png"
-  },
-  {
-    "name": "Trioxhydre",
-    "types": [
-      "Ténèbres",
-      "Dragon"
-    ],
-    "gen": 5,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Trioxhydre.png"
-  },
-  {
-    "name": "Elgyem",
-    "types": [
-      "Psy"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Elgyem.png"
-  },
-  {
-    "name": "Beheeyem",
-    "types": [
-      "Psy"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Beheeyem.png"
-  },
-  {
-    "name": "Karrablast",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Karrablast.png"
-  },
-  {
-    "name": "Lançargot",
-    "types": [
-      "Insecte",
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Lançargot.png"
-  },
-  {
-    "name": "Sovkipou",
-    "types": [
-      "Eau"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Sovkipou.png"
-  },
-  {
-    "name": "Crabagarre",
-    "types": [
-      "Eau",
-      "Ténèbres"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Crabagarre.png"
-  },
-  {
-    "name": "Rapion",
-    "types": [
-      "Poison"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Rapion.png"
-  },
-  {
-    "name": "Scorvol",
-    "types": [
-      "Poison",
-      "Ténèbres"
-    ],
-    "gen": 5,
-    "stage": 2,
-    "color": "Violet",
-    "image": "Scorvol.png"
-  },
-  {
-    "name": "Kyurem",
-    "types": [
-      "Dragon",
-      "Glace"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Kyurem.png"
-  },
-  {
-    "name": "Reshiram",
-    "types": [
-      "Dragon",
-      "Feu"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Reshiram.png"
-  },
-  {
-    "name": "Zekrom",
-    "types": [
-      "Dragon",
-      "Électrik"
-    ],
-    "gen": 5,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Zekrom.png"
-  },
-  {
-    "name": "Marisson Six",
-    "types": [
-      "Plante"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Marisson Six.png"
-  },
-  {
-    "name": "Faucheur",
-    "types": [
-      "Plante"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Faucheur.png"
-  },
-  {
-    "name": "Chesnaught",
-    "types": [
-      "Plante",
-      "Combat"
-    ],
-    "gen": 6,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Chesnaught.png"
-  },
-  {
-    "name": "Feunnec",
-    "types": [
-      "Feu"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Orange",
-    "image": "Feunnec.png"
-  },
-  {
-    "name": "Roussil",
-    "types": [
-      "Feu"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Orange",
-    "image": "Roussil.png"
-  },
-  {
-    "name": "Goupelin",
-    "types": [
-      "Feu",
-      "Psy"
-    ],
-    "gen": 6,
-    "stage": 3,
-    "color": "Orange",
-    "image": "Goupelin.png"
-  },
-  {
-    "name": "Grenousse",
-    "types": [
-      "Eau"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Grenousse.png"
-  },
-  {
-    "name": "Croâporal",
-    "types": [
-      "Eau"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Croâporal.png"
-  },
-  {
-    "name": "Amphinobi",
-    "types": [
-      "Eau",
-      "Ténèbres"
-    ],
-    "gen": 6,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Amphinobi.png"
-  },
-  {
-    "name": "Passerouge",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Passerouge.png"
-  },
-  {
-    "name": "Braisillon",
-    "types": [
-      "Feu"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Braisillon.png"
-  },
-  {
-    "name": "Flambusard",
-    "types": [
-      "Feu",
-      "Normal"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Flambusard.png"
-  },
-  {
-    "name": "Opermine",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Opermine.png"
-  },
-  {
-    "name": "Golgopathe",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Golgopathe.png"
-  },
-  {
-    "name": "Kravarech",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Kravarech.png"
-  },
-  {
-    "name": "Scarhino",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Scarhino.png"
-  },
-  {
-    "name": "Amagara",
-    "types": [
-      "Roche",
-      "Glace"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Amagara.png"
-  },
-  {
-    "name": "Dragmara",
-    "types": [
-      "Roche",
-      "Glace"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Dragmara.png"
-  },
-  {
-    "name": "Ptyura",
-    "types": [
-      "Eau"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Ptyura.png"
-  },
-  {
-    "name": "Sepiatop",
-    "types": [
-      "Roche",
-      "Psy"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Sepiatop.png"
-  },
-  {
-    "name": "Sepiatroce",
-    "types": [
-      "Roche",
-      "Psy"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Sepiatroce.png"
-  },
-  {
-    "name": "Riolu Six",
-    "types": [
-      "Combat"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Riolu Six.png"
-  },
-  {
-    "name": "Sanglouton",
-    "types": [
-      "Combat"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Sanglouton.png"
-  },
-  {
-    "name": "Mimigal Six",
-    "types": [
-      "Combat"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Mimigal Six.png"
-  },
-  {
-    "name": "Spododo",
-    "types": [
-      "Feu"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Spododo.png"
-  },
-  {
-    "name": "Simiabraz Six",
-    "types": [
-      "Feu",
-      "Combat"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Simiabraz Six.png"
-  },
-  {
-    "name": "Poichigeon",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Poichigeon.png"
-  },
-  {
-    "name": "Colombeau",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Gris",
-    "image": "Colombeau.png"
-  },
-  {
-    "name": "Déflaisan",
-    "types": [
-      "Normal",
-      "Vol"
-    ],
-    "gen": 6,
-    "stage": 3,
-    "color": "Blanc",
-    "image": "Déflaisan.png"
-  },
-  {
-    "name": "Doupied",
-    "types": [
-      "Fée"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Doupied.png"
-  },
-  {
-    "name": "Bibichut",
-    "types": [
-      "Fée"
-    ],
-    "gen": 6,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Bibichut.png"
-  },
-  {
-    "name": "Aromatisse",
-    "types": [
-      "Fée"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Aromatisse.png"
-  },
-  {
-    "name": "Pigmask",
-    "types": [
-      "Fée"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Rose",
-    "image": "Pigmask.png"
-  },
-  {
-    "name": "Xerneas",
-    "types": [
-      "Fée"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Xerneas.png"
-  },
-  {
-    "name": "Yveltal",
-    "types": [
-      "Ténèbres",
-      "Vol"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Yveltal.png"
-  },
-  {
-    "name": "Zygarde",
-    "types": [
-      "Dragon",
-      "Sol"
-    ],
-    "gen": 6,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Zygarde.png"
-  },
-  {
-    "name": "Brindibou",
-    "types": [
-      "Plante"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Brindibou.png"
-  },
-  {
-    "name": "Efflèche",
-    "types": [
-      "Plante",
-      "Vol"
-    ],
-    "gen": 7,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Efflèche.png"
-  },
-  {
-    "name": "Archéduc",
-    "types": [
-      "Plante",
-      "Vol"
-    ],
-    "gen": 7,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Archéduc.png"
-  },
-  {
-    "name": "Flamiaou",
-    "types": [
-      "Feu"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Orange",
-    "image": "Flamiaou.png"
-  },
-  {
-    "name": "Matoufeu",
-    "types": [
-      "Feu"
-    ],
-    "gen": 7,
-    "stage": 2,
-    "color": "Orange",
-    "image": "Matoufeu.png"
-  },
-  {
-    "name": "Lasthenia",
-    "types": [
-      "Feu",
-      "Ténèbres"
-    ],
-    "gen": 7,
-    "stage": 3,
-    "color": "Orange",
-    "image": "Lasthenia.png"
-  },
-  {
-    "name": "Otaquin",
-    "types": [
-      "Eau"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Otaquin.png"
-  },
-  {
-    "name": "Otarialls",
-    "types": [
-      "Eau"
-    ],
-    "gen": 7,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Otarialls.png"
-  },
-  {
-    "name": "Oratoria",
-    "types": [
-      "Eau"
-    ],
-    "gen": 7,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Oratoria.png"
-  },
-  {
-    "name": "Trapouch",
-    "types": [
-      "Normal"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Trapouch.png"
-  },
-  {
-    "name": "Kraboss",
-    "types": [
-      "Normal"
-    ],
-    "gen": 7,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Kraboss.png"
-  },
-  {
-    "name": "Griknot Sept",
-    "types": [
-      "Combat"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Griknot Sept.png"
-  },
-  {
-    "name": "Ouhoule",
-    "types": [
-      "Vol",
-      "Normal"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Ouhoule.png"
-  },
-  {
-    "name": "Crabrass",
-    "types": [
-      "Eau"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Crabrass.png"
-  },
-  {
-    "name": "Crabominable",
-    "types": [
-      "Combat",
-      "Glace"
-    ],
-    "gen": 7,
-    "stage": 2,
-    "color": "Blanc",
-    "image": "Crabominable.png"
-  },
-  {
-    "name": "Skelénox Sept",
-    "types": [
-      "Roche"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Skelénox Sept.png"
-  },
-  {
-    "name": "Mangriff",
-    "types": [
-      "Normal"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Mangriff.png"
-  },
-  {
-    "name": "Charjabug",
-    "types": [
-      "Insecte",
-      "Électrik"
-    ],
-    "gen": 7,
-    "stage": 2,
-    "color": "Jaune",
-    "image": "Charjabug.png"
-  },
-  {
-    "name": "Dynavolt",
-    "types": [
-      "Insecte",
-      "Électrik"
-    ],
-    "gen": 7,
-    "stage": 3,
-    "color": "Jaune",
-    "image": "Dynavolt.png"
-  },
-  {
-    "name": "Chochodile",
-    "types": [
-      "Eau"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Chochodile.png"
-  },
-  {
-    "name": "Nakrata Sept",
-    "types": [
-      "Ténèbres"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Nakrata Sept.png"
-  },
-  {
-    "name": "Boumata",
-    "types": [
-      "Ténèbres",
-      "Fée"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Boumata.png"
-  },
-  {
-    "name": "Diaphollen",
-    "types": [
-      "Ténèbres",
-      "Fée"
-    ],
-    "gen": 7,
-    "stage": 2,
-    "color": "Noir",
-    "image": "Diaphollen.png"
-  },
-  {
-    "name": "Solgaleo",
-    "types": [
-      "Acier",
-      "Psy"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Solgaleo.png"
-  },
-  {
-    "name": "Lunala",
-    "types": [
-      "Spectre",
-      "Psy"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Lunala.png"
-  },
-  {
-    "name": "Necrozma",
-    "types": [
-      "Psy"
-    ],
-    "gen": 7,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Necrozma.png"
-  },
-  {
-    "name": "Ouistempo",
-    "types": [
-      "Normal"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Ouistempo.png"
-  },
-  {
-    "name": "Miaoulédon",
-    "types": [
-      "Insecte",
-      "Fée"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Jaune",
-    "image": "Miaoulédon.png"
-  },
-  {
-    "name": "Larméléon",
-    "types": [
-      "Feu"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Orange",
-    "image": "Larméléon.png"
-  },
-  {
-    "name": "Anubis",
-    "types": [
-      "Feu"
-    ],
-    "gen": 8,
-    "stage": 2,
-    "color": "Orange",
-    "image": "Anubis.png"
-  },
-  {
-    "name": "Grandosaur",
-    "types": [
-      "Feu",
-      "Ténèbres"
-    ],
-    "gen": 8,
-    "stage": 3,
-    "color": "Orange",
-    "image": "Grandosaur.png"
-  },
-  {
-    "name": "Larméléon Bis",
-    "types": [
-      "Feu"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Orange",
-    "image": "Larméléon Bis.png"
-  },
-  {
-    "name": "Ouisticargue",
-    "types": [
-      "Eau"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Ouisticargue.png"
-  },
-  {
-    "name": "Danaissiete",
-    "types": [
-      "Eau"
-    ],
-    "gen": 8,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Danaissiete.png"
-  },
-  {
-    "name": "Roublenard",
-    "types": [
-      "Eau",
-      "Ténèbres"
-    ],
-    "gen": 8,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Roublenard.png"
-  },
-  {
-    "name": "Charmillon Huit",
-    "types": [
-      "Plante"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Charmillon Huit.png"
-  },
-  {
-    "name": "Feuilloutan",
-    "types": [
-      "Plante"
-    ],
-    "gen": 8,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Feuilloutan.png"
-  },
-  {
-    "name": "Bourrasque",
-    "types": [
-      "Plante",
-      "Vol"
-    ],
-    "gen": 8,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Bourrasque.png"
-  },
-  {
-    "name": "Excavarion",
-    "types": [
-      "Sol"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Excavarion.png"
-  },
-  {
-    "name": "Digermine",
-    "types": [
-      "Sol"
-    ],
-    "gen": 8,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Digermine.png"
-  },
-  {
-    "name": "Corvinat",
-    "types": [
-      "Vol",
-      "Ténèbres"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Corvinat.png"
-  },
-  {
-    "name": "Corvaillus Huit",
-    "types": [
-      "Vol",
-      "Ténèbres"
-    ],
-    "gen": 8,
-    "stage": 2,
-    "color": "Noir",
-    "image": "Corvaillus Huit.png"
-  },
-  {
-    "name": "Groggneux",
-    "types": [
-      "Ténèbres",
-      "Normal"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Groggneux.png"
-  },
-  {
-    "name": "Groret",
-    "types": [
-      "Ténèbres",
-      "Normal"
-    ],
-    "gen": 8,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Groret.png"
-  },
-  {
-    "name": "Bâblisel",
-    "types": [
-      "Ténèbres"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Noir",
-    "image": "Bâblisel.png"
-  },
-  {
-    "name": "Tarinor Huit",
-    "types": [
-      "Roche"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Tarinor Huit.png"
-  },
-  {
-    "name": "Marincanaille",
-    "types": [
-      "Eau"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Marincanaille.png"
-  },
-  {
-    "name": "Lamérgus",
-    "types": [
-      "Roche",
-      "Eau"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Lamérgus.png"
-  },
-  {
-    "name": "Zacian",
-    "types": [
-      "Acier",
-      "Fée"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Zacian.png"
-  },
-  {
-    "name": "Zamazenta",
-    "types": [
-      "Acier",
-      "Combat"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Zamazenta.png"
-  },
-  {
-    "name": "Éthernatos",
-    "types": [
-      "Poison",
-      "Dragon"
-    ],
-    "gen": 8,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Éthernatos.png"
-  },
-  {
-    "name": "Poussacha",
-    "types": [
-      "Feu"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Poussacha.png"
-  },
-  {
-    "name": "Matoufio",
-    "types": [
-      "Feu",
-      "Normal"
-    ],
-    "gen": 9,
-    "stage": 2,
-    "color": "Rouge",
-    "image": "Matoufio.png"
-  },
-  {
-    "name": "Miascarade",
-    "types": [
-      "Feu",
-      "Normal"
-    ],
-    "gen": 9,
-    "stage": 3,
-    "color": "Rouge",
-    "image": "Miascarade.png"
-  },
-  {
-    "name": "Coiffeton",
-    "types": [
-      "Eau"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Coiffeton.png"
-  },
-  {
-    "name": "Canarbello",
-    "types": [
-      "Eau"
-    ],
-    "gen": 9,
-    "stage": 2,
-    "color": "Bleu",
-    "image": "Canarbello.png"
-  },
-  {
-    "name": "Palmaval",
-    "types": [
-      "Eau",
-      "Combat"
-    ],
-    "gen": 9,
-    "stage": 3,
-    "color": "Bleu",
-    "image": "Palmaval.png"
-  },
-  {
-    "name": "Chocodile Neuf",
-    "types": [
-      "Plante"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Chocodile Neuf.png"
-  },
-  {
-    "name": "Boulodre",
-    "types": [
-      "Plante"
-    ],
-    "gen": 9,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Boulodre.png"
-  },
-  {
-    "name": "Skelédirge",
-    "types": [
-      "Plante",
-      "Spectre"
-    ],
-    "gen": 9,
-    "stage": 3,
-    "color": "Vert",
-    "image": "Skelédirge.png"
-  },
-  {
-    "name": "Manglouton",
-    "types": [
-      "Normal"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Manglouton.png"
-  },
-  {
-    "name": "Ravageois",
-    "types": [
-      "Normal",
-      "Combat"
-    ],
-    "gen": 9,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Ravageois.png"
-  },
-  {
-    "name": "Fléautorse",
-    "types": [
-      "Insecte"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Vert",
-    "image": "Fléautorse.png"
-  },
-  {
-    "name": "Nokturnowl",
-    "types": [
-      "Insecte",
-      "Vol"
-    ],
-    "gen": 9,
-    "stage": 2,
-    "color": "Vert",
-    "image": "Nokturnowl.png"
-  },
-  {
-    "name": "Coudlangue Neuf",
-    "types": [
-      "Sol"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Coudlangue Neuf.png"
-  },
-  {
-    "name": "Tylton",
-    "types": [
-      "Vol"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Tylton.png"
-  },
-  {
-    "name": "Malvalame",
-    "types": [
-      "Vol",
-      "Sol"
-    ],
-    "gen": 9,
-    "stage": 2,
-    "color": "Marron",
-    "image": "Malvalame.png"
-  },
-  {
-    "name": "Angoliath",
-    "types": [
-      "Insecte",
-      "Sol"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Angoliath.png"
-  },
-  {
-    "name": "Farigiraf",
-    "types": [
-      "Normal",
-      "Psy"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Marron",
-    "image": "Farigiraf.png"
-  },
-  {
-    "name": "Vécolame",
-    "types": [
-      "Eau",
-      "Fée"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Bleu",
-    "image": "Vécolame.png"
-  },
-  {
-    "name": "Cadanturbi",
-    "types": [
-      "Électrik"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Gris",
-    "image": "Cadanturbi.png"
-  },
-  {
-    "name": "Kraknoix Neuf",
-    "types": [
-      "Roche",
-      "Poison"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Kraknoix Neuf.png"
-  },
-  {
-    "name": "Terapagos",
-    "types": [
-      "Normal"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Blanc",
-    "image": "Terapagos.png"
-  },
-  {
-    "name": "Koraidon",
-    "types": [
-      "Combat",
-      "Dragon"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Rouge",
-    "image": "Koraidon.png"
-  },
-  {
-    "name": "Miraidon",
-    "types": [
-      "Électrik",
-      "Dragon"
-    ],
-    "gen": 9,
-    "stage": 1,
-    "color": "Violet",
-    "image": "Miraidon.png"
-  }
+  { "name": "Bulbizarre", "types": ["Plante", "Poison"],    "gen": 1, "stage": 1, "color": "Vert",   "image": "Bulbizarre (1G).png" },
+  { "name": "Herbizarre", "types": ["Plante", "Poison"],    "gen": 1, "stage": 2, "color": "Vert",   "image": "Herbizarre (1G).png" },
+  { "name": "Florizarre", "types": ["Plante", "Poison"],    "gen": 1, "stage": 3, "color": "Vert",   "image": "Florizarre (1G).png" },
+  { "name": "Salamèche",  "types": ["Feu"],                 "gen": 1, "stage": 1, "color": "Rouge",  "image": "Salamèche (1G).png" },
+  { "name": "Reptincel",  "types": ["Feu"],                 "gen": 1, "stage": 2, "color": "Rouge",  "image": "Reptincel (1G).png" },
+  { "name": "Dracaufeu",  "types": ["Feu", "Vol"],          "gen": 1, "stage": 3, "color": "Rouge",  "image": "Dracaufeu (1G).png" },
+  { "name": "Carapuce",   "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Bleu",   "image": "Carapuce (1G).png" },
+  { "name": "Carabaffe",  "types": ["Eau"],                 "gen": 1, "stage": 2, "color": "Bleu",   "image": "Carabaffe (1G).png" },
+  { "name": "Tortank",    "types": ["Eau"],                 "gen": 1, "stage": 3, "color": "Bleu",   "image": "Tortank (1G).png" },
+  { "name": "Chenipan",   "types": ["Insecte"],             "gen": 1, "stage": 1, "color": "Vert",   "image": "Chenipan (1G).png" },
+  { "name": "Chrysacier", "types": ["Insecte"],             "gen": 1, "stage": 2, "color": "Vert",   "image": "Chrysacier (1G).png" },
+  { "name": "Papilusion", "types": ["Insecte", "Vol"],      "gen": 1, "stage": 3, "color": "Blanc",  "image": "Papilusion (1G).png" },
+  { "name": "Aspicot",    "types": ["Insecte", "Poison"],   "gen": 1, "stage": 1, "color": "Marron", "image": "Aspicot (1G).png" },
+  { "name": "Coconfort",  "types": ["Insecte", "Poison"],   "gen": 1, "stage": 2, "color": "Jaune",  "image": "Coconfort (1G).png" },
+  { "name": "Dardargnan", "types": ["Insecte", "Poison"],   "gen": 1, "stage": 3, "color": "Jaune",  "image": "Dardargnan (1G).png" },
+  { "name": "Roucool",    "types": ["Normal", "Vol"],       "gen": 1, "stage": 1, "color": "Marron", "image": "Roucool (1G).png" },
+  { "name": "Roucoups",   "types": ["Normal", "Vol"],       "gen": 1, "stage": 2, "color": "Marron", "image": "Roucoups (1G).png" },
+  { "name": "Roucarnage", "types": ["Normal", "Vol"],       "gen": 1, "stage": 3, "color": "Marron", "image": "Roucarnage (1G).png" },
+  { "name": "Rattata",    "types": ["Normal"],              "gen": 1, "stage": 1, "color": "Violet", "image": "Rattata (1G).png" },
+  { "name": "Rattatac",   "types": ["Normal"],              "gen": 1, "stage": 2, "color": "Marron", "image": "Rattatac (1G).png" },
+  { "name": "Piafabec",   "types": ["Normal", "Vol"],       "gen": 1, "stage": 1, "color": "Marron", "image": "Piafabec (1G).png" },
+  { "name": "Rapasdepic", "types": ["Normal", "Vol"],       "gen": 1, "stage": 2, "color": "Marron", "image": "Rapasdepic (1G).png" },
+  { "name": "Abo",        "types": ["Poison"],              "gen": 1, "stage": 1, "color": "Violet", "image": "Abo (1G).png" },
+  { "name": "Arbok",      "types": ["Poison"],              "gen": 1, "stage": 2, "color": "Violet", "image": "Arbok (1G).png" },
+  { "name": "Pikachu",    "types": ["Électrik"],            "gen": 1, "stage": 2, "color": "Jaune",  "image": "Pikachu (1G).png" },
+  { "name": "Raichu",     "types": ["Électrik"],            "gen": 1, "stage": 3, "color": "Jaune",  "image": "Raichu (1G).png" },
+  { "name": "Sabelette",  "types": ["Sol"],                 "gen": 1, "stage": 1, "color": "Jaune",  "image": "Sabelette (1G).png" },
+  { "name": "Sablaireau", "types": ["Sol"],                 "gen": 1, "stage": 2, "color": "Jaune",  "image": "Sablaireau (1G).png" },
+  { "name": "Nidoran F",  "types": ["Poison"],              "gen": 1, "stage": 1, "color": "Bleu",   "image": "Nidoran F (1G).png" },
+  { "name": "Nidorina",   "types": ["Poison"],              "gen": 1, "stage": 2, "color": "Bleu",   "image": "Nidorina (1G).png" },
+  { "name": "Nidoqueen",  "types": ["Poison", "Sol"],       "gen": 1, "stage": 3, "color": "Bleu",   "image": "Nidoqueen (1G).png" },
+  { "name": "Nidoran M",  "types": ["Poison"],              "gen": 1, "stage": 1, "color": "Violet", "image": "Nidoran M (1G).png" },
+  { "name": "Nidorino",   "types": ["Poison"],              "gen": 1, "stage": 2, "color": "Violet", "image": "Nidorino (1G).png" },
+  { "name": "Nidoking",   "types": ["Poison", "Sol"],       "gen": 1, "stage": 3, "color": "Violet", "image": "Nidoking (1G).png" },
+  { "name": "Mélofée",    "types": ["Fée"],                 "gen": 1, "stage": 2, "color": "Rose",   "image": "Mélofée (1G).png" },
+  { "name": "Mélodelfe",  "types": ["Fée"],                 "gen": 1, "stage": 3, "color": "Rose",   "image": "Mélodelfe (1G).png" },
+  { "name": "Goupix",     "types": ["Feu"],                 "gen": 1, "stage": 1, "color": "Marron", "image": "Goupix (1G).png" },
+  { "name": "Feunard",    "types": ["Feu"],                 "gen": 1, "stage": 2, "color": "Jaune",  "image": "Feunard (1G).png" },
+  { "name": "Rondoudou",  "types": ["Normal", "Fée"],       "gen": 1, "stage": 2, "color": "Rose",   "image": "Rondoudou (1G).png" },
+  { "name": "Grodoudou",  "types": ["Normal", "Fée"],       "gen": 1, "stage": 3, "color": "Rose",   "image": "Grodoudou (1G).png" },
+  { "name": "Nosferapti", "types": ["Poison", "Vol"],       "gen": 1, "stage": 1, "color": "Violet", "image": "Nosferapti (1G).png" },
+  { "name": "Nosferalto", "types": ["Poison", "Vol"],       "gen": 1, "stage": 2, "color": "Violet", "image": "Nosferalto (1G).png" },
+  { "name": "Mystherbe",  "types": ["Plante", "Poison"],    "gen": 1, "stage": 1, "color": "Bleu",   "image": "Mystherbe (1G).png" },
+  { "name": "Ortide",     "types": ["Plante", "Poison"],    "gen": 1, "stage": 2, "color": "Bleu",   "image": "Ortide (1G).png" },
+  { "name": "Rafflesia",  "types": ["Plante", "Poison"],    "gen": 1, "stage": 3, "color": "Rouge",  "image": "Rafflesia (1G).png" },
+  { "name": "Paras",      "types": ["Insecte", "Plante"],   "gen": 1, "stage": 1, "color": "Rouge",  "image": "Paras (1G).png" },
+  { "name": "Parasect",   "types": ["Insecte", "Plante"],   "gen": 1, "stage": 2, "color": "Rouge",  "image": "Parasect (1G).png" },
+  { "name": "Mimitoss",   "types": ["Insecte", "Poison"],   "gen": 1, "stage": 1, "color": "Violet", "image": "Mimitoss (1G).png" },
+  { "name": "Aéromite",   "types": ["Insecte", "Poison"],   "gen": 1, "stage": 2, "color": "Violet", "image": "Aéromite (1G).png" },
+  { "name": "Taupiqueur", "types": ["Sol"],                 "gen": 1, "stage": 1, "color": "Marron", "image": "Taupiqueur (1G).png" },
+  { "name": "Triopikeur", "types": ["Sol"],                 "gen": 1, "stage": 2, "color": "Marron", "image": "Triopikeur (1G).png" },
+  { "name": "Miaouss",    "types": ["Normal"],              "gen": 1, "stage": 1, "color": "Jaune",  "image": "Miaouss (1G).png" },
+  { "name": "Persian",    "types": ["Normal"],              "gen": 1, "stage": 2, "color": "Jaune",  "image": "Persian (1G).png" },
+  { "name": "Psykokwak",  "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Jaune",  "image": "Psykokwak (1G).png" },
+  { "name": "Akwakwak",   "types": ["Eau"],                 "gen": 1, "stage": 2, "color": "Bleu",   "image": "Akwakwak (1G).png" },
+  { "name": "Férosinge",  "types": ["Combat"],              "gen": 1, "stage": 1, "color": "Marron", "image": "Férosinge (1G).png" },
+  { "name": "Colossinge", "types": ["Combat"],              "gen": 1, "stage": 2, "color": "Marron", "image": "Colossinge (1G).png" },
+  { "name": "Caninos",    "types": ["Feu"],                 "gen": 1, "stage": 1, "color": "Marron", "image": "Caninos (1G).png" },
+  { "name": "Arcanin",    "types": ["Feu"],                 "gen": 1, "stage": 2, "color": "Marron", "image": "Arcanin (1G).png" },
+  { "name": "Ptitard",    "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Bleu",   "image": "Ptitard (1G).png" },
+  { "name": "Têtarte",    "types": ["Eau"],                 "gen": 1, "stage": 2, "color": "Bleu",   "image": "Têtarte (1G).png" },
+  { "name": "Tartard",    "types": ["Eau", "Combat"],       "gen": 1, "stage": 3, "color": "Bleu",   "image": "Tartard (1G).png" },
+  { "name": "Abra",       "types": ["Psy"],                 "gen": 1, "stage": 1, "color": "Marron", "image": "Abra (1G).png" },
+  { "name": "Kadabra",    "types": ["Psy"],                 "gen": 1, "stage": 2, "color": "Marron", "image": "Kadabra (1G).png" },
+  { "name": "Alakazam",   "types": ["Psy"],                 "gen": 1, "stage": 3, "color": "Marron", "image": "Alakazam (1G).png" },
+  { "name": "Machoc",     "types": ["Combat"],              "gen": 1, "stage": 1, "color": "Gris",   "image": "Machoc (1G).png" },
+  { "name": "Machopeur",  "types": ["Combat"],              "gen": 1, "stage": 2, "color": "Gris",   "image": "Machopeur (1G).png" },
+  { "name": "Mackogneur", "types": ["Combat"],              "gen": 1, "stage": 3, "color": "Gris",   "image": "Mackogneur (1G).png" },
+  { "name": "Chétiflor",  "types": ["Plante", "Poison"],    "gen": 1, "stage": 1, "color": "Vert",   "image": "Chétiflor (1G).png" },
+  { "name": "Boustiflor", "types": ["Plante", "Poison"],    "gen": 1, "stage": 2, "color": "Vert",   "image": "Boustiflor (1G).png" },
+  { "name": "Empiflor",   "types": ["Plante", "Poison"],    "gen": 1, "stage": 3, "color": "Vert",   "image": "Empiflor (1G).png" },
+  { "name": "Tentacool",  "types": ["Eau", "Poison"],       "gen": 1, "stage": 1, "color": "Bleu",   "image": "Tentacool (1G).png" },
+  { "name": "Tentacruel", "types": ["Eau", "Poison"],       "gen": 1, "stage": 2, "color": "Bleu",   "image": "Tentacruel (1G).png" },
+  { "name": "Racaillou",  "types": ["Roche", "Sol"],        "gen": 1, "stage": 1, "color": "Marron", "image": "Racaillou (1G).png" },
+  { "name": "Gravalanch", "types": ["Roche", "Sol"],        "gen": 1, "stage": 2, "color": "Marron", "image": "Gravalanch (1G).png" },
+  { "name": "Grolem",     "types": ["Roche", "Sol"],        "gen": 1, "stage": 3, "color": "Marron", "image": "Grolem (1G).png" },
+  { "name": "Ponyta",     "types": ["Feu"],                 "gen": 1, "stage": 1, "color": "Jaune",  "image": "Ponyta (1G).png" },
+  { "name": "Galopa",     "types": ["Feu"],                 "gen": 1, "stage": 2, "color": "Jaune",  "image": "Galopa (1G).png" },
+  { "name": "Ramoloss",   "types": ["Eau", "Psy"],          "gen": 1, "stage": 1, "color": "Rose",   "image": "Ramoloss (1G).png" },
+  { "name": "Flagadoss",  "types": ["Eau", "Psy"],          "gen": 1, "stage": 2, "color": "Rose",   "image": "Flagadoss (1G).png" },
+  { "name": "Magnéti",    "types": ["Électrik", "Acier"],   "gen": 1, "stage": 1, "color": "Gris",   "image": "Magnéti (1G).png" },
+  { "name": "Magnéton",   "types": ["Électrik", "Acier"],   "gen": 1, "stage": 2, "color": "Gris",   "image": "Magnéton (1G).png" },
+  { "name": "Canarticho", "types": ["Normal", "Vol"],       "gen": 1, "stage": 1, "color": "Marron", "image": "Canarticho (1G).png" },
+  { "name": "Doduo",      "types": ["Normal", "Vol"],       "gen": 1, "stage": 1, "color": "Marron", "image": "Doduo (1G).png" },
+  { "name": "Dodrio",     "types": ["Normal", "Vol"],       "gen": 1, "stage": 2, "color": "Marron", "image": "Dodrio (1G).png" },
+  { "name": "Otaria",     "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Blanc",  "image": "Otaria (1G).png" },
+  { "name": "Lamantine",  "types": ["Eau", "Glace"],        "gen": 1, "stage": 2, "color": "Blanc",  "image": "Lamantine (1G).png" },
+  { "name": "Tadmorv",    "types": ["Poison"],              "gen": 1, "stage": 1, "color": "Violet", "image": "Tadmorv (1G).png" },
+  { "name": "Grotadmorv", "types": ["Poison"],              "gen": 1, "stage": 2, "color": "Violet", "image": "Grotadmorv (1G).png" },
+  { "name": "Kokiyas",    "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Violet", "image": "Kokiyas (1G).png" },
+  { "name": "Crustabri",  "types": ["Eau", "Glace"],        "gen": 1, "stage": 2, "color": "Violet", "image": "Crustabri (1G).png" },
+  { "name": "Fantominus", "types": ["Spectre", "Poison"],   "gen": 1, "stage": 1, "color": "Violet", "image": "Fantominus (1G).png" },
+  { "name": "Spectrum",   "types": ["Spectre", "Poison"],   "gen": 1, "stage": 2, "color": "Violet", "image": "Spectrum (1G).png" },
+  { "name": "Ectoplasma", "types": ["Spectre", "Poison"],   "gen": 1, "stage": 3, "color": "Violet", "image": "Ectoplasma (1G).png" },
+  { "name": "Onix",       "types": ["Roche", "Sol"],        "gen": 1, "stage": 1, "color": "Gris",   "image": "Onix (1G).png" },
+  { "name": "Soporifik",  "types": ["Psy"],                 "gen": 1, "stage": 1, "color": "Jaune",  "image": "Soporifik (1G).png" },
+  { "name": "Hypnomade",  "types": ["Psy"],                 "gen": 1, "stage": 2, "color": "Jaune",  "image": "Hypnomade (1G).png" },
+  { "name": "Krabby",     "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Rouge",  "image": "Krabby (1G).png" },
+  { "name": "Krabboss",   "types": ["Eau"],                 "gen": 1, "stage": 2, "color": "Rouge",  "image": "Krabboss (1G).png" },
+  { "name": "Voltorbe",   "types": ["Électrik"],            "gen": 1, "stage": 1, "color": "Rouge",  "image": "Voltorbe (1G).png" },
+  { "name": "Électrode",  "types": ["Électrik"],            "gen": 1, "stage": 2, "color": "Rouge",  "image": "Électrode (1G).png" },
+  { "name": "Noeunoeuf",  "types": ["Plante", "Psy"],       "gen": 1, "stage": 1, "color": "Rose",   "image": "Noeunoeuf (1G).png" },
+  { "name": "Noadkoko",   "types": ["Plante", "Psy"],       "gen": 1, "stage": 2, "color": "Jaune",  "image": "Noadkoko (1G).png" },
+  { "name": "Osselait",   "types": ["Sol"],                 "gen": 1, "stage": 1, "color": "Marron", "image": "Osselait (1G).png" },
+  { "name": "Ossatueur",  "types": ["Sol"],                 "gen": 1, "stage": 2, "color": "Marron", "image": "Ossatueur (1G).png" },
+  { "name": "Kicklee",    "types": ["Combat"],              "gen": 1, "stage": 2, "color": "Marron", "image": "Kicklee (1G).png" },
+  { "name": "Tygnon",     "types": ["Combat"],              "gen": 1, "stage": 2, "color": "Marron", "image": "Tygnon (1G).png" },
+  { "name": "Excelangue", "types": ["Normal"],              "gen": 1, "stage": 1, "color": "Rose",   "image": "Excelangue (1G).png" },
+  { "name": "Smogo",      "types": ["Poison"],              "gen": 1, "stage": 1, "color": "Violet", "image": "Smogo (1G).png" },
+  { "name": "Smogogo",    "types": ["Poison"],              "gen": 1, "stage": 2, "color": "Violet", "image": "Smogogo (1G).png" },
+  { "name": "Rhinocorne", "types": ["Sol", "Roche"],        "gen": 1, "stage": 1, "color": "Gris",   "image": "Rhinocorne (1G).png" },
+  { "name": "Rhinoféros", "types": ["Sol", "Roche"],        "gen": 1, "stage": 2, "color": "Gris",   "image": "Rhinoféros (1G).png" },
+  { "name": "Leveinard",  "types": ["Normal"],              "gen": 1, "stage": 2, "color": "Rose",   "image": "Leveinard (1G).png" },
+  { "name": "Saquedeneu", "types": ["Plante"],              "gen": 1, "stage": 1, "color": "Bleu",   "image": "Saquedeneu (1G).png" },
+  { "name": "Kangourex",  "types": ["Normal"],              "gen": 1, "stage": 1, "color": "Marron", "image": "Kangourex (1G).png" },
+  { "name": "Hypotrempe", "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Bleu",   "image": "Hypotrempe (1G).png" },
+  { "name": "Hypocéan",   "types": ["Eau"],                 "gen": 1, "stage": 2, "color": "Bleu",   "image": "Hypocéan (1G).png" },
+  { "name": "Poissirène", "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Rouge",  "image": "Poissirène (1G).png" },
+  { "name": "Poissoroy",  "types": ["Eau"],                 "gen": 1, "stage": 2, "color": "Rouge",  "image": "Poissoroy (1G).png" },
+  { "name": "Stari",      "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Marron", "image": "Stari (1G).png" },
+  { "name": "Staross",    "types": ["Eau", "Psy"],          "gen": 1, "stage": 2, "color": "Violet", "image": "Staross (1G).png" },
+  { "name": "M. Mime",    "types": ["Psy", "Fée"],          "gen": 1, "stage": 2, "color": "Rose",   "image": "M. Mime (1G).png" },
+  { "name": "Insécateur", "types": ["Insecte", "Vol"],      "gen": 1, "stage": 1, "color": "Vert",   "image": "Insécateur (1G).png" },
+  { "name": "Lippoutou",  "types": ["Glace", "Psy"],        "gen": 1, "stage": 2, "color": "Rouge",  "image": "Lippoutou (1G).png" },
+  { "name": "Élektek",    "types": ["Électrik"],            "gen": 1, "stage": 2, "color": "Jaune",  "image": "Élektek (1G).png" },
+  { "name": "Magmar",     "types": ["Feu"],                 "gen": 1, "stage": 2, "color": "Rouge",  "image": "Magmar (1G).png" },
+  { "name": "Scarabrute", "types": ["Insecte"],             "gen": 1, "stage": 1, "color": "Marron", "image": "Scarabrute (1G).png" },
+  { "name": "Tauros",     "types": ["Normal"],              "gen": 1, "stage": 1, "color": "Marron", "image": "Tauros (1G).png" },
+  { "name": "Magicarpe",  "types": ["Eau"],                 "gen": 1, "stage": 1, "color": "Rouge",  "image": "Magicarpe (1G).png" },
+  { "name": "Léviator",   "types": ["Eau", "Vol"],          "gen": 1, "stage": 2, "color": "Bleu",   "image": "Léviator (1G).png" },
+  { "name": "Lokhlass",   "types": ["Eau", "Glace"],        "gen": 1, "stage": 1, "color": "Bleu",   "image": "Lokhlass (1G).png" },
+  { "name": "Métamorph",  "types": ["Normal"],              "gen": 1, "stage": 1, "color": "Violet", "image": "Métamorph (1G).png" },
+  { "name": "Évoli",      "types": ["Normal"],              "gen": 1, "stage": 1, "color": "Marron", "image": "Évoli (1G).png" },
+  { "name": "Aquali",     "types": ["Eau"],                 "gen": 1, "stage": 2, "color": "Bleu",   "image": "Aquali (1G).png" },
+  { "name": "Voltali",    "types": ["Électrik"],            "gen": 1, "stage": 2, "color": "Jaune",  "image": "Voltali (1G).png" },
+  { "name": "Pyroli",     "types": ["Feu"],                 "gen": 1, "stage": 2, "color": "Rouge",  "image": "Pyroli (1G).png" },
+  { "name": "Porygon",    "types": ["Normal"],              "gen": 1, "stage": 1, "color": "Rose",   "image": "Porygon (1G).png" },
+  { "name": "Amonita",    "types": ["Roche", "Eau"],        "gen": 1, "stage": 1, "color": "Bleu",   "image": "Amonita (1G).png" },
+  { "name": "Amonistar",  "types": ["Roche", "Eau"],        "gen": 1, "stage": 2, "color": "Bleu",   "image": "Amonistar (1G).png" },
+  { "name": "Kabuto",     "types": ["Roche", "Eau"],        "gen": 1, "stage": 1, "color": "Marron", "image": "Kabuto (1G).png" },
+  { "name": "Kabutops",   "types": ["Roche", "Eau"],        "gen": 1, "stage": 2, "color": "Marron", "image": "Kabutops (1G).png" },
+  { "name": "Ptéra",      "types": ["Roche", "Vol"],        "gen": 1, "stage": 1, "color": "Violet", "image": "Ptéra (1G).png" },
+  { "name": "Ronflex",    "types": ["Normal"],              "gen": 1, "stage": 2, "color": "Noir",   "image": "Ronflex (1G).png" },
+  { "name": "Artikodin",  "types": ["Glace", "Vol"],        "gen": 1, "stage": 1, "color": "Bleu",   "image": "Artikodin (1G).png" },
+  { "name": "Électhor",   "types": ["Électrik", "Vol"],     "gen": 1, "stage": 1, "color": "Jaune",  "image": "Électhor (1G).png" },
+  { "name": "Sulfura",    "types": ["Feu", "Vol"],          "gen": 1, "stage": 1, "color": "Jaune",  "image": "Sulfura (1G).png" },
+  { "name": "Minidraco",  "types": ["Dragon"],              "gen": 1, "stage": 1, "color": "Bleu",   "image": "Minidraco (1G).png" },
+  { "name": "Draco",      "types": ["Dragon"],              "gen": 1, "stage": 2, "color": "Bleu",   "image": "Draco (1G).png" },
+  { "name": "Dracolosse", "types": ["Dragon", "Vol"],       "gen": 1, "stage": 3, "color": "Marron", "image": "Dracolosse (1G).png" },
+  { "name": "Mewtwo",     "types": ["Psy"],                 "gen": 1, "stage": 1, "color": "Violet", "image": "Mewtwo (1G).png" },
+  { "name": "Mew",        "types": ["Psy"],                 "gen": 1, "stage": 1, "color": "Rose",   "image": "Mew (1G).png" },
+  { "name": "Germignon",  "types": ["Plante"],              "gen": 2, "stage": 1, "color": "Vert",   "image": "Germignon (2G).png" },
+  { "name": "Macronium",  "types": ["Plante"],              "gen": 2, "stage": 2, "color": "Vert",   "image": "Macronium (2G).png" },
+  { "name": "Méganium",   "types": ["Plante"],              "gen": 2, "stage": 3, "color": "Vert",   "image": "Méganium (2G).png" },
+  { "name": "Héricendre", "types": ["Feu"],                 "gen": 2, "stage": 1, "color": "Jaune",  "image": "Héricendre (2G).png" },
+  { "name": "Feurisson",  "types": ["Feu"],                 "gen": 2, "stage": 2, "color": "Jaune",  "image": "Feurisson (2G).png" },
+  { "name": "Typhlosion", "types": ["Feu"],                 "gen": 2, "stage": 3, "color": "Jaune",  "image": "Typhlosion (2G).png" },
+  { "name": "Kaiminus",   "types": ["Eau"],                 "gen": 2, "stage": 1, "color": "Bleu",   "image": "Kaiminus (2G).png" },
+  { "name": "Crocrodil",  "types": ["Eau"],                 "gen": 2, "stage": 2, "color": "Bleu",   "image": "Crocrodil (2G).png" },
+  { "name": "Aligatueur", "types": ["Eau"],                 "gen": 2, "stage": 3, "color": "Bleu",   "image": "Aligatueur (2G).png" },
+  { "name": "Fouinette",  "types": ["Normal"],              "gen": 2, "stage": 1, "color": "Marron", "image": "Fouinette (2G).png" },
+  { "name": "Fouinar",    "types": ["Normal"],              "gen": 2, "stage": 2, "color": "Marron", "image": "Fouinar (2G).png" },
+  { "name": "Hoothoot",   "types": ["Normal", "Vol"],       "gen": 2, "stage": 1, "color": "Marron", "image": "Hoothoot (2G).png" },
+  { "name": "Noarfang",   "types": ["Normal", "Vol"],       "gen": 2, "stage": 2, "color": "Marron", "image": "Noarfang (2G).png" },
+  { "name": "Coxy",       "types": ["Insecte", "Vol"],      "gen": 2, "stage": 1, "color": "Rouge",  "image": "Coxy (2G).png" },
+  { "name": "Coxyclaque", "types": ["Insecte", "Vol"],      "gen": 2, "stage": 2, "color": "Rouge",  "image": "Coxyclaque (2G).png" },
+  { "name": "Mimigal",    "types": ["Insecte", "Poison"],   "gen": 2, "stage": 1, "color": "Vert",   "image": "Mimigal (2G).png" },
+  { "name": "Migalos",    "types": ["Insecte", "Poison"],   "gen": 2, "stage": 2, "color": "Rouge",  "image": "Migalos (2G).png" },
+  { "name": "Nostenfer",  "types": ["Poison", "Vol"],       "gen": 2, "stage": 3, "color": "Violet", "image": "Nostenfer (2G).png" },
+  { "name": "Loupio",     "types": ["Eau", "Électrik"],     "gen": 2, "stage": 1, "color": "Bleu",   "image": "Loupio (2G).png" },
+  { "name": "Lanturn",    "types": ["Eau", "Électrik"],     "gen": 2, "stage": 2, "color": "Bleu",   "image": "Lanturn (2G).png" },
+  { "name": "Pichu",      "types": ["Électrik"],            "gen": 2, "stage": 1, "color": "Jaune",  "image": "Pichu (2G).png" },
+  { "name": "Mélo",       "types": ["Fée"],                 "gen": 2, "stage": 1, "color": "Rose",   "image": "Mélo (2G).png" },
+  { "name": "Toudoudou",  "types": ["Normal", "Fée"],       "gen": 2, "stage": 1, "color": "Rose",   "image": "Toudoudou (2G).png" },
+  { "name": "Togepi",     "types": ["Fée"],                 "gen": 2, "stage": 1, "color": "Blanc",  "image": "Togepi (2G).png" },
+  { "name": "Togetic",    "types": ["Fée", "Vol"],          "gen": 2, "stage": 2, "color": "Blanc",  "image": "Togetic (2G).png" },
+  { "name": "Natu",       "types": ["Psy", "Vol"],          "gen": 2, "stage": 1, "color": "Vert",   "image": "Natu (2G).png" },
+  { "name": "Xatu",       "types": ["Psy", "Vol"],          "gen": 2, "stage": 2, "color": "Vert",   "image": "Xatu (2G).png" },
+  { "name": "Wattouat",   "types": ["Électrik"],            "gen": 2, "stage": 1, "color": "Blanc",  "image": "Wattouat (2G).png" },
+  { "name": "Lainergie",  "types": ["Électrik"],            "gen": 2, "stage": 2, "color": "Rose",   "image": "Lainergie (2G).png" },
+  { "name": "Pharamp",    "types": ["Électrik"],            "gen": 2, "stage": 3, "color": "Jaune",  "image": "Pharamp (2G).png" },
+  { "name": "Joliflor",   "types": ["Plante"],              "gen": 2, "stage": 3, "color": "Vert",   "image": "Joliflor (2G).png" },
+  { "name": "Marill",     "types": ["Eau", "Fée"],          "gen": 2, "stage": 2, "color": "Bleu",   "image": "Marill (2G).png" },
+  { "name": "Azumarill",  "types": ["Eau", "Fée"],          "gen": 2, "stage": 3, "color": "Bleu",   "image": "Azumarill (2G).png" },
+  { "name": "Simularbre", "types": ["Roche"],               "gen": 2, "stage": 2, "color": "Marron", "image": "Simularbre (2G).png" },
+  { "name": "Tarpaud",    "types": ["Eau"],                 "gen": 2, "stage": 3, "color": "Vert",   "image": "Tarpaud (2G).png" },
+  { "name": "Granivol",   "types": ["Plante", "Vol"],       "gen": 2, "stage": 1, "color": "Rose",   "image": "Granivol (2G).png" },
+  { "name": "Floravol",   "types": ["Plante", "Vol"],       "gen": 2, "stage": 2, "color": "Vert",   "image": "Floravol (2G).png" },
+  { "name": "Cotovol",    "types": ["Plante", "Vol"],       "gen": 2, "stage": 3, "color": "Bleu",   "image": "Cotovol (2G).png" },
+  { "name": "Capumain",   "types": ["Normal"],              "gen": 2, "stage": 1, "color": "Violet", "image": "Capumain (2G).png" },
+  { "name": "Tournegrin", "types": ["Plante"],              "gen": 2, "stage": 1, "color": "Jaune",  "image": "Tournegrin (2G).png" },
+  { "name": "Héliatronc", "types": ["Plante"],              "gen": 2, "stage": 2, "color": "Jaune",  "image": "Héliatronc (2G).png" },
+  { "name": "Yanma",      "types": ["Insecte", "Vol"],      "gen": 2, "stage": 1, "color": "Rouge",  "image": "Yanma (2G).png" },
+  { "name": "Axoloto",    "types": ["Eau", "Sol"],          "gen": 2, "stage": 1, "color": "Bleu",   "image": "Axoloto (2G).png" },
+  { "name": "Maraiste",   "types": ["Eau", "Sol"],          "gen": 2, "stage": 2, "color": "Bleu",   "image": "Maraiste (2G).png" },
+  { "name": "Mentali",    "types": ["Psy"],                 "gen": 2, "stage": 2, "color": "Violet", "image": "Mentali (2G).png" },
+  { "name": "Noctali",    "types": ["Ténèbres"],            "gen": 2, "stage": 2, "color": "Noir",   "image": "Noctali (2G).png" },
+  { "name": "Cornèbre",   "types": ["Ténèbres", "Vol"],     "gen": 2, "stage": 1, "color": "Noir",   "image": "Cornèbre (2G).png" },
+  { "name": "Roigada",    "types": ["Eau", "Psy"],          "gen": 2, "stage": 2, "color": "Rose",   "image": "Roigada (2G).png" },
+  { "name": "Feuforêve",  "types": ["Spectre"],             "gen": 2, "stage": 1, "color": "Gris",   "image": "Feuforêve (2G).png" },
+  { "name": "Zarbi",      "types": ["Psy"],                 "gen": 2, "stage": 1, "color": "Noir",   "image": "Zarbi (2G).png" },
+  { "name": "Qulbutoké",  "types": ["Psy"],                 "gen": 2, "stage": 2, "color": "Bleu",   "image": "Qulbutoké (2G).png" },
+  { "name": "Girafarig",  "types": ["Normal", "Psy"],       "gen": 2, "stage": 1, "color": "Jaune",  "image": "Girafarig (2G).png" },
+  { "name": "Pomdepik",   "types": ["Insecte"],             "gen": 2, "stage": 1, "color": "Gris",   "image": "Pomdepik (2G).png" },
+  { "name": "Foretress",  "types": ["Insecte", "Acier"],    "gen": 2, "stage": 2, "color": "Violet", "image": "Foretress (2G).png" },
+  { "name": "Insolourdo", "types": ["Normal"],              "gen": 2, "stage": 1, "color": "Jaune",  "image": "Insolourdo (2G).png" },
+  { "name": "Scorplane",  "types": ["Sol", "Vol"],          "gen": 2, "stage": 1, "color": "Violet", "image": "Scorplane (2G).png" },
+  { "name": "Steelix",    "types": ["Acier", "Sol"],        "gen": 2, "stage": 2, "color": "Gris",   "image": "Steelix (2G).png" },
+  { "name": "Snubbull",   "types": ["Fée"],                 "gen": 2, "stage": 1, "color": "Rose",   "image": "Snubbull (2G).png" },
+  { "name": "Granbull",   "types": ["Fée"],                 "gen": 2, "stage": 2, "color": "Violet", "image": "Granbull (2G).png" },
+  { "name": "Qwilfish",   "types": ["Eau", "Poison"],       "gen": 2, "stage": 1, "color": "Gris",   "image": "Qwilfish (2G).png" },
+  { "name": "Cizayox",    "types": ["Insecte", "Acier"],    "gen": 2, "stage": 2, "color": "Rouge",  "image": "Cizayox (2G).png" },
+  { "name": "Caratroc",   "types": ["Insecte", "Roche"],    "gen": 2, "stage": 1, "color": "Jaune",  "image": "Caratroc (2G).png" },
+  { "name": "Scarhino",   "types": ["Insecte", "Combat"],   "gen": 2, "stage": 1, "color": "Bleu",   "image": "Scarhino (2G).png" },
+  { "name": "Farfuret",   "types": ["Ténèbres", "Glace"],   "gen": 2, "stage": 1, "color": "Noir",   "image": "Farfuret (2G).png" },
+  { "name": "Teddiursa",  "types": ["Normal"],              "gen": 2, "stage": 1, "color": "Marron", "image": "Teddiursa (2G).png" },
+  { "name": "Ursaring",   "types": ["Normal"],              "gen": 2, "stage": 2, "color": "Marron", "image": "Ursaring (2G).png" },
+  { "name": "Limagma",    "types": ["Feu"],                 "gen": 2, "stage": 1, "color": "Rouge",  "image": "Limagma (2G).png" },
+  { "name": "Volcaropod", "types": ["Feu", "Roche"],        "gen": 2, "stage": 2, "color": "Rouge",  "image": "Volcaropod (2G).png" },
+  { "name": "Marcacrin",  "types": ["Glace", "Sol"],        "gen": 2, "stage": 1, "color": "Marron", "image": "Marcacrin (2G).png" },
+  { "name": "Cochignon",  "types": ["Glace", "Sol"],        "gen": 2, "stage": 2, "color": "Marron", "image": "Cochignon (2G).png" },
+  { "name": "Corayon",    "types": ["Eau", "Roche"],        "gen": 2, "stage": 1, "color": "Rose",   "image": "Corayon (2G).png" },
+  { "name": "Rémoraid",   "types": ["Eau"],                 "gen": 2, "stage": 1, "color": "Gris",   "image": "Rémoraid (2G).png" },
+  { "name": "Octillery",  "types": ["Eau"],                 "gen": 2, "stage": 2, "color": "Rouge",  "image": "Octillery (2G).png" },
+  { "name": "Cadoizo",    "types": ["Glace", "Vol"],        "gen": 2, "stage": 1, "color": "Rouge",  "image": "Cadoizo (2G).png" },
+  { "name": "Démanta",    "types": ["Eau", "Vol"],          "gen": 2, "stage": 2, "color": "Violet", "image": "Démanta (2G).png" },
+  { "name": "Airmure",    "types": ["Acier", "Vol"],        "gen": 2, "stage": 1, "color": "Gris",   "image": "Airmure (2G).png" },
+  { "name": "Malosse",    "types": ["Ténèbres", "Feu"],     "gen": 2, "stage": 1, "color": "Noir",   "image": "Malosse (2G).png" },
+  { "name": "Démolosse",  "types": ["Ténèbres", "Feu"],     "gen": 2, "stage": 2, "color": "Noir",   "image": "Démolosse (2G).png" },
+  { "name": "Hyporoi",    "types": ["Eau", "Dragon"],       "gen": 2, "stage": 3, "color": "Bleu",   "image": "Hyporoi (2G).png" },
+  { "name": "Phanpy",     "types": ["Sol"],                 "gen": 2, "stage": 1, "color": "Bleu",   "image": "Phanpy (2G).png" },
+  { "name": "Donphan",    "types": ["Sol"],                 "gen": 2, "stage": 2, "color": "Gris",   "image": "Donphan (2G).png" },
+  { "name": "Porygon2",   "types": ["Normal"],              "gen": 2, "stage": 2, "color": "Rouge",  "image": "Porygon2 (2G).png" },
+  { "name": "Cerfrousse", "types": ["Normal"],              "gen": 2, "stage": 1, "color": "Marron", "image": "Cerfrousse (2G).png" },
+  { "name": "Queulorior", "types": ["Normal"],              "gen": 2, "stage": 1, "color": "Blanc",  "image": "Queulorior (2G).png" },
+  { "name": "Debugant",   "types": ["Combat"],              "gen": 2, "stage": 1, "color": "Violet", "image": "Debugant (2G).png" },
+  { "name": "Kapoera",    "types": ["Combat"],              "gen": 2, "stage": 2, "color": "Marron", "image": "Kapoera (2G).png" },
+  { "name": "Lippouti",   "types": ["Glace", "Psy"],        "gen": 2, "stage": 1, "color": "Rose",   "image": "Lippouti (2G).png" },
+  { "name": "Élekid",     "types": ["Électrik"],            "gen": 2, "stage": 1, "color": "Jaune",  "image": "Élekid (2G).png" },
+  { "name": "Magby",      "types": ["Feu"],                 "gen": 2, "stage": 1, "color": "Rouge",  "image": "Magby (2G).png" },
+  { "name": "Écrémeuh",   "types": ["Normal"],              "gen": 2, "stage": 1, "color": "Rose",   "image": "Écrémeuh (2G).png" },
+  { "name": "Leuphorie",  "types": ["Normal"],              "gen": 2, "stage": 3, "color": "Rose",   "image": "Leuphorie (2G).png" },
+  { "name": "Raikou",     "types": ["Électrik"],            "gen": 2, "stage": 1, "color": "Jaune",  "image": "Raikou (2G).png" },
+  { "name": "Entei",      "types": ["Feu"],                 "gen": 2, "stage": 1, "color": "Marron", "image": "Entei (2G).png" },
+  { "name": "Suicune",    "types": ["Eau"],                 "gen": 2, "stage": 1, "color": "Bleu",   "image": "Suicune (2G).png" },
+  { "name": "Embrylex",   "types": ["Roche", "Sol"],        "gen": 2, "stage": 1, "color": "Vert",   "image": "Embrylex (2G).png" },
+  { "name": "Ymphect",    "types": ["Roche", "Sol"],        "gen": 2, "stage": 2, "color": "Gris",   "image": "Ymphect (2G).png" },
+  { "name": "Tyranocif",  "types": ["Roche", "Ténèbres"],   "gen": 2, "stage": 3, "color": "Vert",   "image": "Tyranocif (2G).png" },
+  { "name": "Lugia",      "types": ["Psy", "Vol"],          "gen": 2, "stage": 1, "color": "Blanc",  "image": "Lugia (2G).png" },
+  { "name": "Ho-Oh",      "types": ["Feu", "Vol"],          "gen": 2, "stage": 1, "color": "Rouge",  "image": "Ho-Oh (2G).png" },
+  { "name": "Celebi",     "types": ["Psy", "Plante"],       "gen": 2, "stage": 1, "color": "Vert",   "image": "Celebi (2G).png" },
+  { "name": "Arcko",      "types": ["Plante"],              "gen": 3, "stage": 1, "color": "Vert",   "image": "Arcko (3G).png" },
+  { "name": "Massko",     "types": ["Plante"],              "gen": 3, "stage": 2, "color": "Vert",   "image": "Massko (3G).png" },
+  { "name": "Jungko",     "types": ["Plante"],              "gen": 3, "stage": 3, "color": "Vert",   "image": "Jungko (3G).png" },
+  { "name": "Poussifeu",  "types": ["Feu"],                 "gen": 3, "stage": 1, "color": "Rouge",  "image": "Poussifeu (3G).png" },
+  { "name": "Galifeu",    "types": ["Feu", "Combat"],       "gen": 3, "stage": 2, "color": "Rouge",  "image": "Galifeu (3G).png" },
+  { "name": "Braségali",  "types": ["Feu", "Combat"],       "gen": 3, "stage": 3, "color": "Rouge",  "image": "Braségali (3G).png" },
+  { "name": "Gobou",      "types": ["Eau"],                 "gen": 3, "stage": 1, "color": "Bleu",   "image": "Gobou (3G).png" },
+  { "name": "Flobio",     "types": ["Eau", "Sol"],          "gen": 3, "stage": 2, "color": "Bleu",   "image": "Flobio (3G).png" },
+  { "name": "Laggron",    "types": ["Eau", "Sol"],          "gen": 3, "stage": 3, "color": "Bleu",   "image": "Laggron (3G).png" },
+  { "name": "Medhyèna",   "types": ["Ténèbres"],            "gen": 3, "stage": 1, "color": "Gris",   "image": "Medhyèna (3G).png" },
+  { "name": "Grahyèna",   "types": ["Ténèbres"],            "gen": 3, "stage": 2, "color": "Gris",   "image": "Grahyèna (3G).png" },
+  { "name": "Zigzaton",   "types": ["Normal"],              "gen": 3, "stage": 1, "color": "Marron", "image": "Zigzaton (3G).png" },
+  { "name": "Linéon",     "types": ["Normal"],              "gen": 3, "stage": 2, "color": "Blanc",  "image": "Linéon (3G).png" },
+  { "name": "Chenipotte", "types": ["Insecte"],             "gen": 3, "stage": 1, "color": "Rouge",  "image": "Chenipotte (3G).png" },
+  { "name": "Armulys",    "types": ["Insecte"],             "gen": 3, "stage": 2, "color": "Blanc",  "image": "Armulys (3G).png" },
+  { "name": "Charmillon", "types": ["Insecte", "Vol"],      "gen": 3, "stage": 3, "color": "Jaune",  "image": "Charmillon (3G).png" },
+  { "name": "Blindalys",  "types": ["Insecte"],             "gen": 3, "stage": 2, "color": "Violet", "image": "Blindalys (3G).png" },
+  { "name": "Papinox",    "types": ["Insecte", "Poison"],   "gen": 3, "stage": 3, "color": "Vert",   "image": "Papinox (3G).png" },
+  { "name": "Nénupiot",   "types": ["Eau", "Plante"],       "gen": 3, "stage": 1, "color": "Vert",   "image": "Nénupiot (3G).png" },
+  { "name": "Lombre",     "types": ["Eau", "Plante"],       "gen": 3, "stage": 2, "color": "Vert",   "image": "Lombre (3G).png" },
+  { "name": "Ludicolo",   "types": ["Eau", "Plante"],       "gen": 3, "stage": 3, "color": "Vert",   "image": "Ludicolo (3G).png" },
+  { "name": "Grainipiot", "types": ["Plante"],              "gen": 3, "stage": 1, "color": "Marron", "image": "Grainipiot (3G).png" },
+  { "name": "Pifeuil",    "types": ["Plante", "Ténèbres"],  "gen": 3, "stage": 2, "color": "Marron", "image": "Pifeuil (3G).png" },
+  { "name": "Tengalice",  "types": ["Plante", "Ténèbres"],  "gen": 3, "stage": 3, "color": "Marron", "image": "Tengalice (3G).png" },
+  { "name": "Nirondelle", "types": ["Normal", "Vol"],       "gen": 3, "stage": 1, "color": "Bleu",   "image": "Nirondelle (3G).png" },
+  { "name": "Hélédelle",  "types": ["Normal", "Vol"],       "gen": 3, "stage": 2, "color": "Bleu",   "image": "Hélédelle (3G).png" },
+  { "name": "Goélise",    "types": ["Eau", "Vol"],          "gen": 3, "stage": 1, "color": "Blanc",  "image": "Goélise (3G).png" },
+  { "name": "Bekipan",    "types": ["Eau", "Vol"],          "gen": 3, "stage": 2, "color": "Jaune",  "image": "Bekipan (3G).png" },
+  { "name": "Tarsal",     "types": ["Psy", "Fée"],          "gen": 3, "stage": 1, "color": "Blanc",  "image": "Tarsal (3G).png" },
+  { "name": "Kirlia",     "types": ["Psy", "Fée"],          "gen": 3, "stage": 2, "color": "Blanc",  "image": "Kirlia (3G).png" },
+  { "name": "Gardevoir",  "types": ["Psy", "Fée"],          "gen": 3, "stage": 3, "color": "Blanc",  "image": "Gardevoir (3G).png" },
+  { "name": "Arakdo",     "types": ["Insecte", "Eau"],      "gen": 3, "stage": 1, "color": "Bleu",   "image": "Arakdo (3G).png" },
+  { "name": "Maskadra",   "types": ["Insecte", "Vol"],      "gen": 3, "stage": 2, "color": "Bleu",   "image": "Maskadra (3G).png" },
+  { "name": "Balignon",   "types": ["Plante"],              "gen": 3, "stage": 1, "color": "Marron", "image": "Balignon (3G).png" },
+  { "name": "Chapignon",  "types": ["Plante", "Combat"],    "gen": 3, "stage": 2, "color": "Vert",   "image": "Chapignon (3G).png" },
+  { "name": "Parecool",   "types": ["Normal"],              "gen": 3, "stage": 1, "color": "Marron", "image": "Parecool (3G).png" },
+  { "name": "Vigoroth",   "types": ["Normal"],              "gen": 3, "stage": 2, "color": "Blanc",  "image": "Vigoroth (3G).png" },
+  { "name": "Monaflèmit", "types": ["Normal"],              "gen": 3, "stage": 3, "color": "Marron", "image": "Monaflèmit (3G).png" },
+  { "name": "Ningale",    "types": ["Insecte", "Sol"],      "gen": 3, "stage": 1, "color": "Gris",   "image": "Ningale (3G).png" },
+  { "name": "Ninjask",    "types": ["Insecte", "Vol"],      "gen": 3, "stage": 2, "color": "Jaune",  "image": "Ninjask (3G).png" },
+  { "name": "Munja",      "types": ["Insecte", "Spectre"],  "gen": 3, "stage": 2, "color": "Marron", "image": "Munja (3G).png" },
+  { "name": "Chuchmur",   "types": ["Normal"],              "gen": 3, "stage": 1, "color": "Rose",   "image": "Chuchmur (3G).png" },
+  { "name": "Ramboum",    "types": ["Normal"],              "gen": 3, "stage": 2, "color": "Bleu",   "image": "Ramboum (3G).png" },
+  { "name": "Brouhabam",  "types": ["Normal"],              "gen": 3, "stage": 3, "color": "Bleu",   "image": "Brouhabam (3G).png" },
+  { "name": "Makuhita",   "types": ["Combat"],              "gen": 3, "stage": 1, "color": "Jaune",  "image": "Makuhita (3G).png" },
+  { "name": "Hariyama",   "types": ["Combat"],              "gen": 3, "stage": 2, "color": "Marron", "image": "Hariyama (3G).png" },
+  { "name": "Azurill",    "types": ["Normal", "Fée"],       "gen": 3, "stage": 1, "color": "Bleu",   "image": "Azurill (3G).png" },
+  { "name": "Tarinor",    "types": ["Roche"],               "gen": 3, "stage": 1, "color": "Gris",   "image": "Tarinor (3G).png" },
+  { "name": "Skitty",     "types": ["Normal"],              "gen": 3, "stage": 1, "color": "Rose",   "image": "Skitty (3G).png" },
+  { "name": "Delcatty",   "types": ["Normal"],              "gen": 3, "stage": 2, "color": "Violet", "image": "Delcatty (3G).png" },
+  { "name": "Ténéfix",    "types": ["Ténèbres", "Spectre"], "gen": 3, "stage": 1, "color": "Violet", "image": "Ténéfix (3G).png" },
+  { "name": "Mysdibule",  "types": ["Acier", "Fée"],        "gen": 3, "stage": 1, "color": "Noir",   "image": "Mysdibule (3G).png" },
+  { "name": "Galekid",    "types": ["Acier", "Roche"],      "gen": 3, "stage": 1, "color": "Gris",   "image": "Galekid (3G).png" },
+  { "name": "Galegon",    "types": ["Acier", "Roche"],      "gen": 3, "stage": 2, "color": "Gris",   "image": "Galegon (3G).png" },
+  { "name": "Galeking",   "types": ["Acier", "Roche"],      "gen": 3, "stage": 3, "color": "Gris",   "image": "Galeking (3G).png" },
+  { "name": "Méditikka",  "types": ["Combat", "Psy"],       "gen": 3, "stage": 1, "color": "Bleu",   "image": "Méditikka (3G).png" },
+  { "name": "Charmina",   "types": ["Combat", "Psy"],       "gen": 3, "stage": 2, "color": "Rouge",  "image": "Charmina (3G).png" },
+  { "name": "Dynavolt",   "types": ["Électrik"],            "gen": 3, "stage": 1, "color": "Vert",   "image": "Dynavolt (3G).png" },
+  { "name": "Élecsprint", "types": ["Électrik"],            "gen": 3, "stage": 2, "color": "Jaune",  "image": "Élecsprint (3G).png" },
+  { "name": "Posipi",     "types": ["Électrik"],            "gen": 3, "stage": 1, "color": "Jaune",  "image": "Posipi (3G).png" },
+  { "name": "Négapi",     "types": ["Électrik"],            "gen": 3, "stage": 1, "color": "Jaune",  "image": "Négapi (3G).png" },
+  { "name": "Muciole",    "types": ["Insecte"],             "gen": 3, "stage": 1, "color": "Gris",   "image": "Muciole (3G).png" },
+  { "name": "Lumivole",   "types": ["Insecte"],             "gen": 3, "stage": 1, "color": "Violet", "image": "Lumivole (3G).png" },
+  { "name": "Rosélia",    "types": ["Plante", "Poison"],    "gen": 3, "stage": 2, "color": "Vert",   "image": "Rosélia (3G).png" },
+  { "name": "Gloupti",    "types": ["Poison"],              "gen": 3, "stage": 1, "color": "Vert",   "image": "Gloupti (3G).png" },
+  { "name": "Avaltout",   "types": ["Poison"],              "gen": 3, "stage": 2, "color": "Violet", "image": "Avaltout (3G).png" },
+  { "name": "Carvanha",   "types": ["Eau", "Ténèbres"],     "gen": 3, "stage": 1, "color": "Rouge",  "image": "Carvanha (3G).png" },
+  { "name": "Sharpedo",   "types": ["Eau", "Ténèbres"],     "gen": 3, "stage": 2, "color": "Bleu",   "image": "Sharpedo (3G).png" },
+  { "name": "Wailmer",    "types": ["Eau"],                 "gen": 3, "stage": 1, "color": "Bleu",   "image": "Wailmer (3G).png" },
+  { "name": "Wailord",    "types": ["Eau"],                 "gen": 3, "stage": 2, "color": "Bleu",   "image": "Wailord (3G).png" },
+  { "name": "Chamallot",  "types": ["Feu", "Sol"],          "gen": 3, "stage": 1, "color": "Jaune",  "image": "Chamallot (3G).png" },
+  { "name": "Camérupt",   "types": ["Feu", "Sol"],          "gen": 3, "stage": 2, "color": "Rouge",  "image": "Camérupt (3G).png" },
+  { "name": "Chartor",    "types": ["Feu"],                 "gen": 3, "stage": 1, "color": "Marron", "image": "Chartor (3G).png" },
+  { "name": "Spoink",     "types": ["Psy"],                 "gen": 3, "stage": 1, "color": "Noir",   "image": "Spoink (3G).png" },
+  { "name": "Groret",     "types": ["Psy"],                 "gen": 3, "stage": 2, "color": "Violet", "image": "Groret (3G).png" },
+  { "name": "Spinda",     "types": ["Normal"],              "gen": 3, "stage": 1, "color": "Marron", "image": "Spinda (3G).png" },
+  { "name": "Kraknoix",   "types": ["Sol"],                 "gen": 3, "stage": 1, "color": "Marron", "image": "Kraknoix (3G).png" },
+  { "name": "Vibraninf",  "types": ["Sol", "Dragon"],       "gen": 3, "stage": 2, "color": "Vert",   "image": "Vibraninf (3G).png" },
+  { "name": "Libégon",    "types": ["Sol", "Dragon"],       "gen": 3, "stage": 3, "color": "Vert",   "image": "Libégon (3G).png" },
+  { "name": "Cacnea",     "types": ["Plante"],              "gen": 3, "stage": 1, "color": "Vert",   "image": "Cacnea (3G).png" },
+  { "name": "Cacturne",   "types": ["Plante", "Ténèbres"],  "gen": 3, "stage": 2, "color": "Vert",   "image": "Cacturne (3G).png" },
+  { "name": "Tylton",     "types": ["Normal", "Vol"],       "gen": 3, "stage": 1, "color": "Bleu",   "image": "Tylton (3G).png" },
+  { "name": "Altaria",    "types": ["Dragon", "Vol"],       "gen": 3, "stage": 2, "color": "Bleu",   "image": "Altaria (3G).png" },
+  { "name": "Mangriff",   "types": ["Normal"],              "gen": 3, "stage": 1, "color": "Blanc",  "image": "Mangriff (3G).png" },
+  { "name": "Séviper",    "types": ["Poison"],              "gen": 3, "stage": 1, "color": "Noir",   "image": "Séviper (3G).png" },
+  { "name": "Séléroc",    "types": ["Roche", "Psy"],        "gen": 3, "stage": 1, "color": "Jaune",  "image": "Séléroc (3G).png" },
+  { "name": "Solaroc",    "types": ["Roche", "Psy"],        "gen": 3, "stage": 1, "color": "Rouge",  "image": "Solaroc (3G).png" },
+  { "name": "Barloche",   "types": ["Eau", "Sol"],          "gen": 3, "stage": 1, "color": "Gris",   "image": "Barloche (3G).png" },
+  { "name": "Barbicha",   "types": ["Eau", "Sol"],          "gen": 3, "stage": 2, "color": "Bleu",   "image": "Barbicha (3G).png" },
+  { "name": "Écrapince",  "types": ["Eau"],                 "gen": 3, "stage": 1, "color": "Rouge",  "image": "Écrapince (3G).png" },
+  { "name": "Colhomard",  "types": ["Eau", "Ténèbres"],     "gen": 3, "stage": 2, "color": "Rouge",  "image": "Colhomard (3G).png" },
+  { "name": "Balbuto",    "types": ["Sol", "Psy"],          "gen": 3, "stage": 1, "color": "Marron", "image": "Balbuto (3G).png" },
+  { "name": "Kaorine",    "types": ["Sol", "Psy"],          "gen": 3, "stage": 2, "color": "Noir",   "image": "Kaorine (3G).png" },
+  { "name": "Lilia",      "types": ["Roche", "Plante"],     "gen": 3, "stage": 1, "color": "Violet", "image": "Lilia (3G).png" },
+  { "name": "Vacilys",    "types": ["Roche", "Plante"],     "gen": 3, "stage": 2, "color": "Vert",   "image": "Vacilys (3G).png" },
+  { "name": "Anorith",    "types": ["Roche", "Insecte"],    "gen": 3, "stage": 1, "color": "Gris",   "image": "Anorith (3G).png" },
+  { "name": "Armaldo",    "types": ["Roche", "Insecte"],    "gen": 3, "stage": 2, "color": "Gris",   "image": "Armaldo (3G).png" },
+  { "name": "Barpau",     "types": ["Eau"],                 "gen": 3, "stage": 1, "color": "Marron", "image": "Barpau (3G).png" },
+  { "name": "Milobellus", "types": ["Eau"],                 "gen": 3, "stage": 2, "color": "Rose",   "image": "Milobellus (3G).png" },
+  { "name": "Morphéo",    "types": ["Normal"],              "gen": 3, "stage": 1, "color": "Gris",   "image": "Morphéo (3G).png" },
+  { "name": "Kecleon",    "types": ["Normal"],              "gen": 3, "stage": 1, "color": "Vert",   "image": "Kecleon (3G).png" },
+  { "name": "Polichombr", "types": ["Spectre"],             "gen": 3, "stage": 1, "color": "Noir",   "image": "Polichombr (3G).png" },
+  { "name": "Branette",   "types": ["Spectre"],             "gen": 3, "stage": 2, "color": "Noir",   "image": "Branette (3G).png" },
+  { "name": "Skelénox",   "types": ["Spectre"],             "gen": 3, "stage": 1, "color": "Noir",   "image": "Skelénox (3G).png" },
+  { "name": "Téraclope",  "types": ["Spectre"],             "gen": 3, "stage": 2, "color": "Noir",   "image": "Téraclope (3G).png" },
+  { "name": "Tropius",    "types": ["Plante", "Vol"],       "gen": 3, "stage": 1, "color": "Vert",   "image": "Tropius (3G).png" },
+  { "name": "Éoko",       "types": ["Psy"],                 "gen": 3, "stage": 2, "color": "Bleu",   "image": "Éoko (3G).png" },
+  { "name": "Absol",      "types": ["Ténèbres"],            "gen": 3, "stage": 1, "color": "Blanc",  "image": "Absol (3G).png" },
+  { "name": "Okéoké",     "types": ["Psy"],                 "gen": 3, "stage": 1, "color": "Bleu",   "image": "Okéoké (3G).png" },
+  { "name": "Stalgamin",  "types": ["Glace"],               "gen": 3, "stage": 1, "color": "Gris",   "image": "Stalgamin (3G).png" },
+  { "name": "Oniglali",   "types": ["Glace"],               "gen": 3, "stage": 2, "color": "Gris",   "image": "Oniglali (3G).png" },
+  { "name": "Obalie",     "types": ["Glace", "Eau"],        "gen": 3, "stage": 1, "color": "Bleu",   "image": "Obalie (3G).png" },
+  { "name": "Phogleur",   "types": ["Glace", "Eau"],        "gen": 3, "stage": 2, "color": "Bleu",   "image": "Phogleur (3G).png" },
+  { "name": "Kaimorse",   "types": ["Glace", "Eau"],        "gen": 3, "stage": 3, "color": "Bleu",   "image": "Kaimorse (3G).png" },
+  { "name": "Coquiperl",  "types": ["Eau"],                 "gen": 3, "stage": 1, "color": "Bleu",   "image": "Coquiperl (3G).png" },
+  { "name": "Serpang",    "types": ["Eau"],                 "gen": 3, "stage": 2, "color": "Bleu",   "image": "Serpang (3G).png" },
+  { "name": "Rosabyss",   "types": ["Eau"],                 "gen": 3, "stage": 2, "color": "Rose",   "image": "Rosabyss (3G).png" },
+  { "name": "Relicanth",  "types": ["Eau", "Roche"],        "gen": 3, "stage": 1, "color": "Gris",   "image": "Relicanth (3G).png" },
+  { "name": "Lovdisc",    "types": ["Eau"],                 "gen": 3, "stage": 1, "color": "Rose",   "image": "Lovdisc (3G).png" },
+  { "name": "Draby",      "types": ["Dragon"],              "gen": 3, "stage": 1, "color": "Bleu",   "image": "Draby (3G).png" },
+  { "name": "Drackhaus",  "types": ["Dragon"],              "gen": 3, "stage": 2, "color": "Blanc",  "image": "Drackhaus (3G).png" },
+  { "name": "Drattak",    "types": ["Dragon", "Vol"],       "gen": 3, "stage": 3, "color": "Bleu",   "image": "Drattak (3G).png" },
+  { "name": "Terhal",     "types": ["Acier", "Psy"],        "gen": 3, "stage": 1, "color": "Bleu",   "image": "Terhal (3G).png" },
+  { "name": "Métang",     "types": ["Acier", "Psy"],        "gen": 3, "stage": 2, "color": "Bleu",   "image": "Métang (3G).png" },
+  { "name": "Métalosse",  "types": ["Acier", "Psy"],        "gen": 3, "stage": 3, "color": "Bleu",   "image": "Métalosse (3G).png" },
+  { "name": "Regirock",   "types": ["Roche"],               "gen": 3, "stage": 1, "color": "Marron", "image": "Regirock (3G).png" },
+  { "name": "Regice",     "types": ["Glace"],               "gen": 3, "stage": 1, "color": "Bleu",   "image": "Regice (3G).png" },
+  { "name": "Registeel",  "types": ["Acier"],               "gen": 3, "stage": 1, "color": "Gris",   "image": "Registeel (3G).png" },
+  { "name": "Latias",     "types": ["Dragon", "Psy"],       "gen": 3, "stage": 1, "color": "Rouge",  "image": "Latias (3G).png" },
+  { "name": "Latios",     "types": ["Dragon", "Psy"],       "gen": 3, "stage": 1, "color": "Bleu",   "image": "Latios (3G).png" },
+  { "name": "Kyogre",     "types": ["Eau"],                 "gen": 3, "stage": 1, "color": "Bleu",   "image": "Kyogre (3G).png" },
+  { "name": "Groudon",    "types": ["Sol"],                 "gen": 3, "stage": 1, "color": "Rouge",  "image": "Groudon (3G).png" },
+  { "name": "Rayquaza",   "types": ["Dragon", "Vol"],       "gen": 3, "stage": 1, "color": "Vert",   "image": "Rayquaza (3G).png" },
+  { "name": "Jirachi",    "types": ["Acier", "Psy"],        "gen": 3, "stage": 1, "color": "Jaune",  "image": "Jirachi (3G).png" },
+  { "name": "Deoxys",     "types": ["Psy"],                 "gen": 3, "stage": 1, "color": "Rouge",  "image": "Deoxys (3G).png" },
+  { "name": "Tortipouss", "types": ["Plante"],              "gen": 4, "stage": 1, "color": "Vert",   "image": "Tortipouss (4G).png" },
+  { "name": "Boskara",    "types": ["Plante"],              "gen": 4, "stage": 2, "color": "Vert",   "image": "Boskara (4G).png" },
+  { "name": "Torterra",   "types": ["Plante", "Sol"],       "gen": 4, "stage": 3, "color": "Vert",   "image": "Torterra (4G).png" },
+  { "name": "Ouisticram", "types": ["Feu"],                 "gen": 4, "stage": 1, "color": "Marron", "image": "Ouisticram (4G).png" },
+  { "name": "Chimpenfeu", "types": ["Feu", "Combat"],       "gen": 4, "stage": 2, "color": "Marron", "image": "Chimpenfeu (4G).png" },
+  { "name": "Simiabraz",  "types": ["Feu", "Combat"],       "gen": 4, "stage": 3, "color": "Marron", "image": "Simiabraz (4G).png" },
+  { "name": "Tiplouf",    "types": ["Eau"],                 "gen": 4, "stage": 1, "color": "Bleu",   "image": "Tiplouf (4G).png" },
+  { "name": "Prinplouf",  "types": ["Eau"],                 "gen": 4, "stage": 2, "color": "Bleu",   "image": "Prinplouf (4G).png" },
+  { "name": "Pingoléon",  "types": ["Eau", "Acier"],        "gen": 4, "stage": 3, "color": "Bleu",   "image": "Pingoléon (4G).png" },
+  { "name": "Étourmi",    "types": ["Normal", "Vol"],       "gen": 4, "stage": 1, "color": "Marron", "image": "Étourmi (4G).png" },
+  { "name": "Étourvol",   "types": ["Normal", "Vol"],       "gen": 4, "stage": 2, "color": "Marron", "image": "Étourvol (4G).png" },
+  { "name": "Étouraptor", "types": ["Normal", "Vol"],       "gen": 4, "stage": 3, "color": "Marron", "image": "Étouraptor (4G).png" },
+  { "name": "Keunotor",   "types": ["Normal"],              "gen": 4, "stage": 1, "color": "Marron", "image": "Keunotor (4G).png" },
+  { "name": "Castorno",   "types": ["Normal", "Eau"],       "gen": 4, "stage": 2, "color": "Marron", "image": "Castorno (4G).png" },
+  { "name": "Crikzik",    "types": ["Insecte"],             "gen": 4, "stage": 1, "color": "Rouge",  "image": "Crikzik (4G).png" },
+  { "name": "Mélokrik",   "types": ["Insecte"],             "gen": 4, "stage": 2, "color": "Rouge",  "image": "Mélokrik (4G).png" },
+  { "name": "Lixy",       "types": ["Électrik"],            "gen": 4, "stage": 1, "color": "Bleu",   "image": "Lixy (4G).png" },
+  { "name": "Luxio",      "types": ["Électrik"],            "gen": 4, "stage": 2, "color": "Bleu",   "image": "Luxio (4G).png" },
+  { "name": "Luxray",     "types": ["Électrik"],            "gen": 4, "stage": 3, "color": "Bleu",   "image": "Luxray (4G).png" },
+  { "name": "Rozbouton",  "types": ["Plante", "Poison"],    "gen": 4, "stage": 1, "color": "Vert",   "image": "Rozbouton (4G).png" },
+  { "name": "Roserade",   "types": ["Plante", "Poison"],    "gen": 4, "stage": 3, "color": "Vert",   "image": "Roserade (4G).png" },
+  { "name": "Kranidos",   "types": ["Roche"],               "gen": 4, "stage": 1, "color": "Bleu",   "image": "Kranidos (4G).png" },
+  { "name": "Charkos",    "types": ["Roche"],               "gen": 4, "stage": 2, "color": "Bleu",   "image": "Charkos (4G).png" },
+  { "name": "Dinoclier",  "types": ["Roche", "Acier"],      "gen": 4, "stage": 1, "color": "Gris",   "image": "Dinoclier (4G).png" },
+  { "name": "Bastiodon",  "types": ["Roche", "Acier"],      "gen": 4, "stage": 2, "color": "Gris",   "image": "Bastiodon (4G).png" },
+  { "name": "Cheniti",    "types": ["Insecte"],             "gen": 4, "stage": 1, "color": "Vert",   "image": "Cheniti (4G).png" },
+  { "name": "Cheniselle", "types": ["Insecte", "Plante"],   "gen": 4, "stage": 2, "color": "Vert",   "image": "Cheniselle (4G).png" },
+  { "name": "Papilord",   "types": ["Insecte", "Vol"],      "gen": 4, "stage": 2, "color": "Jaune",  "image": "Papilord (4G).png" },
+  { "name": "Apitrini",   "types": ["Insecte", "Vol"],      "gen": 4, "stage": 1, "color": "Jaune",  "image": "Apitrini (4G).png" },
+  { "name": "Apireine",   "types": ["Insecte", "Vol"],      "gen": 4, "stage": 2, "color": "Jaune",  "image": "Apireine (4G).png" },
+  { "name": "Pachirisu",  "types": ["Électrik"],            "gen": 4, "stage": 1, "color": "Blanc",  "image": "Pachirisu (4G).png" },
+  { "name": "Mustébouée", "types": ["Eau"],                 "gen": 4, "stage": 1, "color": "Marron", "image": "Mustébouée (4G).png" },
+  { "name": "Mustéflott", "types": ["Eau"],                 "gen": 4, "stage": 2, "color": "Marron", "image": "Mustéflott (4G).png" },
+  { "name": "Ceribou",    "types": ["Plante"],              "gen": 4, "stage": 1, "color": "Rose",   "image": "Ceribou (4G).png" },
+  { "name": "Ceriflor",   "types": ["Plante"],              "gen": 4, "stage": 2, "color": "Violet", "image": "Ceriflor (4G).png" },
+  { "name": "Sancoki",    "types": ["Eau"],                 "gen": 4, "stage": 1, "color": "Violet", "image": "Sancoki (4G).png" },
+  { "name": "Tritosor",   "types": ["Eau", "Sol"],          "gen": 4, "stage": 2, "color": "Violet", "image": "Tritosor (4G).png" },
+  { "name": "Capidextre", "types": ["Normal"],              "gen": 4, "stage": 2, "color": "Violet", "image": "Capidextre (4G).png" },
+  { "name": "Baudrive",   "types": ["Spectre", "Vol"],      "gen": 4, "stage": 1, "color": "Violet", "image": "Baudrive (4G).png" },
+  { "name": "Grodrive",   "types": ["Spectre", "Vol"],      "gen": 4, "stage": 2, "color": "Violet", "image": "Grodrive (4G).png" },
+  { "name": "Laporeille", "types": ["Normal"],              "gen": 4, "stage": 1, "color": "Marron", "image": "Laporeille (4G).png" },
+  { "name": "Lockpin",    "types": ["Normal"],              "gen": 4, "stage": 2, "color": "Marron", "image": "Lockpin (4G).png" },
+  { "name": "Magirêve",   "types": ["Spectre"],             "gen": 4, "stage": 2, "color": "Violet", "image": "Magirêve (4G).png" },
+  { "name": "Corboss",    "types": ["Ténèbres", "Vol"],     "gen": 4, "stage": 2, "color": "Noir",   "image": "Corboss (4G).png" },
+  { "name": "Chaglam",    "types": ["Normal"],              "gen": 4, "stage": 1, "color": "Gris",   "image": "Chaglam (4G).png" },
+  { "name": "Chaffreux",  "types": ["Normal"],              "gen": 4, "stage": 2, "color": "Gris",   "image": "Chaffreux (4G).png" },
+  { "name": "Korillon",   "types": ["Psy"],                 "gen": 4, "stage": 1, "color": "Jaune",  "image": "Korillon (4G).png" },
+  { "name": "Moufouette", "types": ["Poison", "Ténèbres"],  "gen": 4, "stage": 1, "color": "Violet", "image": "Moufouette (4G).png" },
+  { "name": "Moufflair",  "types": ["Poison", "Ténèbres"],  "gen": 4, "stage": 2, "color": "Violet", "image": "Moufflair (4G).png" },
+  { "name": "Archéomire", "types": ["Acier", "Psy"],        "gen": 4, "stage": 1, "color": "Vert",   "image": "Archéomire (4G).png" },
+  { "name": "Archéodong", "types": ["Acier", "Psy"],        "gen": 4, "stage": 2, "color": "Vert",   "image": "Archéodong (4G).png" },
+  { "name": "Manzaï",     "types": ["Roche"],               "gen": 4, "stage": 1, "color": "Marron", "image": "Manzaï (4G).png" },
+  { "name": "Mime Jr.",   "types": ["Psy", "Fée"],          "gen": 4, "stage": 1, "color": "Rose",   "image": "Mime Jr. (4G).png" },
+  { "name": "Ptiravi",    "types": ["Normal"],              "gen": 4, "stage": 1, "color": "Rose",   "image": "Ptiravi (4G).png" },
+  { "name": "Pijako",     "types": ["Normal", "Vol"],       "gen": 4, "stage": 1, "color": "Noir",   "image": "Pijako (4G).png" },
+  { "name": "Spiritomb",  "types": ["Spectre", "Ténèbres"], "gen": 4, "stage": 1, "color": "Violet", "image": "Spiritomb (4G).png" },
+  { "name": "Griknot",    "types": ["Dragon", "Sol"],       "gen": 4, "stage": 1, "color": "Bleu",   "image": "Griknot (4G).png" },
+  { "name": "Carmache",   "types": ["Dragon", "Sol"],       "gen": 4, "stage": 2, "color": "Bleu",   "image": "Carmache (4G).png" },
+  { "name": "Carchacrok", "types": ["Dragon", "Sol"],       "gen": 4, "stage": 3, "color": "Bleu",   "image": "Carchacrok (4G).png" },
+  { "name": "Goinfrex",   "types": ["Normal"],              "gen": 4, "stage": 1, "color": "Noir",   "image": "Goinfrex (4G).png" },
+  { "name": "Riolu",      "types": ["Combat"],              "gen": 4, "stage": 1, "color": "Bleu",   "image": "Riolu (4G).png" },
+  { "name": "Lucario",    "types": ["Combat", "Acier"],     "gen": 4, "stage": 2, "color": "Bleu",   "image": "Lucario (4G).png" },
+  { "name": "Hippopotas", "types": ["Sol"],                 "gen": 4, "stage": 1, "color": "Marron", "image": "Hippopotas (4G).png" },
+  { "name": "Hippodocus", "types": ["Sol"],                 "gen": 4, "stage": 2, "color": "Marron", "image": "Hippodocus (4G).png" },
+  { "name": "Rapion",     "types": ["Poison", "Insecte"],   "gen": 4, "stage": 1, "color": "Violet", "image": "Rapion (4G).png" },
+  { "name": "Drascore",   "types": ["Poison", "Ténèbres"],  "gen": 4, "stage": 2, "color": "Violet", "image": "Drascore (4G).png" },
+  { "name": "Cradopaud",  "types": ["Poison", "Combat"],    "gen": 4, "stage": 1, "color": "Bleu",   "image": "Cradopaud (4G).png" },
+  { "name": "Coatox",     "types": ["Poison", "Combat"],    "gen": 4, "stage": 2, "color": "Bleu",   "image": "Coatox (4G).png" },
+  { "name": "Vortente",   "types": ["Plante"],              "gen": 4, "stage": 1, "color": "Vert",   "image": "Vortente (4G).png" },
+  { "name": "Écayon",     "types": ["Eau"],                 "gen": 4, "stage": 1, "color": "Bleu",   "image": "Écayon (4G).png" },
+  { "name": "Luminéon",   "types": ["Eau"],                 "gen": 4, "stage": 2, "color": "Bleu",   "image": "Luminéon (4G).png" },
+  { "name": "Babimanta",  "types": ["Eau", "Vol"],          "gen": 4, "stage": 1, "color": "Bleu",   "image": "Babimanta (4G).png" },
+  { "name": "Blizzi",     "types": ["Plante", "Glace"],     "gen": 4, "stage": 1, "color": "Blanc",  "image": "Blizzi (4G).png" },
+  { "name": "Blizzaroi",  "types": ["Plante", "Glace"],     "gen": 4, "stage": 2, "color": "Blanc",  "image": "Blizzaroi (4G).png" },
+  { "name": "Dimoret",    "types": ["Ténèbres", "Glace"],   "gen": 4, "stage": 2, "color": "Noir",   "image": "Dimoret (4G).png" },
+  { "name": "Magnézone",  "types": ["Électrik", "Acier"],   "gen": 4, "stage": 3, "color": "Gris",   "image": "Magnézone (4G).png" },
+  { "name": "Coudlangue", "types": ["Normal"],              "gen": 4, "stage": 2, "color": "Rose",   "image": "Coudlangue (4G).png" },
+  { "name": "Rhinastoc",  "types": ["Sol", "Roche"],        "gen": 4, "stage": 3, "color": "Gris",   "image": "Rhinastoc (4G).png" },
+  { "name": "Bouldeneu",  "types": ["Plante"],              "gen": 4, "stage": 2, "color": "Bleu",   "image": "Bouldeneu (4G).png" },
+  { "name": "Élekable",   "types": ["Électrik"],            "gen": 4, "stage": 3, "color": "Jaune",  "image": "Élekable (4G).png" },
+  { "name": "Maganon",    "types": ["Feu"],                 "gen": 4, "stage": 3, "color": "Rouge",  "image": "Maganon (4G).png" },
+  { "name": "Togekiss",   "types": ["Fée", "Vol"],          "gen": 4, "stage": 3, "color": "Blanc",  "image": "Togekiss (4G).png" },
+  { "name": "Yanmega",    "types": ["Insecte", "Vol"],      "gen": 4, "stage": 2, "color": "Vert",   "image": "Yanmega (4G).png" },
+  { "name": "Phyllali",   "types": ["Plante"],              "gen": 4, "stage": 2, "color": "Vert",   "image": "Phyllali (4G).png" },
+  { "name": "Givrali",    "types": ["Glace"],               "gen": 4, "stage": 2, "color": "Bleu",   "image": "Givrali (4G).png" },
+  { "name": "Scorvol",    "types": ["Sol", "Vol"],          "gen": 4, "stage": 2, "color": "Violet", "image": "Scorvol (4G).png" },
+  { "name": "Mammochon",  "types": ["Glace", "Sol"],        "gen": 4, "stage": 3, "color": "Marron", "image": "Mammochon (4G).png" },
+  { "name": "Porygon-Z",  "types": ["Normal"],              "gen": 4, "stage": 3, "color": "Rouge",  "image": "Porygon-Z (4G).png" },
+  { "name": "Gallame",    "types": ["Psy", "Combat"],       "gen": 4, "stage": 3, "color": "Blanc",  "image": "Gallame (4G).png" },
+  { "name": "Tarinorme",  "types": ["Roche", "Acier"],      "gen": 4, "stage": 2, "color": "Gris",   "image": "Tarinorme (4G).png" },
+  { "name": "Noctunoir",  "types": ["Spectre"],             "gen": 4, "stage": 3, "color": "Noir",   "image": "Noctunoir (4G).png" },
+  { "name": "Momartik",   "types": ["Glace", "Spectre"],    "gen": 4, "stage": 2, "color": "Blanc",  "image": "Momartik (4G).png" },
+  { "name": "Motisma",    "types": ["Électrik", "Spectre"], "gen": 4, "stage": 1, "color": "Rouge",  "image": "Motisma (4G).png" },
+  { "name": "Créhelf",    "types": ["Psy"],                 "gen": 4, "stage": 1, "color": "Jaune",  "image": "Créhelf (4G).png" },
+  { "name": "Créfollet",  "types": ["Psy"],                 "gen": 4, "stage": 1, "color": "Rose",   "image": "Créfollet (4G).png" },
+  { "name": "Créfadet",   "types": ["Psy"],                 "gen": 4, "stage": 1, "color": "Bleu",   "image": "Créfadet (4G).png" },
+  { "name": "Dialga",     "types": ["Acier", "Dragon"],     "gen": 4, "stage": 1, "color": "Blanc",  "image": "Dialga (4G).png" },
+  { "name": "Palkia",     "types": ["Eau", "Dragon"],       "gen": 4, "stage": 1, "color": "Violet", "image": "Palkia (4G).png" },
+  { "name": "Heatran",    "types": ["Feu", "Acier"],        "gen": 4, "stage": 1, "color": "Marron", "image": "Heatran (4G).png" },
+  { "name": "Regigigas",  "types": ["Normal"],              "gen": 4, "stage": 1, "color": "Blanc",  "image": "Regigigas (4G).png" },
+  { "name": "Giratina",   "types": ["Spectre", "Dragon"],   "gen": 4, "stage": 1, "color": "Noir",   "image": "Giratina (4G).png" },
+  { "name": "Cresselia",  "types": ["Psy"],                 "gen": 4, "stage": 1, "color": "Jaune",  "image": "Cresselia (4G).png" },
+  { "name": "Phione",     "types": ["Eau"],                 "gen": 4, "stage": 1, "color": "Bleu",   "image": "Phione (4G).png" },
+  { "name": "Manaphy",    "types": ["Eau"],                 "gen": 4, "stage": 1, "color": "Bleu",   "image": "Manaphy (4G).png" },
+  { "name": "Darkrai",    "types": ["Ténèbres"],            "gen": 4, "stage": 1, "color": "Noir",   "image": "Darkrai (4G).png" },
+  { "name": "Shaymin",    "types": ["Plante"],              "gen": 4, "stage": 1, "color": "Vert",   "image": "Shaymin (4G).png" },
+  { "name": "Arceus",     "types": ["Normal"],              "gen": 4, "stage": 1, "color": "Blanc",  "image": "Arceus (4G).png" },
+  { "name": "Victini",    "types": ["Psy", "Feu"],          "gen": 5, "stage": 1, "color": "Jaune",  "image": "Victini (5G).png" },
+  { "name": "Vipélierre", "types": ["Plante"],              "gen": 5, "stage": 1, "color": "Vert",   "image": "Vipélierre (5G).png" },
+  { "name": "Lianaja",    "types": ["Plante"],              "gen": 5, "stage": 2, "color": "Vert",   "image": "Lianaja (5G).png" },
+  { "name": "Majaspic",   "types": ["Plante"],              "gen": 5, "stage": 3, "color": "Vert",   "image": "Majaspic (5G).png" },
+  { "name": "Gruikui",    "types": ["Feu"],                 "gen": 5, "stage": 1, "color": "Rouge",  "image": "Gruikui (5G).png" },
+  { "name": "Grotichon",  "types": ["Feu", "Combat"],       "gen": 5, "stage": 2, "color": "Rouge",  "image": "Grotichon (5G).png" },
+  { "name": "Roitiflam",  "types": ["Feu", "Combat"],       "gen": 5, "stage": 3, "color": "Rouge",  "image": "Roitiflam (5G).png" },
+  { "name": "Moustillon", "types": ["Eau"],                 "gen": 5, "stage": 1, "color": "Bleu",   "image": "Moustillon (5G).png" },
+  { "name": "Mateloutre", "types": ["Eau"],                 "gen": 5, "stage": 2, "color": "Bleu",   "image": "Mateloutre (5G).png" },
+  { "name": "Clamiral",   "types": ["Eau"],                 "gen": 5, "stage": 3, "color": "Bleu",   "image": "Clamiral (5G).png" },
+  { "name": "Ratentif",   "types": ["Normal"],              "gen": 5, "stage": 1, "color": "Marron", "image": "Ratentif (5G).png" },
+  { "name": "Miradar",    "types": ["Normal"],              "gen": 5, "stage": 2, "color": "Marron", "image": "Miradar (5G).png" },
+  { "name": "Ponchiot",   "types": ["Normal"],              "gen": 5, "stage": 1, "color": "Marron", "image": "Ponchiot (5G).png" },
+  { "name": "Ponchien",   "types": ["Normal"],              "gen": 5, "stage": 2, "color": "Gris",   "image": "Ponchien (5G).png" },
+  { "name": "Mastouffe",  "types": ["Normal"],              "gen": 5, "stage": 3, "color": "Gris",   "image": "Mastouffe (5G).png" },
+  { "name": "Chacripan",  "types": ["Ténèbres"],            "gen": 5, "stage": 1, "color": "Violet", "image": "Chacripan (5G).png" },
+  { "name": "Léopardus",  "types": ["Ténèbres"],            "gen": 5, "stage": 2, "color": "Violet", "image": "Léopardus (5G).png" },
+  { "name": "Feuillajou", "types": ["Plante"],              "gen": 5, "stage": 1, "color": "Vert",   "image": "Feuillajou (5G).png" },
+  { "name": "Feuiloutan", "types": ["Plante"],              "gen": 5, "stage": 2, "color": "Vert",   "image": "Feuiloutan (5G).png" },
+  { "name": "Flamajou",   "types": ["Feu"],                 "gen": 5, "stage": 1, "color": "Rouge",  "image": "Flamajou (5G).png" },
+  { "name": "Flamoutan",  "types": ["Feu"],                 "gen": 5, "stage": 2, "color": "Rouge",  "image": "Flamoutan (5G).png" },
+  { "name": "Flotajou",   "types": ["Eau"],                 "gen": 5, "stage": 1, "color": "Bleu",   "image": "Flotajou (5G).png" },
+  { "name": "Flotoutan",  "types": ["Eau"],                 "gen": 5, "stage": 2, "color": "Bleu",   "image": "Flotoutan (5G).png" },
+  { "name": "Munna",      "types": ["Psy"],                 "gen": 5, "stage": 1, "color": "Rose",   "image": "Munna (5G).png" },
+  { "name": "Mushana",    "types": ["Psy"],                 "gen": 5, "stage": 2, "color": "Rose",   "image": "Mushana (5G).png" },
+  { "name": "Poichigeon", "types": ["Normal", "Vol"],       "gen": 5, "stage": 1, "color": "Gris",   "image": "Poichigeon (5G).png" },
+  { "name": "Colombeau",  "types": ["Normal", "Vol"],       "gen": 5, "stage": 2, "color": "Gris",   "image": "Colombeau (5G).png" },
+  { "name": "Déflaisan",  "types": ["Normal", "Vol"],       "gen": 5, "stage": 3, "color": "Gris",   "image": "Déflaisan (5G).png" },
+  { "name": "Zébibron",   "types": ["Électrik"],            "gen": 5, "stage": 1, "color": "Noir",   "image": "Zébibron (5G).png" },
+  { "name": "Zéblitz",    "types": ["Électrik"],            "gen": 5, "stage": 2, "color": "Noir",   "image": "Zéblitz (5G).png" },
+  { "name": "Nodulithe",  "types": ["Roche"],               "gen": 5, "stage": 1, "color": "Bleu",   "image": "Nodulithe (5G).png" },
+  { "name": "Géolithe",   "types": ["Roche"],               "gen": 5, "stage": 2, "color": "Bleu",   "image": "Géolithe (5G).png" },
+  { "name": "Gigalithe",  "types": ["Roche"],               "gen": 5, "stage": 3, "color": "Bleu",   "image": "Gigalithe (5G).png" },
+  { "name": "Chovsourir", "types": ["Psy", "Vol"],          "gen": 5, "stage": 1, "color": "Bleu",   "image": "Chovsourir (5G).png" },
+  { "name": "Rhinolove",  "types": ["Psy", "Vol"],          "gen": 5, "stage": 2, "color": "Bleu",   "image": "Rhinolove (5G).png" },
+  { "name": "Rototaupe",  "types": ["Sol"],                 "gen": 5, "stage": 1, "color": "Gris",   "image": "Rototaupe (5G).png" },
+  { "name": "Minotaupe",  "types": ["Sol", "Acier"],        "gen": 5, "stage": 2, "color": "Gris",   "image": "Minotaupe (5G).png" },
+  { "name": "Nanméouïe",  "types": ["Normal"],              "gen": 5, "stage": 1, "color": "Rose",   "image": "Nanméouïe (5G).png" },
+  { "name": "Charpenti",  "types": ["Combat"],              "gen": 5, "stage": 1, "color": "Gris",   "image": "Charpenti (5G).png" },
+  { "name": "Ouvrifier",  "types": ["Combat"],              "gen": 5, "stage": 2, "color": "Gris",   "image": "Ouvrifier (5G).png" },
+  { "name": "Bétochef",   "types": ["Combat"],              "gen": 5, "stage": 3, "color": "Marron", "image": "Bétochef (5G).png" },
+  { "name": "Tritonde",   "types": ["Eau"],                 "gen": 5, "stage": 1, "color": "Bleu",   "image": "Tritonde (5G).png" },
+  { "name": "Batracné",   "types": ["Eau", "Sol"],          "gen": 5, "stage": 2, "color": "Bleu",   "image": "Batracné (5G).png" },
+  { "name": "Crapustule", "types": ["Eau", "Sol"],          "gen": 5, "stage": 3, "color": "Bleu",   "image": "Crapustule (5G).png" },
+  { "name": "Judokrak",   "types": ["Combat"],              "gen": 5, "stage": 1, "color": "Rouge",  "image": "Judokrak (5G).png" },
+  { "name": "Karaclée",   "types": ["Combat"],              "gen": 5, "stage": 1, "color": "Bleu",   "image": "Karaclée (5G).png" },
+  { "name": "Larveyette", "types": ["Insecte", "Plante"],   "gen": 5, "stage": 1, "color": "Jaune",  "image": "Larveyette (5G).png" },
+  { "name": "Couverdure", "types": ["Insecte", "Plante"],   "gen": 5, "stage": 2, "color": "Vert",   "image": "Couverdure (5G).png" },
+  { "name": "Manternel",  "types": ["Insecte", "Plante"],   "gen": 5, "stage": 3, "color": "Jaune",  "image": "Manternel (5G).png" },
+  { "name": "Venipatte",  "types": ["Insecte", "Poison"],   "gen": 5, "stage": 1, "color": "Rouge",  "image": "Venipatte (5G).png" },
+  { "name": "Scobolide",  "types": ["Insecte", "Poison"],   "gen": 5, "stage": 2, "color": "Gris",   "image": "Scobolide (5G).png" },
+  { "name": "Brutapode",  "types": ["Insecte", "Poison"],   "gen": 5, "stage": 3, "color": "Rouge",  "image": "Brutapode (5G).png" },
+  { "name": "Doudouvet",  "types": ["Plante", "Fée"],       "gen": 5, "stage": 1, "color": "Vert",   "image": "Doudouvet (5G).png" },
+  { "name": "Farfaduvet", "types": ["Plante", "Fée"],       "gen": 5, "stage": 2, "color": "Vert",   "image": "Farfaduvet (5G).png" },
+  { "name": "Chlorobule", "types": ["Plante"],              "gen": 5, "stage": 1, "color": "Vert",   "image": "Chlorobule (5G).png" },
+  { "name": "Fragilady",  "types": ["Plante"],              "gen": 5, "stage": 2, "color": "Vert",   "image": "Fragilady (5G).png" },
+  { "name": "Bargantua",  "types": ["Eau"],                 "gen": 5, "stage": 1, "color": "Vert",   "image": "Bargantua (5G).png" },
+  { "name": "Mascaïman",  "types": ["Sol", "Ténèbres"],     "gen": 5, "stage": 1, "color": "Marron", "image": "Mascaïman (5G).png" },
+  { "name": "Escroco",    "types": ["Sol", "Ténèbres"],     "gen": 5, "stage": 2, "color": "Marron", "image": "Escroco (5G).png" },
+  { "name": "Crocorible", "types": ["Sol", "Ténèbres"],     "gen": 5, "stage": 3, "color": "Rouge",  "image": "Crocorible (5G).png" },
+  { "name": "Darumarond", "types": ["Feu"],                 "gen": 5, "stage": 1, "color": "Rouge",  "image": "Darumarond (5G).png" },
+  { "name": "Darumacho",  "types": ["Feu"],                 "gen": 5, "stage": 2, "color": "Rouge",  "image": "Darumacho (5G).png" },
+  { "name": "Maracachi",  "types": ["Plante"],              "gen": 5, "stage": 1, "color": "Vert",   "image": "Maracachi (5G).png" },
+  { "name": "Crabicoque", "types": ["Insecte", "Roche"],    "gen": 5, "stage": 1, "color": "Rouge",  "image": "Crabicoque (5G).png" },
+  { "name": "Crabaraque", "types": ["Insecte", "Roche"],    "gen": 5, "stage": 2, "color": "Rouge",  "image": "Crabaraque (5G).png" },
+  { "name": "Baggiguane", "types": ["Ténèbres", "Combat"],  "gen": 5, "stage": 1, "color": "Jaune",  "image": "Baggiguane (5G).png" },
+  { "name": "Baggaïd",    "types": ["Ténèbres", "Combat"],  "gen": 5, "stage": 2, "color": "Rouge",  "image": "Baggaïd (5G).png" },
+  { "name": "Cryptéro",   "types": ["Psy", "Vol"],          "gen": 5, "stage": 1, "color": "Noir",   "image": "Cryptéro (5G).png" },
+  { "name": "Tutafeh",    "types": ["Spectre"],             "gen": 5, "stage": 1, "color": "Noir",   "image": "Tutafeh (5G).png" },
+  { "name": "Tutankafer", "types": ["Spectre"],             "gen": 5, "stage": 2, "color": "Jaune",  "image": "Tutankafer (5G).png" },
+  { "name": "Carapagos",  "types": ["Eau", "Roche"],        "gen": 5, "stage": 1, "color": "Bleu",   "image": "Carapagos (5G).png" },
+  { "name": "Mégapagos",  "types": ["Eau", "Roche"],        "gen": 5, "stage": 2, "color": "Bleu",   "image": "Mégapagos (5G).png" },
+  { "name": "Arkéapti",   "types": ["Roche", "Vol"],        "gen": 5, "stage": 1, "color": "Jaune",  "image": "Arkéapti (5G).png" },
+  { "name": "Aéroptéryx", "types": ["Roche", "Vol"],        "gen": 5, "stage": 2, "color": "Jaune",  "image": "Aéroptéryx (5G).png" },
+  { "name": "Miamiasme",  "types": ["Poison"],              "gen": 5, "stage": 1, "color": "Vert",   "image": "Miamiasme (5G).png" },
+  { "name": "Miasmax",    "types": ["Poison"],              "gen": 5, "stage": 2, "color": "Vert",   "image": "Miasmax (5G).png" },
+  { "name": "Zorua",      "types": ["Ténèbres"],            "gen": 5, "stage": 1, "color": "Gris",   "image": "Zorua (5G).png" },
+  { "name": "Zoroark",    "types": ["Ténèbres"],            "gen": 5, "stage": 2, "color": "Gris",   "image": "Zoroark (5G).png" },
+  { "name": "Chinchidou", "types": ["Normal"],              "gen": 5, "stage": 1, "color": "Gris",   "image": "Chinchidou (5G).png" },
+  { "name": "Pashmilla",  "types": ["Normal"],              "gen": 5, "stage": 2, "color": "Gris",   "image": "Pashmilla (5G).png" },
+  { "name": "Scrutella",  "types": ["Psy"],                 "gen": 5, "stage": 1, "color": "Violet", "image": "Scrutella (5G).png" },
+  { "name": "Mesmérella", "types": ["Psy"],                 "gen": 5, "stage": 2, "color": "Violet", "image": "Mesmérella (5G).png" },
+  { "name": "Sidérella",  "types": ["Psy"],                 "gen": 5, "stage": 3, "color": "Violet", "image": "Sidérella (5G).png" },
+  { "name": "Nucléos",    "types": ["Psy"],                 "gen": 5, "stage": 1, "color": "Vert",   "image": "Nucléos (5G).png" },
+  { "name": "Méios",      "types": ["Psy"],                 "gen": 5, "stage": 2, "color": "Vert",   "image": "Méios (5G).png" },
+  { "name": "Symbios",    "types": ["Psy"],                 "gen": 5, "stage": 3, "color": "Vert",   "image": "Symbios (5G).png" },
+  { "name": "Couaneton",  "types": ["Eau", "Vol"],          "gen": 5, "stage": 1, "color": "Bleu",   "image": "Couaneton (5G).png" },
+  { "name": "Lakmécygne", "types": ["Eau", "Vol"],          "gen": 5, "stage": 2, "color": "Blanc",  "image": "Lakmécygne (5G).png" },
+  { "name": "Sorbébé",    "types": ["Glace"],               "gen": 5, "stage": 1, "color": "Blanc",  "image": "Sorbébé (5G).png" },
+  { "name": "Sorboul",    "types": ["Glace"],               "gen": 5, "stage": 2, "color": "Blanc",  "image": "Sorboul (5G).png" },
+  { "name": "Sorbouboul", "types": ["Glace"],               "gen": 5, "stage": 3, "color": "Blanc",  "image": "Sorbouboul (5G).png" },
+  { "name": "Vivaldaim",  "types": ["Normal", "Plante"],    "gen": 5, "stage": 1, "color": "Rose",   "image": "Vivaldaim (5G).png" },
+  { "name": "Haydaim",    "types": ["Normal", "Plante"],    "gen": 5, "stage": 2, "color": "Marron", "image": "Haydaim (5G).png" },
+  { "name": "Emolga",     "types": ["Électrik", "Vol"],     "gen": 5, "stage": 1, "color": "Blanc",  "image": "Emolga (5G).png" },
+  { "name": "Carabing",   "types": ["Insecte"],             "gen": 5, "stage": 1, "color": "Bleu",   "image": "Carabing (5G).png" },
+  { "name": "Lançargot",  "types": ["Insecte", "Acier"],    "gen": 5, "stage": 2, "color": "Gris",   "image": "Lançargot (5G).png" },
+  { "name": "Trompignon", "types": ["Plante", "Poison"],    "gen": 5, "stage": 1, "color": "Blanc",  "image": "Trompignon (5G).png" },
+  { "name": "Gaulet",     "types": ["Plante", "Poison"],    "gen": 5, "stage": 2, "color": "Blanc",  "image": "Gaulet (5G).png" },
+  { "name": "Viskuse",    "types": ["Eau", "Spectre"],      "gen": 5, "stage": 1, "color": "Blanc",  "image": "Viskuse (5G).png" },
+  { "name": "Moyade",     "types": ["Eau", "Spectre"],      "gen": 5, "stage": 2, "color": "Blanc",  "image": "Moyade (5G).png" },
+  { "name": "Mamanbo",    "types": ["Eau"],                 "gen": 5, "stage": 1, "color": "Rose",   "image": "Mamanbo (5G).png" },
+  { "name": "Statitik",   "types": ["Insecte", "Électrik"], "gen": 5, "stage": 1, "color": "Jaune",  "image": "Statitik (5G).png" },
+  { "name": "Mygavolt",   "types": ["Insecte", "Électrik"], "gen": 5, "stage": 2, "color": "Jaune",  "image": "Mygavolt (5G).png" },
+  { "name": "Grindur",    "types": ["Plante", "Acier"],     "gen": 5, "stage": 1, "color": "Gris",   "image": "Grindur (5G).png" },
+  { "name": "Noacier",    "types": ["Plante", "Acier"],     "gen": 5, "stage": 2, "color": "Gris",   "image": "Noacier (5G).png" },
+  { "name": "Tic",        "types": ["Acier"],               "gen": 5, "stage": 1, "color": "Gris",   "image": "Tic (5G).png" },
+  { "name": "Clic",       "types": ["Acier"],               "gen": 5, "stage": 2, "color": "Gris",   "image": "Clic (5G).png" },
+  { "name": "Cliticlic",  "types": ["Acier"],               "gen": 5, "stage": 3, "color": "Gris",   "image": "Cliticlic (5G).png" },
+  { "name": "Anchwatt",   "types": ["Électrik"],            "gen": 5, "stage": 1, "color": "Blanc",  "image": "Anchwatt (5G).png" },
+  { "name": "Lampéroie",  "types": ["Électrik"],            "gen": 5, "stage": 2, "color": "Bleu",   "image": "Lampéroie (5G).png" },
+  { "name": "Ohmassacre", "types": ["Électrik"],            "gen": 5, "stage": 3, "color": "Bleu",   "image": "Ohmassacre (5G).png" },
+  { "name": "Lewsor",     "types": ["Psy"],                 "gen": 5, "stage": 1, "color": "Bleu",   "image": "Lewsor (5G).png" },
+  { "name": "Neitram",    "types": ["Psy"],                 "gen": 5, "stage": 2, "color": "Marron", "image": "Neitram (5G).png" },
+  { "name": "Funécire",   "types": ["Spectre", "Feu"],      "gen": 5, "stage": 1, "color": "Blanc",  "image": "Funécire (5G).png" },
+  { "name": "Mélancolux", "types": ["Spectre", "Feu"],      "gen": 5, "stage": 2, "color": "Noir",   "image": "Mélancolux (5G).png" },
+  { "name": "Lugulabre",  "types": ["Spectre", "Feu"],      "gen": 5, "stage": 3, "color": "Noir",   "image": "Lugulabre (5G).png" },
+  { "name": "Coupenotte", "types": ["Dragon"],              "gen": 5, "stage": 1, "color": "Vert",   "image": "Coupenotte (5G).png" },
+  { "name": "Incisache",  "types": ["Dragon"],              "gen": 5, "stage": 2, "color": "Vert",   "image": "Incisache (5G).png" },
+  { "name": "Tranchodon", "types": ["Dragon"],              "gen": 5, "stage": 3, "color": "Jaune",  "image": "Tranchodon (5G).png" },
+  { "name": "Polarhume",  "types": ["Glace"],               "gen": 5, "stage": 1, "color": "Blanc",  "image": "Polarhume (5G).png" },
+  { "name": "Polagriffe", "types": ["Glace"],               "gen": 5, "stage": 2, "color": "Blanc",  "image": "Polagriffe (5G).png" },
+  { "name": "Hexagel",    "types": ["Glace"],               "gen": 5, "stage": 1, "color": "Bleu",   "image": "Hexagel (5G).png" },
+  { "name": "Escargaume", "types": ["Insecte"],             "gen": 5, "stage": 1, "color": "Rouge",  "image": "Escargaume (5G).png" },
+  { "name": "Limaspeed",  "types": ["Insecte"],             "gen": 5, "stage": 2, "color": "Rouge",  "image": "Limaspeed (5G).png" },
+  { "name": "Limonde",    "types": ["Sol", "Électrik"],     "gen": 5, "stage": 1, "color": "Marron", "image": "Limonde (5G).png" },
+  { "name": "Kungfouine", "types": ["Combat"],              "gen": 5, "stage": 1, "color": "Jaune",  "image": "Kungfouine (5G).png" },
+  { "name": "Shaofouine", "types": ["Combat"],              "gen": 5, "stage": 2, "color": "Violet", "image": "Shaofouine (5G).png" },
+  { "name": "Drakkarmin", "types": ["Dragon"],              "gen": 5, "stage": 1, "color": "Rouge",  "image": "Drakkarmin (5G).png" },
+  { "name": "Gringolem",  "types": ["Sol", "Spectre"],      "gen": 5, "stage": 1, "color": "Vert",   "image": "Gringolem (5G).png" },
+  { "name": "Golemastoc", "types": ["Sol", "Spectre"],      "gen": 5, "stage": 2, "color": "Vert",   "image": "Golemastoc (5G).png" },
+  { "name": "Scalpion",   "types": ["Ténèbres", "Acier"],   "gen": 5, "stage": 1, "color": "Rouge",  "image": "Scalpion (5G).png" },
+  { "name": "Scalproie",  "types": ["Ténèbres", "Acier"],   "gen": 5, "stage": 2, "color": "Rouge",  "image": "Scalproie (5G).png" },
+  { "name": "Frison",     "types": ["Normal"],              "gen": 5, "stage": 1, "color": "Marron", "image": "Frison (5G).png" },
+  { "name": "Furaiglon",  "types": ["Normal", "Vol"],       "gen": 5, "stage": 1, "color": "Blanc",  "image": "Furaiglon (5G).png" },
+  { "name": "Gueriaigle", "types": ["Normal", "Vol"],       "gen": 5, "stage": 2, "color": "Rouge",  "image": "Gueriaigle (5G).png" },
+  { "name": "Vostourno",  "types": ["Ténèbres", "Vol"],     "gen": 5, "stage": 1, "color": "Marron", "image": "Vostourno (5G).png" },
+  { "name": "Vaututrice", "types": ["Ténèbres", "Vol"],     "gen": 5, "stage": 2, "color": "Marron", "image": "Vaututrice (5G).png" },
+  { "name": "Aflamanoir", "types": ["Feu"],                 "gen": 5, "stage": 1, "color": "Rouge",  "image": "Aflamanoir (5G).png" },
+  { "name": "Fermite",    "types": ["Insecte", "Acier"],    "gen": 5, "stage": 1, "color": "Gris",   "image": "Fermite (5G).png" },
+  { "name": "Solochi",    "types": ["Ténèbres", "Dragon"],  "gen": 5, "stage": 1, "color": "Bleu",   "image": "Solochi (5G).png" },
+  { "name": "Diamat",     "types": ["Ténèbres", "Dragon"],  "gen": 5, "stage": 2, "color": "Bleu",   "image": "Diamat (5G).png" },
+  { "name": "Trioxhydre", "types": ["Ténèbres", "Dragon"],  "gen": 5, "stage": 3, "color": "Bleu",   "image": "Trioxhydre (5G).png" },
+  { "name": "Pyronille",  "types": ["Insecte", "Feu"],      "gen": 5, "stage": 1, "color": "Blanc",  "image": "Pyronille (5G).png" },
+  { "name": "Pyrax",      "types": ["Insecte", "Feu"],      "gen": 5, "stage": 2, "color": "Blanc",  "image": "Pyrax (5G).png" },
+  { "name": "Cobaltium",  "types": ["Acier", "Combat"],     "gen": 5, "stage": 1, "color": "Bleu",   "image": "Cobaltium (5G).png" },
+  { "name": "Terrakium",  "types": ["Roche", "Combat"],     "gen": 5, "stage": 1, "color": "Gris",   "image": "Terrakium (5G).png" },
+  { "name": "Viridium",   "types": ["Plante", "Combat"],    "gen": 5, "stage": 1, "color": "Vert",   "image": "Viridium (5G).png" },
+  { "name": "Boréas",     "types": ["Vol"],                 "gen": 5, "stage": 1, "color": "Vert",   "image": "Boréas (5G).png" },
+  { "name": "Fulguris",   "types": ["Électrik", "Vol"],     "gen": 5, "stage": 1, "color": "Bleu",   "image": "Fulguris (5G).png" },
+  { "name": "Reshiram",   "types": ["Dragon", "Feu"],       "gen": 5, "stage": 1, "color": "Blanc",  "image": "Reshiram (5G).png" },
+  { "name": "Zekrom",     "types": ["Dragon", "Électrik"],  "gen": 5, "stage": 1, "color": "Noir",   "image": "Zekrom (5G).png" },
+  { "name": "Démétéros",  "types": ["Sol", "Vol"],          "gen": 5, "stage": 1, "color": "Marron", "image": "Démétéros (5G).png" },
+  { "name": "Kyurem",     "types": ["Dragon", "Glace"],     "gen": 5, "stage": 1, "color": "Gris",   "image": "Kyurem (5G).png" },
+  { "name": "Keldeo",     "types": ["Eau", "Combat"],       "gen": 5, "stage": 1, "color": "Jaune",  "image": "Keldeo (5G).png" },
+  { "name": "Meloetta",   "types": ["Normal", "Psy"],       "gen": 5, "stage": 1, "color": "Blanc",  "image": "Meloetta (5G).png" },
+  { "name": "Genesect",   "types": ["Insecte", "Acier"],    "gen": 5, "stage": 1, "color": "Violet", "image": "Genesect (5G).png" }
 ]

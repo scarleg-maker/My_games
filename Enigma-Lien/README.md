@@ -5,6 +5,16 @@ Petit serveur Node.js qui héberge le jeu d'énigmes "Enigma-Lien" (réarranger
 (jusqu'à 10 joueurs), avec un système de thèmes éditable (Pokémon fourni,
 Dragon Ball en exemple, et d'autres thèmes possibles).
 
+Sur le plateau, seuls **l'image et le nom** de chaque personnage sont
+visibles — aucune information de type ou de critère n'est affichée sur les
+cartes, quel que soit le thème ; c'est justement ce qu'il faut deviner grâce
+aux liens affichés sous le plateau. Pour réordonner les cartes, deux
+méthodes équivalentes et cumulables : les boutons ◀ ▶ (échange avec la carte
+voisine), ou le **glisser-déposer** — glisse une carte sur une autre pour
+échanger directement leurs deux positions (ex : déposer la carte en
+position 4 sur celle en position 2 les échange, les 4 autres cartes ne
+bougent pas). Fonctionne à la souris comme au doigt (écran tactile).
+
 ## 1. Installation et lancement
 
 Prérequis : [Node.js](https://nodejs.org) 18 ou plus récent.
@@ -20,23 +30,23 @@ il installe les dépendances au premier lancement si besoin, démarre le
 serveur et ouvre automatiquement le menu principal dans ton navigateur.
 Laisse sa fenêtre ouverte pendant la partie ; la fermer arrête le serveur.
 
-Le serveur écoute par défaut sur le port **9500**. Pour changer de port :
-`PORT=8080 npm start` (si tu changes le port, adapte aussi le `9500` dans
+Le serveur écoute par défaut sur le port **8500**. Pour changer de port :
+`PORT=8080 npm start` (si tu changes le port, adapte aussi le `8500` dans
 `Lancer_Enigmalien.bat`).
 
 Au démarrage, le terminal affiche les adresses utiles :
 
-- **Menu principal** : http://localhost:9500/
-- **Écran maître** (pour piloter un tournoi) : http://localhost:9500/maitre.html
-- **Pages joueurs** : http://localhost:9500/joueur1.html … /joueur10.html
+- **Menu principal** : http://localhost:8500/
+- **Écran maître** (pour piloter un tournoi) : http://localhost:8500/maitre.html
+- **Pages joueurs** : http://localhost:8500/joueur1.html … /joueur10.html
 
 ## 2. Jouer en solo
 
-Va sur http://localhost:9500/solo.html, entre ton nom, choisis un thème et
+Va sur http://localhost:8500/solo.html, entre ton nom, choisis un thème et
 le nombre de vies/essais par énigme, puis lance une énigme. À la fin de
 chaque partie (victoire ou défaite), le résultat est enregistré
 automatiquement. Le classement cumulé (parties, victoires, défaites, ratio,
-meilleure série) est visible sur http://localhost:9500/classement.html.
+meilleure série) est visible sur http://localhost:8500/classement.html.
 
 Ces statistiques sont stockées dans `data/players.json` (agrégées par
 joueur) et `data/solo_history.json` (historique détaillé de chaque partie).
@@ -44,17 +54,17 @@ joueur) et `data/solo_history.json` (historique détaillé de chaque partie).
 ## 3. Jouer en tournoi (multijoueur, jusqu'à 10 joueurs)
 
 1. Sur la machine qui héberge la partie, ouvre **l'écran maître** :
-   http://localhost:9500/maitre.html — c'est l'écran à projeter/partager,
+   http://localhost:8500/maitre.html — c'est l'écran à projeter/partager,
    qui sert à configurer et piloter le tournoi.
 2. Chaque joueur ouvre, **depuis son propre appareil** (téléphone,
    ordinateur…) connecté au **même réseau local**, l'URL de son
-   emplacement : `http://<adresse-IP-du-serveur>:9500/joueur1.html`,
+   emplacement : `http://<adresse-IP-du-serveur>:8500/joueur1.html`,
    `joueur2.html`, etc. (jusqu'à `joueur10.html`). Il choisit un pseudo et
    rejoint. Sur la machine qui héberge le serveur, retrouve ton adresse IP
    locale avec `ipconfig` (Windows) ou `ifconfig` / `ip a` (Mac/Linux) —
    généralement une adresse du type `192.168.x.x`.
    - Si les autres appareils n'arrivent pas à se connecter, vérifie le
-     pare-feu de la machine hôte (autoriser Node.js / le port 9500 sur le
+     pare-feu de la machine hôte (autoriser Node.js / le port 8500 sur le
      réseau local).
 3. Sur l'écran maître, choisis le **thème**, le **type de tournoi**, et les
    paramètres, puis clique sur *Enregistrer la configuration*.
@@ -147,9 +157,40 @@ serveur.
 
 ## 6. Ajouter un nouveau thème (ex : Dragon Ball / "DragonBallEx")
 
-Un thème d'exemple est déjà fourni : `data/dragonball/dragonballex.json`
-(une vingtaine de personnages/formes) avec les critères ARC (=),
-PUISSANCE (numérique), FORME (numérique) et COULEUR (=).
+Un thème d'exemple est fourni et déjà enrichi : `data/dragonball/dragonballex.json`
+(96 personnages/formes) avec les critères ARC (numérique), PUISSANCE
+(numérique), FORME (numérique), RACE (=) et AGE (numérique).
+
+Légende des codes utilisés dans `dragonballex.json` :
+
+- `arc` : 1ère apparition du personnage — 0 = Passé, 1 = Arc Enfant,
+  2 = Piccolo Daimao + Tournois, 3 = Arc Saiyan, 4 = Arc Namek,
+  5 = Arc Cyborg + Cell, 6 = Arc Boo, 7 = Arcs GT.
+- `power` : puissance du personnage, de 1 à 10.
+- `form` : niveau de transformation du personnage, de 1 à 4.
+- `race` : race du personnage (texte libre, comparé par égalité).
+- `age` : 1 = enfant, 2 = ado, 3 = adulte, 4 = ancien/indéterminé.
+
+⚠️ Important : `dragonballex.json` (comme tous les fichiers de `data/`) doit
+rester un JSON strictement valide — un simple tableau d'objets, chacun
+représentant un personnage. Le JSON n'accepte pas les commentaires : n'y
+ajoute pas d'objet "légende" du genre `{ "_comment_xxx": "..." }` au
+début du tableau, même pour documenter les codes ci-dessus — le moteur le
+traiterait comme un personnage à part entière (sans `name` ni image, ça
+casse la génération d'énigmes), et surtout une seule virgule manquante ou
+en trop dans ce fichier empêche TOUS les thèmes de se charger, pas
+seulement Dragon Ball (c'est exactement ce qui s'est produit : une virgule
+manquante dans `data/themes.json` et une virgule en trop dans
+`dragonballex.json`). Pour documenter un format, ajoute plutôt tes notes
+ici, dans le README, ou dans le champ `"note"` du thème dans
+`data/themes.json`. Après toute modification manuelle, tu peux vérifier
+qu'un fichier reste valide avec :
+
+```
+node -e "JSON.parse(require('fs').readFileSync('data/dragonball/dragonballex.json','utf8'))"
+```
+
+Si la commande ne renvoie aucune erreur, le fichier est valide.
 
 Pour créer ton propre thème :
 
@@ -242,7 +283,7 @@ node scripts/test_full.js
 
 - Le serveur héberge **un seul tournoi à la fois** (pas de salons multiples
   en parallèle) — adapté à un usage "entre amis, chez soi".
-- Pensé pour un réseau local (`http://<IP locale>:9500`). Pour un accès
+- Pensé pour un réseau local (`http://<IP locale>:8500`). Pour un accès
   depuis Internet, il faudrait toi-même mettre en place un hébergement /
   redirection de port (non couvert ici).
 - Le thème Dragon Ball n'est qu'un exemple illustratif (une vingtaine

@@ -1,1 +1,12 @@
-{}
+{
+  "scarleg": {
+    "name": "Scarleg",
+    "parties": 2,
+    "victoires": 2,
+    "defaites": 0,
+    "meilleureSerie": 2,
+    "serieActuelle": 2,
+    "dernierTheme": "dragonball",
+    "dernierJoue": "2026-10-02T08:56:11.899Z"
+  }
+}

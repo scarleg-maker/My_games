@@ -367,7 +367,7 @@ class Tournament {
     if (this.round && this.status === "playing") {
       base.round = {
         number: this.round.number,
-        display: this.round.display.map((c) => ({ name: c.name, types: c.types, image: c.image })),
+        display: this.round.display.map((c) => ({ name: c.name, image: c.image })),
         links: this.round.links,
         imageFolder: this.theme.imageFolder,
         criteria: this.theme.criteria,

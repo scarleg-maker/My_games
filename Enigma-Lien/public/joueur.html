@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="wrap">
+<div class="wrap wide">
   <h1>⬡ Enigma-Lien <span id="slotLabel"></span></h1>
   <div class="sub" id="connStatus">Connexion…</div>
 
@@ -134,7 +134,7 @@ function runPlayer(slot) {
       document.getElementById('gameSub').textContent = `Manche ${state.round.number} — ${state.me.name}`;
       document.getElementById('statusText').textContent = '';
       document.getElementById('validateBtn').disabled = false;
-      renderBoard(document.getElementById('cardsRow'), display, state.round.imageFolder, move, false);
+      renderBoard(document.getElementById('cardsRow'), display, state.round.imageFolder, move, swap, false);
       renderLinks(document.getElementById('linksRow'), state.round.links, state.round.criteria, null);
       renderLives(document.getElementById('livesRow'), state.me.livesLeft, (state.config && state.config.livesPerRound) || state.me.livesLeft);
     } else if (state.me.status === 'spectateur') {
@@ -151,7 +151,13 @@ function runPlayer(slot) {
     const j = idx + dir;
     if (j < 0 || j >= display.length) return;
     [display[idx], display[j]] = [display[j], display[idx]];
-    renderBoard(document.getElementById('cardsRow'), display, currentState.round.imageFolder, move, false);
+    renderBoard(document.getElementById('cardsRow'), display, currentState.round.imageFolder, move, swap, false);
+  }
+
+  function swap(fromIdx, toIdx) {
+    if (fromIdx === toIdx) return;
+    [display[fromIdx], display[toIdx]] = [display[toIdx], display[fromIdx]];
+    renderBoard(document.getElementById('cardsRow'), display, currentState.round.imageFolder, move, swap, false);
   }
 
   function renderStandings(standings, winnerSlots) {

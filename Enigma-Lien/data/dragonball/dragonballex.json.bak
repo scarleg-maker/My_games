@@ -1,0 +1,118 @@
+[
+{ "name": "Goku (Enfant)",          "image": "Goku (Enfant).png",                   "age": 1,      "arc": 2, "form": 1, "power": 1,  "race": "Saiyan" }, 
+{ "name": "Goku",                   "image": "Goku.png",                   "age": 3,      "arc": 2, "form": 1, "power": 4,  "race": "Saiyan" },
+{ "name": "Goku (SSJ1)",            "image": "Goku SSJ1.png",              "age": 3,      "arc": 4, "form": 2, "power": 6,  "race": "Saiyan" },
+{ "name": "Goku (SSJ2)",            "image": "Goku SSJ2.png",              "age": 3,      "arc": 6, "form": 2, "power": 7,  "race": "Saiyan" },
+{ "name": "Goku (SSJ3)",            "image": "Goku SSJ3.png",              "age": 3,      "arc": 6, "form": 3, "power": 9,  "race": "Saiyan" },
+{ "name": "Goku (SSJ4)",            "image": "Goku SSJ4.png",              "age": 3,      "arc": 7, "form": 4, "power": 10, "race": "Saiyan" },
+
+{ "name": "Vegeta",                 "image": "Vegeta.png",                 "age": 3,      "arc": 3, "form": 1, "power": 4,  "race": "Saiyan" },
+{ "name": "Vegeta (SSJ1)",          "image": "Vegeta SSJ1.png",           "age": 3,      "arc": 5, "form": 2, "power": 6,  "race": "Saiyan" },
+{ "name": "Majin Vegeta",           "image": "Majin Vegeta.png",           "age": 3,      "arc": 6, "form": 3, "power": 7,  "race": "Saiyan" },
+{ "name": "Vegeta (SSJ4)",          "image": "Vegeta SSJ4.png",            "age": 3,      "arc": 7, "form": 4, "power": 10, "race": "Saiyan" },
+
+{ "name": "Radditz",                "image": "Radditz.png",            "age": 3,      "arc": 3, "form": 1, "power": 3, "race": "Saiyan" },
+{ "name": "Nappa",                  "image": "Nappa.png",            "age": 3,      "arc": 3, "form": 1, "power": 3, "race": "Saiyan" },
+
+{ "name": "Vegeto",                 "image": "Vegeto SSJ1.png",            "age": 3,      "arc": 6, "form": 1, "power": 9, "race": "Fusion" },
+{ "name": "Gogeta",                 "image": "Gogeta SSJ1.png",                 "age": 3,      "arc": 6, "form": 1, "power": 9, "race": "Fusion" },
+{ "name": "Gogeta SSJ4",            "image": "Gogeta SSJ4.png",            "age": 3,      "arc": 7, "form": 4, "power": 10, "race": "Fusion" },
+{ "name": "Gotenks",                "image": "Gotenks SSJ3.png",           "age": 1,      "arc": 6, "form": 2, "power": 8, "race": "Fusion" },
+
+{ "name": "Piccolo",                "image": "Piccolo.png",                "age": 3,      "arc": 2, "form": 1, "power": 6,  "race": "Namek" },
+{ "name": "Krillin",                "image": "Krillin.png",                "age": 3,      "arc": 1, "form": 1, "power": 5,  "race": "Terrien" },
+{ "name": "Yamcha",                 "image": "Yamcha.png",                 "age": 3,      "arc": 1, "form": 1, "power": 4,  "race": "Terrien" },
+{ "name": "Tenshinhan",             "image": "Tenshinhan.png",             "age": 3,      "arc": 2, "form": 1, "power": 5,  "race": "Terrien" },
+{ "name": "Chaozu",                 "image": "Chaozu.png",                 "age": 3,      "arc": 2, "form": 1, "power": 3,  "race": "Terrien" },
+{ "name": "Kamesennin",             "image": "Kamesennin.png",             "age": 4,      "arc": 2, "form": 1, "power": 3,  "race": "Terrien" },
+
+{ "name": "Goten",                  "image": "Goten.png",                  "age": 1,      "arc": 6, "form": 1, "power": 4,  "race": "Saiyan" },
+{ "name": "Trunks",                 "image": "Trunks.png",                 "age": 1,      "arc": 6, "form": 1, "power": 4,  "race": "Saiyan" },
+
+{ "name": "Trunks (Mirai)",         "image": "Trunks SSJ1 (Mirai).png",    "age": 2,      "arc": 5, "form": 2, "power": 6,  "race": "Saiyan" },
+
+{ "name": "Gohan (enfant)",         "image": "Gohan (Namek).png",           "age": 1,      "arc": 3, "form": 1, "power": 2,  "race": "Saiyan" },
+{ "name": "Gohan (SSJ1)",           "image": "Gohan SSJ1.png",           "age": 2,      "arc": 3, "form": 2, "power": 4,  "race": "Saiyan" },
+{ "name": "Gohan (SSJ2)",           "image": "Gohan SSJ2.png",           "age": 2,      "arc": 5, "form": 3, "power": 7,  "race": "Saiyan" },
+{ "name": "Gohan (Mystique)",       "image": "Gohan (Ultime).png",         "age": 2,      "arc": 6, "form": 4, "power": 9,  "race": "Saiyan" },
+
+{ "name": "Dodoria",                "image": "Dodoria.png",   "age": 4,      "arc": 4, "form": 1, "power": 3,  "race": "Alien" },
+{ "name": "Zarbon",                 "image": "Zarbon.png",   "age": 4,      "arc": 4, "form": 1, "power": 3,  "race": "Alien" },
+{ "name": "Guldo",                  "image": "Guldo.png",   "age": 4,      "arc": 4, "form": 1, "power": 3,  "race": "Alien" },
+{ "name": "Reccoom",                "image": "Reccoom.png",   "age": 3,      "arc": 4, "form": 1, "power": 4,  "race": "Alien" },
+{ "name": "Jeice",                  "image": "Jeice.png",   "age": 3,      "arc": 4, "form": 1, "power": 4,  "race": "Alien" },
+{ "name": "Burta",                  "image": "Burta.png",   "age": 3,      "arc": 4, "form": 1, "power": 4,  "race": "Alien" },
+{ "name": "Ginyu",                  "image": "Ginyu.png",   "age": 4,      "arc": 4, "form": 1, "power": 4,  "race": "Alien" },
+
+{ "name": "Nail",                   "image": "Nail.png",   "age": 4,      "arc": 4, "form": 1, "power": 4,  "race": "Namek" },
+
+{ "name": "Freezer (1ere forme)",   "image": "Freezer (1ere forme).png",   "age": 4,      "arc": 4, "form": 1, "power": 4,  "race": "Alien" },
+{ "name": "Freezer (2e forme)",     "image": "Freezer (2e forme.png",      "age": 4,      "arc": 4, "form": 2, "power": 4,  "race": "Alien" },
+{ "name": "Freezer (3e forme)",     "image": "Freezer (3e forme.png",      "age": 4,      "arc": 4, "form": 3, "power": 4,  "race": "Alien" },
+{ "name": "Freezer (forme finale)", "image": "Freezer (forme finale).png", "age": 4,      "arc": 4, "form": 4, "power": 5,  "race": "Alien" },
+{ "name": "Mecha Freezer",          "image": "Mecha Freezer.png",          "age": 4,      "arc": 5, "form": 4, "power": 5,  "race": "Alien" },
+{ "name": "Roi Cold",               "image": "Roi Cold.png",          "age": 4,      "arc": 5, "form": 2, "power": 4,  "race": "Alien" },
+
+{ "name": "C-19",                   "image": "C-19.png",                   "age": 3,      "arc": 5, "form": 1, "power": 5,  "race": "Cyborg" },
+{ "name": "C-20",                   "image": "C-20.png",                   "age": 3,      "arc": 5, "form": 1, "power": 5,  "race": "Cyborg" },
+{ "name": "C-16",                   "image": "C-16.png",                   "age": 3,      "arc": 5, "form": 1, "power": 6,  "race": "Cyborg" },
+{ "name": "C-17",                   "image": "C-17.png",                   "age": 3,      "arc": 5, "form": 1, "power": 6,  "race": "Cyborg" },
+{ "name": "C-18",                   "image": "C-18.png",                   "age": 3,      "arc": 5, "form": 1, "power": 6,  "race": "Cyborg" },
+
+{ "name": "Cell (1ere Forme)",      "image": "Cell (1ere Forme).png",      "age": 1,      "arc": 5, "form": 1, "power": 6,  "race": "Cyborg" },
+{ "name": "Cell (2e Forme)",        "image": "Cell (2e Forme).png",        "age": 1,      "arc": 5, "form": 2, "power": 6,  "race": "Cyborg" },
+{ "name": "Cell (Parfait)",         "image": "Cell (Parfait).png",           "age": 1,      "arc": 5, "form": 3, "power": 7,  "race": "Cyborg" },
+
+{ "name": "Kaio de l'Est",          "image": "Kaio de l'Est).png",           "age": 4,      "arc": 6, "form": 1, "power": 7,  "race": "Dieu" },
+{ "name": "Kibito",                 "image": "Kibito.png",           "age": 4,      "arc": 6, "form": 1, "power": 6,  "race": "Dieu" },
+{ "name": "Grand Kaio Shin",        "image": "Grand Kaio Shin.png",           "age": 4,      "arc": 6, "form": 1, "power": 7,  "race": "Dieu" },
+{ "name": "Satan",                  "image": "Satan.png",           "age": 3,      "arc": 6, "form": 1, "power": 1,  "race": "Terrien" },
+
+{ "name": "Dabra",                  "image": "Dabra.png",           "age": 4,      "arc": 6, "form": 1, "power": 7,  "race": "Démon" },
+{ "name": "Pui Pui",                "image": "Pui Pui.png",           "age": 3,      "arc": 6, "form": 1, "power": 5,  "race": "Alien" },
+{ "name": "Yakon",                  "image": "Yakon.png",           "age": 3,      "arc": 6, "form": 1, "power": 5,  "race": "Alien" },
+
+{ "name": "Buu (Gentil)",           "image": "Buu (Gentil).png",           "age": 4,      "arc": 6, "form": 1, "power": 6,  "race": "Démon" },
+{ "name": "Buu (Mal)",              "image": "Buu (Mal).png",              "age": 4,      "arc": 6, "form": 1, "power": 6,  "race": "Démon" },
+{ "name": "Buu (Super)",            "image": "Buu (Super).png",            "age": 4,      "arc": 6, "form": 2, "power": 7,  "race": "Démon" },
+{ "name": "Buu (Gotenks)",          "image": "Buu (Gotenks).png",          "age": 4,      "arc": 6, "form": 3, "power": 8,  "race": "Démon" },
+{ "name": "Buu (Gohan)",            "image": "Buu (Gohan).png",            "age": 4,      "arc": 6, "form": 4, "power": 9,  "race": "Démon" },
+{ "name": "Kid Buu",                "image": "Kid Buu.png",                "age": 4,      "arc": 6, "form": 1, "power": 7,  "race": "Démon" },
+
+{ "name": "Uub",                    "image": "Uub.png",                "age": 2,      "arc": 7, "form": 1, "power": 7,  "race": "Terrien" },
+{ "name": "Majuub",                 "image": "Majuub.png",                "age": 2,      "arc": 7, "form": 2, "power": 7,  "race": "Fusion" },
+
+{ "name": "Baby Vegeta",            "image": "Baby Vegeta 3.png",          "age": 1,      "arc": 7, "form": 2, "power": 8,  "race": "Cyborg" },
+{ "name": "General Rild",           "image": "General Rild.png",           "age": 4,      "arc": 7, "form": 2, "power": 7,  "race": "Cyborg" },
+{ "name": "Super-C17",              "image": "Super-C17.png",              "age": 4,      "arc": 7, "form": 2, "power": 8,  "race": "Fusion" },
+{ "name": "Su Shenron",             "image": "Su Shenron.png",             "age": 4,      "arc": 7, "form": 1, "power": 8,  "race": "Démon" },
+{ "name": "San Shenron",            "image": "San Shenron.png",            "age": 4,      "arc": 7, "form": 1, "power": 8,  "race": "Démon" },
+{ "name": "Omega Shenron",          "image": "Omega Shenron.png",          "age": 4,      "arc": 7, "form": 2, "power": 10, "race": "Démon" },
+
+{ "name": "Bardock",                "image": "Bardock.png",                  "age": 3,      "arc": 0, "form": 1, "power": 3,  "race": "Saiyan" },
+{ "name": "Toma",                   "image": "Toma.png",                  "age": 3,      "arc": 0, "form": 1, "power": 3,  "race": "Saiyan" },
+{ "name": "Selipa",                 "image": "Selipa.png",                  "age": 3,      "arc": 0, "form": 1, "power": 3,  "race": "Saiyan" },
+{ "name": "Topeto",                 "image": "Topeto.png",                  "age": 3,      "arc": 0, "form": 1, "power": 3,  "race": "Saiyan" },
+{ "name": "Pumbukin",               "image": "Pumbukin.png",                  "age": 3,      "arc": 0, "form": 1, "power": 3,  "race": "Saiyan" },
+
+{ "name": "Garlic",                 "image": "Garlic.png",                  "age": 4,      "arc": 3, "form": 1, "power": 3,  "race": "Démon" },
+{ "name": "Dr. Willow",             "image": "Dr. Willow.png",                  "age": 4,      "arc": 3, "form": 1, "power": 3,  "race": "Cyborg" },
+{ "name": "Thales",                 "image": "Thales.png",                  "age": 3,      "arc": 3, "form": 1, "power": 4,  "race": "Saiyan" },
+{ "name": "Slug",                   "image": "Slug.png",            "age": 3,      "arc": 3, "form": 1, "power": 4,  "race": "Namek" },
+{ "name": "Sauzer",                 "image": "Sauzer.png",                  "age": 3,      "arc": 4, "form": 1, "power": 4,  "race": "Alien" },
+{ "name": "Cooler",                 "image": "Cooler.png",                  "age": 3,      "arc": 4, "form": 4, "power": 5,  "race": "Alien" },
+{ "name": "Metal Cooler",           "image": "Metal Cooler.png",                  "age": 3,      "arc": 4, "form": 4, "power": 5,  "race": "Cyborg" },
+
+{ "name": "Broly",                  "image": "Broly.png",                  "age": 3,      "arc": 5, "form": 2, "power": 7,  "race": "Saiyan" },
+{ "name": "Paragus",                "image": "Paragus.png",                  "age": 3,      "arc": 5, "form": 1, "power": 5,  "race": "Saiyan" },
+{ "name": "C-13",                   "image": "C-13.png",                  "age": 3,      "arc": 5, "form": 1, "power": 5,  "race": "Cyborg" },
+{ "name": "C-14",                   "image": "C-14.png",                  "age": 3,      "arc": 5, "form": 1, "power": 5,  "race": "Cyborg" },
+{ "name": "C-15",                   "image": "C-15.png",                  "age": 3,      "arc": 5, "form": 1, "power": 5,  "race": "Cyborg" },
+{ "name": "Super C-13",             "image": "Super C-13.png",                  "age": 3,      "arc": 5, "form": 2, "power": 6,  "race": "Fusion" },
+{ "name": "Bojack",                 "image": "Bojack.png",                  "age": 3,      "arc": 5, "form": 2, "power": 6,  "race": "Alien" },
+{ "name": "Zangya",                 "image": "Zangya.png",                  "age": 3,      "arc": 5, "form": 1, "power": 5,  "race": "Alien" },
+{ "name": "Paikuhan",               "image": "Paikuhan.png",                  "age": 3,      "arc": 6, "form": 1, "power": 6,  "race": "Alien" },
+{ "name": "Bio Broly",              "image": "Bio Broly.png",                  "age": 3,      "arc": 6, "form": 3, "power": 6,  "race": "Cyborg" },
+{ "name": "Tapion",                 "image": "Tapion.png",                  "age": 4,      "arc": 6, "form": 1, "power": 6,  "race": "Alien" },
+{ "name": "Hildegarn",              "image": "Hildegarn.png",                  "age": 4,      "arc": 6, "form": 1, "power": 7,  "race": "Démon" }
+]
