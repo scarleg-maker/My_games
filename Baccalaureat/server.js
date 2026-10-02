@@ -186,7 +186,7 @@ io.on('connection', (socket) => {
   socket.on('redraw-letter', () => {
     if (!game || game.phase !== 'ready') return;
     const oldLetter = game.letter;
-    game.players.forEach(p => { p.total -= REDRAW_PENALTY; });
+    game.players.forEach(p => { p.total = Math.max(0, p.total - REDRAW_PENALTY); });
     notify(`Nouvelle lettre demandée (lettre "${oldLetter}" écartée) : -${REDRAW_PENALTY} points pour tous les joueurs.`, 'penalty');
 
     game.letter = null;
@@ -277,7 +277,7 @@ io.on('connection', (socket) => {
           points: pts,
           results: game.roundResults[p.id] || {}
         });
-        p.total += pts;
+        p.total = Math.max(0, p.total + pts);
       });
       game.phase = 'round-summary';
       broadcastState();

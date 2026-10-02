@@ -161,6 +161,27 @@ tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
 
 @keyframes pulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.08);} }
 
+#masterTimerBox {
+  font-size: 1.8rem;
+  margin: 8px 0;
+}
+
+.answer-duplicate {
+  background: rgba(242,177,52,0.18);
+}
+.duplicate-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: var(--accent-2, #f2b134);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .overlay {
   position: fixed; inset: 0;
   background: rgba(8,10,16,0.94);

@@ -21,6 +21,7 @@ const nextRoundBtn = document.getElementById('nextRoundBtn');
 const endGameBtn = document.getElementById('endGameBtn');
 const masterLinkList = document.getElementById('masterLinkList');
 const activeStatus = document.getElementById('activeStatus');
+const masterTimerBox = document.getElementById('masterTimerBox');
 const toastBox = document.getElementById('toastBox');
 
 const drawOverlay = document.getElementById('drawOverlay');
@@ -33,6 +34,7 @@ const winnerName = document.getElementById('winnerName');
 let currentState = null;
 let scrollInterval = null;
 let countdownInterval = null;
+let masterTimerInterval = null;
 
 function renderLinks(players) {
   const base = `${location.protocol}//${location.host}`;
@@ -74,6 +76,24 @@ function clearOverlays() {
   countdownOverlay.style.display = 'none';
   if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+  if (masterTimerInterval) { clearInterval(masterTimerInterval); masterTimerInterval = null; }
+  masterTimerBox.style.display = 'none';
+  masterTimerBox.classList.remove('low');
+}
+
+function runMasterTimer(remainingMs) {
+  masterTimerBox.style.display = 'block';
+  const localEnd = Date.now() + remainingMs;
+  function tick() {
+    const remaining = Math.max(0, Math.ceil((localEnd - Date.now()) / 1000));
+    const mm = Math.floor(remaining / 60);
+    const ss = remaining % 60;
+    masterTimerBox.textContent = `${mm}:${ss.toString().padStart(2, '0')}`;
+    masterTimerBox.classList.toggle('low', remaining <= 10 && remaining > 0);
+    if (Date.now() >= localEnd) clearInterval(masterTimerInterval);
+  }
+  tick();
+  masterTimerInterval = setInterval(tick, 250);
 }
 
 function runLetterScramble(remainingMs) {
@@ -163,6 +183,7 @@ function render(state) {
       break;
     case 'active':
       activeStatus.textContent = `${state.playersDone.length} / ${state.players.length} joueur(s) ont terminé`;
+      runMasterTimer(state.timerRemainingMs);
       break;
     case 'reviewing':
       reviewPanel.style.display = 'block';
@@ -177,19 +198,38 @@ function render(state) {
   }
 }
 
+function normalizeAnswer(text) {
+  return (text || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // ignore les accents
+}
+
 function renderReview(data) {
   reviewThemeName.textContent = data.theme;
   reviewIdx.textContent = data.themeIndex + 1;
   reviewTotal.textContent = data.totalThemes;
 
+  // Compte les réponses identiques (hors réponses vides) pour aider l'arbitre à les repérer
+  const counts = {};
+  data.rows.forEach(row => {
+    const norm = normalizeAnswer(row.answer);
+    if (norm) counts[norm] = (counts[norm] || 0) + 1;
+  });
+
   const localResults = {};
   reviewBody.innerHTML = '';
   data.rows.forEach(row => {
     localResults[row.playerId] = null;
+    const norm = normalizeAnswer(row.answer);
+    const isDuplicate = norm && counts[norm] > 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.name}</td>
-      <td>${row.answer ? row.answer : '<i style="color:#777">(vide)</i>'}</td>
+      <td class="${isDuplicate ? 'answer-duplicate' : ''}">
+        ${row.answer ? row.answer : '<i style="color:#777">(vide)</i>'}
+        ${isDuplicate ? `<span class="duplicate-badge" title="Réponse identique à ${counts[norm] - 1} autre(s) joueur(s)">⚠ identique ×${counts[norm]}</span>` : ''}
+      </td>
       <td>
         <div class="status-btns" data-player="${row.playerId}">
           <button class="status-btn correct" data-status="correct">Correcte</button>
