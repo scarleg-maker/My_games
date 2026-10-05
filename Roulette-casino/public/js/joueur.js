@@ -1,8 +1,14 @@
 (function () {
-  const match = window.location.pathname.match(/joueur(\d+)\.html/i);
+  const match = window.location.pathname.match(/\/joueur(\d+)(?:\.html)?\/?$/i);   // /CODE/joueurN
   const playerNum = match ? parseInt(match[1], 10) : null;
 
-  const socket = io();
+  const socket = Salon.connect();
+  renderSalonTag();
+  function renderSalonTag() {
+    const tag = document.getElementById('salon-tag');
+    if (tag) tag.innerHTML = `Salon<b>${Salon.esc(Salon.code)}</b>`;
+    Salon.recent.add(Salon.code, 'joueur');
+  }
 
   const el = (id) => document.getElementById(id);
   const balanceAmountEl = el('balance-amount');
@@ -492,6 +498,22 @@
   socket.on('join-error', () => {
     waitingOverlay.classList.remove('hidden');
     setTimeout(tryJoin, 3000);
+  });
+
+  // Salon introuvable (serveur redemarre, salon pas encore recree par le maitre...) :
+  // on affiche une attente et on se reconnecte tout seul des que le salon reapparait.
+  let noRoomTimer = null;
+  socket.on('no-room', () => {
+    waitingOverlay.classList.remove('hidden');
+    el('waiting-text').textContent = `Le salon ${Salon.code} est introuvable pour le moment (le serveur a peut-etre redemarre). ` +
+      `Reconnexion automatique des que le maitre du jeu le relance...`;
+    clearInterval(noRoomTimer);
+    noRoomTimer = setInterval(async () => {
+      try {
+        const info = await (await fetch(Salon.api(), { cache: 'no-store' })).json();
+        if (info && info.exists) { clearInterval(noRoomTimer); socket.disconnect().connect(); }
+      } catch (e) { /* serveur injoignable : on reessaie */ }
+    }, 3000);
   });
 
   socket.on('joined', (data) => {

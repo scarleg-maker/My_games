@@ -13,6 +13,9 @@
   }
   .brand { display:flex; align-items:center; gap:14px; }
   .brand .display { font-size: 20px; }
+  .salon-tag { font-family:'Barlow Condensed'; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+    border:1px solid var(--felt-line); border-radius:999px; padding:3px 12px; }
+  .salon-tag b { font-family:'Cinzel'; color:var(--gold-bright); letter-spacing:.1em; margin-left:4px; }
   .player-name { font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); font-size: 13px;}
   .wallet { display:flex; align-items:center; gap:22px; }
   .wallet .amount { font-family:'Cinzel'; font-weight:700; font-size:22px; color: var(--gold-bright); }
@@ -323,6 +326,7 @@
 <div class="topbar">
   <div class="brand">
     <div class="display" style="font-size:13px; letter-spacing:.3em; color:var(--gold);">CASINO ROYAL</div>
+    <div class="salon-tag" id="salon-tag" title="Code du salon"></div>
   </div>
   <div class="wallet">
     <div class="auto-countdown-badge hidden" id="auto-countdown-badge">
@@ -465,7 +469,7 @@
 <div class="overlay" id="waiting-overlay">
   <div class="card">
     <h2 class="display">En attente...</h2>
-    <p style="color:var(--muted); margin-top:10px;">La partie n'a pas encore commence. Demandez au maitre du jeu de la lancer depuis sa table.</p>
+    <p id="waiting-text" style="color:var(--muted); margin-top:10px;">La partie n'a pas encore commence. Demandez au maitre du jeu de la lancer depuis sa table.</p>
   </div>
 </div>
 
@@ -486,6 +490,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/wheel.js"></script>
+<script src="/js/salon.js"></script>
 <script src="/js/joueur.js"></script>
 </body>
 </html>

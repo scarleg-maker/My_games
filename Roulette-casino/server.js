@@ -1,25 +1,31 @@
+// Casino Royal - roulette multi-joueurs, multi-salons.
+// Chaque salon (code court, ex. K7QF) contient une partie complete et independante :
+// ses joueurs, ses tirages, son mode automatique, ses sauvegardes.
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const R = require('./roulette');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 7777;
-const DATA_DIR = path.join(__dirname, 'data');
-const SAVE_FILE = path.join(DATA_DIR, 'joueurs.txt');
-const PARTIES_DIR = path.join(DATA_DIR, 'parties');
+// DATA_DIR peut pointer vers un disque persistant (ex. Render : /var/data)
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const SALONS_DIR = path.join(DATA_DIR, 'salons');
+const PUBLIC = path.join(__dirname, 'public');
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(SAVE_FILE)) fs.writeFileSync(SAVE_FILE, '');
-if (!fs.existsSync(PARTIES_DIR)) fs.mkdirSync(PARTIES_DIR, { recursive: true });
+const ROOM_IDLE_MS = Number(process.env.ROOM_IDLE_MS) || 6 * 3600 * 1000;      // salon sans personne depuis 6 h : supprime de la memoire
+const PURGE_INTERVAL_MS = Number(process.env.PURGE_INTERVAL_MS) || 10 * 60 * 1000;
+const MAX_ROOMS = 300;
 
-// Local network IPv4 addresses (excluding loopback) that other devices on
-// the same Wi-Fi/LAN can use to reach this server instead of "localhost".
+fs.mkdirSync(SALONS_DIR, { recursive: true });
+
+// Adresses IPv4 locales (hors loopback) utilisables par les autres appareils du reseau.
 function getLocalIPs() {
   const nets = os.networkInterfaces();
   const ips = [];
@@ -32,59 +38,115 @@ function getLocalIPs() {
 }
 
 // ---------------------------------------------------------------------------
-// Roulette constants
+// Codes de salon et dossiers de sauvegarde (un dossier par salon)
 // ---------------------------------------------------------------------------
-const WHEEL_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-const RED_NUMBERS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const CODE_RE = /^[A-Z0-9]{3,10}$/;
+const RESERVED = new Set(['API', 'CSS', 'JS', 'LIB', 'SOCKET', 'STATIC', 'DATA', 'JOUEUR', 'MAITRE', 'MASTER', 'ARBITRE', 'ACCUEIL', 'FAVICON', 'REJOINDRE']);
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // sans 0/O ni 1/I/L : evite les confusions a l'oral
+const cleanCode = c => String(c || '').trim().toUpperCase();
+const validCode = c => CODE_RE.test(c) && !RESERVED.has(c) && !/^JOUEUR\d+$/.test(c);
 
-function colorOf(n) {
-  if (n === 0) return 'green';
-  return RED_NUMBERS.has(n) ? 'red' : 'black';
+const salonDir = code => path.join(SALONS_DIR, code);
+const saveFileOf = code => path.join(salonDir(code), 'joueurs.txt');
+const partiesDirOf = code => path.join(salonDir(code), 'parties');
+const salonKnownOnDisk = code => fs.existsSync(salonDir(code));
+function ensureSalonDir(code) {
+  fs.mkdirSync(partiesDirOf(code), { recursive: true });
+  if (!fs.existsSync(saveFileOf(code))) fs.writeFileSync(saveFileOf(code), '');
 }
 
-// Every 2x2 "corner" (carre) block on the classic 3x12 table, referenced by
-// the 4 numbers it covers. Layout (row0=top=3,6,9..36 / row1=mid=2,5,8..35 / row2=bottom=1,4,7..34)
-function buildGridNumbers() {
-  const rows = [[], [], []]; // row0 top ... row2 bottom
-  for (let col = 0; col < 12; col++) {
-    const base = col * 3;
-    rows[2][col] = base + 1; // bottom
-    rows[1][col] = base + 2; // middle
-    rows[0][col] = base + 3; // top
+// Anciennes versions (un seul salon implicite) : data/joueurs.txt et data/parties/
+// sont deplaces vers le salon PRINCIPAL pour ne rien perdre.
+(function migrateLegacyData() {
+  const legacySave = path.join(DATA_DIR, 'joueurs.txt');
+  const legacyParties = path.join(DATA_DIR, 'parties');
+  let partyFiles = [];
+  try { partyFiles = fs.readdirSync(legacyParties).filter(f => f.endsWith('.json')); } catch { }
+  let hasSave = false;
+  try { hasSave = fs.statSync(legacySave).size > 0; } catch { }
+  if ((!hasSave && partyFiles.length === 0) || salonKnownOnDisk('PRINCIPAL')) return;
+  ensureSalonDir('PRINCIPAL');
+  if (hasSave) fs.renameSync(legacySave, saveFileOf('PRINCIPAL'));
+  partyFiles.forEach(f => fs.renameSync(path.join(legacyParties, f), path.join(partiesDirOf('PRINCIPAL'), f)));
+  console.log('  Anciennes sauvegardes deplacees vers le salon PRINCIPAL (creez un salon avec le code PRINCIPAL pour les retrouver).');
+})();
+
+// ---------------------------------------------------------------------------
+// Registre des salons : code -> { code, game, autoTimer, lastActivity }
+// ---------------------------------------------------------------------------
+function newGame() {
+  return {
+    started: false,
+    spinning: false,
+    players: {},       // num -> { num, name, balance, bets: {key:amount}, connected, socketId, ... }
+    history: [],       // { number, color }, le plus recent en premier (200 max)
+    autoMode: false,
+    autoIntervalSec: 20,
+    nextSpinAt: null   // epoch ms, ou null si aucun tirage automatique n'est programme
+  };
+}
+
+const rooms = new Map();
+const socketCount = code => { const s = io.sockets.adapter.rooms.get(code); return s ? s.size : 0; };
+
+function destroyRoom(room) {
+  room.destroyed = true;
+  clearTimeout(room.autoTimer);
+  rooms.delete(room.code);
+}
+// force : le registre est plein, on libere les salons vides (sauf ceux crees il y a moins d'une minute)
+function purgeRooms(force) {
+  const limit = force ? 60 * 1000 : ROOM_IDLE_MS;
+  for (const room of [...rooms.values()]) {
+    if (socketCount(room.code) === 0 && Date.now() - room.lastActivity > limit) destroyRoom(room);
   }
-  return rows;
 }
-const GRID = buildGridNumbers();
+setInterval(() => purgeRooms(false), PURGE_INTERVAL_MS).unref();
+
+// create=false : un salon deja connu sur le disque est recree a la demande
+// (utile apres un redemarrage du serveur) ; sinon on renvoie null.
+function getRoom(code, create) {
+  if (rooms.has(code)) return rooms.get(code);
+  if (!create && !salonKnownOnDisk(code)) return null;
+  if (rooms.size >= MAX_ROOMS) purgeRooms(true);
+  if (rooms.size >= MAX_ROOMS) return null;
+  ensureSalonDir(code);
+  const room = { code, game: newGame(), autoTimer: null, lastActivity: Date.now(), destroyed: false };
+  rooms.set(code, room);
+  return room;
+}
+
+function newCode() {
+  for (let len = 4; len <= 8; len++) {
+    for (let i = 0; i < 50; i++) {
+      let c = '';
+      for (let k = 0; k < len; k++) c += ALPHABET[(Math.random() * ALPHABET.length) | 0];
+      if (!rooms.has(c) && !salonKnownOnDisk(c) && validCode(c)) return c;
+    }
+  }
+  throw new Error('Impossible de generer un code de salon');
+}
 
 // ---------------------------------------------------------------------------
-// In-memory game state
+// Etat diffuse aux clients d'un salon
 // ---------------------------------------------------------------------------
-let game = {
-  started: false,
-  spinning: false,
-  players: {},   // num -> { num, name, balance, bets: {key:amount}, connected, socketId }
-  history: [],   // { number, color }, most recent first
-  autoMode: false,
-  autoIntervalSec: 20,
-  nextSpinAt: null // epoch ms, or null when no auto-spin is scheduled
-};
-let autoTimerHandle = null;
-
-function publicState() {
+function publicState(room) {
+  const game = room.game;
   return {
     started: game.started,
     spinning: game.spinning,
     players: Object.values(game.players).map(p => ({
       num: p.num, name: p.name, balance: p.balance,
-      connected: p.connected, totalBet: totalBetOf(p),
+      connected: p.connected, totalBet: R.totalBetOf(p),
       historyCount: (p.roundHistory || []).length
     })),
     history: game.history.slice(0, 25),
-    hotcold: computeStats()
+    hotcold: R.computeStats(game.history)
   };
 }
 
-function autoState() {
+function autoState(room) {
+  const game = room.game;
   return {
     started: game.started,
     autoMode: game.autoMode,
@@ -93,52 +155,60 @@ function autoState() {
   };
 }
 
-function broadcastAutoState() {
-  io.emit('auto-state', autoState());
-}
+const emitRoom = (room, event, payload) => io.to(room.code).emit(event, payload);
+const broadcastState = room => emitRoom(room, 'state-update', publicState(room));
+const broadcastAutoState = room => emitRoom(room, 'auto-state', autoState(room));
 
-// Arms (or disarms) the server-side auto-spin countdown. Safe to call anytime;
-// always clears any previously pending timer first so there is never more
-// than one in flight.
-function scheduleAutoSpin() {
-  clearTimeout(autoTimerHandle);
-  autoTimerHandle = null;
-  if (!game.autoMode || !game.started) {
+// Arme (ou desarme) le compte a rebours du tirage automatique du salon. Peut etre
+// appele a tout moment : annule toujours le minuteur precedent (jamais deux en meme temps).
+function scheduleAutoSpin(room) {
+  clearTimeout(room.autoTimer);
+  room.autoTimer = null;
+  const game = room.game;
+  if (room.destroyed || !game.autoMode || !game.started) {
     game.nextSpinAt = null;
-    broadcastAutoState();
+    broadcastAutoState(room);
     return;
   }
   game.nextSpinAt = Date.now() + game.autoIntervalSec * 1000;
-  broadcastAutoState();
-  autoTimerHandle = setTimeout(() => {
-    if (game.autoMode && game.started && !game.spinning) {
-      performSpin();
-    } else {
-      scheduleAutoSpin();
+  broadcastAutoState(room);
+  room.autoTimer = setTimeout(() => {
+    if (room.destroyed) return;
+    const g = room.game;
+    if (socketCount(room.code) === 0) {
+      // plus personne dans le salon : on met le mode automatique en pause
+      g.autoMode = false;
+      g.nextSpinAt = null;
+      broadcastAutoState(room);
+      return;
     }
+    if (g.autoMode && g.started && !g.spinning) performSpin(room);
+    else scheduleAutoSpin(room);
   }, game.autoIntervalSec * 1000);
 }
 
-// Resolves one full spin: picks a winning number, broadcasts the 3s wheel
-// animation, then after it lands, settles every player's bets and history.
-// Used by both the master's manual button and the auto-spin timer.
-function performSpin() {
-  if (!game.started || game.spinning) return;
-  clearTimeout(autoTimerHandle);
-  autoTimerHandle = null;
+// Un tirage complet : choisit le numero, diffuse l'animation de 3 s, puis regle les
+// mises de chaque joueur. Utilise par le bouton manuel et par le minuteur automatique.
+function performSpin(room) {
+  const game = room.game;
+  if (room.destroyed || !game.started || game.spinning) return;
+  clearTimeout(room.autoTimer);
+  room.autoTimer = null;
 
   game.spinning = true;
   const winNumber = Math.floor(Math.random() * 37);
-  const winColor = colorOf(winNumber);
-  io.emit('spin-start', { number: winNumber, color: winColor, duration: 3000 });
+  const winColor = R.colorOf(winNumber);
+  emitRoom(room, 'spin-start', { number: winNumber, color: winColor, duration: 3000 });
 
   setTimeout(() => {
+    if (room.destroyed || room.game !== game) return;   // salon supprime ou partie remplacee entre-temps
+
     Object.values(game.players).forEach(p => {
       const betsSnapshot = { ...p.bets };
-      const miseTotale = totalBetOf(p);
+      const miseTotale = R.totalBetOf(p);
       let winnings = 0;
       Object.entries(p.bets).forEach(([key, amount]) => {
-        winnings += evaluateBet(key, amount, winNumber);
+        winnings += R.evaluateBet(key, amount, winNumber);
       });
       p.balance += winnings;
       p.bets = {};
@@ -167,225 +237,86 @@ function performSpin() {
     if (game.history.length > 200) game.history.length = 200;
     game.spinning = false;
 
-    io.emit('spin-result', {
+    emitRoom(room, 'spin-result', {
       number: winNumber, color: winColor,
       history: game.history.slice(0, 25),
-      hotcold: computeStats()
+      hotcold: R.computeStats(game.history)
     });
-    broadcastState();
+    broadcastState(room);
 
-    if (game.autoMode) scheduleAutoSpin();
+    if (game.autoMode) scheduleAutoSpin(room);
   }, 3000);
 }
 
-function totalBetOf(p) {
-  return Object.values(p.bets).reduce((a, b) => a + b, 0);
-}
-
-// game.history is already capped to the last 200 draws (see performSpin).
-function computeStats() {
-  const hist = game.history;
-  const counts = new Array(37).fill(0);
-  let red = 0, black = 0, green = 0, even = 0, odd = 0;
-  const dozen = [0, 0, 0];
-
-  hist.forEach(h => {
-    counts[h.number]++;
-    if (h.number === 0) {
-      green++;
-    } else {
-      if (h.color === 'red') red++; else black++;
-      if (h.number % 2 === 0) even++; else odd++;
-      dozen[Math.ceil(h.number / 12) - 1]++;
-    }
-  });
-
-  const total = hist.length;
-  const pct = (n) => (total > 0 ? Math.round((n / total) * 1000) / 10 : 0);
-
-  const arr = counts.map((c, n) => ({ n, c }));
-  const hot = [...arr].sort((a, b) => b.c - a.c || a.n - b.n).slice(0, 5);
-  const cold = [...arr].sort((a, b) => a.c - b.c || a.n - b.n).slice(0, 5);
-
-  return {
-    hot, cold, counts,
-    percentages: {
-      total,
-      red, black, green,
-      redPct: pct(red), blackPct: pct(black), greenPct: pct(green),
-      even, odd, evenPct: pct(even), oddPct: pct(odd),
-      dozen1: dozen[0], dozen2: dozen[1], dozen3: dozen[2],
-      dozen1Pct: pct(dozen[0]), dozen2Pct: pct(dozen[1]), dozen3Pct: pct(dozen[2])
-    }
-  };
-}
-
-function broadcastState() {
-  io.emit('state-update', publicState());
-}
-
-// Position of a number (1-36) on the table: column 1-12, and row 0(top)/1(mid)/2(bottom)
-// matching GRID above (row0=3,6,9.. / row1=2,5,8.. / row2=1,4,7..)
-function numberPos(n) {
-  const col = Math.ceil(n / 3);
-  const rem = n - (col - 1) * 3;
-  const row = rem === 1 ? 2 : rem === 2 ? 1 : 0;
-  return { col, row };
-}
-
 // ---------------------------------------------------------------------------
-// Bet evaluation - full French/European roulette bet set
-// key formats:
-//   straight-<n>                     numero plein            x36
-//   split-<a>-<b>                    cheval (2 adjacents, incl. 0-1/0-2/0-3) x18
-//   trio-0-1-2 | trio-0-2-3          trio (3 numeros avec 0) x12
-//   street-<col>                     transversale simple (3)  x12
-//   doublestreet-<col>               transversale double (6)  x6
-//   corner-a-b-c-d                   carre (4 numeros)        x9
-//   column-<1|2|3>                   colonne (12 numeros)     x3
-//   dozen-<1|2|3>                    tiers / douzaine (12)    x3
-//   color-red | color-black          chance simple            x2
-//   parity-even | parity-odd         chance simple            x2
-//   range-low | range-high           manque(1-18)/passe(19-36) x2
-// ---------------------------------------------------------------------------
-function evaluateBet(key, amount, winNumber) {
-  const winColor = colorOf(winNumber);
-  if (key.startsWith('straight-')) {
-    const n = parseInt(key.split('-')[1], 10);
-    return n === winNumber ? amount * 36 : 0;
-  }
-  if (key.startsWith('split-')) {
-    const nums = key.split('-').slice(1).map(Number);
-    return nums.includes(winNumber) ? amount * 18 : 0;
-  }
-  if (key.startsWith('doublestreet-')) {
-    const col = parseInt(key.split('-')[1], 10);
-    const nums = [1,2,3,4,5,6].map(o => (col - 1) * 3 + o);
-    return nums.includes(winNumber) ? amount * 6 : 0;
-  }
-  if (key.startsWith('street-')) {
-    const col = parseInt(key.split('-')[1], 10);
-    const nums = [1,2,3].map(o => (col - 1) * 3 + o);
-    return nums.includes(winNumber) ? amount * 12 : 0;
-  }
-  if (key.startsWith('corner-')) {
-    const nums = key.split('-').slice(1).map(Number);
-    return nums.includes(winNumber) ? amount * 9 : 0;
-  }
-  if (key === 'trio-0-1-2') return [0, 1, 2].includes(winNumber) ? amount * 12 : 0;
-  if (key === 'trio-0-2-3') return [0, 2, 3].includes(winNumber) ? amount * 12 : 0;
-  if (key.startsWith('column-')) {
-    if (winNumber === 0) return 0;
-    const rem = parseInt(key.split('-')[1], 10); // 1, 2 or 3 (0 means "3")
-    const winRem = winNumber % 3 === 0 ? 3 : winNumber % 3;
-    return winRem === rem ? amount * 3 : 0;
-  }
-  if (key.startsWith('dozen-')) {
-    if (winNumber === 0) return 0;
-    const d = parseInt(key.split('-')[1], 10);
-    const inDozen = winNumber >= (d - 1) * 12 + 1 && winNumber <= d * 12;
-    return inDozen ? amount * 3 : 0;
-  }
-  if (key === 'color-red') return winColor === 'red' ? amount * 2 : 0;
-  if (key === 'color-black') return winColor === 'black' ? amount * 2 : 0;
-  if (key === 'parity-even') return (winNumber !== 0 && winNumber % 2 === 0) ? amount * 2 : 0;
-  if (key === 'parity-odd') return (winNumber !== 0 && winNumber % 2 === 1) ? amount * 2 : 0;
-  if (key === 'range-low') return (winNumber >= 1 && winNumber <= 18) ? amount * 2 : 0;
-  if (key === 'range-high') return (winNumber >= 19 && winNumber <= 36) ? amount * 2 : 0;
-  return 0;
-}
-
-function isValidBetKey(key) {
-  if (key.startsWith('straight-')) {
-    const n = parseInt(key.split('-')[1], 10);
-    return Number.isInteger(n) && n >= 0 && n <= 36;
-  }
-  if (key.startsWith('split-')) {
-    const parts = key.split('-').slice(1).map(Number);
-    if (parts.length !== 2) return false;
-    const [a, b] = parts;
-    if (a === 0 || b === 0) {
-      // 0 physically touches only 1, 2 and 3 on the table
-      const other = a === 0 ? b : a;
-      return a !== b && [1, 2, 3].includes(other);
-    }
-    if ([a, b].some(n => !Number.isInteger(n) || n < 1 || n > 36)) return false;
-    const pa = numberPos(a), pb = numberPos(b);
-    const sameColAdjacentRow = pa.col === pb.col && Math.abs(pa.row - pb.row) === 1;
-    const sameRowAdjacentCol = pa.row === pb.row && Math.abs(pa.col - pb.col) === 1;
-    return sameColAdjacentRow || sameRowAdjacentCol;
-  }
-  if (key.startsWith('doublestreet-')) {
-    const col = parseInt(key.split('-')[1], 10);
-    return Number.isInteger(col) && col >= 1 && col <= 11;
-  }
-  if (key.startsWith('street-')) {
-    const col = parseInt(key.split('-')[1], 10);
-    return Number.isInteger(col) && col >= 1 && col <= 12;
-  }
-  if (key.startsWith('corner-')) {
-    const parts = key.split('-').slice(1);
-    return parts.length === 4 && parts.every(p => Number.isInteger(parseInt(p, 10)));
-  }
-  if (key.startsWith('column-')) return ['column-1', 'column-2', 'column-3'].includes(key);
-  if (key.startsWith('dozen-')) return ['dozen-1', 'dozen-2', 'dozen-3'].includes(key);
-  if (key === 'trio-0-1-2' || key === 'trio-0-2-3') return true;
-  if (key === 'color-red' || key === 'color-black') return true;
-  if (key === 'parity-even' || key === 'parity-odd') return true;
-  if (key === 'range-low' || key === 'range-high') return true;
-  return false;
-}
-
-const CHIP_VALUES = [1, 2, 5, 10, 25, 50];
-
-// The three "chances simples" pairs that each cover the entire non-zero
-// range on their own: betting both sides at once is disallowed.
-const OPPOSITE_BETS = {
-  'color-red': 'color-black',
-  'color-black': 'color-red',
-  'parity-even': 'parity-odd',
-  'parity-odd': 'parity-even',
-  'range-low': 'range-high',
-  'range-high': 'range-low'
-};
-const BET_LABELS = {
-  'color-red': 'Rouge', 'color-black': 'Noir',
-  'parity-even': 'Pair', 'parity-odd': 'Impair',
-  'range-low': 'Manque (1-18)', 'range-high': 'Passe (19-36)'
-};
-
-// ---------------------------------------------------------------------------
-// Static files & explicit /joueurN.html routing
+// HTTP : pages, API des salons
 // ---------------------------------------------------------------------------
 app.use(express.json());
-app.use('/css', express.static(path.join(__dirname, 'public/css')));
-app.use('/js', express.static(path.join(__dirname, 'public/js')));
+app.use('/css', express.static(path.join(PUBLIC, 'css')));
+app.use('/js', express.static(path.join(PUBLIC, 'js')));
 
-app.get('/', (req, res) => res.redirect('/maitre.html'));
-app.get('/maitre.html', (req, res) => res.sendFile(path.join(__dirname, 'public/master.html')));
-app.get('/master.html', (req, res) => res.sendFile(path.join(__dirname, 'public/master.html'))); // English-name alias
-app.get(/^\/joueur(\d+)\.html$/, (req, res) => res.sendFile(path.join(__dirname, 'public/joueur.html')));
+const sendPage = (res, name) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(PUBLIC, name)); };
 
-// Server's LAN IP addresses + port, so the master screen can show players
-// how to reach it from another device instead of "localhost".
+app.get('/', (req, res) => sendPage(res, 'accueil.html'));
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+// anciennes adresses (un seul salon implicite) -> accueil
+app.get(['/maitre.html', '/master.html'], (req, res) => res.redirect('/'));
+app.get(/^\/joueur\d+\.html$/, (req, res) => res.redirect('/'));
+
+// Adresses reseau du serveur : pour que la page maitre donne un lien utilisable depuis un autre appareil.
 app.get('/api/server-info', (req, res) => {
   res.json({ port: PORT, ips: getLocalIPs() });
+});
+
+// Creation d'un salon : code aleatoire, ou code choisi (3 a 10 lettres/chiffres).
+// reuse:true => on (re)prend un salon existant ou on le recree avec le meme code.
+app.post('/api/salons', (req, res) => {
+  const body = req.body || {};
+  const code = body.code ? cleanCode(body.code) : newCode();
+  if (!validCode(code)) return res.json({ ok: false, error: 'Code invalide : 3 a 10 lettres ou chiffres' });
+  if (rooms.has(code) && !body.reuse) return res.json({ ok: false, error: `Le salon ${code} est deja en cours d'utilisation` });
+  const room = getRoom(code, true);
+  if (!room) return res.json({ ok: false, error: 'Le serveur est plein, reessayez dans quelques minutes' });
+  res.json({ ok: true, code });
+});
+
+// --- API d'un salon : /api/salons/:code/... --------------------------------
+const salonApi = express.Router();
+app.use('/api/salons/:code', (req, res, next) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide' });
+  req.salonCode = code;
+  next();
+}, salonApi);
+
+// Infos publiques : utilisees par la page d'accueil pour choisir son siege.
+salonApi.get('/', (req, res) => {
+  const room = getRoom(req.salonCode, false);
+  if (!room) return res.json({ exists: false, code: req.salonCode });
+  const g = room.game;
+  res.json({
+    exists: true, code: room.code, started: g.started, spinning: g.spinning,
+    players: Object.values(g.players).map(p => ({ num: p.num, name: p.name, connected: p.connected }))
+  });
 });
 
 function parseSoldeLine(line) {
   try {
     return JSON.parse(line);
   } catch (e) {
-    // backward compatibility with the old "name:balance" plain-text format
+    // compatibilite avec l'ancien format texte "nom:solde"
     const [savedName, savedBalance] = line.split(':');
     return savedName ? { name: savedName, balance: parseFloat(savedBalance), history: [] } : null;
   }
 }
+function readSoldeLines(code) {
+  try { return fs.readFileSync(saveFileOf(code), 'utf8').split('\n').filter(Boolean); } catch { return []; }
+}
 
-// Lookup a saved player (balance + last 25 rounds history) by name
-app.get('/api/solde/:nom', (req, res) => {
+// Solde sauvegarde d'un joueur (solde + 25 dernieres parties), par nom
+salonApi.get('/solde/:nom', (req, res) => {
   const nom = decodeURIComponent(req.params.nom).trim().toLowerCase();
-  const lines = fs.readFileSync(SAVE_FILE, 'utf8').split('\n').filter(Boolean);
+  const lines = readSoldeLines(req.salonCode);
   for (let i = lines.length - 1; i >= 0; i--) {
     const rec = parseSoldeLine(lines[i]);
     if (rec && rec.name && rec.name.trim().toLowerCase() === nom) {
@@ -395,68 +326,58 @@ app.get('/api/solde/:nom', (req, res) => {
   res.json({ found: false });
 });
 
-// List every distinct saved player name, with their most recent balance
-// (the save file is append-only: later lines override earlier ones for the
-// same name), so the master screen can offer them for management/deletion.
-app.get('/api/soldes', (req, res) => {
-  const lines = fs.readFileSync(SAVE_FILE, 'utf8').split('\n').filter(Boolean);
-  const byName = new Map(); // lower-case name -> record (last one wins)
-  lines.forEach(line => {
+// Tous les joueurs sauvegardes du salon (le fichier est en ajout : la derniere ligne gagne)
+salonApi.get('/soldes', (req, res) => {
+  const byName = new Map();
+  readSoldeLines(req.salonCode).forEach(line => {
     const rec = parseSoldeLine(line);
     if (rec && rec.name) byName.set(rec.name.trim().toLowerCase(), rec);
   });
-  const soldes = [...byName.values()].map(rec => ({
-    name: rec.name, balance: rec.balance, historyCount: (rec.history || []).length
-  }));
-  res.json({ soldes });
+  res.json({
+    soldes: [...byName.values()].map(rec => ({ name: rec.name, balance: rec.balance, historyCount: (rec.history || []).length }))
+  });
 });
 
-// Delete every saved line for a given player name.
-app.delete('/api/solde/:nom', (req, res) => {
+salonApi.delete('/solde/:nom', (req, res) => {
   const nom = decodeURIComponent(req.params.nom).trim().toLowerCase();
-  const lines = fs.readFileSync(SAVE_FILE, 'utf8').split('\n').filter(Boolean);
+  const lines = readSoldeLines(req.salonCode);
   const kept = lines.filter(line => {
     const rec = parseSoldeLine(line);
     return !(rec && rec.name && rec.name.trim().toLowerCase() === nom);
   });
-  fs.writeFileSync(SAVE_FILE, kept.length ? kept.join('\n') + '\n' : '');
+  if (lines.length) fs.writeFileSync(saveFileOf(req.salonCode), kept.length ? kept.join('\n') + '\n' : '');
   res.json({ success: true, removed: lines.length - kept.length });
 });
 
-// List saved full-game snapshots (numbers drawn + all players' balances),
-// newest first, so the master screen can offer them for reloading.
-app.get('/api/parties', (req, res) => {
-  try {
-    const files = fs.readdirSync(PARTIES_DIR).filter(f => f.endsWith('.json'));
-    const parties = files.map(filename => {
-      try {
-        const data = JSON.parse(fs.readFileSync(path.join(PARTIES_DIR, filename), 'utf8'));
-        return {
-          filename,
-          label: data.label || filename,
-          savedAt: data.savedAt || null,
-          playerCount: Array.isArray(data.players) ? data.players.length : 0,
-          drawCount: Array.isArray(data.gameHistory) ? data.gameHistory.length : 0
-        };
-      } catch (e) {
-        return null;
-      }
-    }).filter(Boolean).sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-    res.json({ parties });
-  } catch (e) {
-    res.json({ parties: [] });
-  }
+// Parties completes sauvegardees du salon (les plus recentes d'abord)
+salonApi.get('/parties', (req, res) => {
+  const dir = partiesDirOf(req.salonCode);
+  let files = [];
+  try { files = fs.readdirSync(dir).filter(f => f.endsWith('.json')); } catch { }
+  const parties = files.map(filename => {
+    try {
+      const data = JSON.parse(fs.readFileSync(path.join(dir, filename), 'utf8'));
+      return {
+        filename,
+        label: data.label || filename,
+        savedAt: data.savedAt || null,
+        playerCount: Array.isArray(data.players) ? data.players.length : 0,
+        drawCount: Array.isArray(data.gameHistory) ? data.gameHistory.length : 0
+      };
+    } catch (e) {
+      return null;
+    }
+  }).filter(Boolean).sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+  res.json({ parties });
 });
 
-// Delete a saved full-game snapshot by filename.
-app.delete('/api/parties/:filename', (req, res) => {
+salonApi.delete('/parties/:filename', (req, res) => {
   const filename = req.params.filename;
-  const filePath = path.join(PARTIES_DIR, filename);
-  // guard against path traversal outside PARTIES_DIR
-  if (!filePath.startsWith(PARTIES_DIR) || !filename.endsWith('.json')) {
+  if (filename !== path.basename(filename) || !filename.endsWith('.json')) {
     return res.status(400).json({ success: false, message: 'Nom de fichier invalide.' });
   }
   try {
+    const filePath = path.join(partiesDirOf(req.salonCode), filename);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     res.json({ success: true });
   } catch (e) {
@@ -464,46 +385,61 @@ app.delete('/api/parties/:filename', (req, res) => {
   }
 });
 
+// --- Pages d'un salon --------------------------------------------------------
+//   /CODE                 page maitre du salon
+//   /CODE/rejoindre       page d'accueil, code pre-rempli (lien / QR code des joueurs)
+//   /CODE/joueurN         ecran du joueur N (".html" accepte aussi)
+const pageCode = req => cleanCode(req.params[0]);
+app.get(/^\/([A-Za-z0-9]{3,10})\/joueur(\d+)(?:\.html)?\/?$/, (req, res, next) => validCode(pageCode(req)) ? sendPage(res, 'joueur.html') : next());
+app.get(/^\/([A-Za-z0-9]{3,10})\/rejoindre\/?$/, (req, res, next) => validCode(pageCode(req)) ? sendPage(res, 'accueil.html') : next());
+app.get(/^\/([A-Za-z0-9]{3,10})\/?$/, (req, res, next) => validCode(pageCode(req)) ? sendPage(res, 'master.html') : next());
+
 // ---------------------------------------------------------------------------
-// Socket.io
+// Socket.io : une connexion = une page ouverte dans un salon (?room=CODE)
 // ---------------------------------------------------------------------------
 io.on('connection', (socket) => {
-  socket.emit('state-update', publicState());
-  socket.emit('auto-state', autoState());
+  const code = cleanCode(socket.handshake.query && socket.handshake.query.room);
+  const room = validCode(code) ? getRoom(code, false) : null;
+  if (!room) {
+    // salon inconnu (serveur redemarre, salon expire...) : la page decide quoi faire
+    socket.emit('no-room', { code });
+    return;
+  }
+  socket.join(room.code);
+  socket.data.roomCode = room.code;
+  room.lastActivity = Date.now();
+  socket.onAny(() => { room.lastActivity = Date.now(); });
 
-  // ---- Master: create a brand-new game -----------------------------------
+  socket.emit('state-update', publicState(room));
+  socket.emit('auto-state', autoState(room));
+
+  const makePlayer = (num, p) => ({
+    num,
+    name: (p.name || `Joueur ${num}`).trim(),
+    balance: Math.max(0, Number(p.balance) || 0),
+    bets: {},
+    lastBets: {},
+    connected: false,
+    socketId: null,
+    roundHistory: Array.isArray(p.history || p.roundHistory) ? (p.history || p.roundHistory).slice(0, 25) : []
+  });
+
+  // ---- Maitre : nouvelle partie ---------------------------------------------
   socket.on('create-game', (payload) => {
     const players = Array.isArray(payload?.players) ? payload.players : [];
     const newPlayers = {};
-    players.forEach((p, i) => {
-      const num = i + 1;
-      const history = Array.isArray(p.history) ? p.history.slice(0, 25) : [];
-      newPlayers[num] = {
-        num,
-        name: (p.name || `Joueur ${num}`).trim(),
-        balance: Math.max(0, Number(p.balance) || 0),
-        bets: {},
-        lastBets: {},
-        connected: false,
-        socketId: null,
-        roundHistory: history
-      };
-    });
-    clearTimeout(autoTimerHandle);
-    autoTimerHandle = null;
-    game = {
-      started: true, spinning: false, players: newPlayers, history: [],
-      autoMode: false, autoIntervalSec: 20, nextSpinAt: null
-    };
+    players.forEach((p, i) => { newPlayers[i + 1] = makePlayer(i + 1, p); });
+    clearTimeout(room.autoTimer);
+    room.autoTimer = null;
+    room.game = { ...newGame(), started: true, players: newPlayers };
     socket.emit('game-created', { count: players.length });
-    broadcastState();
-    broadcastAutoState();
+    broadcastState(room);
+    broadcastAutoState(room);
   });
 
-  // ---- Master: save a full snapshot of the current game (all players'
-  // balances + round history, plus the actual sequence of numbers drawn so
-  // the chauds/froids and percentage stats can be restored too) ------------
+  // ---- Maitre : sauvegarder la partie complete (soldes + historiques + tirages) ---
   socket.on('save-game', ({ label }) => {
+    const game = room.game;
     if (!game.started) return;
     const snapshot = {
       savedAt: new Date().toISOString(),
@@ -517,17 +453,23 @@ io.on('connection', (socket) => {
     };
     const filename = `partie-${Date.now()}.json`;
     try {
-      fs.writeFileSync(path.join(PARTIES_DIR, filename), JSON.stringify(snapshot, null, 2));
+      ensureSalonDir(room.code);
+      fs.writeFileSync(path.join(partiesDirOf(room.code), filename), JSON.stringify(snapshot, null, 2));
       socket.emit('game-saved', { filename, label: snapshot.label });
     } catch (e) {
-      socket.emit('game-save-error', { message: 'Impossible d\'ecrire la sauvegarde sur le disque.' });
+      socket.emit('game-save-error', { message: "Impossible d'ecrire la sauvegarde sur le disque." });
     }
   });
 
-  // ---- Master: reload a previously saved full game session ----------------
+  // ---- Maitre : recharger une partie sauvegardee du salon ----------------------
   socket.on('load-game', ({ filename }) => {
-    const filePath = path.join(PARTIES_DIR, String(filename || ''));
-    if (!filePath.startsWith(PARTIES_DIR) || !fs.existsSync(filePath)) {
+    const name = String(filename || '');
+    if (name !== path.basename(name) || !name.endsWith('.json')) {
+      socket.emit('load-game-error', { message: 'Sauvegarde introuvable.' });
+      return;
+    }
+    const filePath = path.join(partiesDirOf(room.code), name);
+    if (!fs.existsSync(filePath)) {
       socket.emit('load-game-error', { message: 'Sauvegarde introuvable.' });
       return;
     }
@@ -541,55 +483,34 @@ io.on('connection', (socket) => {
 
     const newPlayers = {};
     (Array.isArray(snapshot.players) ? snapshot.players : []).forEach((p, i) => {
-      const num = i + 1;
-      newPlayers[num] = {
-        num,
-        name: (p.name || `Joueur ${num}`).trim(),
-        balance: Math.max(0, Number(p.balance) || 0),
-        bets: {},
-        lastBets: {},
-        connected: false,
-        socketId: null,
-        roundHistory: Array.isArray(p.roundHistory) ? p.roundHistory.slice(0, 25) : []
-      };
+      newPlayers[i + 1] = makePlayer(i + 1, p);
     });
-
-    clearTimeout(autoTimerHandle);
-    autoTimerHandle = null;
-    game = {
-      started: true, spinning: false, players: newPlayers,
-      history: Array.isArray(snapshot.gameHistory) ? snapshot.gameHistory.slice(0, 200) : [],
-      autoMode: false, autoIntervalSec: 20, nextSpinAt: null
+    clearTimeout(room.autoTimer);
+    room.autoTimer = null;
+    room.game = {
+      ...newGame(), started: true, players: newPlayers,
+      history: Array.isArray(snapshot.gameHistory) ? snapshot.gameHistory.slice(0, 200) : []
     };
     socket.emit('game-created', { count: Object.keys(newPlayers).length });
-    broadcastState();
-    broadcastAutoState();
+    broadcastState(room);
+    broadcastAutoState(room);
   });
 
-  // ---- Master: add a new player to the currently running game (e.g. right
-  // after reloading a saved party, or anytime mid-game). Shares the same
-  // game.history / stats as everyone else since those are game-wide, not
-  // per-player. ------------------------------------------------------------
+  // ---- Maitre : ajouter un joueur a la partie en cours -------------------------
+  // (les statistiques sont communes a toute la partie : le nouveau les voit aussitot)
   socket.on('add-player', ({ name, balance, history }) => {
+    const game = room.game;
     if (!game.started) return;
     const existingNums = Object.keys(game.players).map(Number);
     const num = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
-    game.players[num] = {
-      num,
-      name: (name || `Joueur ${num}`).trim(),
-      balance: Math.max(0, Number(balance) || 0),
-      bets: {},
-      lastBets: {},
-      connected: false,
-      socketId: null,
-      roundHistory: Array.isArray(history) ? history.slice(0, 25) : []
-    };
+    game.players[num] = makePlayer(num, { name, balance, history });
     socket.emit('player-added', { num, name: game.players[num].name });
-    broadcastState();
+    broadcastState(room);
   });
 
-  // ---- Player: join their numbered screen ---------------------------------
+  // ---- Joueur : rejoindre son ecran numerote ------------------------------------
   socket.on('join-player', ({ num }) => {
+    const game = room.game;
     const p = game.players[num];
     if (!game.started || !p) {
       socket.emit('join-error', { message: "La partie n'a pas encore commence. Attendez que le maitre du jeu demarre la partie." });
@@ -600,25 +521,25 @@ io.on('connection', (socket) => {
     socket.data.playerNum = num;
     socket.emit('joined', {
       num: p.num, name: p.name, balance: p.balance, bets: p.bets,
-      history: game.history.slice(0, 25), hotcold: computeStats(),
-      chipValues: CHIP_VALUES, grid: GRID, spinning: game.spinning,
+      history: game.history.slice(0, 25), hotcold: R.computeStats(game.history),
+      chipValues: R.CHIP_VALUES, grid: R.GRID, spinning: game.spinning,
       roundHistoryCount: (p.roundHistory || []).length,
       lastBets: p.lastBets || {}
     });
-    broadcastState();
+    broadcastState(room);
   });
 
-  // ---- Player: place a bet --------------------------------------------------
+  // ---- Joueur : miser ---------------------------------------------------------
   socket.on('place-bet', ({ key, amount }) => {
-    const num = socket.data.playerNum;
-    const p = game.players[num];
+    const game = room.game;
+    const p = game.players[socket.data.playerNum];
     if (!p || game.spinning) return;
-    if (!isValidBetKey(key)) return;
-    if (!CHIP_VALUES.includes(amount)) return;
-    const opposite = OPPOSITE_BETS[key];
+    if (!R.isValidBetKey(key)) return;
+    if (!R.CHIP_VALUES.includes(amount)) return;
+    const opposite = R.OPPOSITE_BETS[key];
     if (opposite && p.bets[opposite]) {
       socket.emit('bet-refused', {
-        message: `Impossible de miser sur ${BET_LABELS[key]} et ${BET_LABELS[opposite]} en meme temps.`
+        message: `Impossible de miser sur ${R.BET_LABELS[key]} et ${R.BET_LABELS[opposite]} en meme temps.`
       });
       return;
     }
@@ -629,13 +550,13 @@ io.on('connection', (socket) => {
     p.balance -= amount;
     p.bets[key] = (p.bets[key] || 0) + amount;
     socket.emit('bet-update', { balance: p.balance, bets: p.bets });
-    broadcastState();
+    broadcastState(room);
   });
 
-  // ---- Player: repeat the exact bets from their last round --------------------
+  // ---- Joueur : rejouer les mises du tour precedent -------------------------------
   socket.on('repeat-last-bet', () => {
-    const num = socket.data.playerNum;
-    const p = game.players[num];
+    const game = room.game;
+    const p = game.players[socket.data.playerNum];
     if (!p || game.spinning) return;
     if (!p.lastBets || Object.keys(p.lastBets).length === 0) return;
     const total = Object.values(p.lastBets).reduce((a, b) => a + b, 0);
@@ -648,82 +569,87 @@ io.on('connection', (socket) => {
       p.bets[key] = (p.bets[key] || 0) + amount;
     });
     socket.emit('bet-update', { balance: p.balance, bets: p.bets });
-    broadcastState();
+    broadcastState(room);
   });
 
-  // ---- Player: remove a single bet spot (the "gomme", one click at a time) ---
+  // ---- Joueur : effacer une mise (la gomme) ---------------------------------------
   socket.on('remove-bet', ({ key }) => {
-    const num = socket.data.playerNum;
-    const p = game.players[num];
+    const game = room.game;
+    const p = game.players[socket.data.playerNum];
     if (!p || game.spinning) return;
     const amount = p.bets[key];
     if (!amount) return;
     p.balance += amount;
     delete p.bets[key];
     socket.emit('bet-update', { balance: p.balance, bets: p.bets });
-    broadcastState();
+    broadcastState(room);
   });
 
-  // ---- Player: clear all their bets at once ----------------------------------
+  // ---- Joueur : effacer toutes ses mises -------------------------------------------
   socket.on('clear-bets', () => {
-    const num = socket.data.playerNum;
-    const p = game.players[num];
+    const game = room.game;
+    const p = game.players[socket.data.playerNum];
     if (!p || game.spinning) return;
-    const refund = totalBetOf(p);
-    p.balance += refund;
+    p.balance += R.totalBetOf(p);
     p.bets = {};
     socket.emit('bet-update', { balance: p.balance, bets: p.bets });
-    broadcastState();
+    broadcastState(room);
   });
 
-  // ---- Player: save balance + history to disk and leave -----------------------
+  // ---- Joueur : sauvegarder solde + historique dans le salon et quitter -------------
   socket.on('save-quit', () => {
-    const num = socket.data.playerNum;
-    const p = game.players[num];
+    const game = room.game;
+    const p = game.players[socket.data.playerNum];
     if (!p) return;
     const record = {
       name: p.name,
       balance: p.balance,
       history: (p.roundHistory || []).slice(0, 25)
     };
-    fs.appendFileSync(SAVE_FILE, JSON.stringify(record) + '\n');
+    ensureSalonDir(room.code);
+    fs.appendFileSync(saveFileOf(room.code), JSON.stringify(record) + '\n');
     p.connected = false;
     socket.emit('quit-confirmed');
-    broadcastState();
+    broadcastState(room);
   });
 
-  // ---- Master: top up a player's balance (e.g. after going bankrupt) ----------
+  // ---- Maitre : recharger un joueur a sec ------------------------------------------
   socket.on('add-funds', ({ num, amount }) => {
+    const game = room.game;
     const p = game.players[num];
     const amt = Number(amount);
     if (!p || !Number.isFinite(amt) || amt <= 0) return;
     p.balance += amt;
     const s = io.sockets.sockets.get(p.socketId);
     if (s) s.emit('balance-update', { balance: p.balance });
-    broadcastState();
+    broadcastState(room);
   });
 
-  // ---- Master: launch a spin -------------------------------------------------
-  socket.on('spin-request', () => performSpin());
+  // ---- Maitre : lancer un tirage ------------------------------------------------------
+  socket.on('spin-request', () => performSpin(room));
 
-  // ---- Master: enable/disable auto-spin mode and its interval ----------------
+  // ---- Maitre : mode automatique (10, 20 ou 30 s) --------------------------------------
   socket.on('set-auto-mode', ({ enabled, interval }) => {
+    const game = room.game;
     if (!game.started) return;
     game.autoMode = !!enabled;
     const iv = Number(interval);
     if ([10, 20, 30].includes(iv)) game.autoIntervalSec = iv;
-    scheduleAutoSpin();
+    scheduleAutoSpin(room);
   });
 
   socket.on('disconnect', () => {
-    const num = socket.data.playerNum;
-    if (num && game.players[num] && game.players[num].socketId === socket.id) {
-      game.players[num].connected = false;
-      broadcastState();
+    const p = room.game.players[socket.data.playerNum];
+    if (p && p.socketId === socket.id) {
+      p.connected = false;
+      broadcastState(room);
     }
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`Casino Roulette lance : http://localhost:${PORT}/maitre.html`);
+  console.log('\n  Casino Roulette lance !');
+  console.log(`  Accueil (creer ou rejoindre un salon) : http://localhost:${PORT}/`);
+  for (const ip of getLocalIPs()) console.log(`  Depuis le reseau local                : http://${ip}:${PORT}/`);
+  console.log('');
 });

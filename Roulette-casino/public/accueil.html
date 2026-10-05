@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casino Royal — Roulette</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  body { padding: 28px 18px 60px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  header.top { text-align: center; margin-bottom: 28px; }
+  header.top .kicker { font-size: 14px; letter-spacing: .3em; color: var(--gold); }
+  header.top h1 { font-size: clamp(30px, 6vw, 46px); margin-top: 4px; }
+  header.top .sub { color: var(--muted); font-family:'Barlow Condensed'; letter-spacing:.15em; text-transform:uppercase; font-size:13px; margin-top:8px; }
+  header.top p { color: var(--muted); max-width: 36rem; margin: 14px auto 0; line-height: 1.5; }
+
+  .cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .card h2 { font-size: 21px; }
+  .card p.lead { color: var(--muted); margin: 0 0 16px; line-height: 1.45; }
+  .row { display: flex; gap: 10px; }
+  .row input { flex: 1; min-width: 0; }
+  input[type="text"] {
+    background: rgba(0,0,0,.28); border: 1px solid var(--felt-line); color: var(--cream);
+    padding: 11px 13px; border-radius: 8px; font-family: 'Manrope'; font-size: 15px; width: 100%;
+  }
+  input:focus { outline: 1.5px solid var(--gold); }
+  #code, #mycode { text-transform: uppercase; letter-spacing: .15em; font-family: 'Cinzel'; font-weight: 700; font-size: 18px; }
+  .btn.big { width: 100%; padding: 15px 20px; font-size: 16px; }
+  details { margin-top: 16px; color: var(--muted); }
+  details summary { cursor: pointer; font-size: 14px; }
+  details .row { margin-top: 10px; }
+  .small { font-size: 12px; color: var(--muted); font-family: 'Barlow Condensed'; letter-spacing: .03em; line-height: 1.4; }
+
+  #found { margin-top: 16px; }
+  .found-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .found-head strong { font-family: 'Cinzel'; font-size: 20px; letter-spacing: .1em; color: var(--gold-bright); }
+  .err { color: #e07a86; margin: 0; }
+  .seats { display: grid; gap: 8px; margin-top: 12px; }
+  .seat {
+    display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+    border: 1px solid var(--felt-line); background: rgba(0,0,0,.22); border-radius: 10px;
+    padding: 11px 14px; color: inherit; text-decoration: none;
+  }
+  .seat:hover { border-color: var(--gold); }
+  .seat .who { flex: 1; font-weight: 700; }
+  .seat .who small { display: block; color: var(--muted); font-weight: 400; font-family: 'Barlow Condensed'; font-size: 13px; }
+  .seat.taken { opacity: .6; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #7a2f2f; flex: none; }
+  .dot.on { background: #2fbf6a; box-shadow: 0 0 6px #2fbf6a; }
+
+  .recent { margin-top: 26px; }
+  .recent h2 { font-size: 15px; }
+  .recent ul { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 10px; }
+  .recent li { display: inline-flex; border: 1px solid var(--felt-line); border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.25); }
+  .recent li a { padding: 7px 8px 7px 15px; color: var(--cream); text-decoration: none; }
+  .recent li a strong { font-family: 'Cinzel'; letter-spacing: .08em; color: var(--gold-bright); margin-right: 6px; }
+  .recent li button { border: 0; background: none; color: var(--muted); padding: 0 12px; }
+  .recent li button:hover { color: #e07a86; }
+
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #5a1620; color: #fff;
+    padding: 12px 20px; border-radius: 10px; box-shadow: 0 8px 24px var(--shadow); display: none; z-index: 10; }
+  @media (max-width: 760px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="display kicker">CASINO ROYAL</div>
+    <h1 class="display">Roulette Europeenne</h1>
+    <div class="sub">Simulation multi-joueurs</div>
+    <p>Chaque groupe joue dans son propre <b>salon</b> : autant de parties separees que vous voulez, en meme temps, sans se gener.</p>
+  </header>
+
+  <div class="cards">
+    <section class="card">
+      <h2 class="display">Creer un salon</h2>
+      <p class="lead">Vous devenez le maitre du jeu : un salon est cree avec un code a donner aux joueurs (ou un QR code a scanner).</p>
+      <button class="btn big" id="create">Creer un salon</button>
+      <details>
+        <summary>Choisir mon propre code</summary>
+        <div class="row"><input type="text" id="mycode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn-outline" id="createCustom">Creer</button></div>
+        <p class="small" style="margin:8px 0 0">3 a 10 lettres ou chiffres. Pratique pour retrouver le meme salon (et ses sauvegardes) d'une fois sur l'autre.</p>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2 class="display">Rejoindre un salon</h2>
+      <p class="lead">Entrez le code donne par le maitre du jeu, puis choisissez votre siege.</p>
+      <div class="row"><input type="text" id="code" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" id="join">Rejoindre</button></div>
+      <div id="found"></div>
+    </section>
+  </div>
+
+  <div class="recent" id="recent"></div>
+</div>
+<div id="toast" role="alert"></div>
+
+<script src="/js/salon.js"></script>
+<script>
+const found = document.getElementById('found'), codeInput = document.getElementById('code'), toastEl = document.getElementById('toast');
+let watching = null, watchTimer = null, toastTimer = null;
+
+function toastErr(t) {
+  toastEl.textContent = t; toastEl.style.display = 'block';
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (toastEl.style.display = 'none'), 3500);
+}
+
+async function createRoom(code) {
+  try {
+    const r = await (await fetch('/api/salons', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(code ? { code } : {}) })).json();
+    if (!r.ok) return toastErr(r.error);
+    Salon.recent.add(r.code, 'maitre');
+    location.href = '/' + r.code;
+  } catch { toastErr('Serveur injoignable'); }
+}
+document.getElementById('create').onclick = () => createRoom();
+document.getElementById('createCustom').onclick = () => {
+  const c = document.getElementById('mycode').value.trim();
+  if (!c) return toastErr('Indiquez un code');
+  createRoom(c);
+};
+document.getElementById('mycode').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('createCustom').click(); });
+
+async function roomInfo(code) {
+  try { return await (await fetch('/api/salons/' + encodeURIComponent(code), { cache: 'no-store' })).json(); }
+  catch { return null; }
+}
+
+async function lookup(code, quiet) {
+  code = code.trim().toUpperCase();
+  if (!code) { if (!quiet) toastErr('Indiquez le code du salon'); return; }
+  const info = await roomInfo(code);
+  if (!info) { if (!quiet) toastErr('Serveur injoignable'); return; }
+  if (!info.exists) {
+    watching = null; clearInterval(watchTimer);
+    found.innerHTML = `<p class="err">Aucun salon « ${Salon.esc(code)} ». Verifiez le code avec le maitre du jeu.</p>`;
+    return;
+  }
+  watching = code;
+  Salon.recent.add(code, 'joueur');
+  renderSeats(info);
+  clearInterval(watchTimer);
+  watchTimer = setInterval(async () => { if (watching) { const i = await roomInfo(watching); if (i && i.exists) renderSeats(i); } }, 3000);
+  renderRecent();
+}
+
+function renderSeats(info) {
+  let h = `<div class="found-head"><span>Salon <strong>${Salon.esc(info.code)}</strong></span></div>`;
+  if (!info.started || info.players.length === 0) {
+    h += `<p class="small" style="margin:10px 0 0">La partie n'a pas encore commence : le maitre du jeu doit la lancer. Cette liste se met a jour toute seule.</p>`;
+  } else {
+    h += '<p class="small" style="margin:10px 0 0">Touchez votre siege :</p><div class="seats">' + info.players.map(p => {
+      const sub = p.connected ? 'deja connecte' : 'libre';
+      return `<a class="seat ${p.connected ? 'taken' : ''}" href="/${Salon.esc(info.code)}/joueur${p.num}">
+        <span class="dot${p.connected ? ' on' : ''}"></span>
+        <span class="who">${Salon.esc(p.name)}<small>Siege ${p.num} — ${sub}</small></span><span>→</span></a>`;
+    }).join('') + '</div>';
+  }
+  found.innerHTML = h;
+}
+
+document.getElementById('join').onclick = () => lookup(codeInput.value);
+codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(codeInput.value); });
+
+function renderRecent() {
+  const box = document.getElementById('recent'), list = Salon.recent.list();
+  if (!list.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<h2 class="display">Salons recents sur cet appareil</h2><ul>' + list.map(x =>
+    `<li><a href="${x.role === 'maitre' ? '/' + Salon.esc(x.code) : '/' + Salon.esc(x.code) + '/rejoindre'}"><strong>${Salon.esc(x.code)}</strong><span class="small">${x.role === 'maitre' ? 'maitre' : 'joueur'}</span></a>
+     <button data-rm="${Salon.esc(x.code)}" title="Retirer de la liste" aria-label="Retirer ${Salon.esc(x.code)}">✕</button></li>`).join('') + '</ul>';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rm]');
+  if (b) { Salon.recent.remove(b.dataset.rm); renderRecent(); }
+});
+renderRecent();
+
+// adresse /CODE/rejoindre (lien ou QR code du maitre) : le code est deja rempli
+if (Salon.code && /\/rejoindre\/?$/.test(location.pathname)) {
+  codeInput.value = Salon.code;
+  lookup(Salon.code, true);
+}
+</script>
+</body>
+</html>

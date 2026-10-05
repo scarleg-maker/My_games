@@ -1,5 +1,5 @@
 (function () {
-  const socket = io();
+  const socket = Salon.connect();
 
   const setupScreen = document.getElementById('setup-screen');
   const dashboardScreen = document.getElementById('dashboard-screen');
@@ -22,6 +22,9 @@
   const hotRow = document.getElementById('hot-row');
   const coldRow = document.getElementById('cold-row');
   const serverIpBadge = document.getElementById('server-ip-badge');
+  const noRoomBanner = document.getElementById('noroom-banner');
+  const noRoomText = document.getElementById('noroom-text');
+  const recreateBtn = document.getElementById('recreate-btn');
   const resumeScreen = document.getElementById('resume-screen');
   const partiesList = document.getElementById('parties-list');
   const soldesScreen = document.getElementById('soldes-screen');
@@ -44,39 +47,51 @@
     return RED_SET.has(n) ? 'red' : 'black';
   }
 
-  // -------- Server LAN IP (so links work from other devices even when the
-  // master's own browser shows "localhost") --------
-  let networkOrigin = null; // e.g. "http://192.168.1.42:7777", or null if none found
+  // -------- Invitation du salon : code, lien /CODE/rejoindre et QR code --------
+  // Si la page maitre est ouverte via "localhost", on utilise l'adresse reseau du serveur
+  // pour que le lien, le QR code et les liens des joueurs fonctionnent depuis un autre appareil.
+  let networkOrigin = null;   // ex. "http://192.168.1.42:7777", ou null si aucune adresse reseau
+  let knownPlayerCount = 0;
+
+  const isLocalHostName = () => ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const inviteOrigin = () => (isLocalHostName() && networkOrigin) ? networkOrigin : window.location.origin;
+
+  function renderInvite() {
+    const url = `${inviteOrigin()}/${Salon.code}/rejoindre`;
+    const note = (isLocalHostName() && !networkOrigin)
+      ? '<div class="invite-note">Adresse reseau non detectee : seuls les appareils de cet ordinateur pourront rejoindre.</div>' : '';
+    serverIpBadge.innerHTML = `
+      <div class="invite">
+        <div class="qr" id="qr"></div>
+        <div class="invite-text">
+          <div class="invite-code">Salon <b>${Salon.esc(Salon.code)}</b></div>
+          <div class="invite-help">Les joueurs scannent le QR code, ouvrent ce lien, ou tapent le code sur la page d'accueil :</div>
+          <div class="invite-url"><code>${Salon.esc(url)}</code> <button class="copy-ip-btn" id="copy-invite-btn">copier</button></div>
+          ${note}
+          <a class="invite-home" href="/">Changer de salon</a>
+        </div>
+      </div>`;
+    Salon.drawQR(document.getElementById('qr'), url);
+    const copyBtn = document.getElementById('copy-invite-btn');
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(url);
+      copyBtn.textContent = 'copie !';
+      setTimeout(() => (copyBtn.textContent = 'copier'), 1200);
+    });
+  }
+  renderInvite();
+  Salon.recent.add(Salon.code, 'maitre');
 
   (async function loadServerInfo() {
     try {
-      const r = await fetch('/api/server-info');
-      const data = await r.json();
-      const port = data.port;
+      const data = await (await fetch('/api/server-info')).json();
       const ips = data.ips || [];
-      if (ips.length > 0) {
-        networkOrigin = `http://${ips[0]}:${port}`;
-      }
-      if (ips.length === 0) {
-        serverIpBadge.innerHTML = `Adresse reseau non detectee — utilisez <b>localhost</b> uniquement sur cet ordinateur.`;
-      } else if (ips.length === 1) {
-        serverIpBadge.innerHTML = `Adresse pour les autres appareils : <b>${ips[0]}:${port}</b> <button class="copy-ip-btn" id="copy-ip-btn">copier</button>`;
-      } else {
-        serverIpBadge.innerHTML = `Adresses disponibles : ` +
-          ips.map(ip => `<b>${ip}:${port}</b>`).join(' &nbsp;ou&nbsp; ') +
-          ` <button class="copy-ip-btn" id="copy-ip-btn">copier la 1ere</button>`;
-      }
-      const copyBtn = document.getElementById('copy-ip-btn');
-      if (copyBtn) {
-        copyBtn.addEventListener('click', () => {
-          navigator.clipboard?.writeText(`${ips[0]}:${port}`);
-          copyBtn.textContent = 'copie !';
-          setTimeout(() => { copyBtn.textContent = ips.length > 1 ? 'copier la 1ere' : 'copier'; }, 1200);
-        });
-      }
+      if (ips.length > 0) networkOrigin = `http://${ips[0]}:${data.port}`;
     } catch (e) {
       console.error('Impossible de recuperer /api/server-info', e);
     }
+    renderInvite();
+    if (knownPlayerCount > 0) { lastLinksCount = 0; renderLinks(knownPlayerCount); }
   })();
 
   // -------- resume a previously saved full game --------
@@ -87,7 +102,7 @@
 
   async function loadPartiesList() {
     try {
-      const r = await fetch('/api/parties');
+      const r = await fetch(Salon.api('/parties'));
       const data = await r.json();
       const parties = data.parties || [];
       if (parties.length === 0) {
@@ -101,7 +116,7 @@
         item.className = 'party-item';
         item.innerHTML = `
           <div class="party-info">
-            <div class="party-label">${p.label}</div>
+            <div class="party-label">${Salon.esc(p.label)}</div>
             <div class="party-meta">${fmtDate(p.savedAt)} — ${p.playerCount} joueur(s), ${p.drawCount} tirage(s) memorise(s)</div>
           </div>
           <div class="btn-group">
@@ -115,7 +130,7 @@
         item.querySelector('.delete-btn').addEventListener('click', async () => {
           if (!confirm(`Supprimer definitivement la sauvegarde "${p.label}" ?`)) return;
           try {
-            await fetch('/api/parties/' + encodeURIComponent(p.filename), { method: 'DELETE' });
+            await fetch(Salon.api('/parties/' + encodeURIComponent(p.filename)), { method: 'DELETE' });
             loadPartiesList();
           } catch (e) { alert('Erreur lors de la suppression.'); }
         });
@@ -129,7 +144,7 @@
 
   async function loadSoldesList() {
     try {
-      const r = await fetch('/api/soldes');
+      const r = await fetch(Salon.api('/soldes'));
       const data = await r.json();
       const soldes = data.soldes || [];
       if (soldes.length === 0) {
@@ -143,7 +158,7 @@
         item.className = 'party-item';
         item.innerHTML = `
           <div class="party-info">
-            <div class="party-label">${s.name}</div>
+            <div class="party-label">${Salon.esc(s.name)}</div>
             <div class="party-meta">${s.balance.toFixed(2)} € — ${s.historyCount} partie(s) en memoire</div>
           </div>
           <button class="btn-danger delete-solde-btn">Supprimer</button>
@@ -151,7 +166,7 @@
         item.querySelector('.delete-solde-btn').addEventListener('click', async () => {
           if (!confirm(`Supprimer definitivement le solde sauvegarde de "${s.name}" ?`)) return;
           try {
-            await fetch('/api/solde/' + encodeURIComponent(s.name), { method: 'DELETE' });
+            await fetch(Salon.api('/solde/' + encodeURIComponent(s.name)), { method: 'DELETE' });
             loadSoldesList();
           } catch (e) { alert('Erreur lors de la suppression.'); }
         });
@@ -234,7 +249,7 @@
         const name = row.querySelector('.p-name').value.trim();
         if (!name) return;
         try {
-          const r = await fetch('/api/solde/' + encodeURIComponent(name));
+          const r = await fetch(Salon.api('/solde/' + encodeURIComponent(name)));
           const data = await r.json();
           if (data.found) {
             row.querySelector('.p-balance').value = data.balance;
@@ -276,10 +291,9 @@
     if (count === lastLinksCount) return;
     lastLinksCount = count;
     linksBox.innerHTML = '';
-    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-    const origin = (isLocalhost && networkOrigin) ? networkOrigin : window.location.origin;
+    const origin = inviteOrigin();
     for (let i = 1; i <= count; i++) {
-      const url = `${origin}/joueur${i}.html`;
+      const url = `${origin}/${Salon.code}/joueur${i}`;
       const item = document.createElement('div');
       item.className = 'link-item';
       item.innerHTML = `<a href="${url}" target="_blank">Ecran Joueur ${i}</a><button data-url="${url}">copier</button>`;
@@ -292,14 +306,25 @@
     }
   }
 
-  socket.on('game-created', ({ count }) => {
+  let dashboardShown = false;
+  function showDashboard(count) {
+    dashboardShown = true;
     setupScreen.style.display = 'none';
     resumeScreen.classList.add('hidden');
     soldesScreen.classList.add('hidden');
     dashboardScreen.style.display = 'block';
-    lastLinksCount = 0; // force a full rebuild even if the count happens to match
+    lastLinksCount = 0; // reconstruit toujours les liens, meme si le nombre de joueurs est identique
     renderLinks(count);
-  });
+  }
+  function showSetup() {
+    dashboardShown = false;
+    dashboardScreen.style.display = 'none';
+    setupScreen.style.display = '';
+    loadPartiesList();
+    loadSoldesList();
+  }
+
+  socket.on('game-created', ({ count }) => showDashboard(count));
 
   socket.on('player-added', ({ num, name }) => {
     addPlayerHint.textContent = `${name} a rejoint la table (Joueur ${num}).`;
@@ -313,7 +338,7 @@
     const name = addPlayerNameInput.value.trim();
     if (!name) return;
     try {
-      const r = await fetch('/api/solde/' + encodeURIComponent(name));
+      const r = await fetch(Salon.api('/solde/' + encodeURIComponent(name)));
       const data = await r.json();
       if (data.found) {
         addPlayerBalanceInput.value = data.balance;
@@ -336,6 +361,11 @@
   });
 
   socket.on('state-update', (state) => {
+    noRoomBanner.classList.add('hidden');
+    knownPlayerCount = state.players.length;
+    // la page suit l'etat reel du salon : partie en cours -> tableau de bord, sinon configuration
+    if (state.started && !dashboardShown) showDashboard(state.players.length);
+    else if (!state.started && dashboardShown) showSetup();
     renderLinks(state.players.length);
     playersTbody.innerHTML = '';
     state.players.forEach(p => {
@@ -344,7 +374,7 @@
       if (isBankrupt) tr.className = 'bankrupt';
       tr.innerHTML = `
         <td><span class="dot ${p.connected ? 'on' : 'off'}"></span></td>
-        <td>${p.name}${isBankrupt ? ' ⚠️' : ''}</td>
+        <td>${Salon.esc(p.name)}${isBankrupt ? ' ⚠️' : ''}</td>
         <td>${p.balance.toFixed(2)} €</td>
         <td>${p.totalBet.toFixed(2)} €</td>
         <td>
@@ -439,5 +469,30 @@
     updateCountdownDisplay();
     clearInterval(countdownTick);
     if (nextSpinAt) countdownTick = setInterval(updateCountdownDisplay, 250);
+  });
+  // -------- Salon introuvable (serveur redemarre, mise en veille Render...) --------
+  // Les parties vivent en memoire : apres un redemarrage le salon n'existe plus.
+  // Le maitre peut le recreer avec le meme code ; les pages des joueurs se reconnectent seules.
+  socket.on('no-room', () => {
+    noRoomText.innerHTML = `Le salon <b>${Salon.esc(Salon.code)}</b> n'existe plus sur le serveur (redemarrage ou mise en veille ?). ` +
+      `Les parties en cours sont perdues, mais vos <b>sauvegardes</b> restent disponibles si le disque est conserve.`;
+    noRoomBanner.classList.remove('hidden');
+  });
+
+  recreateBtn.addEventListener('click', async () => {
+    recreateBtn.disabled = true;
+    try {
+      const r = await (await fetch('/api/salons', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: Salon.code, reuse: true })
+      })).json();
+      if (!r.ok) { alert(r.error || 'Impossible de recreer le salon.'); return; }
+      noRoomBanner.classList.add('hidden');
+      socket.disconnect().connect();     // se reconnecte au salon fraichement recree
+    } catch (e) {
+      alert('Serveur injoignable.');
+    } finally {
+      recreateBtn.disabled = false;
+    }
   });
 })();

@@ -1,7 +1,9 @@
 # 🎰 Casino Royal — Roulette multi-joueurs
 
-Simulation de roulette de casino en reseau local : un ecran "Maitre du jeu"
-et un ecran par joueur (sur des appareils/onglets separes).
+Simulation de roulette de casino : un ecran "Maitre du jeu" et un ecran par
+joueur (sur des appareils/onglets separes). Chaque groupe joue dans son propre
+**salon** : autant de parties separees que l'on veut, en meme temps, sur le
+meme serveur (voir "Salons" ci-dessous).
 
 ## Installation
 
@@ -13,27 +15,33 @@ npm install
 npm start
 ```
 
-Le serveur demarre sur **http://localhost:7777**.
+Le serveur demarre sur **http://localhost:7777** (page d'accueil : creer ou
+rejoindre un salon).
 
 ### Sous Windows
 
 Un raccourci `Lancer_Roulette.bat` est fourni : double-cliquez dessus pour
 installer les dependances (au premier lancement), demarrer le serveur et
-ouvrir automatiquement la table du maitre dans le navigateur. Gardez la
+ouvrir automatiquement la page d'accueil dans le navigateur. Gardez la
 fenetre noire ouverte pendant la partie ; fermez-la pour arreter le serveur.
 
 ## Utilisation
 
-1. Sur l'ordinateur du maitre du jeu, ouvrez **http://localhost:7777/maitre.html**
-   — l'adresse reseau a communiquer aux autres appareils (ex: `192.168.1.20:7777`)
-   est automatiquement detectee et affichee en haut de la page.
+1. Sur l'ordinateur du maitre du jeu, ouvrez **http://localhost:7777/** et
+   cliquez sur **Creer un salon** : vous arrivez sur la table du maitre
+   (`/K7QF`, le code change a chaque salon). En haut de la page, un encart
+   donne le code du salon, le lien d'invitation et un **QR code** ; l'adresse
+   reseau du serveur (ex: `192.168.1.20`) est detectee automatiquement.
 2. Indiquez le nombre de joueurs, leur nom et leur mise de depart (vous pouvez
-   recuperer le solde sauvegarde d'une partie precedente via "Charger solde").
-3. Cliquez sur **Demarrer la partie**. Des liens apparaissent, un par joueur —
-   ils utilisent automatiquement l'adresse reseau detectee (et non
-   `localhost`) afin de fonctionner directement depuis un autre appareil.
-4. Donnez chaque lien au joueur correspondant (autre onglet, autre telephone,
-   autre ordinateur du meme reseau Wi-Fi).
+   recuperer le solde sauvegarde d'une partie precedente via "Charger solde"),
+   puis cliquez sur **Demarrer la partie**. Des liens apparaissent, un par
+   joueur (`/K7QF/joueur1`, `/K7QF/joueur2`...).
+3. Les joueurs rejoignent le salon de l'une de ces facons : scanner le **QR
+   code**, ouvrir le lien d'invitation `/K7QF/rejoindre`, ou taper le code sur
+   la page d'accueil. Ils touchent ensuite leur siege (leur nom) pour ouvrir
+   leur ecran. Le maitre peut aussi leur envoyer directement le lien de leur
+   ecran.
+4. (Reseau local) tous les appareils doivent etre sur le meme Wi-Fi.
 5. Chaque joueur choisit un jeton (1, 2, 5, 10, 25 ou 50 €) puis clique sur la
    table pour miser : numero plein, cheval (y compris 0-1, 0-2, 0-3), trio
    (0-1-2 ou 0-2-3), transversale simple/double, carre, tiers, colonne,
@@ -60,6 +68,53 @@ fenetre noire ouverte pendant la partie ; fermez-la pour arreter le serveur.
    l'ecran de chaque joueur pendant 3 secondes, avec le gain juste en dessous
    si le joueur a gagne quelque chose sur ce tour.
 
+## Salons
+
+Chaque salon est identifie par un **code court** (ex. `K7QF`) et contient une
+partie complete et **independante** : ses joueurs, ses tirages, ses
+statistiques, son mode automatique et ses sauvegardes. Plusieurs salons
+peuvent tourner en meme temps sans se gener.
+
+| Adresse | Page |
+|---|---|
+| `/` | Accueil : creer un salon, rejoindre avec un code, salons recents |
+| `/K7QF` | Table du maitre du salon |
+| `/K7QF/rejoindre` | Invitation (lien / QR code) : code pre-rempli, choix du siege |
+| `/K7QF/joueur2` | Ecran du joueur 2 |
+
+- **Code choisi** : sur l'accueil, "Choisir mon propre code" (3 a 10 lettres
+  ou chiffres, ex. `FAMILLE`) pour retrouver le meme salon d'une fois sur
+  l'autre. Un code deja utilise par un salon en cours est refuse.
+- **Sauvegardes par salon** : les soldes, historiques et parties sauvegardes
+  sont rangees dans `data/salons/<CODE>/`. Un autre salon ne les voit pas, et
+  en recreant un salon avec le meme code on les retrouve.
+- **Menage automatique** : un salon sans aucune page ouverte depuis 6 heures
+  est supprime de la memoire (ses sauvegardes sur disque restent). Si plus
+  personne n'est connecte quand un tirage automatique devait avoir lieu, le
+  mode automatique est mis en pause.
+- **Salons recents** : l'accueil garde la liste des salons ouverts sur
+  l'appareil (maitre ou joueur), un clic pour y retourner.
+- **Anciennes sauvegardes** : si vous venez d'une version sans salons, vos
+  anciens fichiers (`data/joueurs.txt`, `data/parties/`) sont deplaces au
+  demarrage dans le salon `PRINCIPAL` : creez un salon avec ce code pour les
+  retrouver.
+- Les anciennes adresses `/maitre.html` et `/joueurN.html` redirigent vers
+  l'accueil.
+- **Acces** : le code du salon donne acces a sa page maitre (`/CODE`). Ne le
+  communiquez qu'aux participants ; les joueurs n'ont besoin que du lien
+  `/CODE/rejoindre` ou de leur ecran `/CODE/joueurN`.
+
+### Hebergement (Render...)
+
+Lancement : `npm start` (ou `node server.js`) ; le port est lu dans la
+variable `PORT`. Les parties vivent **en memoire** : si le service se met en
+veille (plan gratuit) ou redemarre, les parties en cours disparaissent. La
+page du maitre propose alors **"Recreer le salon avec le meme code"**, et les
+ecrans des joueurs se reconnectent tout seuls. Les sauvegardes sur disque ne
+survivent que si le disque est persistant : sur Render, ajoutez un disque
+persistant et definissez la variable `DATA_DIR` (ex. `/var/data`) ; sans
+disque, les sauvegardes sont perdues a chaque redeploiement.
+
 ## Mode automatique
 
 Sur la table du maitre, activez la case **"Mode automatique"** et choisissez
@@ -72,10 +127,12 @@ minuteur redemarre alors simplement a zero pour le prochain tirage.
 
 ## Sauvegarde des soldes et de l'historique (par joueur)
 
+(Toutes les sauvegardes decrites ci-dessous sont propres au salon courant.)
+
 A tout moment (et automatiquement propose quand le solde atteint 0€), un
 joueur peut cliquer sur **Sauvegarder & quitter**. Son nom, son solde et ses
 **25 dernieres parties jouees** (numero sorti, mise, gain, perte nette) sont
-enregistres dans `data/joueurs.txt`. Le maitre du jeu peut ensuite recharger
+enregistres dans `data/salons/<CODE>/joueurs.txt`. Le maitre du jeu peut ensuite recharger
 ce solde et cet historique pour une prochaine partie en tapant le meme nom et
 en cliquant sur "Charger solde" — l'historique continue alors de s'accumuler
 (toujours plafonne aux 25 parties les plus recentes).
@@ -90,7 +147,8 @@ rouge/noir, pair/impair, tiers).
 
 - **Pour sauvegarder** : sur la table du maitre, une fois la partie en cours,
   donnez un nom (optionnel) a la sauvegarde puis cliquez sur
-  **"💾 Sauvegarder la partie"**. Un fichier est cree dans `data/parties/`.
+  **"💾 Sauvegarder la partie"**. Un fichier est cree dans
+  `data/salons/<CODE>/parties/`.
 - **Pour reprendre** : au demarrage de l'application (ou en revenant a
   l'ecran d'accueil), un encart **"Reprendre une partie sauvegardee"**
   liste toutes les sauvegardes disponibles avec leur date, le nombre de
@@ -114,14 +172,14 @@ Deux facons de supprimer des sauvegardes :
   l'ecran d'accueil du maitre, avec un bouton **"Supprimer"** pour chacun.
 
 **Manuellement, en editant les fichiers** (si besoin, ou hors ligne) :
-- Les parties completes sont dans `data/parties/` — supprimez le(s)
-  fichier(s) `.json` voulu(s).
-- Les soldes individuels sont dans `data/joueurs.txt` — ouvrez ce fichier
-  texte et supprimez la ou les lignes du joueur concerne.
+- Les parties completes sont dans `data/salons/<CODE>/parties/` — supprimez
+  le(s) fichier(s) `.json` voulu(s).
+- Les soldes individuels sont dans `data/salons/<CODE>/joueurs.txt` — ouvrez
+  ce fichier texte et supprimez la ou les lignes du joueur concerne.
 
 Sous Termux :
 ```bash
-cd ~/roulette-casino/data
+cd ~/roulette-casino/data/salons/K7QF
 rm parties/partie-XXXXXXXXXX.json   # une sauvegarde de partie precise
 nano joueurs.txt                     # puis supprimez la ligne voulue
 ```
