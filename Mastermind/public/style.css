@@ -56,6 +56,14 @@ h1, h2, h3 {
   color: var(--encre);
 }
 
+.top h1 #code-salon {
+  color: var(--rose-fonce);
+  letter-spacing: 6px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 10px;
+  padding: 2px 10px;
+}
+
 .top p {
   color: #6a3a52;
   max-width: 480px;
@@ -331,6 +339,49 @@ h1, h2, h3 {
   font-size: 20px;
   letter-spacing: 6px;
   color: var(--rose-fonce);
+}
+
+.salon-liens {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.salon-lien {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: var(--jaune);
+  border: 2px solid var(--rose-fonce);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.salon-lien .qr {
+  flex: none;
+  width: 112px;
+  height: 112px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--jaune);
+}
+
+.salon-lien-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.salon-lien-texte strong {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--encre);
+}
+
+.salon-lien-texte a {
+  color: var(--rose-fonce);
+  font-size: 13px;
+  word-break: break-all;
 }
 
 a.retour {

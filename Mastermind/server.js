@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,7 +14,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ----------------------------------------------------------
-   Utilitaires
+   Utilitaires de jeu
 ---------------------------------------------------------- */
 
 // Génère un nombre secret de n chiffres, sans zéro en tête.
@@ -41,7 +42,7 @@ function genererSecret(nbChiffres, repetition) {
 }
 
 // Évalue une proposition par rapport à un secret.
-// difficulte 'facile'  -> tableau de 'vert' | 'orange' | 'rouge' par position
+// difficulte 'facile'    -> tableau de 'vert' | 'orange' | 'rouge' par position
 // difficulte 'difficile' -> tableau de 'vert' | 'rouge' par position (présence uniquement)
 function evaluer(secretArr, guessArr, difficulte) {
   const n = secretArr.length;
@@ -54,7 +55,6 @@ function evaluer(secretArr, guessArr, difficulte) {
     return resultat;
   }
 
-  // Mode facile : vert / orange / rouge avec gestion des doublons.
   const restant = [...secretArr];
   for (let i = 0; i < n; i++) {
     if (guessArr[i] === secretArr[i]) {
@@ -82,11 +82,9 @@ function estGagne(resultat) {
 function parseGuess(str, nbChiffres) {
   if (!/^[0-9]+$/.test(str)) return null;
   if (str.length !== nbChiffres) return null;
-  const arr = str.split('').map(Number);
-  return arr;
+  return str.split('').map(Number);
 }
 
-// Vérifie qu'une proposition respecte la règle de répétition de la partie.
 function respecteRepetition(arr, repetition) {
   if (repetition !== 'unique') return true;
   return new Set(arr).size === arr.length;
@@ -97,54 +95,157 @@ function nettoyerNom(nom, defaut) {
   return propre || defaut;
 }
 
+function lanUrls() {
+  const urls = [];
+  for (const infos of Object.values(os.networkInterfaces())) {
+    for (const i of infos || []) {
+      if (i.family === 'IPv4' && !i.internal) urls.push(`http://${i.address}:${PORT}`);
+    }
+  }
+  return urls;
+}
+
 /* ----------------------------------------------------------
-   État global (jeu local à un seul salon à la fois)
+   Salons : chaque partie (solo ou duel) vit dans son propre
+   salon, identifié par un code court, indépendant des autres.
 ---------------------------------------------------------- */
 
-let soloGame = null;
-let duoGame = null;
+const salons = new Map(); // code -> salon
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O ni 1/I/L, pour éviter les confusions
+const CODE_RE = /^[A-Z2-9]{4}$/;
+const RESERVED = new Set(['API', 'STATIC']);
+const SALON_IDLE_MS = 6 * 3600 * 1000; // un salon inactif depuis 6h est supprimé
 
-function nouvelEtatDuoPublic() {
-  if (!duoGame) return null;
+const cleanCode = (c) => String(c || '').trim().toUpperCase();
+const validCode = (c) => CODE_RE.test(c) && !RESERVED.has(c);
+
+function nouveauCode() {
+  for (let i = 0; i < 100; i++) {
+    let c = '';
+    for (let k = 0; k < 4; k++) c += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+    if (!salons.has(c) && validCode(c)) return c;
+  }
+  throw new Error('Impossible de générer un code de salon');
+}
+
+function creerSalon(config) {
+  const code = nouveauCode();
+  const salon = {
+    code,
+    mode: config.mode, // 'solo' | 'duo'
+    digits: config.digits,
+    difficulty: config.difficulty,
+    repetition: config.repetition,
+    creeLe: Date.now(),
+    derniereActivite: Date.now(),
+    connectes: new Set(), // sockets connectés à ce salon (toutes pages confondues)
+    solo: null,
+    duo: null,
+  };
+
+  if (config.mode === 'solo') {
+    salon.solo = {
+      secret: genererSecret(config.digits, config.repetition),
+      historique: [],
+      tentatives: 0,
+      gagne: false,
+      nom: nettoyerNom(config.name, 'Joueur'),
+    };
+  } else {
+    const noms = Array.isArray(config.names) ? config.names : [];
+    salon.duo = {
+      status: 'choix', // choix -> jeu -> fini
+      turn: null,
+      winner: null,
+      players: {
+        joueur1: { secret: null, ready: false, historique: [], nom: nettoyerNom(noms[0], 'Joueur 1') },
+        joueur2: { secret: null, ready: false, historique: [], nom: nettoyerNom(noms[1], 'Joueur 2') },
+      },
+    };
+  }
+
+  salons.set(code, salon);
+  return salon;
+}
+
+function toucher(salon) {
+  salon.derniereActivite = Date.now();
+}
+
+function purgerSalons() {
+  const maintenant = Date.now();
+  for (const [code, salon] of salons) {
+    if (salon.connectes.size === 0 && maintenant - salon.derniereActivite > SALON_IDLE_MS) {
+      salons.delete(code);
+    }
+  }
+}
+setInterval(purgerSalons, 30 * 60 * 1000);
+
+/* ----------------------------------------------------------
+   États publics diffusés aux clients (jamais le secret adverse)
+---------------------------------------------------------- */
+
+function infoSalon(salon) {
+  const base = {
+    code: salon.code,
+    mode: salon.mode,
+    digits: salon.digits,
+    difficulty: salon.difficulty,
+    repetition: salon.repetition,
+  };
+  if (salon.mode === 'duo') {
+    const { joueur1, joueur2 } = salon.duo.players;
+    base.duo = {
+      status: salon.duo.status,
+      turn: salon.duo.turn,
+      winner: salon.duo.winner,
+      joueur1: { nom: joueur1.nom, ready: joueur1.ready, pret: joueur1.ready },
+      joueur2: { nom: joueur2.nom, ready: joueur2.ready, pret: joueur2.ready },
+    };
+  }
+  return base;
+}
+
+function etatDuoPublic(salon) {
+  const d = salon.duo;
   return {
-    status: duoGame.status,
-    digits: duoGame.digits,
-    difficulty: duoGame.difficulty,
-    repetition: duoGame.repetition,
-    turn: duoGame.turn,
-    winner: duoGame.winner,
-    joueur1: {
-      nom: duoGame.players.joueur1.nom,
-      ready: duoGame.players.joueur1.ready,
-      historique: duoGame.players.joueur1.historique,
-    },
-    joueur2: {
-      nom: duoGame.players.joueur2.nom,
-      ready: duoGame.players.joueur2.ready,
-      historique: duoGame.players.joueur2.historique,
-    },
+    code: salon.code,
+    digits: salon.digits,
+    difficulty: salon.difficulty,
+    repetition: salon.repetition,
+    status: d.status,
+    turn: d.turn,
+    winner: d.winner,
+    joueur1: { nom: d.players.joueur1.nom, ready: d.players.joueur1.ready, historique: d.players.joueur1.historique },
+    joueur2: { nom: d.players.joueur2.nom, ready: d.players.joueur2.ready, historique: d.players.joueur2.historique },
   };
 }
 
-// Comme nouvelEtatDuoPublic, mais ajoute "monCode" = le code secret du joueur
+// Comme etatDuoPublic, mais ajoute "monCode" = le code secret du joueur
 // destinataire (jamais celui de l'adversaire), pour l'afficher sur sa page.
-function nouvelEtatPour(joueur) {
-  const base = nouvelEtatDuoPublic();
-  if (!base) return null;
-  const monSecret = duoGame.players[joueur] ? duoGame.players[joueur].secret : null;
+function etatDuoPour(salon, joueur) {
+  const base = etatDuoPublic(salon);
+  const monSecret = salon.duo.players[joueur] ? salon.duo.players[joueur].secret : null;
   return { ...base, monCode: monSecret ? monSecret.join('') : null };
 }
 
-function diffuserEtatDuo() {
-  io.to('joueur1').emit('duo-update', nouvelEtatPour('joueur1'));
-  io.to('joueur2').emit('duo-update', nouvelEtatPour('joueur2'));
+function diffuserEtatDuo(salon) {
+  io.to(`${salon.code}:joueur1`).emit('duo-update', etatDuoPour(salon, 'joueur1'));
+  io.to(`${salon.code}:joueur2`).emit('duo-update', etatDuoPour(salon, 'joueur2'));
+  io.to(`${salon.code}:lobby`).emit('duo-update', etatDuoPublic(salon));
+}
+
+function getSalon(code) {
+  if (!validCode(code)) return null;
+  return salons.get(code) || null;
 }
 
 /* ----------------------------------------------------------
-   API : création de partie depuis la page maître
+   API : création et consultation des salons
 ---------------------------------------------------------- */
 
-app.post('/api/new-game', (req, res) => {
+app.post('/api/salons', (req, res) => {
   const { players, digits, difficulty, name, names, repetition } = req.body;
   const nbJoueurs = Number(players);
   const nbChiffres = Number(digits);
@@ -155,176 +256,215 @@ app.post('/api/new-game', (req, res) => {
   if (!['facile', 'difficile'].includes(difficulty)) return res.status(400).json({ error: 'difficulty invalide' });
   if (rep === 'unique' && nbChiffres > 10) return res.status(400).json({ error: 'digits invalide' });
 
-  if (nbJoueurs === 1) {
-    soloGame = {
-      digits: nbChiffres,
-      difficulty,
-      repetition: rep,
-      secret: genererSecret(nbChiffres, rep),
-      historique: [],
-      tentatives: 0,
-      gagne: false,
-      nom: nettoyerNom(name, 'Joueur'),
-    };
-    return res.json({ mode: 'solo', redirect: '/solo.html' });
-  }
-
-  const noms = Array.isArray(names) ? names : [];
-  duoGame = {
+  const salon = creerSalon({
+    mode: nbJoueurs === 1 ? 'solo' : 'duo',
     digits: nbChiffres,
     difficulty,
     repetition: rep,
-    status: 'choix', // choix -> jeu -> fini
-    turn: null,
-    winner: null,
-    players: {
-      joueur1: { secret: null, ready: false, historique: [], nom: nettoyerNom(noms[0], 'Joueur 1') },
-      joueur2: { secret: null, ready: false, historique: [], nom: nettoyerNom(noms[1], 'Joueur 2') },
-    },
-  };
-  diffuserEtatDuo();
+    name,
+    names,
+  });
 
+  if (salon.mode === 'solo') {
+    return res.json({ mode: 'solo', code: salon.code, redirect: `/${salon.code}/solo` });
+  }
   return res.json({
     mode: '2p',
-    links: [`http://localhost:${PORT}/joueur1`, `http://localhost:${PORT}/joueur2`],
+    code: salon.code,
+    redirect: `/${salon.code}`,
+    links: [`${req.protocol}://${req.get('host')}/${salon.code}/joueur1`, `${req.protocol}://${req.get('host')}/${salon.code}/joueur2`],
   });
+});
+
+app.get('/api/salons/:code', (req, res) => {
+  const salon = getSalon(cleanCode(req.params.code));
+  if (!salon) return res.json({ existe: false, code: cleanCode(req.params.code) });
+  res.json({ existe: true, ...infoSalon(salon) });
 });
 
 /* ----------------------------------------------------------
-   API : mode solo
+   API : mode solo (scopée par salon)
 ---------------------------------------------------------- */
 
-app.get('/api/solo/state', (req, res) => {
-  if (!soloGame) return res.status(404).json({ error: 'Aucune partie solo en cours' });
+app.get('/api/salons/:code/solo/state', (req, res) => {
+  const salon = getSalon(cleanCode(req.params.code));
+  if (!salon || salon.mode !== 'solo') return res.status(404).json({ error: 'Salon introuvable' });
+  const s = salon.solo;
   res.json({
-    digits: soloGame.digits,
-    difficulty: soloGame.difficulty,
-    repetition: soloGame.repetition,
-    historique: soloGame.historique,
-    tentatives: soloGame.tentatives,
-    gagne: soloGame.gagne,
-    nom: soloGame.nom,
+    code: salon.code,
+    digits: salon.digits,
+    difficulty: salon.difficulty,
+    repetition: salon.repetition,
+    historique: s.historique,
+    tentatives: s.tentatives,
+    gagne: s.gagne,
+    nom: s.nom,
   });
 });
 
-app.post('/api/solo/guess', (req, res) => {
-  if (!soloGame) return res.status(404).json({ error: 'Aucune partie solo en cours' });
-  if (soloGame.gagne) return res.status(400).json({ error: 'Partie déjà terminée' });
+app.post('/api/salons/:code/solo/guess', (req, res) => {
+  const salon = getSalon(cleanCode(req.params.code));
+  if (!salon || salon.mode !== 'solo') return res.status(404).json({ error: 'Salon introuvable' });
+  const s = salon.solo;
+  if (s.gagne) return res.status(400).json({ error: 'Partie déjà terminée' });
 
-  const guessArr = parseGuess(String(req.body.guess || ''), soloGame.digits);
-  if (!guessArr) {
-    return res.status(400).json({ error: `Entrez ${soloGame.digits} chiffres valides.` });
-  }
-  if (!respecteRepetition(guessArr, soloGame.repetition)) {
+  const guessArr = parseGuess(String(req.body.guess || ''), salon.digits);
+  if (!guessArr) return res.status(400).json({ error: `Entrez ${salon.digits} chiffres valides.` });
+  if (!respecteRepetition(guessArr, salon.repetition)) {
     return res.status(400).json({ error: 'Cette partie exige des chiffres uniques.' });
   }
 
-  const resultat = evaluer(soloGame.secret, guessArr, soloGame.difficulty);
-  soloGame.tentatives += 1;
+  const resultat = evaluer(s.secret, guessArr, salon.difficulty);
+  s.tentatives += 1;
   const gagne = estGagne(resultat);
-  soloGame.gagne = gagne;
-  soloGame.historique.push({ guess: guessArr, resultat });
+  s.gagne = gagne;
+  s.historique.push({ guess: guessArr, resultat });
+  toucher(salon);
 
-  res.json({
-    resultat,
-    tentatives: soloGame.tentatives,
-    gagne,
-    secret: gagne ? soloGame.secret : undefined,
-  });
+  res.json({ resultat, tentatives: s.tentatives, gagne, secret: gagne ? s.secret : undefined });
 });
 
 /* ----------------------------------------------------------
-   Pages joueur (mode duo)
+   Pages servies dynamiquement par salon
+   (statiques en premier via express.static, donc on n'arrive
+   ici que pour des chemins qui ne correspondent à aucun fichier)
 ---------------------------------------------------------- */
 
-app.get('/joueur1', (req, res) => res.sendFile(path.join(__dirname, 'public', 'joueur.html')));
-app.get('/joueur2', (req, res) => res.sendFile(path.join(__dirname, 'public', 'joueur.html')));
+app.get('/:code/solo', (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(404).send('Salon introuvable');
+  res.sendFile(path.join(__dirname, 'public', 'solo.html'));
+});
+
+app.get('/:code/joueur1', (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(404).send('Salon introuvable');
+  res.sendFile(path.join(__dirname, 'public', 'joueur.html'));
+});
+
+app.get('/:code/joueur2', (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(404).send('Salon introuvable');
+  res.sendFile(path.join(__dirname, 'public', 'joueur.html'));
+});
+
+app.get('/:code', (req, res, next) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return next(); // laisse Express répondre 404 normalement
+  res.sendFile(path.join(__dirname, 'public', 'lobby.html'));
+});
 
 /* ----------------------------------------------------------
-   Socket.io : mode duo en temps réel
+   Socket.io : mode duo en temps réel, isolé par salon
 ---------------------------------------------------------- */
 
 io.on('connection', (socket) => {
-  socket.on('rejoindre', ({ joueur, nom }) => {
-    socket.data.joueur = joueur;
-    socket.join(joueur);
-    if (duoGame && nom) {
-      duoGame.players[joueur].nom = nettoyerNom(nom, duoGame.players[joueur].nom);
-      diffuserEtatDuo();
-    } else {
-      socket.emit('duo-update', nouvelEtatPour(joueur));
+  socket.on('rejoindre', ({ code, joueur, nom }) => {
+    code = cleanCode(code);
+    const salon = getSalon(code);
+    if (!salon || salon.mode !== 'duo') {
+      socket.emit('duo-update', null);
+      return;
     }
+    socket.data.code = code;
+    socket.data.joueur = joueur; // 'joueur1' | 'joueur2' | undefined (spectateur lobby)
+    socket.join(joueur === 'joueur1' || joueur === 'joueur2' ? `${code}:${joueur}` : `${code}:lobby`);
+    salon.connectes.add(socket.id);
+    toucher(salon);
+    if (nom && (joueur === 'joueur1' || joueur === 'joueur2')) {
+      salon.duo.players[joueur].nom = nettoyerNom(nom, salon.duo.players[joueur].nom);
+    }
+    diffuserEtatDuo(salon);
   });
 
-  socket.on('definir-nom', ({ joueur, nom }) => {
-    if (!duoGame) return;
-    duoGame.players[joueur].nom = nettoyerNom(nom, duoGame.players[joueur].nom);
-    diffuserEtatDuo();
+  socket.on('definir-nom', ({ code, joueur, nom }) => {
+    const salon = getSalon(cleanCode(code));
+    if (!salon || salon.mode !== 'duo') return;
+    salon.duo.players[joueur].nom = nettoyerNom(nom, salon.duo.players[joueur].nom);
+    toucher(salon);
+    diffuserEtatDuo(salon);
   });
 
-  socket.on('definir-secret', ({ joueur, secret, nom }) => {
-    if (!duoGame || duoGame.status !== 'choix') return;
-    const nbChiffres = duoGame.digits;
+  socket.on('definir-secret', ({ code, joueur, secret, nom }) => {
+    const salon = getSalon(cleanCode(code));
+    if (!salon || salon.mode !== 'duo' || salon.duo.status !== 'choix') return;
+    const nbChiffres = salon.digits;
     const arr = parseGuess(String(secret || ''), nbChiffres);
     if (!arr) {
       socket.emit('erreur', { message: `Choisissez ${nbChiffres} chiffres (0 à 9).` });
       return;
     }
-    if (!respecteRepetition(arr, duoGame.repetition)) {
+    if (!respecteRepetition(arr, salon.repetition)) {
       socket.emit('erreur', { message: `Choisissez ${nbChiffres} chiffres uniques.` });
       return;
     }
-    if (nom) duoGame.players[joueur].nom = nettoyerNom(nom, duoGame.players[joueur].nom);
-    duoGame.players[joueur].secret = arr;
-    duoGame.players[joueur].ready = true;
+    if (nom) salon.duo.players[joueur].nom = nettoyerNom(nom, salon.duo.players[joueur].nom);
+    salon.duo.players[joueur].secret = arr;
+    salon.duo.players[joueur].ready = true;
 
-    const { joueur1, joueur2 } = duoGame.players;
+    const { joueur1, joueur2 } = salon.duo.players;
     if (joueur1.ready && joueur2.ready) {
-      duoGame.status = 'jeu';
-      duoGame.turn = Math.random() < 0.5 ? 'joueur1' : 'joueur2';
+      salon.duo.status = 'jeu';
+      salon.duo.turn = Math.random() < 0.5 ? 'joueur1' : 'joueur2';
     }
-    diffuserEtatDuo();
+    toucher(salon);
+    diffuserEtatDuo(salon);
   });
 
-  socket.on('proposition', ({ joueur, guess }) => {
-    if (!duoGame || duoGame.status !== 'jeu') return;
-    if (duoGame.turn !== joueur) {
+  socket.on('proposition', ({ code, joueur, guess }) => {
+    const salon = getSalon(cleanCode(code));
+    if (!salon || salon.mode !== 'duo' || salon.duo.status !== 'jeu') return;
+    if (salon.duo.turn !== joueur) {
       socket.emit('erreur', { message: "Ce n'est pas votre tour." });
       return;
     }
     const adversaire = joueur === 'joueur1' ? 'joueur2' : 'joueur1';
-    const nbChiffres = duoGame.digits;
+    const nbChiffres = salon.digits;
     const arr = parseGuess(String(guess || ''), nbChiffres);
     if (!arr) {
       socket.emit('erreur', { message: `Entrez ${nbChiffres} chiffres (0 à 9).` });
       return;
     }
-    if (!respecteRepetition(arr, duoGame.repetition)) {
+    if (!respecteRepetition(arr, salon.repetition)) {
       socket.emit('erreur', { message: `Entrez ${nbChiffres} chiffres uniques.` });
       return;
     }
 
-    const secretAdversaire = duoGame.players[adversaire].secret;
-    const resultat = evaluer(secretAdversaire, arr, duoGame.difficulty);
+    const secretAdversaire = salon.duo.players[adversaire].secret;
+    const resultat = evaluer(secretAdversaire, arr, salon.difficulty);
     const gagne = estGagne(resultat);
 
-    duoGame.players[joueur].historique.push({ guess: arr, resultat });
+    salon.duo.players[joueur].historique.push({ guess: arr, resultat });
 
     if (gagne) {
-      duoGame.status = 'fini';
-      duoGame.winner = joueur;
+      salon.duo.status = 'fini';
+      salon.duo.winner = joueur;
     } else {
-      duoGame.turn = adversaire;
+      salon.duo.turn = adversaire;
     }
-    diffuserEtatDuo();
+    toucher(salon);
+    diffuserEtatDuo(salon);
   });
 
-  socket.on('demander-etat', () => {
-    const joueur = socket.data.joueur;
-    socket.emit('duo-update', joueur ? nouvelEtatPour(joueur) : nouvelEtatDuoPublic());
+  socket.on('demander-etat', ({ code, joueur } = {}) => {
+    const salon = getSalon(cleanCode(code));
+    if (!salon || salon.mode !== 'duo') { socket.emit('duo-update', null); return; }
+    socket.emit('duo-update', joueur === 'joueur1' || joueur === 'joueur2' ? etatDuoPour(salon, joueur) : etatDuoPublic(salon));
+  });
+
+  socket.on('disconnect', () => {
+    const code = socket.data.code;
+    const salon = code ? getSalon(code) : null;
+    if (salon) {
+      salon.connectes.delete(socket.id);
+      toucher(salon);
+    }
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Mastermind disponible sur http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n  Mastermind est lancé !`);
+  console.log(`  Accueil (créer une partie) : http://localhost:${PORT}/`);
+  for (const u of lanUrls()) console.log(`  Depuis le réseau local      : ${u}/`);
+  console.log('');
 });

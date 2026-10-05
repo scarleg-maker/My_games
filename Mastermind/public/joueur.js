@@ -1,7 +1,13 @@
-const moi = window.location.pathname.includes('joueur2') ? 'joueur2' : 'joueur1';
+// L'URL est de la forme /ABCD/joueur1 ou /ABCD/joueur2 : le salon isole
+// totalement cette partie des autres parties en cours sur le serveur.
+const segments = window.location.pathname.split('/').filter(Boolean);
+const code = (segments[0] || '').toUpperCase();
+const moi = (segments[1] || '').includes('joueur2') ? 'joueur2' : 'joueur1';
 const adversaire = moi === 'joueur1' ? 'joueur2' : 'joueur1';
 
 document.getElementById('badge-joueur').textContent = moi === 'joueur1' ? 'Joueur 1' : 'Joueur 2';
+const eyebrowEl = document.querySelector('.eyebrow');
+if (eyebrowEl) eyebrowEl.textContent = `Mode duel — Salon ${code}`;
 
 // --- Nom mémorisé dans le navigateur d'une partie à l'autre ---
 const champNom = document.getElementById('champ-nom');
@@ -12,11 +18,11 @@ const socket = io();
 let dernierEtat = null;
 
 socket.on('connect', () => {
-  socket.emit('rejoindre', { joueur: moi, nom: champNom.value });
+  socket.emit('rejoindre', { code, joueur: moi, nom: champNom.value });
 });
 
 champNom.addEventListener('change', () => {
-  socket.emit('definir-nom', { joueur: moi, nom: champNom.value });
+  socket.emit('definir-nom', { code, joueur: moi, nom: champNom.value });
 });
 
 socket.on('erreur', ({ message }) => {
@@ -31,7 +37,7 @@ socket.on('duo-update', (etat) => {
 
 function rendre(etat) {
   if (!etat) {
-    document.getElementById('carte-choix').innerHTML = '<p>Aucune partie à 2 joueurs en cours. <a class="retour" href="/">← Retour à l\'accueil</a></p>';
+    document.getElementById('carte-choix').innerHTML = `<p>Ce salon (${code}) n'existe pas ou n'est plus actif. <a class="retour" href="/">← Retour à l'accueil</a></p>`;
     return;
   }
 
@@ -159,7 +165,7 @@ document.getElementById('btn-alea').addEventListener('click', () => {
 document.getElementById('btn-valider-secret').addEventListener('click', () => {
   const val = document.getElementById('champ-secret').value.trim();
   document.getElementById('erreur-choix').textContent = '';
-  socket.emit('definir-secret', { joueur: moi, secret: val, nom: champNom.value });
+  socket.emit('definir-secret', { code, joueur: moi, secret: val, nom: champNom.value });
 });
 
 document.getElementById('btn-guess').addEventListener('click', envoyerProposition);
@@ -171,6 +177,6 @@ function envoyerProposition() {
   const val = document.getElementById('champ-guess').value.trim();
   if (!val) return;
   document.getElementById('erreur-jeu').textContent = '';
-  socket.emit('proposition', { joueur: moi, guess: val });
+  socket.emit('proposition', { code, joueur: moi, guess: val });
   document.getElementById('champ-guess').value = '';
 }

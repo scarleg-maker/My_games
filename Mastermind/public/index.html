@@ -63,12 +63,17 @@
   </div>
 
   <button class="btn-principal" id="btn-lancer">Lancer la partie</button>
+  <p class="info" id="erreur-creation" style="color:#D33F49;"></p>
 </div>
 
-<div class="carte" id="carte-liens" style="display:none;">
-  <h3>Partie à 2 joueurs prête</h3>
-  <p class="info">Ouvrez ces deux adresses (par exemple dans deux onglets ou deux navigateurs) :</p>
-  <div class="liens" id="liens-joueurs"></div>
+<div class="carte">
+  <h3>Rejoindre un salon existant</h3>
+  <p class="info">Vous avez reçu un code à 4 caractères ? Entrez-le pour rejoindre la partie en cours.</p>
+  <div class="saisie">
+    <input type="text" id="champ-code-rejoindre" placeholder="CODE" maxlength="4" style="text-transform:uppercase;letter-spacing:4px;">
+    <button class="btn-principal" style="width:auto;" id="btn-rejoindre">Rejoindre</button>
+  </div>
+  <div id="resultat-rejoindre"></div>
 </div>
 
 <script src="/index.js"></script>

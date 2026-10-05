@@ -1,9 +1,15 @@
+// Le code du salon fait partie de l'URL : /ABCD/solo
+const code = window.location.pathname.split('/').filter(Boolean)[0]?.toUpperCase();
 let etat = null;
 
 async function chargerEtat() {
-  const res = await fetch('/api/solo/state');
+  if (!code) {
+    document.body.innerHTML = '<div class="carte"><p>Salon introuvable. <a class="retour" href="/">← Retour à l\'accueil</a></p></div>';
+    return;
+  }
+  const res = await fetch(`/api/salons/${encodeURIComponent(code)}/solo/state`);
   if (!res.ok) {
-    document.body.innerHTML = '<div class="carte"><p>Aucune partie en cours. <a class="retour" href="/">← Retour à l\'accueil</a></p></div>';
+    document.body.innerHTML = '<div class="carte"><p>Aucune partie en cours dans ce salon. <a class="retour" href="/">← Retour à l\'accueil</a></p></div>';
     return;
   }
   etat = await res.json();
@@ -13,6 +19,8 @@ async function chargerEtat() {
     badge.style.display = 'inline-block';
   }
   document.getElementById('titre').textContent = `Devinez le nombre secret (${etat.digits} chiffres)`;
+  const eyebrow = document.querySelector('.eyebrow');
+  if (eyebrow) eyebrow.textContent = `Mode solo — Salon ${code}`;
   const legendeRep = document.createElement('p');
   legendeRep.className = 'info';
   legendeRep.textContent = etat.repetition === 'unique'
@@ -76,7 +84,7 @@ async function valider() {
   const guess = champ.value.trim();
   if (!guess) return;
 
-  const res = await fetch('/api/solo/guess', {
+  const res = await fetch(`/api/salons/${encodeURIComponent(code)}/solo/guess`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ guess }),

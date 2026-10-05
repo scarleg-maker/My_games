@@ -69,10 +69,12 @@ majAffichageNoms();
 
 document.getElementById('btn-lancer').addEventListener('click', async () => {
   const btn = document.getElementById('btn-lancer');
+  const erreurDiv = document.getElementById('erreur-creation');
+  erreurDiv.textContent = '';
   btn.disabled = true;
   btn.textContent = 'Préparation...';
   try {
-    const res = await fetch('/api/new-game', {
+    const res = await fetch('/api/salons', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -87,26 +89,47 @@ document.getElementById('btn-lancer').addEventListener('click', async () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur');
 
-    if (data.mode === 'solo') {
-      window.location.href = data.redirect;
-      return;
-    }
-
-    const carte = document.getElementById('carte-liens');
-    const liste = document.getElementById('liens-joueurs');
-    liste.innerHTML = '';
-    data.links.forEach((lien, i) => {
-      const a = document.createElement('a');
-      a.href = lien;
-      a.target = '_blank';
-      a.textContent = `Joueur ${i + 1} → ${lien}`;
-      liste.appendChild(a);
-    });
-    carte.style.display = 'block';
+    // Chaque partie vit dans son propre salon (code à 4 caractères) : on
+    // redirige directement vers le salon qui vient d'être créé.
+    window.location.href = data.redirect;
   } catch (e) {
-    alert(e.message);
+    erreurDiv.textContent = e.message;
   } finally {
     btn.disabled = false;
     btn.textContent = 'Lancer la partie';
   }
+});
+
+/* ---------------------------------------------------------------
+   Rejoindre un salon existant depuis son code
+--------------------------------------------------------------- */
+
+const champCode = document.getElementById('champ-code-rejoindre');
+const resultatRejoindre = document.getElementById('resultat-rejoindre');
+
+async function rejoindreParCode() {
+  const code = champCode.value.trim().toUpperCase();
+  resultatRejoindre.innerHTML = '';
+  if (!code) return;
+
+  try {
+    const res = await fetch(`/api/salons/${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (!data.existe) {
+      resultatRejoindre.innerHTML = `<p class="info" style="color:#D33F49;">Aucun salon « ${code} ». Vérifiez le code.</p>`;
+      return;
+    }
+    if (data.mode === 'solo') {
+      resultatRejoindre.innerHTML = `<p class="info">Le salon « ${code} » est une partie solo, personnelle : <a class="retour" href="/${code}/solo">y accéder</a>.</p>`;
+      return;
+    }
+    resultatRejoindre.innerHTML = `<p class="info">Salon « ${code} » trouvé : <a class="retour" href="/${code}">rejoindre le salon</a>.</p>`;
+  } catch {
+    resultatRejoindre.innerHTML = `<p class="info" style="color:#D33F49;">Serveur injoignable.</p>`;
+  }
+}
+
+document.getElementById('btn-rejoindre').addEventListener('click', rejoindreParCode);
+champCode.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') rejoindreParCode();
 });
