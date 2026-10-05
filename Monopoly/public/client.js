@@ -1,13 +1,17 @@
-const params = new URLSearchParams(location.search);
-const gameId = params.get("game");
-const myPlayerIndex = parseInt(params.get("player"), 10);
+// Adresses : /CODE/joueurN (joueur assis) ou /CODE/plateau (spectateur)
+const pm = location.pathname.match(/^\/([A-Za-z0-9]{3,10})\/(?:joueur([1-8])|plateau)/i) || [];
+const ROOM = (pm[1] || '').toUpperCase();
+const myPlayerIndex = pm[2] ? parseInt(pm[2], 10) - 1 : -1; // -1 = spectateur
+const isSpectator = myPlayerIndex < 0;
 
 const socket = io();
 
 let latestState = null;
+let latestRoom = null;
 let boardBuilt = false;
 let diceAnimTimer = null;
 let manageModalOpen = false;
+let lobbyFormKey = null;
 
 const bannerEl = document.getElementById("current-player-banner");
 const die1El = document.getElementById("die1");
@@ -15,20 +19,86 @@ const die2El = document.getElementById("die2");
 const actionButtonsEl = document.getElementById("action-buttons");
 const manageBtn = document.getElementById("manage-btn");
 const logEl = document.getElementById("log");
+document.getElementById("room-tag").textContent = `Salon ${ROOM}${isSpectator ? " · spectateur" : ` · siège ${myPlayerIndex + 1}`}`;
+if (isSpectator) manageBtn.classList.add("hidden");
+MP.recent.add(ROOM, isSpectator ? "spectateur" : "joueur");
+
+// envoi d'une action au serveur (affiche l'erreur éventuelle)
+function act(type, data = {}) {
+  socket.emit("act", { type, ...data }, (r) => {
+    if (r && !r.ok) { MP.toast(r.error, "bad"); if (r.noroom) showNoRoom(r.error); }
+  });
+}
+function showNoRoom(msg) {
+  document.body.innerHTML = `<div class="overlay"><div class="setup-card"><h2>Salon introuvable</h2><p>${MP.esc(msg || "")}</p><a class="btn primary" href="/">Retour à l'accueil</a></div></div>`;
+}
 
 // ===================== CONNEXION =====================
 socket.on("connect", () => {
-  socket.emit("joinGame", { gameId, playerIndex: myPlayerIndex }, (res) => {
-    if (!res.ok) {
-      document.body.innerHTML = `<div class="overlay"><div class="setup-card"><h2>Impossible de rejoindre</h2><p>${res.error}</p></div></div>`;
-      return;
-    }
-    applyState(res.state);
+  socket.emit("joinRoom", { code: ROOM, role: isSpectator ? "spectator" : "seat", seat: myPlayerIndex }, (res) => {
+    if (!res.ok) return showNoRoom(res.error);
+    renderRoom(res.room);
+    if (res.state && res.room.phase !== "lobby") applyState(res.state);
   });
 });
 
-socket.on("state", (state) => applyState(state));
+socket.on("room", (room) => renderRoom(room));
+socket.on("state", (state) => { if (latestRoom && latestRoom.phase !== "lobby") applyState(state); });
+socket.on("roomClosed", () => showNoRoom("Ce salon a été fermé."));
 socket.on("diceRolling", () => startDiceAnimation());
+
+// ===================== SALLE D'ATTENTE =====================
+function renderRoom(room) {
+  const prev = latestRoom;
+  latestRoom = room;
+  const overlay = document.getElementById("lobby-overlay");
+  if (room.phase === "lobby") {
+    if (prev && prev.phase !== "lobby") { boardBuilt = false; latestState = null; manageModalOpen = false; closeModal(); }
+    overlay.classList.remove("hidden");
+    renderLobby(room);
+  } else {
+    overlay.classList.add("hidden");
+  }
+}
+
+function renderLobby(room) {
+  document.getElementById("lobby-title").textContent = `Salon ${room.code} — ${room.boardName}`;
+  const me = isSpectator ? null : room.seats[myPlayerIndex];
+  const form = document.getElementById("lobby-form");
+  const key = isSpectator ? "spec" : me && me.claimed ? "claimed:" + me.name : "free";
+  if (key !== lobbyFormKey) { // le formulaire n'est reconstruit que si l'état du siège change
+    lobbyFormKey = key;
+    if (isSpectator) {
+      form.innerHTML = `<p class="muted">Tu suis la partie en spectateur. Le plateau s'affichera dès son démarrage.</p>`;
+    } else if (me && me.claimed) {
+      form.innerHTML = `<p>Tu es <strong>${MP.esc(me.name)}</strong> (siège ${myPlayerIndex + 1}). En attente du lancement par l'hôte…</p>
+        <button class="btn ghost small" id="release-btn">Changer de nom / libérer le siège</button>`;
+      document.getElementById("release-btn").onclick = () => act("release");
+    } else {
+      const saved = (me && me.name) || localStorage.getItem("monopoly-name") || "";
+      form.innerHTML = `<p class="muted">Choisis ton nom pour t'installer au siège ${myPlayerIndex + 1}.</p>
+        <div class="row"><input type="text" id="claim-name" maxlength="16" placeholder="Ton nom" value="${MP.esc(saved)}" autocomplete="off">
+        <button class="btn primary" id="claim-btn">Je m'installe</button></div>`;
+      const submit = () => {
+        const name = document.getElementById("claim-name").value.trim();
+        if (name) localStorage.setItem("monopoly-name", name);
+        act("claim", { name });
+      };
+      document.getElementById("claim-btn").onclick = submit;
+      document.getElementById("claim-name").addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+    }
+  }
+  document.getElementById("lobby-seats").innerHTML = room.seats.map((x) => {
+    const sub = x.type === "ai" ? "🤖 joué par l'IA" : x.claimed ? (x.online ? "connecté" : "installé, pas connecté") : "place libre";
+    const you = x.index === myPlayerIndex ? " (vous)" : "";
+    return `<div class="seat static"><span class="chip" style="--c:${x.color}"></span><span class="dot${x.online ? " on" : ""}"></span>
+      <span class="who">${MP.esc(x.name || "Joueur " + (x.index + 1))}${you}<small>Siège ${x.index + 1} — ${sub}</small></span></div>`;
+  }).join("");
+  const missing = room.seats.filter((x) => !x.claimed).length;
+  document.getElementById("lobby-wait").textContent = missing
+    ? `En attente de ${missing} joueur${missing > 1 ? "s" : ""}…`
+    : "Tout le monde est là : l'hôte peut lancer la partie.";
+}
 
 // ===================== PLATEAU =====================
 function boardCoords(id) {
@@ -206,6 +276,10 @@ function renderControls(state) {
   }
 
   const current = state.players[state.currentPlayerIndex];
+  if (isSpectator) {
+    bannerEl.textContent = current.type === "ai" ? `🤖 ${current.name} joue…` : `Au tour de ${current.name}`;
+    return;
+  }
   if (!isMyTurn) {
     bannerEl.textContent = current.type === "ai" ? `🤖 ${current.name} réfléchit…` : `Au tour de ${current.name}…`;
     return;
@@ -219,20 +293,20 @@ function renderControls(state) {
     const payBtn = document.createElement("button");
     payBtn.className = "btn ghost wide";
     payBtn.textContent = "Payer 50 M€ pour sortir";
-    payBtn.onclick = () => socket.emit("payJailFee");
+    payBtn.onclick = () => act("payJailFee");
     actionButtonsEl.appendChild(payBtn);
 
     if (me.jailCards > 0) {
       const cardBtn = document.createElement("button");
       cardBtn.className = "btn ghost wide";
       cardBtn.textContent = "Utiliser une carte de sortie";
-      cardBtn.onclick = () => socket.emit("useJailCard");
+      cardBtn.onclick = () => act("useJailCard");
       actionButtonsEl.appendChild(cardBtn);
     }
     const rollBtn = document.createElement("button");
     rollBtn.className = "btn primary wide";
     rollBtn.textContent = "Tenter un double";
-    rollBtn.onclick = () => socket.emit("rollDice");
+    rollBtn.onclick = () => act("rollDice");
     actionButtonsEl.appendChild(rollBtn);
     return;
   }
@@ -241,13 +315,13 @@ function renderControls(state) {
     const rollBtn = document.createElement("button");
     rollBtn.className = "btn primary wide";
     rollBtn.textContent = "Lancer les dés";
-    rollBtn.onclick = () => socket.emit("rollDice");
+    rollBtn.onclick = () => act("rollDice");
     actionButtonsEl.appendChild(rollBtn);
   } else {
     const endBtn = document.createElement("button");
     endBtn.className = "btn ghost wide";
     endBtn.textContent = "Fin du tour";
-    endBtn.onclick = () => socket.emit("endTurn");
+    endBtn.onclick = () => act("endTurn");
     actionButtonsEl.appendChild(endBtn);
   }
 }
@@ -281,8 +355,8 @@ function renderPendingModal(state) {
         <button class="btn ghost" id="buy-no">Ne pas acheter</button>
       </div>
     `);
-    document.getElementById("buy-yes").onclick = () => socket.emit("buyDecision", { buy: true });
-    document.getElementById("buy-no").onclick = () => socket.emit("buyDecision", { buy: false });
+    document.getElementById("buy-yes").onclick = () => act("buyDecision", { buy: true });
+    document.getElementById("buy-no").onclick = () => act("buyDecision", { buy: false });
   } else if (action.type === "card") {
     openModal(`
       <h2>${action.deck}</h2>
@@ -291,7 +365,7 @@ function renderPendingModal(state) {
         <button class="btn primary" id="card-ok">OK</button>
       </div>
     `);
-    document.getElementById("card-ok").onclick = () => socket.emit("ackCard");
+    document.getElementById("card-ok").onclick = () => act("ackCard");
   }
 }
 
@@ -344,13 +418,13 @@ function renderManageModal() {
       if (!prop.mortgaged && ownsFullGroup && prop.houses < 5 && prop.houses <= minSiblingHouses) {
         const buildBtn = document.createElement("button");
         buildBtn.textContent = prop.houses === 4 ? `Hôtel (${space.houseCost} M€)` : `+ Maison (${space.houseCost} M€)`;
-        buildBtn.onclick = () => socket.emit("manageProperty", { spaceId: space.id, action: "build" });
+        buildBtn.onclick = () => act("manageProperty", { spaceId: space.id, action: "build" });
         rowActions.appendChild(buildBtn);
       }
       if (prop.houses > 0) {
         const sellBtn = document.createElement("button");
         sellBtn.textContent = "Vendre bâtiment";
-        sellBtn.onclick = () => socket.emit("manageProperty", { spaceId: space.id, action: "sellHouse" });
+        sellBtn.onclick = () => act("manageProperty", { spaceId: space.id, action: "sellHouse" });
         rowActions.appendChild(sellBtn);
       }
     }
@@ -358,13 +432,13 @@ function renderManageModal() {
       if (!prop.mortgaged) {
         const mortgageBtn = document.createElement("button");
         mortgageBtn.textContent = `Hypothéquer (+${Math.floor(space.price / 2)} M€)`;
-        mortgageBtn.onclick = () => socket.emit("manageProperty", { spaceId: space.id, action: "mortgage" });
+        mortgageBtn.onclick = () => act("manageProperty", { spaceId: space.id, action: "mortgage" });
         rowActions.appendChild(mortgageBtn);
       } else {
         const cost = Math.ceil((space.price / 2) * 1.1);
         const unmortgageBtn = document.createElement("button");
         unmortgageBtn.textContent = `Lever l'hypothèque (-${cost} M€)`;
-        unmortgageBtn.onclick = () => socket.emit("manageProperty", { spaceId: space.id, action: "unmortgage" });
+        unmortgageBtn.onclick = () => act("manageProperty", { spaceId: space.id, action: "unmortgage" });
         rowActions.appendChild(unmortgageBtn);
       }
     }

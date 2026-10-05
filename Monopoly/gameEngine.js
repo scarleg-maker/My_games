@@ -55,6 +55,14 @@ class MonopolyGame extends EventEmitter {
   }
 
   // ---------- utilitaires ----------
+  // Arrête proprement la partie (salon supprimé ou retour au salon)
+  destroy() {
+    this.gameOver = true;
+    clearTimeout(this._aiTimer);
+    this._aiTimer = null;
+    this.removeAllListeners();
+  }
+
   addLog(msg) {
     this.log.push(msg);
     if (this.log.length > 200) this.log.shift();
@@ -532,4 +540,5 @@ class MonopolyGame extends EventEmitter {
   }
 }
 
+MonopolyGame.PALETTE = PALETTE;
 module.exports = MonopolyGame;
