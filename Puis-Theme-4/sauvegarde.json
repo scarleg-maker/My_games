@@ -1,0 +1,15 @@
+{
+ "rooms": {
+  "69XE": {
+   "roster": [],
+   "mode": "classique",
+   "nbJoueurs": 2,
+   "singleScreen": false,
+   "freeEmpty": true,
+   "randomFlip": false,
+   "wrongRule": "give",
+   "themeFile": "dragonball.json",
+   "t": 1791184505489
+  }
+ }
+}

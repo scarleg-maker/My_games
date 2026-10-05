@@ -4,26 +4,27 @@ Puissance 4 de 2 à 6 joueurs, avec une page arbitre et une page par joueur.
 
 ## Lancer le jeu
 
-Aucune installation de module : il suffit de Node.js (version 16 ou plus).
+**En local** : double-cliquer sur `Lancer_Puis-them-4.bat`, ou lancer `node server.js` (Node.js 16 ou plus, aucun module à installer), puis ouvrir http://localhost:14400/.
 
-```
-node server.js
-```
+**Sur Render** : service web Node, commande de démarrage `npm start` (ou `node server.js`). Le serveur utilise automatiquement le port fourni par Render (variable `PORT`).
 
-- Page arbitre : http://localhost:14400/
-- Pages joueurs : http://localhost:14400/joueur1 … /joueur6
+## Salons
 
-Les autres appareils du même réseau (téléphones, tablettes) utilisent l'adresse IP affichée dans la console au démarrage, par exemple `http://192.168.1.20:14400/joueur2`.
+Chaque groupe joue dans son propre **salon**, identifié par un code court (ex. `K7QF`). Autant de salons que nécessaire peuvent tourner en même temps, sans se gêner.
 
-## Déroulement
+1. Sur la page d'accueil, l'arbitre clique sur **Créer un salon** (ou choisit son propre code, ex. `FAMILLE`). Il arrive sur la page arbitre `/K7QF`.
+2. Les joueurs rejoignent le salon : en scannant le QR code de la page arbitre, en ouvrant le lien `/K7QF/rejoindre`, ou en tapant le code sur la page d'accueil. Chacun choisit ensuite son siège (`/K7QF/joueur1`, `/K7QF/joueur2`…).
+3. L'arbitre choisit le mode, les joueurs s'inscrivent (nom + couleur), puis l'arbitre lance la partie.
 
-1. Sur la page arbitre, choisir le mode, le nombre de joueurs et, en mode Thématique, le fichier de thèmes.
-2. Chaque joueur s'inscrit depuis sa page (nom + couleur parmi 10). L'arbitre peut aussi inscrire tout le monde lui-même.
-3. L'arbitre lance la partie.
+Un salon sans aucune page ouverte pendant 6 heures est supprimé. Ses réglages et ses joueurs habituels restent mémorisés : en recréant un salon avec le même code, on les retrouve (pratique en local avec un code fixe).
+
+Sur Render, si le service se met en veille ou redémarre, les salons en cours disparaissent : la page arbitre propose alors de **recréer le salon avec le même code**, et les pages des joueurs se reconnectent toutes seules.
+
+La page d'accueil garde aussi la liste des salons récents ouverts sur l'appareil.
 
 **Joueurs IA** : chaque siège peut passer en « 🤖 IA » (bouton Humain / IA). L'IA calcule plusieurs coups à l'avance : elle gagne quand elle le peut, bloque les alignements adverses, prépare ses menaces et évite d'offrir la victoire. En Renversé, elle décide seule de retourner une colonne (en tenant compte du hasard en mode Aléatoire). En Thématique, elle ne vise que des cases où une réponse existe, donne une bonne réponse environ 8 fois sur 10, et sa réponse est jugée automatiquement. Une partie peut se jouer entièrement entre IA.
 
-**Un seul écran** (Classique et Renversé) : dans la configuration, choisir « Un seul écran ». Tout se joue sur la page principale, à tour de rôle ; les pages /joueurN ne servent plus qu'à suivre le plateau.
+**Un seul écran** (Classique et Renversé) : dans la configuration, choisir « Un seul écran ». Tout se joue sur la page principale, à tour de rôle ; les pages des joueurs ne servent plus qu’à suivre le plateau.
 
 **Joueurs et noms** : sur la page arbitre, le nom tapé dans un siège s'enregistre tout seul (une couleur libre est choisie si besoin). « Retirer » libère un siège, « Vider tous les sièges » les libère tous. Au démarrage du serveur, les sièges sont vides ; les joueurs ayant déjà lancé une partie sont proposés en pastilles « Joueurs habituels » (un clic les replace, ✕ ou « Oublier tous les joueurs habituels » pour nettoyer la liste). Sur sa page, un joueur peut aussi « libérer ce siège » s'il y trouve un ancien nom.
 

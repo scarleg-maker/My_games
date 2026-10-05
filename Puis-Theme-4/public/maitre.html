@@ -28,6 +28,13 @@
   .preview { --cell: clamp(28px, 3.6vw, 46px); overflow-x: auto; padding-bottom: .8rem; }
   .err { color: var(--bad); font-weight: 700; }
   .slots { display: grid; gap: .7rem; }
+  .room-badge { border: 1px dashed var(--brass); background: rgba(217,173,79,.08); color: var(--ink); border-radius: 999px; padding: .2rem .8rem; font-size: .9rem; }
+  .room-badge strong { font-family: var(--display); letter-spacing: .08em; color: var(--brass); }
+  .invite { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; padding: .8rem; border: 1px dashed var(--line); border-radius: 12px; }
+  .invite code { color: var(--ink); overflow-wrap: anywhere; }
+  .qr { flex: none; width: 112px; height: 112px; border-radius: 8px; overflow: hidden; background: #f1ede4; }
+  .qr img, .qr canvas { display: block; }
+  .code-big { font-family: var(--display); font-weight: 800; font-size: 1.3rem; letter-spacing: .12em; color: var(--brass); }
   .slot-tools { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .7rem; }
   .slot-tools .btn { font-size: .85rem; padding: .35em .8em; }
   .slot { border: 1px solid var(--line); border-radius: 14px; padding: .7rem .8rem; background: var(--felt-2); display: grid; gap: .55rem; }
@@ -119,7 +126,8 @@
 </head>
 <body>
 <header class="top">
-  <div class="logo">Puis-thème <span class="four">4</span></div>
+  <a class="logo" href="/" title="Accueil" style="color:inherit;text-decoration:none">Puis-thème <span class="four">4</span></a>
+  <button class="room-badge" id="roomBadge" title="Copier le lien d'invitation des joueurs"></button>
   <span class="meta" id="meta">Page arbitre</span>
   <div class="actions" id="topActions"></div>
 </header>
@@ -132,7 +140,12 @@ const app = document.getElementById('app');
 let playHere = true, showCounts = false;
 const pickedColor = {};   // couleur choisie pour un siège avant inscription
 
+let firstRender = true;
 function render(s) {
+  if (firstRender) { firstRender = false; P4.recent.add(P4.room, 'arbitre'); document.title = `Puis-thème 4 — Salon ${P4.room}`; }
+  const badge = document.getElementById('roomBadge');
+  badge.innerHTML = `Salon <strong>${P4.room}</strong>`;
+  badge.onclick = () => copy(joinUrl(s));
   document.getElementById('meta').textContent = s.phase === 'setup' ? 'Page arbitre — configuration'
     : `Mode ${P4.modeName(s.mode)}${s.singleScreen ? ' · un seul écran' : ''}${s.mode === 'thematique' && s.themeTitle ? ' · ' + s.themeTitle : ''}`;
   P4.setOptions(document.getElementById('rosterList'), s.roster.map(r => r.name));
@@ -167,7 +180,7 @@ function renderSetup(s) {
   if (!them) {
     h += `<section class="panel"><h2>Écrans</h2><div class="choice2">
       <button class="mode" aria-pressed="${s.singleScreen}" data-single="1"><strong>Un seul écran</strong><span>Tout le monde joue ici, à tour de rôle. Aucune autre page n'est nécessaire.</span></button>
-      <button class="mode" aria-pressed="${!s.singleScreen}" data-single="0"><strong>Un écran par joueur</strong><span>Chacun joue depuis sa page /joueur1, /joueur2… sur son téléphone ou son ordinateur.</span></button>
+      <button class="mode" aria-pressed="${!s.singleScreen}" data-single="0"><strong>Un écran par joueur</strong><span>Chacun rejoint le salon avec le code ou le QR code, sur son téléphone ou son ordinateur.</span></button>
     </div></section>`;
   }
 
@@ -228,7 +241,7 @@ function renderSetup(s) {
     h += `<div class="slot ${seat.name ? 'ready' : ''}">
       <div class="slot-head">${seat.name ? P4.chip(s, i) : ''}<strong>Joueur ${i + 1}</strong>
         <span class="kind"><button data-kind="human" data-seat="${i}" aria-pressed="${!seat.ai}">Humain</button><button data-kind="ai" data-seat="${i}" aria-pressed="${!!seat.ai}">🤖 IA</button></span>
-        ${s.singleScreen || seat.ai ? '' : `<span class="dot${seat.online ? ' on' : ''}" title="${seat.online ? 'Écran connecté' : 'Écran non connecté'}"></span><a href="/joueur${i + 1}" target="_blank">/joueur${i + 1}</a>`}
+        ${s.singleScreen || seat.ai ? '' : `<span class="dot${seat.online ? ' on' : ''}" title="${seat.online ? 'Écran connecté' : 'Écran non connecté'}"></span><a href="/${P4.room}/joueur${i + 1}" target="_blank">page du joueur ${i + 1}</a>`}
         ${seat.name ? `<button class="btn ghost" data-unreg="${i}">Retirer</button>` : ''}</div>
       <input type="text" id="name-${i}" data-seat="${i}" data-server maxlength="20" placeholder="Nom du joueur (enregistré automatiquement)" value="${P4.esc(seat.name || '')}" list="rosterList" autocomplete="off">
       <div class="swatches">${s.colors.map(c => `<button class="swatch ${chosen === c.id ? 'sel' : ''}" style="--c:${c.hex}" data-seat="${i}" data-color="${c.id}"
@@ -240,12 +253,66 @@ function renderSetup(s) {
   const missing = s.seats.slice(0, n).filter(x => !x.name).length;
   h += `<div class="start-bar"><button class="btn primary big" data-a="start" ${ready ? '' : 'disabled'}>Lancer la partie</button>
     <span class="muted small">${missing ? `${missing} joueur${missing > 1 ? 's' : ''} à inscrire${s.singleScreen ? '' : ' (ici ou depuis sa page)'}.` : (ready ? 'Tout le monde est prêt.' : 'Choisis une thématique.')}</span></div>`;
-  if (!s.singleScreen && s.lanUrls && s.lanUrls.length) h += `<p class="urls">Depuis un autre appareil du même réseau : ${s.lanUrls.map(u => `<code>${u}/joueur1</code>`).join(', ')} (puis /joueur2, /joueur3…)</p>`;
+  if (!s.singleScreen) h += invitation(s);
   h += '</section></div></div>';
   P4.setHTML(app, h);
 
   const pv = document.getElementById('preview');
   if (pv) P4.renderBoard(pv, { ...s, phase: 'setup', pending: null }, { showCounts: true });
+}
+
+// ------------------------------------------------------------------ invitation des joueurs
+const isLocalHost = /^(localhost|127\.|\[::1\]|0\.0\.0\.0)/.test(location.hostname);
+function joinUrl(s) {
+  // en local, « localhost » n'est pas joignable depuis un téléphone : on propose l'adresse du réseau
+  if (isLocalHost && s.lanUrls && s.lanUrls.length) return `${s.lanUrls[0]}/${P4.room}/rejoindre`;
+  return P4.roomUrl('/rejoindre');
+}
+function invitation(s) {
+  const url = joinUrl(s);
+  return `<div class="invite"><div class="qr" id="qr" data-keep data-url="${P4.esc(url)}"></div><div>
+    <p style="margin:0 0 .3rem"><strong>Inviter les joueurs</strong> — code du salon : <span class="code-big">${P4.room}</span></p>
+    <p class="small muted" style="margin:0 0 .5rem">Scanner le QR code, ou ouvrir <code>${P4.esc(url)}</code>, ou taper le code sur la page d'accueil. Chacun choisit ensuite son siège.</p>
+    <button class="btn" data-copy="${P4.esc(url)}">Copier le lien</button></div></div>`;
+}
+let qrLib = null;
+function drawQR() {
+  const box = document.getElementById('qr');
+  if (!box || box.dataset.done === box.dataset.url) return;
+  if (!qrLib) {
+    qrLib = new Promise(ok => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      sc.onload = () => ok(true); sc.onerror = () => ok(false);
+      document.head.appendChild(sc);
+    });
+  }
+  qrLib.then(ok => {
+    const b = document.getElementById('qr');
+    if (!b) return;
+    if (!ok || !window.QRCode) { b.style.display = 'none'; return; }
+    if (b.dataset.done === b.dataset.url) return;
+    b.innerHTML = ''; b.dataset.done = b.dataset.url;
+    new QRCode(b, { text: b.dataset.url, width: 112, height: 112, colorDark: '#10221c', colorLight: '#f1ede4', correctLevel: QRCode.CorrectLevel.M });
+  });
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); P4.toast('Lien copié : ' + text, 'ok'); }
+  catch { prompt('Copie ce lien :', text); }
+}
+
+// ------------------------------------------------------------------ salon inexistant ou expiré
+function noRoom() {
+  document.getElementById('topActions').innerHTML = '';
+  document.getElementById('meta').textContent = '';
+  app.innerHTML = `<div class="panel" style="max-width:34rem;margin:2rem auto;text-align:center">
+    <h2 style="font-size:1.5rem">Le salon ${P4.esc(P4.room)} n'existe pas</h2>
+    <p class="muted">Il a peut-être expiré, ou le serveur a redémarré (sur Render, le service se met en veille après un moment sans activité).</p>
+    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap"><button class="btn primary" id="recreate">Créer le salon ${P4.esc(P4.room)}</button><a class="btn" href="/" style="text-decoration:none;color:inherit">Accueil</a></div></div>`;
+  document.getElementById('recreate').onclick = async () => {
+    const r = await (await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: P4.room, reuse: true }) })).json();
+    if (r.ok) P4.reconnect(); else P4.toast(r.error, 'bad');
+  };
 }
 
 function registerSeat(seat, color) {
@@ -403,6 +470,7 @@ document.addEventListener('click', e => {
   const s = P4.state;
   if (t.dataset.mode) return P4.act('config', { mode: t.dataset.mode });
   if (t.dataset.free) return P4.act('config', { freeEmpty: t.dataset.free === '1' });
+  if (t.dataset.copy) return copy(t.dataset.copy);
   if (t.dataset.wrong) return P4.act('config', { wrongRule: t.dataset.wrong });
   if (t.dataset.rflip) return P4.act('config', { randomFlip: t.dataset.rflip === '1' });
   if (t.dataset.kind) {
@@ -453,7 +521,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches('input[id^="name-"]')) { saveName(e.target); e.target.blur(); }
 });
 
-P4.connect('master', render);
+P4.connect('master', s => { render(s); drawQR(); }, noRoom);
 </script>
 </body>
 </html>

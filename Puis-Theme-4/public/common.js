@@ -12,27 +12,71 @@
   P4.pname = (s, i) => s.seats[i]?.name || `Joueur ${i + 1}`;
 
   // ---------- connexion temps réel (Server-Sent Events)
-  P4.connect = function (w, onState) {
+  // code du salon = premier segment de l'adresse (/K7QF ou /K7QF/joueur2)
+  P4.room = (location.pathname.split('/')[1] || '').toUpperCase();
+  { // adresse en minuscules (/famille) → on affiche la forme officielle (/FAMILLE)
+    const seg = location.pathname.split('/')[1] || '';
+    if (seg && seg !== P4.room && /^[a-z0-9]{3,10}$/i.test(seg) && seg !== 'static')
+      history.replaceState(null, '', location.pathname.replace('/' + seg, '/' + P4.room) + location.search);
+  }
+  P4.roomUrl = (suffix = '') => `${location.origin}/${P4.room}${suffix}`;
+
+  // ---------- connexion temps réel (Server-Sent Events)
+  // onNoRoom : appelé si le salon n'existe pas (ou plus : serveur redémarré, salon expiré)
+  P4.connect = function (w, onState, onNoRoom) {
     who = w;
-    document.body.insertAdjacentHTML('beforeend', '<div class="offline-bar">Connexion au serveur perdue — reconnexion…</div><div id="toasts" aria-live="polite"></div>');
-    const es = new EventSource('/events?who=' + encodeURIComponent(w));
-    es.onopen = () => document.body.classList.remove('offline');
-    es.onerror = () => document.body.classList.add('offline');
-    es.onmessage = e => {
-      const s = JSON.parse(e.data);
-      P4.state = s;
-      if (s.flash && s.flash.id !== lastFlash) { if (!firstState) P4.toast(s.flash.text, s.flash.kind); lastFlash = s.flash.id; }
-      P4.keepInputs(() => onState(s));
-      firstState = false;
+    if (!document.getElementById('toasts'))
+      document.body.insertAdjacentHTML('beforeend', '<div class="offline-bar">Connexion au serveur perdue — reconnexion…</div><div id="toasts" aria-live="polite"></div>');
+    let es = null, retry = null;
+    const open = () => {
+      es = new EventSource(`/events?room=${encodeURIComponent(P4.room)}&who=${encodeURIComponent(w)}`);
+      es.onopen = () => document.body.classList.remove('offline');
+      es.onerror = () => {
+        document.body.classList.add('offline');
+        // connexion refusée : on vérifie si le salon existe encore, puis on réessaie
+        if (es.readyState === EventSource.CLOSED) {
+          clearTimeout(retry);
+          P4.roomInfo().then(info => {
+            if (info && !info.exists) { document.body.classList.remove('offline'); onNoRoom && onNoRoom(); }
+            retry = setTimeout(open, 4000);
+          });
+        }
+      };
+      es.onmessage = e => {
+        const s = JSON.parse(e.data);
+        P4.state = s;
+        if (s.flash && s.flash.id !== lastFlash) { if (!firstState) P4.toast(s.flash.text, s.flash.kind); lastFlash = s.flash.id; }
+        P4.keepInputs(() => onState(s));
+        firstState = false;
+      };
     };
+    P4.reconnect = () => { if (es) es.close(); clearTimeout(retry); open(); };
+    open();
+  };
+  P4.roomInfo = async function (code = P4.room) {
+    try { return await (await fetch('/api/rooms/' + encodeURIComponent(code), { cache: 'no-store' })).json(); }
+    catch { return null; }
   };
   P4.act = async function (type, data = {}) {
     try {
-      const r = await fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ who, type, ...data }) });
+      const r = await fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ room: P4.room, who, type, ...data }) });
       const j = await r.json();
       if (!j.ok) P4.toast(j.error, 'bad');
+      if (j.noroom && P4.reconnect) P4.reconnect();
       return j;
     } catch { P4.toast('Serveur injoignable', 'bad'); return { ok: false }; }
+  };
+  // salons récents de cet appareil (page d'accueil)
+  P4.recent = {
+    list() { try { return JSON.parse(localStorage.getItem('p4-salons') || '[]'); } catch { return []; } },
+    add(code, role) {
+      try {
+        const l = P4.recent.list().filter(x => x.code !== code);
+        l.unshift({ code, role, t: Date.now() });
+        localStorage.setItem('p4-salons', JSON.stringify(l.slice(0, 8)));
+      } catch { }
+    },
+    remove(code) { try { localStorage.setItem('p4-salons', JSON.stringify(P4.recent.list().filter(x => x.code !== code))); } catch { } },
   };
   P4.toast = function (text, kind = 'info') {
     const box = document.getElementById('toasts');
@@ -58,6 +102,7 @@
     for (const a of [...n.attributes]) if (o.getAttribute(a.name) !== a.value) o.setAttribute(a.name, a.value);
   }
   function morph(o, n) {
+    if (o.hasAttribute('data-keep') && n.hasAttribute('data-keep')) return;   // contenu géré à part (QR code…)
     const focused = o === document.activeElement;
     if (o.tagName === 'INPUT') {
       // on ne touche pas aux attributs d'un champ en cours de saisie

@@ -56,7 +56,8 @@
 </head>
 <body>
 <header class="top">
-  <div class="logo">Puis-thème <span class="four">4</span></div>
+  <a class="logo" href="/" style="color:inherit;text-decoration:none">Puis-thème <span class="four">4</span></a>
+  <span class="muted small" id="roomTag"></span>
   <div class="me" id="me"></div>
 </header>
 <main id="app"></main>
@@ -67,7 +68,14 @@
 const seat = +(location.pathname.match(/joueur(\d)/) || [0, 1])[1] - 1;
 const app = document.getElementById('app');
 let myColor = null;
-document.title = `Puis-thème 4 — Joueur ${seat + 1}`;
+document.title = `Puis-thème 4 — ${P4.room} — Joueur ${seat + 1}`;
+document.getElementById('roomTag').textContent = `Salon ${P4.room} · joueur ${seat + 1}`;
+
+function noRoom() {
+  app.innerHTML = `<div class="reg panel" style="text-align:center"><h1>Salon ${P4.esc(P4.room)} introuvable</h1>
+    <p>Vérifie le code avec l'arbitre. Si le serveur vient de redémarrer, l'arbitre doit recréer le salon : cette page se reconnectera toute seule.</p>
+    <p><a class="btn" href="/" style="text-decoration:none;color:inherit">Accueil</a></p></div>`;
+}
 
 function render(s) {
   const me = s.seats[seat];
@@ -194,7 +202,8 @@ document.addEventListener('keydown', e => {
   if (e.target.id === 'myname') save();
 });
 
-P4.connect('p' + (seat + 1), render);
+P4.recent.add(P4.room, 'joueur ' + (seat + 1));
+P4.connect('p' + (seat + 1), render, noRoom);
 </script>
 </body>
 </html>
