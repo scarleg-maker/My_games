@@ -2,7 +2,8 @@
 
 Petit serveur Node.js qui héberge le jeu d'énigmes "Enigma-Lien" (réarranger
 6 personnages pour satisfaire 5 liens) en solo ou en tournoi multijoueur
-(jusqu'à 10 joueurs), avec un système de thèmes éditable (Pokémon fourni,
+en **salons** (jusqu'à 10 joueurs par salon, plusieurs salons en parallèle,
+QR code pour inviter les joueurs), avec un système de thèmes éditable (Pokémon fourni,
 Dragon Ball en exemple, et d'autres thèmes possibles).
 
 Sur le plateau, seuls **l'image et le nom** de chaque personnage sont
@@ -26,9 +27,9 @@ npm start
 ```
 
 **Sous Windows**, tu peux à la place double-cliquer sur `Lancer_Enigmalien.bat` :
-il installe les dépendances au premier lancement si besoin, démarre le
+il installe les dépendances au premier lancement si besoin (seulement `express` et `socket.io` ; le générateur de QR code est embarqué dans `lib/vendor/`, rien d'autre à télécharger), démarre le
 serveur et ouvre automatiquement le menu principal dans ton navigateur.
-Laisse sa fenêtre ouverte pendant la partie ; la fermer arrête le serveur.
+Il relance `npm install` à chaque démarrage (rapide quand tout est à jour), ce qui installe automatiquement les modules ajoutés par une mise à jour du jeu. Laisse sa fenêtre ouverte pendant la partie ; la fermer arrête le serveur.
 
 Le serveur écoute par défaut sur le port **8500**. Pour changer de port :
 `PORT=8080 npm start` (si tu changes le port, adapte aussi le `8500` dans
@@ -36,9 +37,11 @@ Le serveur écoute par défaut sur le port **8500**. Pour changer de port :
 
 Au démarrage, le terminal affiche les adresses utiles :
 
-- **Menu principal** : http://localhost:8500/
-- **Écran maître** (pour piloter un tournoi) : http://localhost:8500/maitre.html
-- **Pages joueurs** : http://localhost:8500/joueur1.html … /joueur10.html
+- **Menu principal** (créer / rejoindre un salon, solo, classement) : http://localhost:8500/
+- **Depuis le réseau local** : l'adresse `http://192.168.x.x:8500/` de ta machine
+  (c'est elle qui est encodée dans le QR code des salons — voir §3).
+
+Pour héberger le jeu sur Internet (Render), voir §9.
 
 ## 2. Jouer en solo
 
@@ -51,21 +54,26 @@ meilleure série) est visible sur http://localhost:8500/classement.html.
 Ces statistiques sont stockées dans `data/players.json` (agrégées par
 joueur) et `data/solo_history.json` (historique détaillé de chaque partie).
 
-## 3. Jouer en tournoi (multijoueur, jusqu'à 10 joueurs)
+## 3. Jouer en tournoi : les salons
 
-1. Sur la machine qui héberge la partie, ouvre **l'écran maître** :
-   http://localhost:8500/maitre.html — c'est l'écran à projeter/partager,
-   qui sert à configurer et piloter le tournoi.
-2. Chaque joueur ouvre, **depuis son propre appareil** (téléphone,
-   ordinateur…) connecté au **même réseau local**, l'URL de son
-   emplacement : `http://<adresse-IP-du-serveur>:8500/joueur1.html`,
-   `joueur2.html`, etc. (jusqu'à `joueur10.html`). Il choisit un pseudo et
-   rejoint. Sur la machine qui héberge le serveur, retrouve ton adresse IP
-   locale avec `ipconfig` (Windows) ou `ifconfig` / `ip a` (Mac/Linux) —
-   généralement une adresse du type `192.168.x.x`.
-   - Si les autres appareils n'arrivent pas à se connecter, vérifie le
-     pare-feu de la machine hôte (autoriser Node.js / le port 8500 sur le
-     réseau local).
+Chaque groupe de joueurs joue dans son propre **salon**, identifié par un
+**code court** (ex. `K7QF`). Autant de salons que nécessaire peuvent tourner
+en même temps sur le même serveur, sans se gêner : chacun a son thème, son
+type de tournoi, ses joueurs (10 places) et ses scores.
+
+1. Sur le **menu principal**, le maître du jeu clique sur **Créer un salon**
+   (ou choisit son propre code, ex. `FAMILLE`, via « Choisir mon propre
+   code »). Il arrive sur l'**écran maître** du salon : `/K7QF`.
+2. Les joueurs rejoignent le salon, au choix :
+   - en **scannant le QR code** affiché sur l'écran maître ;
+   - en ouvrant le lien `/K7QF/rejoindre` (bouton *Copier le lien*) ;
+   - en tapant le code sur le menu principal (*Rejoindre un salon*).
+
+   Un clic sur **Rejoindre ce salon** attribue automatiquement la première
+   place libre (deux joueurs qui scannent en même temps reçoivent des places
+   différentes) et ouvre sa page `/K7QF/joueurN`. Il choisit un pseudo et
+   attend. Un joueur déjà inscrit retrouve sa place dans la liste « Tu étais
+   déjà inscrit ? » (ou en rouvrant son lien `/K7QF/joueurN`).
 3. Sur l'écran maître, choisis le **thème**, le **type de tournoi**, et les
    paramètres, puis clique sur *Enregistrer la configuration*.
    - **🏃 Sprinteur** : le premier joueur à résoudre correctement **x**
@@ -87,10 +95,31 @@ joueur) et `data/solo_history.json` (historique détaillé de chaque partie).
 Un joueur qui rejoint après le début d'un tournoi devient spectateur
 jusqu'au tournoi suivant. Une déconnexion en cours de manche fait sortir
 proprement le joueur de la manche (pour ne pas bloquer les autres) ; il
-peut se reconnecter (même URL) pour les manches suivantes.
+peut se reconnecter (même lien) pour les manches suivantes. Recharger la
+page ne le déconnecte pas.
 
-L'historique des tournois terminés est enregistré dans
-`data/tournaments_history.json`.
+**Le QR code et le réseau local.** Le QR code contient l'adresse que les
+téléphones doivent utiliser : sur Render, l'adresse publique du service ; en
+local, l'adresse IP de ta machine sur le réseau (pas `localhost`, qui n'est
+pas joignable depuis un téléphone). Les appareils doivent être sur le même
+réseau Wi-Fi. Si l'un n'arrive pas à se connecter, vérifie le pare-feu de la
+machine hôte (autoriser Node.js / le port 8500). Le QR code est généré par le
+serveur lui-même : il fonctionne aussi sans accès à Internet.
+
+**Durée de vie des salons.** Les salons vivent en mémoire. Un salon sans
+aucune page ouverte pendant 6 heures est supprimé (200 salons maximum en
+même temps). Si le serveur redémarre (ou se met en veille sur un hébergeur
+gratuit), les salons en cours disparaissent : l'écran maître propose alors
+**Recréer le salon avec le même code**, et les pages des joueurs se
+reconnectent toutes seules. Le menu principal garde la liste des salons
+récents ouverts sur l'appareil.
+
+L'historique des tournois terminés (avec le code du salon) est enregistré
+dans `data/tournaments_history.json` ; les statistiques du mode solo restent
+globales au serveur.
+
+Les anciennes adresses fixes (`/maitre.html`, `/joueur1.html`…) redirigent
+vers le menu principal.
 
 ## 4. Éditer les personnages — fichiers "Pokedex"
 
@@ -260,11 +289,15 @@ redémarrage si tu en ajoutes un nouveau).
 
 ```
 enigma-lien-server/
-  server.js                    Serveur Express + Socket.IO (API solo + tournois)
+  server.js                    Serveur Express + Socket.IO (API solo, salons, tournois, QR code)
+  render.yaml                  Déploiement Render (voir §9)
   Lancer_Enigmalien.bat         Lanceur Windows (installe si besoin, démarre, ouvre le navigateur)
   lib/
     puzzleEngine.js            Génération/validation des énigmes (générique, indépendant du thème)
     tournament.js               Machine à états d'un tournoi (Sprinteur / Survie)
+    rooms.js                    Registre des salons (codes, places, purge des salons inactifs)
+    jsonc.js                    Lecteur JSON tolérant (commentaires // et virgules en trop)
+    vendor/qrcode-generator.js  Générateur de QR code embarqué (MIT, voir LICENSE-qrcode-generator.txt)
     themeStore.js               Chargement des thèmes et de leurs données
     playerStats.js               Statistiques solo (classement, historique)
   data/
@@ -279,10 +312,10 @@ enigma-lien-server/
       dragonballex.json            Exemple de thème "Dragon Ball" (à enrichir)
       bat.json                     Réservé pour un futur critère "bataille" (vide)
   public/                       Pages et assets servis par le serveur
-    index.html                   Menu principal
+    index.html                   Menu principal (créer / rejoindre un salon) — aussi servi sur /CODE/rejoindre
     solo.html                    Mode solo
-    maitre.html                  Écran maître (config + pilotage de tournoi)
-    joueur.html                  Page joueur (routée sur /joueur1.html … /joueur10.html)
+    salon-maitre.html            Écran maître d'un salon (QR code, config, pilotage) — servi sur /CODE
+    salon-joueur.html            Page joueur d'un salon — servie sur /CODE/joueur1 … /CODE/joueur10
     classement.html               Classement solo
     css/style.css                  Style partagé (thème visuel d'origine conservé)
     js/common.js                   Rendu du plateau/liens partagé entre solo et joueur
@@ -290,23 +323,53 @@ enigma-lien-server/
   scripts/
     extract_from_original.js     Script ayant servi à générer pokedex.json/bat.json depuis le fichier d'origine
     test_tournament_logic.js     Vérifications automatiques de la logique de tournoi (Sprint/Survie)
-    test_full.js                  Vérification bout-en-bout (solo + tournois via API/Socket.IO)
+    test_rooms_logic.js          Vérifications du registre de salons (codes, places, purge)
+    test_full.js                  Vérification bout-en-bout (solo + tournois + salons simultanés, via API/Socket.IO)
 ```
 
 Pour relancer les vérifications automatiques après une modification :
 
 ```bash
-node scripts/test_tournament_logic.js
-node scripts/test_full.js
+npm test
 ```
+
+(équivalent à lancer `node scripts/test_tournament_logic.js`,
+`node scripts/test_rooms_logic.js` puis `node scripts/test_full.js` ; ce
+dernier prend environ une minute.)
 
 ## 8. Limites connues / pistes d'amélioration
 
-- Le serveur héberge **un seul tournoi à la fois** (pas de salons multiples
-  en parallèle) — adapté à un usage "entre amis, chez soi".
-- Pensé pour un réseau local (`http://<IP locale>:8500`). Pour un accès
-  depuis Internet, il faudrait toi-même mettre en place un hébergement /
-  redirection de port (non couvert ici).
-- Le thème Dragon Ball n'est qu'un exemple illustratif (une vingtaine
-  d'entrées, valeurs de "puissance" non canoniques) — à toi de l'enrichir
-  via `data/dragonball/dragonballex.json`.
+- Les salons sont en mémoire : ils disparaissent au redémarrage du serveur
+  (voir « Durée de vie des salons » au §3).
+- Le thème Dragon Ball est un exemple illustratif (valeurs de "puissance"
+  non canoniques) — à toi de l'enrichir via `data/dragonball/dragonballex.json`.
+- Pas d'authentification : toute personne connaissant le code d'un salon peut
+  le rejoindre, et l'écran maître d'un salon est accessible à qui connaît son
+  adresse `/CODE`. Choisis un code peu devinable pour un salon public.
+
+## 9. Héberger le jeu sur Render
+
+Le serveur lit le port dans la variable `PORT` fournie par Render et
+utilise l'adresse publique du service (`RENDER_EXTERNAL_URL`) pour le QR code.
+
+1. Mets le dossier du projet dans un dépôt Git (GitHub / GitLab). Le fichier
+   `.gitignore` exclut déjà `node_modules`.
+2. Sur https://render.com : **New + → Blueprint**, choisis le dépôt — le
+   fichier `render.yaml` crée le service web. (Ou **New + → Web Service**
+   à la main : *Runtime* Node, *Build Command* `npm install`, *Start Command*
+   `npm start`, *Health Check Path* `/healthz`.)
+3. Une fois déployé, ouvre l'adresse `https://<ton-service>.onrender.com/`,
+   crée un salon et fais scanner le QR code.
+
+À savoir sur l'offre gratuite de Render :
+
+- le service **se met en veille** après ~15 minutes sans requête et met une
+  trentaine de secondes à se réveiller ; les salons en mémoire sont alors
+  perdus (voir « Durée de vie des salons », §3) — réveille le service avant
+  la partie en ouvrant l'adresse quelques instants avant ;
+- le **disque est éphémère** : `data/players.json`, `solo_history.json` et
+  `tournaments_history.json` (classement solo, historiques) sont remis à zéro
+  à chaque redéploiement/redémarrage. Pour les conserver il faut un disque
+  persistant (offre payante) monté sur `data/` ;
+- pour une autre adresse publique (domaine perso, autre hébergeur), définis
+  la variable d'environnement `PUBLIC_URL` (ex. `https://jeu.exemple.fr`).

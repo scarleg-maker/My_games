@@ -1,10 +1,11 @@
 {
   "name": "enigma-lien-server",
-  "version": "1.0.0",
-  "description": "Enigma-Lien - generateur d'enigmes solo et multijoueur (tournois Sprinteur / Survie), thematisable.",
+  "version": "2.0.1",
+  "description": "Enigma-Lien - generateur d'enigmes solo et multijoueur en salons (tournois Sprinteur / Survie, QR code), thematisable.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node scripts/test_tournament_logic.js && node scripts/test_rooms_logic.js && node scripts/test_full.js"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -13,5 +14,8 @@
   },
   "devDependencies": {
     "socket.io-client": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

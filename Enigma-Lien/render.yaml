@@ -1,0 +1,13 @@
+# Déploiement sur Render (https://render.com) : "New +" > "Blueprint", pointe vers ce dépôt.
+# (ou crée à la main un "Web Service" Node avec Build = npm install, Start = npm start)
+services:
+  - type: web
+    name: enigma-lien
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20

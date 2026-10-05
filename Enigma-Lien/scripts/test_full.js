@@ -3,7 +3,8 @@
  *  1. démarre le serveur en sous-processus
  *  2. joue une partie solo complète jusqu'à la victoire (via l'API REST)
  *  3. simule un tournoi Sprinteur avec 2 joueurs via Socket.IO jusqu'à la victoire
- *  4. simule un tournoi Survie avec 3 joueurs via Socket.IO jusqu'à élimination complète
+ *  4. vérifie le câblage réseau d'un tournoi Survie (3 joueurs)
+ *  5. vérifie les salons : codes, QR code, places libres, isolation entre salons simultanés
  * Échoue bruyamment (exit code != 0) si quoi que ce soit ne se comporte pas comme attendu.
  */
 const { spawn } = require("child_process");
@@ -75,9 +76,20 @@ async function testSolo() {
   console.log("✅ Classement mis à jour :", me);
 }
 
-function connectPlayer(slot) {
+async function createRoom(code) {
+  const r = await fetch(`${BASE}/api/rooms`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(code ? { code } : {}),
+  });
+  const data = await r.json();
+  if (!data.ok) throw new Error("création de salon refusée : " + data.error);
+  return data.code;
+}
+
+// Une page (maître ou joueur) se connecte toujours à UN salon : io({ query: { room } })
+function connectPlayer(room) {
   return new Promise((resolve) => {
-    const socket = io(BASE, { transports: ["websocket"] });
+    const socket = io(BASE, { transports: ["websocket"], query: { room } });
     socket.on("connect", () => resolve(socket));
   });
 }
@@ -104,14 +116,15 @@ async function solveRoundBruteForce(socket, slot, state) {
 
 async function testSprint() {
   console.log("\n=== Test tournoi Sprinteur (2 joueurs, cible = 2 manches gagnées) ===");
-  const master = await connectPlayer();
+  const room = await createRoom();
+  const master = await connectPlayer(room);
   master.emit("master:hello");
   await wait(200);
 
   await new Promise((resolve, reject) => master.emit("master:configure", { themeId: "pokemon", mode: "sprint", sprintTarget: 2, livesPerRound: 5000 }, (r) => r.ok ? resolve() : reject(new Error(r.error))));
 
-  const p1 = await connectPlayer();
-  const p2 = await connectPlayer();
+  const p1 = await connectPlayer(room);
+  const p2 = await connectPlayer(room);
   await new Promise((resolve, reject) => p1.emit("player:setName", { slot: 1, name: "Alice" }, (r) => r.ok ? resolve() : reject(new Error(r.error))));
   await new Promise((resolve, reject) => p2.emit("player:setName", { slot: 2, name: "Bob" }, (r) => r.ok ? resolve() : reject(new Error(r.error))));
 
@@ -151,12 +164,13 @@ async function testSurvie() {
   // uniquement le câblage réseau réel (Socket.IO) : inscriptions, démarrage, une vraie
   // soumission, arrêt manuel côté maître — sans dépendre de connaître la solution cachée.
   console.log("\n=== Test tournoi Survie (câblage réseau : lobby, démarrage, soumission, arrêt manuel) ===");
-  const master = await connectPlayer();
+  const room = await createRoom();
+  const master = await connectPlayer(room);
   master.emit("master:hello");
   await wait(200);
   await new Promise((resolve, reject) => master.emit("master:configure", { themeId: "dragonball", mode: "survie", livesPerRound: 3 }, (r) => r.ok ? resolve() : reject(new Error(r.error))));
 
-  const sockets = [await connectPlayer(), await connectPlayer(), await connectPlayer()];
+  const sockets = [await connectPlayer(room), await connectPlayer(room), await connectPlayer(room)];
   const names = ["Casey", "Drew", "Erika"];
   const states = [null, null, null];
   for (let i = 0; i < 3; i++) {
@@ -193,12 +207,119 @@ async function testSurvie() {
   master.close();
 }
 
+
+function emitAck(socket, event, payload) {
+  return new Promise((resolve) => socket.emit(event, payload, resolve));
+}
+
+async function testRooms() {
+  console.log("\n=== Test salons (codes, QR code, places libres, isolation de 2 salons simultanés) ===");
+
+  // codes : invalides / réservés / doublons
+  let r = await (await fetch(`${BASE}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: "ab" }) })).json();
+  if (r.ok) throw new Error("Un code de 2 caractères aurait dû être refusé.");
+  r = await (await fetch(`${BASE}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: "images" }) })).json();
+  if (r.ok) throw new Error("Un code réservé (IMAGES) aurait dû être refusé.");
+  const A = await createRoom("famille");
+  if (A !== "FAMILLE") throw new Error("Le code devrait être normalisé en majuscules : " + A);
+  r = await (await fetch(`${BASE}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: "FAMILLE" }) })).json();
+  if (r.ok) throw new Error("Un code déjà pris aurait dû être refusé.");
+  const B = await createRoom();
+  if (!/^[A-Z2-9]{4}$/.test(B)) throw new Error("Code aléatoire inattendu : " + B);
+  console.log(`✅ Codes : FAMILLE et ${B} créés, doublons / codes invalides / réservés refusés.`);
+
+  // info + salon inexistant
+  let info = await (await fetch(`${BASE}/api/rooms/familLe`)).json();
+  if (!info.exists || info.seats.length !== 10) throw new Error("Info du salon FAMILLE incorrecte : " + JSON.stringify(info));
+  info = await (await fetch(`${BASE}/api/rooms/ZZZZ9`)).json();
+  if (info.exists) throw new Error("Le salon ZZZZ9 ne devrait pas exister.");
+
+  // pages servies
+  for (const [url, mustContain] of [
+    [`/${A}`, "Salon"], [`/${A}/rejoindre`, "Rejoindre un salon"], [`/${A}/joueur3`, "slotLabel"], ["/", "Créer un salon"],
+  ]) {
+    const html = await (await fetch(BASE + url)).text();
+    if (!html.includes(mustContain)) throw new Error(`La page ${url} ne contient pas "${mustContain}".`);
+  }
+  const old = await fetch(`${BASE}/maitre.html`, { redirect: "manual" });
+  if (old.status !== 302) throw new Error("L'ancienne page /maitre.html aurait dû rediriger vers l'accueil (302), reçu " + old.status);
+  const old2 = await fetch(`${BASE}/joueur2.html`, { redirect: "manual" });
+  if (old2.status !== 302) throw new Error("L'ancienne page /joueur2.html aurait dû rediriger vers l'accueil.");
+  const out = await fetch(`${BASE}/${A}/joueur11`);
+  if (out.status !== 404) throw new Error("/CODE/joueur11 (hors 1..10) aurait dû être 404.");
+  console.log("✅ Pages /CODE, /CODE/rejoindre, /CODE/joueurN servies ; anciennes URLs fixes redirigées.");
+
+  // QR code
+  const qr = await fetch(`${BASE}/api/qr?text=${encodeURIComponent("http://exemple.test/" + A + "/rejoindre")}`);
+  const svg = await qr.text();
+  if (!qr.headers.get("content-type").includes("image/svg+xml") || !svg.includes("<svg")) throw new Error("Le QR code n'est pas un SVG valide.");
+  console.log(`✅ QR code SVG généré côté serveur (${svg.length} octets).`);
+
+  // places libres : 3 arrivées simultanées -> 3 places différentes
+  const claims = await Promise.all([1, 2, 3].map(() => fetch(`${BASE}/api/rooms/${A}/claim`, { method: "POST" }).then((x) => x.json())));
+  const slots = claims.map((c) => c.slot);
+  if (new Set(slots).size !== 3 || claims.some((c) => !c.ok)) throw new Error("Les places attribuées simultanément doivent être distinctes : " + JSON.stringify(claims));
+  const none = await fetch(`${BASE}/api/rooms/NOPE2/claim`, { method: "POST" });
+  if (none.status !== 404) throw new Error("claim sur un salon inconnu aurait dû être 404.");
+  console.log("✅ 3 arrivées simultanées -> places distinctes", slots);
+
+  // isolation : mêmes numéros de place dans 2 salons, tournoi lancé dans A seulement
+  const mA = await connectPlayer(A), mB = await connectPlayer(B);
+  mA.emit("master:hello"); mB.emit("master:hello");
+  const stA = { v: null }, stB = { v: null };
+  mA.on("master:state", (s) => (stA.v = s)); mB.on("master:state", (s) => (stB.v = s));
+  await wait(200);
+  let res = await emitAck(mA, "master:configure", { themeId: "pokemon", mode: "survie", livesPerRound: 3 });
+  if (!res.ok) throw new Error(res.error);
+  res = await emitAck(mB, "master:configure", { themeId: "dragonball", mode: "sprint", sprintTarget: 3, livesPerRound: 4 });
+  if (!res.ok) throw new Error(res.error);
+
+  const a1 = await connectPlayer(A), b1 = await connectPlayer(B);
+  res = await emitAck(a1, "player:setName", { slot: 1, name: "Alice" });
+  if (!res.ok) throw new Error(res.error);
+  // même nom + même place dans l'AUTRE salon : doit être accepté (salons indépendants)
+  res = await emitAck(b1, "player:setName", { slot: 1, name: "Alice" });
+  if (!res.ok) throw new Error("Le même nom dans un autre salon devrait être accepté : " + res.error);
+  await wait(200);
+
+  res = await emitAck(mA, "master:start", {});
+  if (!res.ok) throw new Error(res.error);
+  await wait(300);
+  if (stA.v.status !== "playing") throw new Error("Le salon A devrait être en cours de partie.");
+  if (stB.v.status !== "lobby") throw new Error("Le salon B ne devrait PAS être affecté par le démarrage du salon A (status=" + stB.v.status + ").");
+  if (stA.v.config.themeId !== "pokemon" || stB.v.config.themeId !== "dragonball") throw new Error("Les thèmes des deux salons devraient être indépendants.");
+
+  // B démarre aussi, et A le termine : B continue
+  res = await emitAck(mB, "master:start", {});
+  if (!res.ok) throw new Error(res.error);
+  res = await emitAck(mA, "master:end", {});
+  if (!res.ok) throw new Error(res.error);
+  await wait(300);
+  if (stA.v.status !== "finished" || stB.v.status !== "playing") throw new Error(`Fin de A ne doit pas toucher B (A=${stA.v.status}, B=${stB.v.status}).`);
+  console.log("✅ Deux salons simultanés (Pokémon/Survie et Dragon Ball/Sprint) restent totalement indépendants.");
+
+  // les infos publiques reflètent l'état de chaque salon
+  const iA = await (await fetch(`${BASE}/api/rooms/${A}`)).json();
+  const iB = await (await fetch(`${BASE}/api/rooms/${B}`)).json();
+  if (iA.status !== "finished" || iB.status !== "playing" || iB.mode !== "sprint") throw new Error("Infos publiques incohérentes : " + JSON.stringify([iA.status, iB.status, iB.mode]));
+
+  // une page qui se connecte à un salon inexistant reçoit room:missing
+  const ghost = await connectPlayer("ZZZZ9");
+  const missing = await new Promise((resolve) => { ghost.on("room:missing", resolve); setTimeout(() => resolve(null), 1500); });
+  if (!missing) throw new Error("Un salon inexistant doit déclencher l'événement room:missing.");
+  ghost.close();
+
+  [mA, mB, a1, b1].forEach((x) => x.close());
+  console.log("✅ Infos publiques par salon OK, salon inexistant -> room:missing.");
+}
+
 (async () => {
   const child = await startServer();
   try {
     await testSolo();
     await testSprint();
     await testSurvie();
+    await testRooms();
     console.log("\n🎉 TOUT EST OK.");
   } finally {
     child.kill();

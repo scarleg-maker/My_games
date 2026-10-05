@@ -5,23 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Enigma-Lien — Menu</title>
 <link rel="stylesheet" href="/css/style.css">
+<style>
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;}
+  @media (max-width:760px){.cols{grid-template-columns:minmax(0,1fr);}}
+  .panel{background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:16px;}
+  .panel h2{margin-top:0;}
+  .panel p{color:var(--dim);font-size:.72rem;line-height:1.5;margin:0 0 12px;}
+  .row2{display:flex;gap:8px;}
+  .row2 input{flex:1;min-width:0;}
+  #code{text-transform:uppercase;letter-spacing:.2em;font-weight:bold;font-size:1.1rem;}
+  details{margin-top:12px;color:var(--dim);font-size:.72rem;}
+  details summary{cursor:pointer;}
+  details .row2{margin-top:8px;}
+  .seats{display:grid;gap:6px;margin-top:12px;}
+  .seat{display:flex;align-items:center;gap:10px;border:2px solid var(--line);background:var(--bg2);border-radius:6px;padding:8px 10px;color:var(--ink);text-decoration:none;font-size:.75rem;}
+  .seat:hover{border-color:var(--accent);}
+  .seat small{display:block;color:var(--dim);font-size:.62rem;}
+  .seat .who{flex:1;}
+  .seat.taken{opacity:.6;}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--neutral);flex:none;}
+  .dot.on{background:var(--good);}
+  .found-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:14px;font-size:.75rem;}
+  .found-head strong{color:var(--accent);letter-spacing:.15em;font-size:1rem;}
+  .err{color:var(--bad);font-size:.75rem;margin-top:12px;}
+  .recent ul{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-wrap:wrap;gap:8px;}
+  .recent li{display:inline-flex;border:2px solid var(--line);border-radius:20px;overflow:hidden;background:var(--panel);}
+  .recent li a{padding:5px 8px 5px 12px;color:var(--ink);text-decoration:none;font-size:.72rem;}
+  .recent li a strong{color:var(--accent);letter-spacing:.1em;margin-right:6px;}
+  .recent li button{border:0;background:none;color:var(--dim);padding:0 10px;}
+  .recent li button:hover{color:var(--bad);}
+</style>
 </head>
 <body>
 <div class="wrap">
   <h1>⬡ Enigma-Lien</h1>
-  <div class="sub">Générateur d'énigmes à liens — solo ou tournoi multijoueur, thématisable (Pokémon, Dragon Ball, ...).</div>
+  <div class="sub">Générateur d'énigmes à liens — solo ou tournoi multijoueur en salon, thématisable (Pokémon, Dragon Ball, ...).</div>
 
-  <h2>Jouer</h2>
+  <h2>Multijoueur — salons</h2>
+  <div class="cols">
+    <section class="panel">
+      <h2>Créer un salon</h2>
+      <p>Tu deviens le maître du jeu : un salon est créé avec un code court et un QR code à faire scanner aux joueurs. Plusieurs salons peuvent tourner en même temps sur le même serveur.</p>
+      <button class="primary" id="create">➕ Créer un salon</button>
+      <details>
+        <summary>Choisir mon propre code</summary>
+        <div class="row2 field"><input type="text" id="mycode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="createCustom">Créer</button></div>
+        <p style="margin:6px 0 0">3 à 10 lettres ou chiffres.</p>
+      </details>
+    </section>
+
+    <section class="panel">
+      <h2>Rejoindre un salon</h2>
+      <p>Entre le code donné par le maître du jeu (ou scanne son QR code), puis prends une place.</p>
+      <div class="row2 field"><input type="text" id="code" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="primary" id="join">Rejoindre</button></div>
+      <div id="found"></div>
+    </section>
+  </div>
+  <div class="recent" id="recent"></div>
+
+  <h2>Autres modes</h2>
   <div class="tiles">
     <div class="tile" onclick="location.href='/solo.html'">
       <div class="ticon">🎮</div>
       <div class="tname">Solo</div>
       <div class="tmeta">Choisis un thème, un nombre de vies, et enchaîne les énigmes. Ta progression est enregistrée.</div>
-    </div>
-    <div class="tile" onclick="location.href='/maitre.html'">
-      <div class="ticon">🏆</div>
-      <div class="tname">Tournoi multijoueur</div>
-      <div class="tmeta">Écran maître : configure et pilote un tournoi Sprinteur ou Survie pour jusqu'à 10 joueurs.</div>
     </div>
     <div class="tile" onclick="location.href='/classement.html'">
       <div class="ticon">📊</div>
@@ -30,29 +77,121 @@
     </div>
   </div>
 
-  <h2>Liens joueurs</h2>
-  <div class="note">
-    Chaque joueur d'un tournoi ouvre <b>sa propre page</b> depuis son navigateur (téléphone, ordinateur, ...) sur le
-    même réseau que ce serveur : <b>http://&lt;adresse-du-serveur&gt;:8500/joueur1.html</b>, <b>joueur2.html</b>, etc.
-    Sur cette machine, en local, ce sont les raccourcis ci-dessous :
-  </div>
-  <div class="slotlinks" id="slotlinks"></div>
-
   <footer>
     Outil maison non-officiel, inspiré de Pokésort (pokelike.xyz). Pokémon © Nintendo / Game Freak / Creatures Inc.
     Les fichiers de données (data/*.json) sont éditables à la main — voir le README du projet.
   </footer>
 </div>
+<div class="note" id="toast" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:none;max-width:90vw;"></div>
+
 <script>
-const slotlinks = document.getElementById('slotlinks');
-for (let n = 1; n <= 10; n++) {
-  const a = document.createElement('a');
-  a.className = 'btnlike';
-  a.href = `/joueur${n}.html`;
-  a.target = '_blank';
-  a.textContent = `Joueur ${n}`;
-  slotlinks.appendChild(a);
+const found = document.getElementById('found');
+const codeInput = document.getElementById('code');
+let watching = null, watchTimer = null;
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.style.display = 'none'; }, 4000);
 }
+
+// ---- salons récents sur cet appareil (facultatif : sans localStorage la page marche quand même)
+const recent = {
+  KEY: 'enigmalien_rooms',
+  list() { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch (e) { return []; } },
+  save(l) { try { localStorage.setItem(this.KEY, JSON.stringify(l.slice(0, 8))); } catch (e) {} },
+  add(code, role) { this.save([{ code, role }].concat(this.list().filter(x => x.code !== code))); },
+  remove(code) { this.save(this.list().filter(x => x.code !== code)); },
+};
+
+async function createRoom(code) {
+  try {
+    const r = await (await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(code ? { code } : {}) })).json();
+    if (!r.ok) return toast(r.error);
+    recent.add(r.code, 'maître');
+    location.href = '/' + r.code;
+  } catch (e) { toast('Serveur injoignable'); }
+}
+document.getElementById('create').onclick = () => createRoom();
+document.getElementById('createCustom').onclick = () => {
+  const c = document.getElementById('mycode').value.trim();
+  if (!c) return toast('Indique un code');
+  createRoom(c);
+};
+document.getElementById('mycode').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('createCustom').click(); });
+
+async function roomInfo(code) {
+  try { return await (await fetch('/api/rooms/' + encodeURIComponent(code))).json(); } catch (e) { return null; }
+}
+
+async function lookup(code, quiet) {
+  code = code.trim().toUpperCase();
+  if (!code) { if (!quiet) toast('Indique le code du salon'); return; }
+  const info = await roomInfo(code);
+  if (!info) { if (!quiet) toast('Serveur injoignable'); return; }
+  if (!info.exists) {
+    watching = null; clearInterval(watchTimer);
+    found.innerHTML = `<p class="err">Aucun salon « ${esc(code)} ». Vérifie le code avec le maître du jeu.</p>`;
+    return;
+  }
+  watching = code;
+  recent.add(code, 'joueur');
+  renderSeats(info);
+  renderRecent();
+  clearInterval(watchTimer);
+  watchTimer = setInterval(async () => { if (watching) { const i = await roomInfo(watching); if (i && i.exists) renderSeats(i); } }, 3000);
+}
+
+function renderSeats(info) {
+  const modes = { sprint: 'Sprinteur', survie: 'Survie' };
+  const state = { lobby: 'en attente', playing: 'partie en cours', finished: 'terminé' }[info.status] || '';
+  const free = info.seats.filter(s => !s.name).length;
+  let h = `<div class="found-head"><span>Salon <strong>${esc(info.code)}</strong> · ${state}${info.mode ? ' · ' + (modes[info.mode] || '') : ''}</span>
+    <a href="/${esc(info.code)}">écran maître</a></div>`;
+  if (info.status === 'playing') h += '<p style="margin-top:10px">Une partie est déjà en cours : si tu rejoins maintenant, tu seras spectateur jusqu\'au prochain tournoi.</p>';
+  h += free
+    ? `<div style="margin-top:12px"><button class="primary" id="claim">✅ Rejoindre ce salon (${free} place${free > 1 ? 's' : ''} libre${free > 1 ? 's' : ''})</button></div>`
+    : '<p class="err">Le salon est complet.</p>';
+  const named = info.seats.filter(s => s.name);
+  if (named.length) {
+    h += '<p style="margin:14px 0 0">Tu étais déjà inscrit ? Retrouve ta place :</p><div class="seats">' + named.map(s => {
+      const sub = s.connected ? 'connecté' : 'inscrit, déconnecté';
+      return `<a class="seat ${s.connected ? 'taken' : ''}" href="/${esc(info.code)}/joueur${s.slot}">
+        <span class="dot${s.connected ? ' on' : ''}"></span><span class="who">${esc(s.name)}<small>Place ${s.slot} — ${sub}</small></span><span>→</span></a>`;
+    }).join('') + '</div>';
+  }
+  found.innerHTML = h;
+  const claim = document.getElementById('claim');
+  if (claim) claim.onclick = async () => {
+    claim.disabled = true;
+    try {
+      const r = await (await fetch('/api/rooms/' + encodeURIComponent(info.code) + '/claim', { method: 'POST' })).json();
+      if (!r.ok) { toast(r.error); claim.disabled = false; return; }
+      location.href = `/${info.code}/joueur${r.slot}`;
+    } catch (e) { toast('Serveur injoignable'); claim.disabled = false; }
+  };
+}
+
+document.getElementById('join').onclick = () => lookup(codeInput.value);
+codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(codeInput.value); });
+
+function renderRecent() {
+  const box = document.getElementById('recent'), list = recent.list();
+  if (!list.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<h2>Salons récents sur cet appareil</h2><ul>' + list.map(x =>
+    `<li><a href="${x.role === 'maître' ? '/' + esc(x.code) : '/' + esc(x.code) + '/rejoindre'}"><strong>${esc(x.code)}</strong><span>${esc(x.role)}</span></a>
+     <button data-rm="${esc(x.code)}" title="Retirer de la liste" aria-label="Retirer ${esc(x.code)}">✕</button></li>`).join('') + '</ul>';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rm]');
+  if (b) { recent.remove(b.dataset.rm); renderRecent(); }
+});
+renderRecent();
+
+// adresse /CODE/rejoindre (lien ou QR code du maître) : le code est déjà rempli
+const m = location.pathname.match(/^\/([A-Za-z0-9]{3,10})\/rejoindre/);
+if (m) { codeInput.value = m[1].toUpperCase(); lookup(m[1], true); }
 </script>
 </body>
 </html>
