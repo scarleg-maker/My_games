@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Composez votre équipe</title>
+<link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/accueil.css">
+</head>
+<body>
+
+<main>
+  <div class="hero">
+    <h1>Composez votre équipe</h1>
+    <p>Chaque groupe joue dans son propre salon, avec ses propres joueurs et ses propres photos.</p>
+  </div>
+
+  <div class="cards">
+    <section class="panel card">
+      <h2>Créer un salon</h2>
+      <p>Vous devenez le maître du jeu : un salon est créé avec un code à donner aux joueurs.</p>
+      <button id="create-btn">Créer un salon</button>
+      <details>
+        <summary>Choisir mon propre code</summary>
+        <div class="row">
+          <input type="text" id="custom-code" maxlength="10" placeholder="ex. PIRATES" autocomplete="off">
+          <button class="secondary" id="create-custom-btn">Créer</button>
+        </div>
+        <p class="hint">3 à 10 lettres ou chiffres. Pratique pour retrouver le même salon d'une fois sur l'autre.</p>
+      </details>
+      <p id="create-error" class="error"></p>
+    </section>
+
+    <section class="panel card">
+      <h2>Rejoindre un salon</h2>
+      <p>Entrez le code donné par le maître du jeu.</p>
+      <div class="row">
+        <input type="text" id="join-code" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button id="join-btn">Rejoindre</button>
+      </div>
+      <div id="join-result"></div>
+    </section>
+  </div>
+
+  <div id="recent-block" class="recent"></div>
+</main>
+
+<script src="/accueil.js"></script>
+</body>
+</html>

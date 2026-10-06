@@ -7,18 +7,63 @@
   DM.PLAYER_COLORS = ['#ff4d6d', '#ffd60a', '#19c37d', '#7c5cff', '#ff8a00', '#2f6bff'];
   DM.playerColor = (id) => DM.PLAYER_COLORS[(id - 1) % DM.PLAYER_COLORS.length];
 
-  /** Appel d'API (GET si pas de corps, sinon POST JSON) */
+  /**
+   * Code du salon en cours : premier segment de l'adresse (/K7QF, /K7QF/joueur2, /K7QF/rejoindre).
+   * Vide sur la page d'accueil elle-même (/).
+   */
+  DM.room = (() => {
+    const seg = (location.pathname.split('/')[1] || '');
+    return /^[A-Za-z0-9]{3,8}$/.test(seg) ? seg.toUpperCase() : '';
+  })();
+  DM.roomUrl = (suffix = '') => `${location.origin}/${DM.room}${suffix}`;
+
+  /**
+   * Appel d'API (GET si pas de corps, sinon POST JSON).
+   * Le salon en cours (DM.room) est injecté automatiquement : dans le corps pour un POST,
+   * en paramètre ?room= pour les lectures propres à un salon (état, réponses).
+   */
   DM.api = async (url, body) => {
-    const opts = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+    let opts = {};
+    if (body !== undefined) {
+      const payload = DM.room ? { room: DM.room, ...body } : body;
+      opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+    } else if (DM.room && /^\/api\/(state|answers)(\?|$)/.test(url)) {
+      url += (url.includes('?') ? '&' : '?') + 'room=' + encodeURIComponent(DM.room);
+    }
     const r = await fetch(url, opts);
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || `Erreur ${r.status}`);
     return j;
   };
 
-  /** Connexion temps réel (Server-Sent Events, reconnexion automatique) */
-  DM.connect = (onState, onConn) => {
-    const es = new EventSource('/events');
+  /** Info légère d'un salon par son code (existe-t-il ? thème, joueurs…) — page d'accueil */
+  DM.roomInfo = async (code) => {
+    try { return await (await fetch('/api/rooms/' + encodeURIComponent(code), { cache: 'no-store' })).json(); }
+    catch { return null; }
+  };
+
+  /** Salons récents sur cet appareil (page d'accueil), mémorisés dans le navigateur */
+  DM.recentRooms = {
+    list() { try { return JSON.parse(localStorage.getItem('dm_salons') || '[]'); } catch { return []; } },
+    add(code, role) {
+      try {
+        const l = DM.recentRooms.list().filter((x) => x.code !== code);
+        l.unshift({ code, role, t: Date.now() });
+        localStorage.setItem('dm_salons', JSON.stringify(l.slice(0, 8)));
+      } catch { /* stockage indisponible */ }
+    },
+    remove(code) {
+      try { localStorage.setItem('dm_salons', JSON.stringify(DM.recentRooms.list().filter((x) => x.code !== code))); }
+      catch { /* stockage indisponible */ }
+    },
+  };
+
+  /**
+   * Connexion temps réel (Server-Sent Events, reconnexion automatique) au salon DM.room.
+   * role : 'referee' (arbitre), 'ecran' (écran commun), ou un numéro de joueur (1 à 6).
+   */
+  DM.connect = (role, onState, onConn) => {
+    const es = new EventSource(`/events?room=${encodeURIComponent(DM.room)}&role=${encodeURIComponent(role)}`);
     es.addEventListener('state', (e) => onState(JSON.parse(e.data)));
     es.onopen = () => onConn && onConn(true);
     es.onerror = () => onConn && onConn(false);

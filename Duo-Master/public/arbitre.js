@@ -19,9 +19,12 @@
   const answersHidden = () => localStorage.getItem('dm_hide_answers') === '1';
 
   DM.connect(
+    'referee',
     (st) => { chain = chain.then(() => render(st)).catch(console.error); },
     (ok) => { $('#offline').style.display = ok ? 'none' : 'block'; }
   );
+
+  DM.recentRooms.add(DM.room, 'arbitre');
 
   async function act(url, body = {}) {
     try { await api(url, body); } catch (e) { DM.toast(e.message, true); }
@@ -260,21 +263,67 @@
     savedTimer = setTimeout(() => { $('#saved').textContent = 'Les noms sont conservés d\'une partie à l\'autre.'; }, 2000);
   });
 
-  /* ---------------- liens joueurs ---------------- */
-  async function renderLinks() {
+  /* ---------------- salon : code, invitation (QR), liens joueurs ---------------- */
+  async function loadInfo() {
     if (!info) {
-      info = { ips: [], port: location.port }; // valeur provisoire, évite les appels multiples
+      info = { ips: [], port: location.port };
       try { info = await api('/api/info'); } catch (e) { /* ignore */ }
     }
+    return info;
+  }
+
+  async function renderLinks() {
+    $('#roomCode').textContent = DM.room;
+    const inf = await loadInfo();
     const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
-    const base = local ? `http://localhost:${info.port}` : location.origin;
-    const lines = S.players.map((p) => `<div>${esc(p.name)} : <a href="${base}/joueur${p.id}" target="_blank" rel="noopener">${base}/joueur${p.id}</a></div>`);
-    lines.push(`<div>Écran commun (scores + tirage) : <a href="${base}/ecran" target="_blank" rel="noopener">${base}/ecran</a></div>`);
-    if (local && info.ips.length) {
-      lines.push(`<div class="muted" style="margin-top:6px">Depuis un téléphone (même réseau Wi-Fi), remplacez <code>localhost</code> par ${info.ips.map((ip) => `<code>${esc(ip)}</code>`).join(' ou ')} dans l'adresse.</div>`);
+
+    // QR / lien à scanner : un téléphone ne peut pas joindre « localhost », il lui faut l'adresse réseau.
+    const qrBase = local && inf.ips.length ? `http://${inf.ips[0]}:${inf.port}` : location.origin;
+    const joinUrl = `${qrBase}/${DM.room}/rejoindre`;
+    $('#qr').dataset.url = joinUrl;
+    $('#joinLink').textContent = joinUrl;
+    $('#joinLink').href = joinUrl;
+    drawQR(joinUrl);
+
+    // Liens texte ci-dessous : utiles surtout depuis cet ordinateur (copier/coller, second onglet).
+    const base = local ? `http://localhost:${inf.port}` : location.origin;
+    const lines = S.players.map((p) => `<div>${esc(p.name)} : <a href="${base}/${DM.room}/joueur${p.id}" target="_blank" rel="noopener">${base}/${DM.room}/joueur${p.id}</a></div>`);
+    lines.push(`<div>Écran commun (scores + tirage) : <a href="${base}/${DM.room}/ecran" target="_blank" rel="noopener">${base}/${DM.room}/ecran</a></div>`);
+    if (local && inf.ips.length) {
+      lines.push(`<div class="muted" style="margin-top:6px">Depuis un téléphone (même réseau Wi-Fi), remplacez <code>localhost</code> par ${inf.ips.map((ip) => `<code>${esc(ip)}</code>`).join(' ou ')} dans l'adresse — ou utilisez le QR code ci-dessus.</div>`);
     }
     $('#links').innerHTML = lines.join('');
   }
+
+  let qrLib = null;
+  function drawQR(url) {
+    const box = $('#qr');
+    if (!box || box.dataset.done === url) return;
+    if (!qrLib) {
+      qrLib = new Promise((ok) => {
+        const sc = document.createElement('script');
+        sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        sc.onload = () => ok(true);
+        sc.onerror = () => ok(false);
+        document.head.appendChild(sc);
+      });
+    }
+    qrLib.then((ok) => {
+      if (box.dataset.url !== url || box.dataset.done === url) return;
+      if (!ok || !window.QRCode) { box.hidden = true; return; }
+      box.hidden = false;
+      box.innerHTML = '';
+      box.dataset.done = url;
+      // eslint-disable-next-line no-new
+      new window.QRCode(box, { text: url, width: 128, height: 128, colorDark: '#0a1f44', colorLight: '#ffffff', correctLevel: window.QRCode.CorrectLevel.M });
+    });
+  }
+
+  $('#copyJoin').addEventListener('click', async () => {
+    const url = $('#qr').dataset.url || '';
+    try { await navigator.clipboard.writeText(url); DM.toast('Lien copié : ' + url); }
+    catch { DM.toast('Impossible de copier automatiquement — sélectionnez le lien.', true); }
+  });
 
   /* ---------------- actions ---------------- */
   $('#drawBtn').addEventListener('click', () => act(S && !S.started ? '/api/start' : '/api/draw'));

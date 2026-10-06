@@ -164,10 +164,27 @@
                 </label>
             </div>
             <div id="modeAInfo" style="display:none;">
-                <p class="info-text" id="modeAConnectionStatus" style="margin:10px 0 6px 0;">Non connecté au serveur.</p>
-                <div id="modeAAddresses" style="margin-bottom:12px;"></div>
-                <label style="font-size:0.85rem;">Connexions joueurs :</label>
-                <div class="lobby-list" id="lobbyList"></div>
+                <!-- Pas encore de salon (page d'accueil, sans code dans l'URL) -->
+                <div id="modeARoomGate">
+                    <p class="info-text" style="text-align:left; margin-bottom:10px;">Le mode Temps réel se joue dans un <strong>salon</strong> : créez-en un nouveau pour démarrer une partie, ou rejoignez un salon que vous avez déjà créé (par ex. depuis un autre appareil).</p>
+                    <button class="btn btn-start" id="createRoomBtn" type="button" style="width:100%;">Créer un salon Temps réel</button>
+                    <div style="display:flex; gap:10px; margin-top:12px; align-items:flex-end;">
+                        <div style="flex-grow:1;">
+                            <label for="joinRoomCodeInput" style="font-size:0.8rem;">Code d'un salon existant :</label>
+                            <input type="text" id="joinRoomCodeInput" placeholder="Ex. AB7K" maxlength="10" style="text-transform:uppercase;">
+                        </div>
+                        <button class="btn btn-neutral" id="joinRoomBtn" type="button" style="white-space:nowrap;">Rejoindre</button>
+                    </div>
+                    <p class="info-text" id="roomGateError" style="color:#ff8a8a; display:none; margin-top:8px;"></p>
+                </div>
+                <!-- Salon actif (code présent dans l'URL) -->
+                <div id="modeARoomPanel" style="display:none;">
+                    <p class="info-text" style="margin:0 0 8px 0;">Salon : <strong id="currentRoomCodeLabel" style="letter-spacing:2px; font-size:1.1rem; color:#00c6ff;"></strong></p>
+                    <p class="info-text" id="modeAConnectionStatus" style="margin:0 0 6px 0;">Non connecté au serveur.</p>
+                    <div id="modeAAddresses" style="margin-bottom:12px;"></div>
+                    <label style="font-size:0.85rem;">Connexions joueurs :</label>
+                    <div class="lobby-list" id="lobbyList"></div>
+                </div>
             </div>
         </div>
 
@@ -330,9 +347,22 @@
 
         // --- Éléments du sélecteur de mode et du Mode A ---
         const modeAInfo = document.getElementById('modeAInfo');
+        const modeARoomGate = document.getElementById('modeARoomGate');
+        const modeARoomPanel = document.getElementById('modeARoomPanel');
+        const currentRoomCodeLabel = document.getElementById('currentRoomCodeLabel');
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const joinRoomCodeInput = document.getElementById('joinRoomCodeInput');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const roomGateError = document.getElementById('roomGateError');
         const modeAConnectionStatus = document.getElementById('modeAConnectionStatus');
         const modeAAddresses = document.getElementById('modeAAddresses');
         const lobbyList = document.getElementById('lobbyList');
+
+        // Un salon ("room") = une partie isolée. Son code apparaît dans l'URL : /{CODE} (maître)
+        // ou /{CODE}/joueurN (joueurs). Sans code dans l'URL, on est sur la page d'accueil : il
+        // faut créer ou rejoindre un salon avant de pouvoir configurer une partie en Mode A.
+        const urlRoomMatch = window.location.pathname.match(/^\/([A-Za-z0-9]{3,10})\/?$/);
+        const urlRoomCode = urlRoomMatch ? urlRoomMatch[1].toUpperCase() : null;
         const liveGameArea = document.getElementById('liveGameArea');
         const liveDisplayImage = document.getElementById('liveDisplayImage');
         const liveImageNameLabel = document.getElementById('liveImageNameLabel');
@@ -363,6 +393,7 @@
 
         function ensureModeASocket() {
             if (modeASocket) return modeASocket;
+            if (!urlRoomCode) return null; // pas de salon : rien à faire tant qu'on n'en a pas créé/rejoint un
             if (typeof io !== 'function') {
                 modeAConnectionStatus.innerText = "⚠ Serveur introuvable. Ouvrez cette page via http://localhost:5500/ (voir README du Mode A) après avoir lancé \"npm start\".";
                 return null;
@@ -370,13 +401,17 @@
             modeASocket = io();
             modeASocket.on('connect', () => {
                 modeAConnectionStatus.innerText = "✅ Connecté au serveur. Configurez la partie ci-dessous puis lancez-la.";
-                modeASocket.emit('register', { role: 'maitre' });
+                modeASocket.emit('register', { role: 'maitre', room: urlRoomCode });
             });
             modeASocket.on('disconnect', () => {
                 modeAConnectionStatus.innerText = "⚠ Connexion au serveur perdue.";
             });
             modeASocket.on('connect_error', () => {
                 modeAConnectionStatus.innerText = "⚠ Impossible de joindre le serveur. Vérifiez qu'il tourne (\"npm start\") et que la page est bien ouverte via http://localhost:5500/.";
+            });
+            modeASocket.on('roomError', (msg) => {
+                modeAConnectionStatus.innerText = `⚠ ${msg}`;
+                showCustomAlert(msg);
             });
             modeASocket.on('setupError', (msg) => {
                 showCustomAlert(msg);
@@ -407,11 +442,12 @@
         }
 
         function buildAddressesHtml(count) {
+            if (!urlRoomCode) return '';
             const port = 5500;
             let html = `<p class="info-text" style="text-align:left; margin-bottom:6px;">Adresses des pages joueurs (à ouvrir sur chaque appareil, même réseau) :</p>`;
             html += '<div class="lobby-list">';
             for (let i = 1; i <= count; i++) {
-                html += `<a class="lobby-slot" href="http://localhost:${port}/joueur${i}" target="_blank" rel="noopener">Joueur ${i} : localhost:${port}/joueur${i}</a>`;
+                html += `<a class="lobby-slot" href="http://localhost:${port}/${urlRoomCode}/joueur${i}" target="_blank" rel="noopener">Joueur ${i} : localhost:${port}/${urlRoomCode}/joueur${i}</a>`;
             }
             html += '</div>';
             return html;
@@ -639,18 +675,76 @@
             modeASocket.emit('skipRound');
         });
 
+        function showRoomGateError(msg) {
+            roomGateError.innerText = msg;
+            roomGateError.style.display = 'block';
+        }
+
+        function updateModeAPanels() {
+            if (urlRoomCode) {
+                modeARoomGate.style.display = 'none';
+                modeARoomPanel.style.display = 'block';
+                currentRoomCodeLabel.innerText = urlRoomCode;
+                ensureModeASocket();
+                renderModeAAddresses();
+            } else {
+                modeARoomGate.style.display = 'block';
+                modeARoomPanel.style.display = 'none';
+            }
+        }
+
         document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
             radio.addEventListener('change', () => {
                 gameMode = getSelectedMode();
                 if (gameMode === 'A') {
                     modeAInfo.style.display = 'block';
-                    ensureModeASocket();
-                    renderModeAAddresses();
+                    updateModeAPanels();
                 } else {
                     modeAInfo.style.display = 'none';
                 }
             });
         });
+
+        createRoomBtn.addEventListener('click', async () => {
+            createRoomBtn.disabled = true;
+            createRoomBtn.innerText = 'Création du salon...';
+            try {
+                const res = await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                const data = await res.json();
+                if (data.ok) {
+                    window.location.href = '/' + data.code;
+                } else {
+                    showRoomGateError(data.error || 'Impossible de créer le salon.');
+                    createRoomBtn.disabled = false;
+                    createRoomBtn.innerText = 'Créer un salon Temps réel';
+                }
+            } catch (e) {
+                showRoomGateError("Impossible de joindre le serveur. Vérifiez qu'il tourne (\"npm start\").");
+                createRoomBtn.disabled = false;
+                createRoomBtn.innerText = 'Créer un salon Temps réel';
+            }
+        });
+
+        joinRoomBtn.addEventListener('click', () => {
+            const code = joinRoomCodeInput.value.trim().toUpperCase();
+            if (!/^[A-Z0-9]{3,10}$/.test(code)) {
+                showRoomGateError('Code de salon invalide.');
+                return;
+            }
+            window.location.href = '/' + code;
+        });
+        joinRoomCodeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') joinRoomBtn.click();
+        });
+
+        // Si l'URL contient déjà un code de salon (ex: /AB7K), on est sur la page maître
+        // de ce salon : on bascule directement en Mode A et on s'y connecte.
+        if (urlRoomCode) {
+            document.querySelector('input[name="gameMode"][value="A"]').checked = true;
+            gameMode = 'A';
+            modeAInfo.style.display = 'block';
+            updateModeAPanels();
+        }
         
         const leftSidebar = document.getElementById('leftSidebar');
         const rightSidebar = document.getElementById('rightSidebar');

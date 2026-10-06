@@ -363,3 +363,66 @@ tr.row-invalid td { background: rgba(229,72,77,0.35); }
   margin-bottom: 4px;
 }
 .detail-answer { font-size: 0.95rem; word-break: break-word; }
+
+/* ===== Salons : accueil, code, invitation (QR) ===== */
+.cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+
+.code-big {
+  display: inline-block;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  font-size: 1.2em;
+  color: var(--accent);
+}
+.code-input {
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+.inline-row { display: flex; gap: 10px; margin-top: 10px; }
+.inline-row input { flex: 1; min-width: 0; }
+.inline-row .btn { flex: 0 0 auto; }
+#myCode { text-transform: uppercase; }
+.subtitle.small { font-size: 0.8rem; margin-top: 6px; }
+
+details.more { margin-top: 16px; color: var(--text-dim); }
+details.more summary { cursor: pointer; font-size: 0.9rem; }
+
+.found-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.found-head strong { letter-spacing: 0.15em; color: var(--accent); font-size: 1.15rem; }
+.small-link { font-size: 0.8rem; color: var(--accent-2); }
+
+.seats { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 10px; }
+.seat {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel-2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.seat:hover { border-color: var(--accent-2); }
+.seat.taken { opacity: 0.6; }
+.seat .who { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.seat .who small { display: block; color: var(--text-dim); font-size: 0.75rem; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); flex: none; }
+.dot.on { background: var(--correct); }
+
+.recent { margin-top: 26px; }
+.recent h3 { font-size: 1rem; }
+.recent ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.recent li { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--bg-panel); }
+.recent li a { padding: 6px 8px 6px 14px; color: var(--text); text-decoration: none; }
+.recent li a strong { letter-spacing: 0.1em; color: var(--accent); margin-right: 8px; }
+.recent li a span { font-size: 0.75rem; color: var(--text-dim); }
+.recent li button { border: 0; background: none; color: var(--text-dim); padding: 0 12px; cursor: pointer; }
+.recent li button:hover { color: var(--invalid); }
+
+.invite { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.invite > div { flex: 1; min-width: 220px; }
+.qr { flex: none; width: 150px; height: 150px; border-radius: 10px; background: #fff; padding: 4px; }
+.invite code { word-break: break-all; color: var(--accent-2); }

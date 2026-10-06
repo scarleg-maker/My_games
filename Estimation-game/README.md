@@ -4,6 +4,10 @@ Jeu multijoueur en temps réel : un joueur (le "Book-maker") reçoit un pourcent
 tiré au hasard sur un thème donné, écrit un indice, et les autres joueurs doivent
 deviner ce pourcentage le plus précisément possible.
 
+**Système de salons** : plusieurs groupes peuvent jouer en même temps sur le même
+serveur, chacun dans son propre salon identifié par un code (ex. `R8MC` ou un code
+personnalisé comme `FAMILLE`), avec QR code d'invitation.
+
 ## Installation
 
 ```bash
@@ -25,41 +29,62 @@ Le serveur démarre sur **http://localhost:2500**
 
 ## Utilisation
 
-1. Ouvrez `http://localhost:2500/` sur l'ordinateur du maître du jeu.
-2. Choisissez le nombre de joueurs (2 à 8), donnez un nom à chacun
+### 1. Page d'accueil (`http://localhost:2500/`)
+- **Créer une partie** → un salon est créé avec un code aléatoire (ou un code personnalisé
+  au choix, ex. `FAMILLE`), et vous êtes redirigé vers la console maître de ce salon.
+- **Rejoindre une partie** → entrez le code donné par le maître du jeu, puis touchez
+  votre nom dans la liste des sièges.
+
+### 2. Console maître (`/CODE`)
+1. Choisissez le nombre de joueurs (2 à 8), donnez un nom à chacun
    (ces noms sont mémorisés dans le navigateur d'une partie à l'autre),
    indiquez le thème de la partie et le nombre de points pour gagner (10 à 100).
-3. Cliquez sur **« Lancer la partie »**.
-4. Chaque joueur ouvre son lien personnel affiché sur l'écran du maître,
-   par exemple `http://localhost:2500/joueur1`, `http://localhost:2500/joueur2`, etc.
-   (sur son téléphone/ordinateur, connecté au même réseau que le serveur).
-5. Un joueur est désigné aléatoirement comme Book-maker (affiché 2 secondes).
+2. Cliquez sur **« Lancer la partie »**.
+3. Un **QR code** et un lien `http://.../CODE/rejoindre` apparaissent : les joueurs
+   scannent le code (ou tapent le code du salon sur la page d'accueil) puis choisissent
+   leur nom dans la liste. Les liens directs par joueur restent aussi disponibles
+   (`/CODE/joueur1`, `/CODE/joueur2`, etc.).
+
+### 3. Déroulement d'une manche
+1. Un joueur est désigné aléatoirement comme Book-maker (affiché 2 secondes).
    Il voit un pourcentage tiré au hasard sur sa jauge en demi-cercle et écrit un indice.
-6. Les autres joueurs lisent l'indice, ajustent leur curseur entre 0 et 100 % sur
+2. Les autres joueurs lisent l'indice, ajustent leur curseur entre 0 et 100 % sur
    leur propre jauge, puis valident.
-7. Les points sont attribués selon la précision :
+3. Les points sont attribués selon la précision :
    - Exact : 5 points
    - ± 2 : 3 points
    - ± 5 : 2 points
    - ± 8 : 1 point
-8. Le tableau des résultats de la manche s'affiche pour tous, puis le Book-maker
-   valide pour passer au joueur suivant.
-9. La partie se termine dès qu'un joueur atteint le nombre de points fixé.
-   Le tableau des scores est visible en permanence sur la page maître.
+4. Le tableau des résultats de la manche s'affiche pour tous, avec la réponse et les
+   zones de points représentées sur la jauge, puis le Book-maker valide pour passer
+   au joueur suivant.
+5. La partie se termine dès qu'un joueur atteint le nombre de points fixé.
+   Le tableau des scores est visible en permanence sur la console maître.
+
+Plusieurs salons peuvent tourner **en parallèle** sans interférer les uns avec les
+autres : chaque groupe a son propre code, ses propres joueurs, son propre thème et
+son propre tableau de scores.
 
 ## Structure du projet
 
 ```
 estimation-game/
-├── server.js              # Serveur Express + Socket.io, logique de jeu
+├── server.js              # Serveur Express + Socket.io : salons, routes, logique de jeu
 ├── package.json
 ├── lancer-le-jeu.bat      # Windows : installe, lance le serveur et ouvre le navigateur
 └── public/
-    ├── master.html / css / js  # Console maître
-    ├── player.html              # Page joueur (jauge demi-cercle)
-    ├── css/style.css            # Style (dégradé vert → cyan)
-    └── js/
-        ├── master.js
-        ├── player.js
-        └── gauge.js             # Dessin de la jauge SVG partagée
+    ├── accueil.html / js/accueil.js   # Page d'accueil : créer / rejoindre un salon
+    ├── maitre.html   / js/maitre.js   # Console maître d'un salon (QR code, scores)
+    ├── joueur.html   / js/joueur.js   # Page joueur (jauge demi-cercle)
+    ├── js/gauge.js                    # Dessin de la jauge SVG partagée
+    └── css/style.css                  # Style (dégradé vert → cyan)
 ```
+
+## Notes
+
+- Les parties en cours sont conservées en mémoire sur le serveur ; un salon sans
+  personne connecté depuis 6 heures est automatiquement supprimé.
+- Pour que les joueurs rejoignent depuis leurs téléphones, tous les appareils
+  doivent être sur le **même réseau Wi-Fi** que l'ordinateur qui héberge le serveur.
+  Le QR code utilise automatiquement l'adresse IP locale du réseau plutôt que
+  `localhost` (injoignable depuis un autre appareil).

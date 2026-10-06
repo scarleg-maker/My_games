@@ -1,5 +1,22 @@
 const socket = io();
-socket.on('connect', () => socket.emit('register', { role: 'master' }));
+socket.on('connect', () => socket.emit('register', { room: ROOM, role: 'master' }));
+socket.on('noroom', showNoRoom);
+
+const mainArea = document.getElementById('mainArea');
+const noRoomPanel = document.getElementById('noRoomPanel');
+function showNoRoom() {
+  mainArea.style.display = 'none';
+  noRoomPanel.style.display = 'block';
+  document.getElementById('noRoomCode').textContent = ROOM;
+}
+document.getElementById('recreateBtn').addEventListener('click', async () => {
+  try {
+    const r = await (await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: ROOM, reuse: true }) })).json();
+    if (!r.ok) return toast(r.error, 'bad');
+    location.reload();
+  } catch { toast('Serveur injoignable', 'bad'); }
+});
+recentSalons.add(ROOM, 'arbitre');
 
 const namesContainer = document.getElementById('namesContainer');
 const numPlayersInput = document.getElementById('numPlayers');
@@ -32,17 +49,51 @@ function renderNameInputs() {
     document.body.appendChild(dl);
   }
   const dl = document.getElementById('namesHistory');
-  dl.innerHTML = savedNames.map(n2 => `<option value="${n2}">`).join('');
+  dl.innerHTML = savedNames.map(n2 => `<option value="${esc(n2)}">`).join('');
 }
 
 numPlayersInput.addEventListener('input', renderNameInputs);
 
-fetch('/api/init-data').then(r => r.json()).then(data => {
+function applyInitData(data, first) {
   savedNames = data.allNamesEver || [];
   lastNames = data.lastNames || [];
   if (lastNames.length >= 2) numPlayersInput.value = lastNames.length;
   renderNameInputs();
-});
+  const st = data.settings || {};
+  if (first) {
+    if (st.numImages) document.getElementById('numImages').value = st.numImages;
+    if (st.maxCards) document.getElementById('maxCards').value = st.maxCards;
+    if (st.numBombs) document.getElementById('numBombs').value = st.numBombs;
+    document.getElementById('ruleIntouchable').checked = !!st.intouchable;
+    document.getElementById('ruleMultiboom').checked = !!st.multiboom;
+  }
+  if (data.imageCount) document.getElementById('uploadStatus').textContent = `✅ ${data.imageCount} images déjà chargées dans ce salon (vous pouvez en charger d'autres pour les remplacer).`;
+  if (first) renderInvite(data.lanUrls || []);
+}
+function loadInitData(first) {
+  return fetch(`/api/rooms/${ROOM}/init-data`).then(r => {
+    if (r.status === 404) { showNoRoom(); return null; }
+    return r.json();
+  }).then(d => { if (d) applyInitData(d, first); });
+}
+loadInitData(true);
+
+// ------------------------------------------------------------------ invitation (code, lien, QR code)
+function renderInvite(lan) {
+  const isLocal = /^(localhost|127\.|\[::1\]|0\.0\.0\.0)/.test(location.hostname);
+  const origin = isLocal && lan.length ? lan[0] : location.origin;
+  const url = `${origin}/${ROOM}/rejoindre`;
+  document.getElementById('roomCode').textContent = ROOM;
+  document.getElementById('joinUrl').textContent = url;
+  document.getElementById('qrImg').src = '/api/qr.svg?text=' + encodeURIComponent(url);
+  document.getElementById('lanNote').textContent = isLocal
+    ? (lan.length ? 'Les téléphones doivent être sur le même Wi-Fi que cet ordinateur.' : "Aucune adresse réseau détectée : le QR code ne fonctionnera pas depuis un téléphone.")
+    : '';
+  document.getElementById('copyBtn').onclick = async () => {
+    try { await navigator.clipboard.writeText(url); toast('Lien copié : ' + url, 'ok'); }
+    catch { prompt('Copiez ce lien :', url); }
+  };
+}
 
 document.getElementById('uploadBtn').addEventListener('click', () => {
   const fileInput = document.getElementById('zipFile');
@@ -51,11 +102,11 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
   const fd = new FormData();
   fd.append('zipfile', fileInput.files[0]);
   status.textContent = 'Chargement...';
-  fetch('/api/upload-zip', { method: 'POST', body: fd })
+  fetch(`/api/rooms/${ROOM}/upload-zip`, { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
       if (data.error) { status.textContent = '❌ ' + data.error; return; }
-      status.textContent = `✅ ${data.count} images chargées dans l'archive.`;
+      status.textContent = `✅ ${data.count} images chargées dans ce salon.`;
     })
     .catch(() => status.textContent = '❌ Erreur réseau.');
 });
@@ -76,7 +127,7 @@ document.getElementById('startBtn').addEventListener('click', () => {
     multiboom: document.getElementById('ruleMultiboom').checked,
   };
   setupError.textContent = '';
-  fetch('/api/start-game', {
+  fetch(`/api/rooms/${ROOM}/start-game`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -96,11 +147,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     socket.emit('resetGame');
     setupPanel.style.display = 'block';
     gamePanel.style.display = 'none';
-    fetch('/api/init-data').then(r => r.json()).then(data => {
-      savedNames = data.allNamesEver || [];
-      lastNames = data.lastNames || [];
-      renderNameInputs();
-    });
+    loadInitData(false);
   }
 });
 
@@ -139,7 +186,7 @@ socket.on('state', (state) => {
   // liens joueurs
   const linksDiv = document.getElementById('playerLinks');
   linksDiv.innerHTML = state.players.map(p =>
-    `<a href="/joueur${p.index + 1}" target="_blank">${colorDot(p.index)}${p.name} → /joueur${p.index + 1}${p.eliminated ? ' (éliminé)' : ''}</a>`
+    `<a href="/${ROOM}/joueur${p.index + 1}" target="_blank">${colorDot(p.index)}${esc(p.name)} → /${ROOM}/joueur${p.index + 1}${p.eliminated ? ' (éliminé)' : ''} <span class="dot${p.online ? ' on' : ''}" title="${p.online ? 'Connecté' : 'Pas encore connecté'}"></span></a>`
   ).join('');
 
   // plateau (vue arbitre : bombes visibles avec couleur par joueur)
@@ -151,9 +198,9 @@ socket.on('state', (state) => {
     const dots = (c.bombs || []).map(pIdx => `<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colorFor(pIdx)};border:1px solid #000;margin:1px;"></span>`).join('');
     const dotsWrap = dots ? `<div style="position:absolute;top:2px;left:2px;display:flex;flex-wrap:wrap;max-width:60%;">${dots}</div>` : '';
     const bombIcon = c.taken && c.isBomb ? `<div class="bomb-icon" style="left:auto;right:2px;top:20px;">💣${c.bombs.length > 1 ? 'x' + c.bombs.length : ''}</div>` : '';
-    const takenLabel = c.taken ? `<div class="fname">→ ${state.players[c.takenBy] ? state.players[c.takenBy].name : ''}</div>` : `<div class="fname">${c.filename}</div>`;
+    const takenLabel = c.taken ? `<div class="fname">→ ${state.players[c.takenBy] ? esc(state.players[c.takenBy].name) : ''}</div>` : `<div class="fname">${stripExt(c.filename)}</div>`;
     return `<div class="${cls}">
-      <img src="/images_pool/${encodeURIComponent(c.filename)}" loading="lazy">
+      <img src="${imgUrl(c.filename)}" loading="lazy">
       ${dotsWrap}${bombIcon}
       ${takenLabel}
     </div>`;
@@ -163,14 +210,14 @@ socket.on('state', (state) => {
   const columns = document.getElementById('columns');
   columns.innerHTML = state.players.map(p => {
     const cards = p.drawnCards.map(c =>
-      `<div class="card-thumb ${c.lost ? 'lost' : ''}"><img src="/images_pool/${encodeURIComponent(c.filename)}"></div>`
+      `<div class="card-thumb ${c.lost ? 'lost' : ''}"><img src="${imgUrl(c.filename)}"></div>`
     ).join('');
     const bombInfo = state.phase === 'placement'
       ? `<div class="status-line">Bombes restantes : ${p.bombsRemaining} ${p.ready ? '✅ Validé' : ''}</div>`
       : '';
     const turnMark = state.currentPlayer === p.index ? ' ⬅ à son tour' : '';
     return `<div class="player-column ${p.eliminated ? 'eliminated' : ''}">
-      <h4>${colorDot(p.index)}${p.name}${turnMark}</h4>
+      <h4>${colorDot(p.index)}${esc(p.name)}${turnMark}</h4>
       <div class="status-line">${p.safeCount}/${state.config.maxCards} images ${p.complete ? '🏆' : ''}${p.eliminated ? ' ☠️ éliminé' : ''}</div>
       ${bombInfo}
       <div class="cards-grid">${cards}</div>
@@ -185,9 +232,9 @@ socket.on('state', (state) => {
     winnerPanel.style.display = 'none';
     const controls = document.getElementById('eliminationControls');
     controls.innerHTML = state.players.filter(p => !p.eliminated).map(p =>
-      `<button class="danger" data-idx="${p.index}" onclick="eliminatePlayer(${p.index})">Éliminer ${p.name} (${p.safeCount}/${state.config.maxCards})</button>`
+      `<button class="danger" data-idx="${p.index}" onclick="eliminatePlayer(${p.index})">Éliminer ${esc(p.name)} (${p.safeCount}/${state.config.maxCards})</button>`
     ).join('') + state.players.filter(p => p.eliminated).map(p =>
-      `<button class="secondary" onclick="restorePlayer(${p.index})">Ré-inclure ${p.name}</button>`
+      `<button class="secondary" onclick="restorePlayer(${p.index})">Ré-inclure ${esc(p.name)}</button>`
     ).join('');
   } else if (state.phase === 'gameEnd') {
     roundEndPanel.style.display = 'none';
@@ -209,8 +256,8 @@ socket.on('state', (state) => {
       ? `💣 Piégée${r.bombCount > 1 ? ' x' + r.bombCount : ''}`
       : '👍 Sûre';
     document.getElementById('revealBox').innerHTML = `
-      <img src="/images_pool/${encodeURIComponent(r.filename)}">
-      <div class="reveal-player">${r.playerName} a tiré :</div>
+      <img src="${imgUrl(r.filename)}">
+      <div class="reveal-player">${esc(r.playerName)} a tiré :</div>
       <div class="reveal-result ${resultClass}">${resultText}</div>
     `;
     revealOverlay.style.display = 'flex';

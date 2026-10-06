@@ -1,3 +1,7 @@
+// Le code du salon est le premier segment de l'adresse : /CODE/config
+const ROOM = (location.pathname.split('/').filter(Boolean)[0] || '').toUpperCase();
+document.getElementById('roomCode').textContent = ROOM;
+
 const numPlayersInput = document.getElementById('numPlayers');
 const playerNamesDiv = document.getElementById('playerNames');
 const numThemesInput = document.getElementById('numThemes');
@@ -135,7 +139,7 @@ createBtn.addEventListener('click', async () => {
   }
 
   try {
-    const res = await fetch('/api/setup', {
+    const res = await fetch(`/api/rooms/${ROOM}/setup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ playerNames, themes, timePerRound })
@@ -153,13 +157,29 @@ createBtn.addEventListener('click', async () => {
       const label = document.createElement('span');
       label.textContent = playerNames[i - 1];
       const a = document.createElement('a');
-      a.href = `${base}/joueur${i}`;
+      a.href = `${base}/${ROOM}/joueur${i}`;
       a.target = '_blank';
-      a.textContent = `${base}/joueur${i}`;
+      a.textContent = `${base}/${ROOM}/joueur${i}`;
       li.appendChild(label);
       li.appendChild(a);
       linkList.appendChild(li);
     }
+
+    // Invitation : code, QR code et lien « rejoindre » (adresse du réseau local si on est sur localhost)
+    document.getElementById('masterLink').href = `/${ROOM}`;
+    document.getElementById('roomCode2').textContent = ROOM;
+    document.getElementById('qrImg').src = `/api/rooms/${ROOM}/qr.svg?t=${Date.now()}`;
+    try {
+      const info = await (await fetch(`/api/rooms/${ROOM}`)).json();
+      if (info && info.joinUrl) {
+        document.getElementById('joinUrl').textContent = info.joinUrl;
+        document.getElementById('copyJoinBtn').onclick = async () => {
+          try { await navigator.clipboard.writeText(info.joinUrl); document.getElementById('copyJoinBtn').textContent = 'Lien copié ✓'; }
+          catch (e) { window.prompt('Copiez ce lien :', info.joinUrl); }
+        };
+      }
+    } catch (e) { /* le QR code reste affiché */ }
+
     linksPanel.style.display = 'block';
     linksPanel.scrollIntoView({ behavior: 'smooth' });
   } catch (e) {

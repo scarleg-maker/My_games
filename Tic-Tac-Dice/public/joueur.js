@@ -1,3 +1,26 @@
+// ---------- Room code + identity from the URL ----------
+const pathMatch = window.location.pathname.match(/^\/([A-Z0-9]{3,10})\/(joueur([1-9]|10)|ecran-unique)$/i);
+const ROOM_CODE = pathMatch ? pathMatch[1].toUpperCase() : null;
+const isSingleScreen = pathMatch ? pathMatch[2].toLowerCase() === 'ecran-unique' : false;
+const myPlayerNum = pathMatch && pathMatch[3] ? parseInt(pathMatch[3], 10) : null; // 1-based
+const myPlayerIndex = myPlayerNum ? myPlayerNum - 1 : null; // 0-based
+
+if (!ROOM_CODE) {
+  window.location.href = '/';
+}
+
+document.getElementById('roomCodeLabel').textContent = ROOM_CODE || '----';
+document.getElementById('masterLink').href = `/${ROOM_CODE}`;
+
+(function rememberRoom() {
+  try {
+    const KEY = 'tictacdice:recentRooms';
+    const list = JSON.parse(localStorage.getItem(KEY) || '[]').filter((c) => c !== ROOM_CODE);
+    list.unshift(ROOM_CODE);
+    localStorage.setItem(KEY, JSON.stringify(list.slice(0, 8)));
+  } catch {}
+})();
+
 const socket = io();
 
 const waitingMsg = document.getElementById('waitingMsg');
@@ -18,15 +41,9 @@ const otherPlayerLinks = document.getElementById('otherPlayerLinks');
 
 let currentState = null;
 
-// ---------- Identify which player this page belongs to ----------
-const isSingleScreen = window.location.pathname === '/ecran-unique';
-const match = window.location.pathname.match(/^\/joueur([1-9]|10)$/);
-const myPlayerNum = match ? parseInt(match[1], 10) : null; // 1-based
-const myPlayerIndex = myPlayerNum ? myPlayerNum - 1 : null; // 0-based
-
 socket.on('connect', () => {
-  if (isSingleScreen) socket.emit('identify', { single: true });
-  else if (myPlayerNum) socket.emit('identify', { playerNum: myPlayerNum });
+  if (isSingleScreen) socket.emit('identify', { code: ROOM_CODE, single: true });
+  else if (myPlayerNum) socket.emit('identify', { code: ROOM_CODE, playerNum: myPlayerNum });
 });
 
 // ---------- 3D dice ----------
@@ -43,9 +60,7 @@ buildDie(die1);
 buildDie(die2);
 
 function setDieFaces(container, value) {
-  container.querySelectorAll('.die-face').forEach((f) => {
-    f.textContent = value;
-  });
+  container.querySelectorAll('.die-face').forEach((f) => { f.textContent = value; });
 }
 
 let spinIntervals = [];
@@ -70,9 +85,7 @@ function stopSpin(container, finalValue) {
 }
 
 // ---------- Rendering ----------
-function playerColorClass(color) {
-  return 'c-' + color;
-}
+function playerColorClass(color) { return 'c-' + color; }
 
 function renderLegend(state) {
   legend.innerHTML = '';
@@ -95,9 +108,6 @@ function renderLegend(state) {
   });
 }
 
-// Determine, among the rolled options, which cells the current player is
-// actually allowed to click: their own already-placed healthy pawn is
-// excluded unless there is no other option available.
 function computeSelectable(state) {
   if (!state.pendingRoll || !state.pendingRoll.resolved) return [];
   const current = state.players[state.currentPlayerIndex];
@@ -107,12 +117,12 @@ function computeSelectable(state) {
   };
   const options = state.pendingRoll.options;
   const free = options.filter((o) => !isOwnHealthy(o));
-  return free.length > 0 ? free : options; // if no alternative, allow the forced choice
+  return free.length > 0 ? free : options;
 }
 
 function computeCellSize(size) {
   const wrap = document.querySelector('.board-wrap');
-  const available = (wrap ? wrap.clientWidth : window.innerWidth) - 16; // minus grid padding
+  const available = (wrap ? wrap.clientWidth : window.innerWidth) - 16;
   const raw = Math.floor(available / (size + 1));
   return Math.max(26, Math.min(60, raw));
 }
@@ -142,9 +152,7 @@ function renderBoard(state) {
   const selectableSet = new Set(selectable.map((o) => `${o.row}-${o.col}`));
 
   const winSet = new Set();
-  if (state.winningCells) {
-    state.winningCells.forEach((wc) => winSet.add(`${wc.row}-${wc.col}`));
-  }
+  if (state.winningCells) state.winningCells.forEach((wc) => winSet.add(`${wc.row}-${wc.col}`));
 
   for (let r = 1; r <= size; r++) {
     const head = document.createElement('div');
@@ -163,9 +171,7 @@ function renderBoard(state) {
           socket.emit('game:place', { row: r, col: c });
         });
       }
-      if (winSet.has(key)) {
-        cellEl.classList.add('win-cell');
-      }
+      if (winSet.has(key)) cellEl.classList.add('win-cell');
       if (cellData.color) {
         const pawn = document.createElement('div');
         pawn.className = 'pawn ' + playerColorClass(cellData.color) + (cellData.damaged ? ' damaged' : '');
@@ -178,7 +184,7 @@ function renderBoard(state) {
 
 function renderOtherLinks(state) {
   otherPlayerLinks.innerHTML = '';
-  if (isSingleScreen) return; // not relevant on the shared screen
+  if (isSingleScreen) return;
   const others = state.players.filter((p, idx) => idx !== myPlayerIndex);
   if (others.length === 0) return;
   const label = document.createElement('div');
@@ -189,7 +195,7 @@ function renderOtherLinks(state) {
     if (idx === myPlayerIndex) return;
     const a = document.createElement('a');
     a.className = 'player-link';
-    a.href = `/joueur${idx + 1}`;
+    a.href = `/${ROOM_CODE}/joueur${idx + 1}`;
     a.target = '_blank';
     a.rel = 'noopener';
     const sw = document.createElement('span');
@@ -197,7 +203,7 @@ function renderOtherLinks(state) {
     sw.style.background = colorAlpha(p.color).replace('0.5', '1');
     a.appendChild(sw);
     const txt = document.createElement('span');
-    txt.textContent = `/joueur${idx + 1} — ${p.name}`;
+    txt.textContent = `/joueur${idx + 1} — ${p.name}` + (p.isAI ? ' 🤖' : '');
     a.appendChild(txt);
     otherPlayerLinks.appendChild(a);
   });
@@ -231,7 +237,7 @@ function renderState(state) {
     identityBanner.textContent = `/joueur${myPlayerNum} — aucun joueur ${myPlayerNum} dans cette partie (spectateur)`;
     identityBanner.className = 'identity-banner spectator';
   } else {
-    identityBanner.textContent = 'Mode spectateur (ouvrez /joueur1, /joueur2, ... pour jouer)';
+    identityBanner.textContent = 'Mode spectateur';
     identityBanner.className = 'identity-banner spectator';
   }
 
@@ -311,12 +317,10 @@ restartBtn.addEventListener('click', () => {
 
 editBtn.addEventListener('click', () => {
   socket.emit('game:edit');
-  window.location.href = '/';
+  window.location.href = `/${ROOM_CODE}`;
 });
 
-socket.on('state', (state) => {
-  renderState(state);
-});
+socket.on('state', (state) => { renderState(state); });
 
 socket.on('game:rolling', ({ faces }) => {
   if (!currentState) return;
@@ -327,7 +331,5 @@ socket.on('game:rolling', ({ faces }) => {
 let resizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    if (currentState) renderBoard(currentState);
-  }, 150);
+  resizeTimer = setTimeout(() => { if (currentState) renderBoard(currentState); }, 150);
 });

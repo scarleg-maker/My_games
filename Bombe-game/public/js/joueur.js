@@ -1,8 +1,14 @@
-const match = window.location.pathname.match(/joueur(\d+)/);
+// adresse : /CODE/joueurN  (le code du salon est dans ROOM, voir common.js)
+const match = window.location.pathname.match(/^\/[^/]+\/joueur(\d+)\/?$/i);
 const playerIndex = match ? parseInt(match[1], 10) - 1 : 0;
 
 const socket = io();
-socket.on('connect', () => socket.emit('register', { role: 'player', index: playerIndex }));
+socket.on('connect', () => socket.emit('register', { room: ROOM, role: 'player', index: playerIndex }));
+socket.on('noroom', () => {
+  document.getElementById('waiting').innerHTML = `Le salon <strong>${esc(ROOM)}</strong> n'existe pas (ou plus). Vérifiez le code avec l'arbitre. <a href="/">← Accueil</a>`;
+  document.getElementById('waiting').style.display = 'block';
+  document.getElementById('playArea').style.display = 'none';
+});
 
 const waiting = document.getElementById('waiting');
 const playArea = document.getElementById('playArea');
@@ -26,7 +32,7 @@ socket.on('state', (state) => {
   playArea.style.display = 'block';
 
   const me = state.players[playerIndex];
-  document.getElementById('playerTitle').textContent = `💣 ${me ? me.name : 'Joueur'} — Manche ${state.roundNumber}`;
+  document.getElementById('playerTitle').textContent = `💣 ${me ? me.name : 'Joueur'} — Salon ${ROOM} — Manche ${state.roundNumber}`;
   document.getElementById('phaseText').textContent = 'Phase : ' + phaseLabelText(state.phase);
 
   const turnDiv = document.getElementById('turnIndicator');
@@ -51,9 +57,9 @@ socket.on('state', (state) => {
       if (c.mine) cls += ' mine-bomb';
       const bombIcon = c.mine ? '<div class="bomb-icon">💣</div>' : '';
       return `<div class="${cls}" data-idx="${c.idx}" onclick="clickPlacement(${c.idx})">
-        <img src="/images_pool/${encodeURIComponent(c.filename)}" loading="lazy">
+        <img src="${imgUrl(c.filename)}" loading="lazy">
         ${bombIcon}
-        <div class="fname">${c.filename}</div>
+        <div class="fname">${stripExt(c.filename)}</div>
       </div>`;
     }).join('');
 
@@ -69,7 +75,7 @@ socket.on('state', (state) => {
       turnDiv.innerHTML = '<div class="turn-indicator my-turn">🎯 C\'est votre tour ! Choisissez une image.</div>';
     } else {
       const cp = state.players[state.currentPlayer];
-      turnDiv.innerHTML = `<div class="turn-indicator">En attente : ${cp ? cp.name : '...'}</div>`;
+      turnDiv.innerHTML = `<div class="turn-indicator">En attente : ${cp ? esc(cp.name) : '...'}</div>`;
     }
     instructions.textContent = 'Cliquez sur une image disponible pour la tirer dans votre équipe. Vos propres bombes sont repérées par 💣.';
     board.innerHTML = state.board.map(c => {
@@ -83,9 +89,9 @@ socket.on('state', (state) => {
       const bombIcon = (c.taken && c.isBomb) ? '<div class="bomb-icon">💣</div>' : (!c.taken && c.mine ? '<div class="bomb-icon">💣</div>' : '');
       const clickAttr = (!c.taken && isMyTurn) ? `onclick="clickDraw(${c.idx})"` : '';
       return `<div class="${cls}" data-idx="${c.idx}" ${clickAttr}>
-        <img src="/images_pool/${encodeURIComponent(c.filename)}" loading="lazy">
+        <img src="${imgUrl(c.filename)}" loading="lazy">
         ${bombIcon}
-        <div class="fname">${c.filename}</div>
+        <div class="fname">${stripExt(c.filename)}</div>
       </div>`;
     }).join('');
   } else {
@@ -94,8 +100,8 @@ socket.on('state', (state) => {
       let cls = 'cell taken';
       cls += c.taken && c.isBomb ? ' taken-bomb' : (c.taken ? ' taken-safe' : '');
       return `<div class="${cls}">
-        <img src="/images_pool/${encodeURIComponent(c.filename)}" loading="lazy">
-        <div class="fname">${c.filename}</div>
+        <img src="${imgUrl(c.filename)}" loading="lazy">
+        <div class="fname">${stripExt(c.filename)}</div>
       </div>`;
     }).join('');
   }
@@ -104,10 +110,10 @@ socket.on('state', (state) => {
   const myTeam = document.getElementById('myTeam');
   if (me) {
     const cards = me.drawnCards.map(c =>
-      `<div class="card-thumb ${c.lost ? 'lost' : ''}"><img src="/images_pool/${encodeURIComponent(c.filename)}"></div>`
+      `<div class="card-thumb ${c.lost ? 'lost' : ''}"><img src="${imgUrl(c.filename)}"></div>`
     ).join('');
     myTeam.innerHTML = `<div class="player-column">
-      <h4>${me.name}</h4>
+      <h4>${esc(me.name)}</h4>
       <div class="status-line">${me.safeCount}/${state.config.maxCards} images ${me.complete ? '🏆 Terminé !' : ''}</div>
       <div class="cards-grid">${cards}</div>
     </div>`;
@@ -133,8 +139,8 @@ socket.on('state', (state) => {
       ? `💣 Piégée${r.bombCount > 1 ? ' x' + r.bombCount : ''}`
       : '👍 Sûre';
     document.getElementById('revealBox').innerHTML = `
-      <img src="/images_pool/${encodeURIComponent(r.filename)}">
-      <div class="reveal-player">${isMe ? 'Vous avez' : r.playerName + ' a'} tiré :</div>
+      <img src="${imgUrl(r.filename)}">
+      <div class="reveal-player">${isMe ? 'Vous avez' : esc(r.playerName) + ' a'} tiré :</div>
       <div class="reveal-result ${resultClass}">${resultText}</div>
     `;
     revealOverlay.style.display = 'flex';

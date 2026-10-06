@@ -31,7 +31,7 @@
     <div id="waitScreen">
         <div class="panel" style="text-align:center;">
             <p style="font-size:1.2rem; margin-bottom:10px;">En attente du lancement de la partie par le maître…</p>
-            <p style="opacity:0.8;">Vous êtes connecté en tant que <strong id="waitSlotName">Joueur</strong>.</p>
+            <p style="opacity:0.8;">Vous êtes connecté en tant que <strong id="waitSlotName">Joueur</strong> dans le salon <strong id="waitRoomCode"></strong>.</p>
         </div>
     </div>
 
@@ -77,14 +77,16 @@
     <div class="error-toast" id="errorToast"></div>
 
     <script>
-        const pathMatch = window.location.pathname.match(/^\/joueur([1-8])$/);
-        const mySlot = pathMatch ? parseInt(pathMatch[1]) : null;
+        const pathMatch = window.location.pathname.match(/^\/([A-Za-z0-9]{3,10})\/joueur([1-8])\/?$/);
+        const myRoom = pathMatch ? pathMatch[1].toUpperCase() : null;
+        const mySlot = pathMatch ? parseInt(pathMatch[2]) : null;
 
         const socket = io();
 
         const slotLabel = document.getElementById('slotLabel');
         const waitScreen = document.getElementById('waitScreen');
         const waitSlotName = document.getElementById('waitSlotName');
+        const waitRoomCode = document.getElementById('waitRoomCode');
         const gameScreen = document.getElementById('gameScreen');
         const gameOverScreen = document.getElementById('gameOverScreen');
 
@@ -115,12 +117,13 @@
         let countdownInterval = null;
         let myThumbs = []; // {name, price, dataURL} — mes achats, avec miniatures
 
-        if (!mySlot) {
-            document.body.innerHTML = '<div class="panel" style="text-align:center;">Adresse invalide. Utilisez /joueur1 à /joueur8.</div>';
+        if (!myRoom || !mySlot) {
+            document.body.innerHTML = '<div class="panel" style="text-align:center;">Adresse invalide. Utilisez le lien complet fourni par le maître (ex. /AB7K/joueur1).</div>';
         } else {
             slotLabel.innerText = `Joueur ${mySlot}`;
             waitSlotName.innerText = `Joueur ${mySlot}`;
-            socket.on('connect', () => socket.emit('register', { role: 'joueur', slot: mySlot }));
+            waitRoomCode.innerText = myRoom;
+            socket.on('connect', () => socket.emit('register', { role: 'joueur', slot: mySlot, room: myRoom }));
         }
 
         function showError(msg) {
@@ -130,6 +133,9 @@
         }
 
         socket.on('bidError', (msg) => showError(msg));
+        socket.on('roomError', (msg) => {
+            document.body.innerHTML = `<div class="panel" style="text-align:center;">${msg}</div>`;
+        });
 
         socket.on('collectionsSync', (payload) => {
             const mine = payload.find(p => p.slot === mySlot);

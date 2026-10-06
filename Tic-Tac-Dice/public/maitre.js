@@ -1,6 +1,44 @@
 const COLORS = ['bleu', 'rouge', 'jaune', 'vert', 'orange', 'violet', 'rose', 'marron', 'noir', 'blanc'];
 
+// ---------- Room code ----------
+const codeMatch = window.location.pathname.match(/^\/([A-Z0-9]{3,10})$/i);
+const ROOM_CODE = codeMatch ? codeMatch[1].toUpperCase() : null;
+
+if (!ROOM_CODE) {
+  window.location.href = '/';
+}
+
+document.getElementById('roomCodeLabel').textContent = ROOM_CODE || '----';
+
+const inviteUrl = window.location.origin + '/' + ROOM_CODE;
+document.getElementById('inviteUrl').textContent = inviteUrl;
+document.getElementById('singleScreenLink').href = `/${ROOM_CODE}/ecran-unique`;
+
+// Remember this room on this device
+(function rememberRoom() {
+  try {
+    const KEY = 'tictacdice:recentRooms';
+    const list = JSON.parse(localStorage.getItem(KEY) || '[]').filter((c) => c !== ROOM_CODE);
+    list.unshift(ROOM_CODE);
+    localStorage.setItem(KEY, JSON.stringify(list.slice(0, 8)));
+  } catch {}
+})();
+
+// ---------- QR code ----------
+function drawQR() {
+  const box = document.getElementById('qr');
+  if (!box || !window.QRCode) return;
+  box.innerHTML = '';
+  new QRCode(box, { text: inviteUrl, width: 128, height: 128, colorDark: '#10221c', colorLight: '#f1ede4' });
+}
+if (window.QRCode) drawQR();
+else window.addEventListener('load', () => setTimeout(drawQR, 300));
+
+// ---------- Socket ----------
 const socket = io();
+socket.on('connect', () => {
+  socket.emit('identify', { code: ROOM_CODE, master: true });
+});
 
 const nbJoueursSel = document.getElementById('nbJoueurs');
 const playersList = document.getElementById('playersList');
@@ -34,7 +72,7 @@ forceBtn.addEventListener('click', () => {
   updateStartAvailability();
 });
 
-let playersData = []; // {name, color}
+let playersData = []; // {name, color, isAI}
 
 function defaultPlayers(n, keepExisting) {
   const arr = [];
@@ -46,63 +84,6 @@ function defaultPlayers(n, keepExisting) {
     }
   }
   playersData = arr;
-}
-
-function renderPlayers() {
-  playersList.innerHTML = '';
-  playersData.forEach((p, idx) => {
-    const row = document.createElement('div');
-    row.className = 'player-row';
-
-    const swatch = document.createElement('div');
-    swatch.className = 'swatch';
-    swatch.style.background = colorToHex(p.color);
-
-    const nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.value = p.name;
-    nameInput.placeholder = `Nom du joueur ${idx + 1}`;
-    nameInput.addEventListener('input', () => {
-      playersData[idx].name = nameInput.value;
-      renderPlayerLinks();
-    });
-
-    const colorSelect = document.createElement('select');
-    COLORS.forEach((c) => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c.charAt(0).toUpperCase() + c.slice(1);
-      const usedElsewhere = playersData.some((pp, i2) => i2 !== idx && pp.color === c);
-      if (usedElsewhere) opt.disabled = true;
-      if (c === p.color) opt.selected = true;
-      colorSelect.appendChild(opt);
-    });
-    colorSelect.addEventListener('change', () => {
-      playersData[idx].color = colorSelect.value;
-      swatch.style.background = colorToHex(colorSelect.value);
-      renderPlayers();
-    });
-
-    row.appendChild(swatch);
-    row.appendChild(nameInput);
-    row.appendChild(colorSelect);
-
-    const aiToggle = document.createElement('label');
-    aiToggle.className = 'ai-toggle' + (idx === 0 ? ' locked' : '');
-    const aiCheckbox = document.createElement('input');
-    aiCheckbox.type = 'checkbox';
-    aiCheckbox.checked = !!p.isAI && idx !== 0;
-    aiCheckbox.disabled = idx === 0;
-    aiCheckbox.addEventListener('change', () => {
-      playersData[idx].isAI = aiCheckbox.checked;
-    });
-    aiToggle.appendChild(aiCheckbox);
-    aiToggle.appendChild(document.createTextNode(idx === 0 ? 'Humain' : '🤖 IA'));
-    row.appendChild(aiToggle);
-
-    playersList.appendChild(row);
-  });
-  renderPlayerLinks();
 }
 
 function colorToHex(name) {
@@ -164,7 +145,7 @@ function renderPlayerLinks() {
     const num = idx + 1;
     const a = document.createElement('a');
     a.className = 'player-link';
-    a.href = `/joueur${num}`;
+    a.href = `/${ROOM_CODE}/joueur${num}`;
     a.target = '_blank';
     a.rel = 'noopener';
 
@@ -179,6 +160,63 @@ function renderPlayerLinks() {
 
     playerLinksEl.appendChild(a);
   });
+}
+
+function renderPlayers() {
+  playersList.innerHTML = '';
+  playersData.forEach((p, idx) => {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+
+    const swatch = document.createElement('div');
+    swatch.className = 'swatch';
+    swatch.style.background = colorToHex(p.color);
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = p.name;
+    nameInput.placeholder = `Nom du joueur ${idx + 1}`;
+    nameInput.addEventListener('input', () => {
+      playersData[idx].name = nameInput.value;
+      renderPlayerLinks();
+    });
+
+    const colorSelect = document.createElement('select');
+    COLORS.forEach((c) => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c.charAt(0).toUpperCase() + c.slice(1);
+      const usedElsewhere = playersData.some((pp, i2) => i2 !== idx && pp.color === c);
+      if (usedElsewhere) opt.disabled = true;
+      if (c === p.color) opt.selected = true;
+      colorSelect.appendChild(opt);
+    });
+    colorSelect.addEventListener('change', () => {
+      playersData[idx].color = colorSelect.value;
+      swatch.style.background = colorToHex(colorSelect.value);
+      renderPlayers();
+    });
+
+    row.appendChild(swatch);
+    row.appendChild(nameInput);
+    row.appendChild(colorSelect);
+
+    const aiToggle = document.createElement('label');
+    aiToggle.className = 'ai-toggle' + (idx === 0 ? ' locked' : '');
+    const aiCheckbox = document.createElement('input');
+    aiCheckbox.type = 'checkbox';
+    aiCheckbox.checked = !!p.isAI && idx !== 0;
+    aiCheckbox.disabled = idx === 0;
+    aiCheckbox.addEventListener('change', () => {
+      playersData[idx].isAI = aiCheckbox.checked;
+    });
+    aiToggle.appendChild(aiCheckbox);
+    aiToggle.appendChild(document.createTextNode(idx === 0 ? 'Humain' : '🤖 IA'));
+    row.appendChild(aiToggle);
+
+    playersList.appendChild(row);
+  });
+  renderPlayerLinks();
 }
 
 nbJoueursSel.addEventListener('change', () => {
@@ -232,7 +270,7 @@ startBtn.addEventListener('click', () => {
     boardSize,
     winLength
   });
-  startBtn.textContent = 'Partie démarrée ✔ — ouvrez /joueur1';
+  startBtn.textContent = `Partie démarrée ✔ — ouvrez /${ROOM_CODE}/joueur1`;
   startBtn.disabled = true;
   forceOverride = false;
   setTimeout(() => { updateStartAvailability(); }, 2500);
@@ -258,4 +296,3 @@ socket.on('setup:config', (config) => {
 defaultPlayers(parseInt(nbJoueursSel.value, 10), false);
 renderPlayers();
 updateForbiddenCombo();
-socket.emit('setup:getConfig');

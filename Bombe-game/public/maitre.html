@@ -2,12 +2,31 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Jeu de la Bombe — Maître du jeu</title>
+<title>Jeu de la Bombe — Arbitre</title>
 <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 <div class="container">
   <h1>💣 Jeu de la Bombe — Poste Arbitre</h1>
+
+  <div id="noRoomPanel" class="panel" style="display:none;">
+    <h2>Ce salon n'existe pas (ou a expiré)</h2>
+    <p>Le salon <strong id="noRoomCode"></strong> n'est plus disponible : le serveur a peut-être redémarré, ou le salon est resté inactif trop longtemps.</p>
+    <button id="recreateBtn" type="button">Recréer le salon avec ce code</button>
+    <a href="/" style="margin-left:12px;">← Accueil</a>
+  </div>
+
+  <div id="mainArea">
+  <div id="invitePanel" class="panel invite">
+    <div class="qr"><img id="qrImg" alt="QR code du salon" width="140" height="140"></div>
+    <div class="invite-text">
+      <p style="margin:0 0 .3rem"><strong>Inviter les joueurs</strong> — code du salon : <span class="code-big" id="roomCode"></span></p>
+      <p class="small" style="margin:0 0 .5rem">Scannez le QR code, ouvrez <code id="joinUrl"></code> ou tapez le code sur la page d'accueil. Chacun choisit ensuite son siège.</p>
+      <div id="lanNote" class="small"></div>
+      <button class="secondary" id="copyBtn" type="button">Copier le lien</button>
+      <a href="/" class="small" style="margin-left:12px;">← Accueil / autre salon</a>
+    </div>
+  </div>
 
   <div id="setupPanel" class="panel">
     <h2>Configuration de la partie</h2>
@@ -23,14 +42,14 @@
     <button id="uploadBtn" type="button">Charger l'archive</button>
     <div id="uploadStatus" class="status-line"></div>
 
-    <label>Nombre d'images en jeu (25 à 75)</label>
-    <input type="number" id="numImages" min="25" max="75" value="25">
+    <label>Nombre d'images en jeu (20 à 75)</label>
+    <input type="number" id="numImages" min="20" max="75" value="25">
 
     <label>Nombre max de cartes par joueur pour gagner (5 à 10)</label>
     <input type="number" id="maxCards" min="5" max="10" value="5">
 
-    <label>Nombre de bombes par joueur (1 à 5)</label>
-    <input type="number" id="numBombs" min="1" max="5" value="3">
+    <label>Nombre de bombes par joueur (1 à 10)</label>
+    <input type="number" id="numBombs" min="1" max="10" value="3">
 
     <div style="margin-top:14px;">
       <label style="display:flex;align-items:center;gap:8px;">
@@ -79,6 +98,7 @@
 
     <button class="secondary" id="resetBtn" type="button">↩ Nouvelle partie complète</button>
   </div>
+  </div>
 </div>
 
 <div id="revealOverlay" class="reveal-overlay" style="display:none;">
@@ -86,6 +106,7 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/static/js/common.js"></script>
 <script src="/static/js/maitre.js"></script>
 </body>
 </html>

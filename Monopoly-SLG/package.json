@@ -1,0 +1,13 @@
+{
+  "name": "monopoly-slg",
+  "version": "1.0.0",
+  "description": "Monopoly-SLG : jeu de Monopoly multijoueur en salons (Node.js, Express, Socket.io)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

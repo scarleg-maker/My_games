@@ -1,4 +1,11 @@
-const socket = io();
+const ROOM_CODE = (location.pathname.match(/^\/([A-Za-z0-9]{3,10})$/) || [null, ''])[1].toUpperCase();
+document.getElementById('room-code-display').textContent = ROOM_CODE;
+document.getElementById('room-code-display-2').textContent = ROOM_CODE;
+
+const socket = io({ query: { room: ROOM_CODE } });
+socket.on('room-not-found', () => {
+  document.body.innerHTML = '<div class="card" style="max-width:480px;margin:60px auto;text-align:center;"><h2>Salon introuvable</h2><p>Ce salon n\'existe plus ou le code est invalide.</p><a href="/">Retour à l\'accueil</a></div>';
+});
 
 let selectedMode = null;
 let currentState = null;
@@ -47,7 +54,7 @@ function renderPlayerInputs() {
 }
 playerCountInput.addEventListener('input', renderPlayerInputs);
 
-fetch('/api/players').then(r => r.json()).then(data => {
+fetch(`/api/rooms/${ROOM_CODE}/players`).then(r => r.json()).then(data => {
   savedNames = data.names || [];
   if (savedNames.length >= 2) playerCountInput.value = savedNames.length;
   renderPlayerInputs();
@@ -65,7 +72,7 @@ uploadBtn.addEventListener('click', () => {
   const fd = new FormData();
   fd.append('zipfile', zipInput.files[0]);
   uploadStatus.textContent = ' Chargement...';
-  fetch('/api/upload-zip', { method: 'POST', body: fd })
+  fetch(`/api/rooms/${ROOM_CODE}/upload-zip`, { method: 'POST', body: fd })
     .then(r => r.json())
     .then(data => {
       if (data.error) { uploadStatus.textContent = ' Erreur : ' + data.error; return; }
@@ -105,7 +112,7 @@ document.getElementById('start-btn').addEventListener('click', () => {
   const errEl = document.getElementById('setup-error');
   errEl.textContent = '';
 
-  fetch('/api/start-game', {
+  fetch(`/api/rooms/${ROOM_CODE}/start-game`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mode: selectedMode, players: names, theme, numDraws, numRounds, maxGifts })
@@ -114,8 +121,8 @@ document.getElementById('start-btn').addEventListener('click', () => {
     .then(data => {
       if (data.error) { errEl.textContent = data.error; return; }
       const linksDiv = document.getElementById('player-links');
-      linksDiv.innerHTML = '<h3>Liens joueurs :</h3>' + data.playerUrls
-        .map((u, i) => `<a href="${u}" target="_blank">${names[i]} → localhost:3500${u}</a>`).join('');
+      linksDiv.innerHTML = `<h3>Salon ${ROOM_CODE} — Liens joueurs :</h3>` + data.playerUrls
+        .map((u, i) => `<a href="${u}" target="_blank">${names[i]} → ${location.origin}${u}</a>`).join('');
     });
 });
 

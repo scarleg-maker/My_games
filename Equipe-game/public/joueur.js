@@ -1,6 +1,13 @@
-const socket = io();
+const urlMatch = window.location.pathname.match(/^\/([A-Za-z0-9]{3,10})\/joueur(\d+)$/);
+const ROOM_CODE = urlMatch ? urlMatch[1].toUpperCase() : '';
+const myIndex = urlMatch ? parseInt(urlMatch[2], 10) - 1 : -1;
+document.getElementById('room-code-display').textContent = 'Salon : ' + ROOM_CODE;
 
-const myIndex = parseInt(window.location.pathname.match(/joueur(\d+)/)[1], 10) - 1;
+const socket = io({ query: { room: ROOM_CODE } });
+socket.on('room-not-found', () => {
+  document.body.innerHTML = '<div class="card" style="max-width:480px;margin:60px auto;text-align:center;"><h2>Salon introuvable</h2><p>Ce salon n\'existe plus ou le code est invalide.</p><a href="/">Retour à l\'accueil</a></div>';
+});
+
 let currentState = null;
 let lastProcessedEventId = 0;
 

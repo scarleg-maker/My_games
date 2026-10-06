@@ -1,4 +1,8 @@
 .screen { padding: 30px; max-width: 1400px; margin: 0 auto; }
+
+.room-badge { font-size: 13px; color: #555; margin: 6px 0 0; }
+.room-badge strong { letter-spacing: 0.08em; color: #1c1d1f; }
+.room-badge a { color: #555; }
 .setup-card { max-width: 640px; margin: 20px auto; }
 .setup-card h3 { margin-top: 22px; margin-bottom: 8px; }
 

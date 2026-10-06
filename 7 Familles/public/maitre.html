@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 Familles — Arbitre</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar"><a href="/">← Accueil</a><span class="room-tag">Salon <strong id="roomCode"></strong></span></div>
+  <h1>🎴 Jeu des 7 Familles</h1>
+  <p class="subtitle">Page de l'arbitre (2 à 10 joueurs)</p>
+
+  <div id="noRoom" class="card-panel hidden">
+    <h2>Salon introuvable</h2>
+    <p>Le salon <strong id="noRoomCode"></strong> n'existe plus (serveur redémarré ou salon expiré).</p>
+    <button id="recreate">Recréer ce salon</button>
+    <a href="/" style="margin-left:12px">Retour à l'accueil</a>
+  </div>
+
+  <div id="main" class="hidden">
+    <!-- Invitation des joueurs -->
+    <div class="card-panel invite">
+      <div class="qr"><img id="qrImg" alt="QR code du salon" width="132" height="132"></div>
+      <div class="invite-text">
+        <p style="margin:0 0 .3rem"><strong>Inviter les joueurs</strong> — code du salon : <span class="code-big" id="inviteCode"></span></p>
+        <p class="small muted" style="margin:0 0 .6rem">Scanner le QR code, ou ouvrir <code id="joinUrl"></code>, ou taper le code sur la page d'accueil. Chacun choisit ensuite son siège.</p>
+        <p id="ipRow" class="small hidden" style="margin:0 0 .6rem">Adresse de ce PC sur le réseau : <select id="ipSelect"></select>
+          <span class="muted">(choisissez celle du Wi-Fi si le QR code ne fonctionne pas)</span></p>
+        <button id="copyBtn">Copier le lien</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="cartes">1. Cartes</button>
+      <button class="tab-btn" data-tab="joueurs">2. Joueurs</button>
+      <button class="tab-btn" data-tab="partie">3. Partie</button>
+    </div>
+
+    <!-- ONGLET CARTES -->
+    <div class="tab-content active" id="tab-cartes">
+      <div class="card-panel">
+        <h2>Charger les images (fichier .zip — 42 fichiers)</h2>
+        <p>Format attendu des noms de fichiers : <code>Famille NN - Nom.png</code><br>
+        Exemple : <code>Pirate 01 - Monkey D. Luffy.png</code>, <code>Marine 03 - Kizaru.png</code></p>
+        <input type="file" id="zipInput" accept=".zip">
+        <button id="uploadBtn" style="margin-left:10px;">Charger le zip</button>
+        <p id="uploadStatus"></p>
+      </div>
+      <div class="card-panel" id="familiesPreview" style="display:none;">
+        <h3>Familles détectées</h3>
+        <div class="families-panel" id="familiesList"></div>
+        <p id="cardsCount" class="muted" style="margin-top:10px;"></p>
+      </div>
+    </div>
+
+    <!-- ONGLET JOUEURS -->
+    <div class="tab-content" id="tab-joueurs">
+      <div class="card-panel">
+        <h2>Nombre de joueurs</h2>
+        <label for="playerCount">Nombre de joueurs (2 à 10)</label><br>
+        <input type="number" id="playerCount" min="2" max="10" value="4" style="width:100px;">
+        <button id="genNamesBtn" style="margin-left:10px;">Valider le nombre</button>
+        <div id="namesForm" style="margin-top:16px;"></div>
+        <button id="savePlayersBtn" style="margin-top:10px; display:none;">Enregistrer les joueurs</button>
+        <p id="playersStatus"></p>
+      </div>
+    </div>
+
+    <!-- ONGLET PARTIE -->
+    <div class="tab-content" id="tab-partie">
+      <div class="card-panel">
+        <h2>Lancer la partie</h2>
+        <div class="action-row">
+          <button id="startGameBtn">🚀 Lancer la partie</button>
+          <button id="resetBtn" class="secondary hidden">🔄 Nouvelle partie</button>
+        </div>
+        <p id="startStatus"></p>
+        <div class="player-links" id="playerLinks"></div>
+      </div>
+
+      <div class="card-panel">
+        <h2>Suivi en direct</h2>
+        <table class="status-table" id="statusTable">
+          <thead><tr><th>Joueur</th><th>Cartes en main</th><th>Familles</th><th>Prêt</th><th>Connecté</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p>Pioche restante : <strong id="piocheCount">-</strong></p>
+      </div>
+
+      <div class="card-panel">
+        <h2>Familles complétées</h2>
+        <div class="families-panel" id="completedFamilies"></div>
+      </div>
+
+      <div class="card-panel hidden" id="winnerPanel">
+        <h2>🏆 Partie terminée</h2>
+        <p id="winnerText" style="font-size:18px;font-weight:700;"></p>
+        <ol id="standingsList"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/common.js"></script>
+<script src="/static/maitre.js"></script>
+</body>
+</html>

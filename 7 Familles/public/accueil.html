@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 Familles — Salons</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>🎴 Jeu des 7 Familles</h1>
+  <p class="subtitle">De 2 à 10 joueurs. Chaque groupe joue dans son propre salon.</p>
+
+  <div class="two-cols">
+    <section class="card-panel">
+      <h2>Créer une partie</h2>
+      <p class="muted">Vous devenez l'arbitre : un salon est créé avec un code (et un QR code) à donner aux joueurs.</p>
+      <button class="big" id="create">Créer un salon</button>
+      <details>
+        <summary>Choisir mon propre code</summary>
+        <div class="row">
+          <input type="text" id="mycode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button id="createCustom">Créer</button>
+        </div>
+        <p class="small muted">3 à 10 lettres ou chiffres. Pratique pour retrouver le même salon (cartes déjà chargées, noms des joueurs) d'une fois sur l'autre.</p>
+      </details>
+    </section>
+
+    <section class="card-panel">
+      <h2>Rejoindre une partie</h2>
+      <p class="muted">Entrez le code donné par l'arbitre (ou scannez son QR code), puis choisissez votre siège.</p>
+      <div class="row">
+        <input type="text" id="code" class="code-input" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button id="join">Rejoindre</button>
+      </div>
+      <div id="found"></div>
+    </section>
+  </div>
+
+  <div class="recent" id="recent"></div>
+</div>
+
+<script src="/static/common.js"></script>
+<script src="/static/accueil.js"></script>
+</body>
+</html>

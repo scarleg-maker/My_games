@@ -3,12 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tic-Tac-Dice — Page Maître</title>
+<title>Tic-Tac-Dice — Salon</title>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <div class="container">
   <h1>🎲 Tic-Tac-Dice</h1>
+
+  <div class="room-banner">
+    Salon : <span class="room-code" id="roomCodeLabel">----</span>
+    <a class="link-btn" href="/" style="margin-left:10px;">← Autre salon</a>
+  </div>
+
+  <div class="invite-box">
+    <div class="invite-qr" id="qr"></div>
+    <div class="invite-text">
+      <p><strong>Invite les joueurs :</strong> ils scannent ce QR code, ou ouvrent le lien ci-dessous,
+         ou tapent simplement le code sur la page d'accueil.</p>
+      <p class="invite-url" id="inviteUrl">...</p>
+    </div>
+  </div>
+
   <h3>Configuration de la partie</h3>
 
   <div class="field">
@@ -59,15 +74,10 @@
     <button id="startBtn">▶ Démarrer la partie</button>
   </div>
 
-  <p style="text-align:center; margin-top:20px; opacity:0.85;">
-    Chaque joueur ouvre <strong>sa propre page</strong> ci-dessous. Le plateau est identique et synchronisé sur
-    tous les écrans, mais seul le joueur dont c'est le tour peut lancer les dés et poser un pion sur sa page.
-  </p>
-
   <div id="playerLinks" class="player-links"></div>
 
   <div style="text-align:center; margin-top:18px;">
-    <a class="player-link" href="/ecran-unique" target="_blank" rel="noopener" style="display:inline-flex;">
+    <a class="player-link" id="singleScreenLink" href="#" target="_blank" rel="noopener" style="display:inline-flex;">
       🖥️ Jouer à plusieurs sur un seul écran (pass &amp; play)
     </a>
   </div>
@@ -80,6 +90,7 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="/maitre.js"></script>
 </body>
 </html>

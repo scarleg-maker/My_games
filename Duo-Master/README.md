@@ -4,7 +4,9 @@ Jeu de quiz à deux tirages. Le serveur tire au sort deux valeurs (par exemple d
 les joueurs cherchent une réponse qui correspond, l'arbitre désigne le vainqueur du point.
 Premier à atteindre le nombre de points choisi (3 à 20) : partie gagnée.
 
-Aucune dépendance : Node.js 16 ou plus suffit.
+Aucune dépendance : Node.js 16 ou plus suffit. Plusieurs parties peuvent tourner **en même temps**, dans des
+**salons** séparés (un code court par partie) : les scores, le thème et le tirage d'un salon n'ont aucun effet sur
+les autres, même s'ils sont joués au même moment sur le même serveur.
 
 ## Lancer
 
@@ -16,17 +18,27 @@ Ouvrir ensuite http://localhost:13000 (port modifiable : `PORT=8080 node server.
 
 | Page | Rôle |
 | --- | --- |
-| `/` ou `/arbitre` | Arbitre : lance le tirage, voit les réponses, attribue / retire les points, règle la partie. Suffit pour jouer sur **un seul écran**. |
-| `/joueur1` … `/joueur6` | Page d'un joueur : points en haut, tirage en direct (défilement de 2 s), scores des autres. |
-| `/ecran` | Écran commun (TV, vidéoprojecteur) : tirage en grand + tous les scores. |
+| `/` | Accueil : créer un salon (nouvelle partie) ou en rejoindre un (code donné par l'arbitre). |
+| `/CODE` | Arbitre du salon CODE : lance le tirage, voit les réponses, attribue / retire les points, règle la partie. Suffit pour jouer sur **un seul écran**. |
+| `/CODE/joueur1` … `/CODE/joueur6` | Page d'un joueur de ce salon : points en haut, tirage en direct (défilement de 2 s), scores des autres. |
+| `/CODE/ecran` | Écran commun de ce salon (TV, vidéoprojecteur) : tirage en grand + tous les scores. |
+| `/CODE/rejoindre` | Page d'accueil avec le code déjà rempli — c'est l'adresse du QR code affiché sur la page arbitre. |
 
-Au démarrage, le terminal affiche aussi les adresses réseau (`http://192.168.x.x:13000/joueur1`)
-à ouvrir depuis les téléphones connectés au même Wi-Fi.
+**Créer une partie** : sur `/`, bouton *Créer un salon* (code à 4 lettres/chiffres tiré au sort), ou *Choisir mon
+propre code* pour un code mémorisable (« FAMILLE »…). La page arbitre affiche alors le code en grand, un QR code et
+un lien à copier : les joueurs le scannent avec leur téléphone, ou tapent le code sur `/`, puis touchent leur nom
+pour rejoindre leur propre page. Le QR code nécessite un accès Internet au moment du scan (bibliothèque chargée
+depuis un CDN) ; sans connexion, le lien texte et le code restent utilisables normalement.
+
+Au démarrage, le terminal affiche aussi l'adresse réseau (`http://192.168.x.x:13000/`) à ouvrir depuis les
+téléphones connectés au même Wi-Fi. Un salon sans aucune page ouverte depuis 6h est libéré de la mémoire du
+serveur ; ses réglages et scores restent sur le disque (`data/rooms.json`) et le salon reprend exactement où il
+en était dès que quelqu'un rouvre son code.
 
 ## Déroulé d'une partie
 
 1. **Réglages de la partie** (page arbitre) : thème, points pour gagner (3–20), nombre de joueurs (2–6), noms.
-   Les noms, le thème, l'objectif et les scores sont conservés dans `data/state.json` (même après un redémarrage).
+   Les noms, le thème, l'objectif et les scores sont conservés dans `data/rooms.json` (même après un redémarrage).
 2. **▶ Lancer la partie** : tant que l'arbitre n'a pas appuyé sur ce bouton, la partie est en attente (les joueurs voient
    « en attente du lancement ») et les réglages restent ouverts. « Nouvelle partie » ramène à cet état.
 3. **Lancer le tirage** : les cartes défilent 2 secondes chez tout le monde, puis les valeurs apparaissent.

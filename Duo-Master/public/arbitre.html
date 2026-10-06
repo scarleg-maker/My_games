@@ -21,7 +21,19 @@
         <b>Duo-Master</b>
       </a>
       <span class="tag" id="themeTag"></span>
+      <a class="leave" href="/">Changer de salon</a>
     </header>
+
+    <section class="card invite-card">
+      <div class="invite">
+        <div class="qr" id="qr" hidden data-keep></div>
+        <div class="invite-info">
+          <p class="invite-code">Salon : <span class="code-big" id="roomCode">…</span></p>
+          <p class="muted small">Les joueurs scannent ce QR code, ou ouvrent <a id="joinLink" target="_blank" rel="noopener"></a>, ou tapent le code sur la page d'accueil.</p>
+          <button class="btn small white" id="copyJoin" type="button">Copier le lien</button>
+        </div>
+      </div>
+    </section>
 
     <div class="modebar" id="modeBar" role="group" aria-label="Mode de jeu">
       <button class="mode-btn" data-mode="speed" type="button">⚡ Rapidité</button>

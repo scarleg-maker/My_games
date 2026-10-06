@@ -43,25 +43,31 @@ noire pendant la partie (elle fait tourner le serveur) ; la fermer arrête le se
    ```
    La console affiche :
    ```
-   Maître  : http://localhost:5500/  (ou /maitre)
-   Joueurs : http://<IP-de-ce-PC>:5500/joueur1  (jusqu'à /joueur8)
+   Accueil (créer un salon) : http://localhost:5500/
+   Depuis le réseau local   : http://<IP-de-ce-PC>:5500/
    ```
 3. Sur l'ordinateur du **maître**, ouvrir `http://localhost:5500/` (ne pas double-cliquer sur le
    fichier HTML pour ce mode : la page doit être servie par le serveur).
-4. Sur chaque téléphone/tablette **joueur**, connecté au **même réseau Wi‑Fi/local**, ouvrir
-   l'adresse indiquée sur la page maître (voir étape 5), en remplaçant `localhost` par l'adresse
-   IP locale du PC maître (ex. `192.168.1.23:5500/joueur1`) — trouvable via `ipconfig` (Windows)
-   ou `ifconfig` / `ip a` (Mac/Linux). Si le joueur ouvre la page sur le **même PC** que le maître
-   (test local), `localhost:5500/joueur1` fonctionne tel quel.
-5. Sur la page maître, choisir le mode **🅰️ Temps réel** : dès que le nombre de joueurs est
-   défini, un encart affiche des **liens cliquables** vers les pages joueurs
-   (`localhost:5500/joueur1`, etc. — remplacez `localhost` par l'IP du PC maître pour les autres
-   appareils), ainsi que les joueurs déjà connectés (Joueur 1 ✓ connecté, etc.), mis à jour en
-   direct. Ces liens restent accessibles (repliables) une fois la partie lancée, en haut de
-   l'écran de jeu.
-6. Configurer la partie (nombre de joueurs, argent de départ, achats max, noms, images/.zip —
+4. Choisir le mode **🅰️ Temps réel**, puis cliquer sur **"Créer un salon Temps réel"**. Le serveur
+   génère un **code de salon** (ex. `AB7K`) et vous amène sur `http://localhost:5500/AB7K` : c'est
+   l'adresse de VOTRE partie. Un salon = une partie isolée ; vous pouvez créer plusieurs salons
+   en simultané sur le même serveur pour faire jouer plusieurs groupes en même temps sans qu'ils
+   se gênent (chacun avec ses propres joueurs, images, enchères).
+   Pour revenir sur un salon déjà créé (par ex. depuis un autre appareil, ou après avoir fermé
+   l'onglet), utilisez "Rejoindre un salon existant" avec son code sur la page d'accueil.
+5. Sur chaque téléphone/tablette **joueur**, connecté au **même réseau Wi‑Fi/local**, ouvrir
+   l'adresse indiquée sur la page maître (voir étape 6), en remplaçant `localhost` par l'adresse
+   IP locale du PC maître (ex. `192.168.1.23:5500/AB7K/joueur1`) — trouvable via `ipconfig`
+   (Windows) ou `ifconfig` / `ip a` (Mac/Linux). Si le joueur ouvre la page sur le **même PC** que
+   le maître (test local), `localhost:5500/AB7K/joueur1` fonctionne tel quel.
+6. Sur la page maître, dès que le nombre de joueurs est défini, un encart affiche des **liens
+   cliquables** vers les pages joueurs de VOTRE salon (`localhost:5500/AB7K/joueur1`, etc. —
+   remplacez `localhost` par l'IP du PC maître pour les autres appareils), ainsi que les joueurs
+   déjà connectés (Joueur 1 ✓ connecté, etc.), mis à jour en direct. Ces liens restent accessibles
+   (repliables) une fois la partie lancée, en haut de l'écran de jeu.
+7. Configurer la partie (nombre de joueurs, argent de départ, achats max, noms, images/.zip —
    **mêmes réglages que le mode B**), puis cliquer sur **"Lancer la partie"**.
-7. La page maître affiche alors un bouton **"Lancer l'enchère"** : c'est le maître qui déclenche
+8. La page maître affiche alors un bouton **"Lancer l'enchère"** : c'est le maître qui déclenche
    chaque image manuellement, une par une. Après avoir cliqué :
    - La mise démarre à **0 M pendant 10 secondes**.
    - Chaque joueur enchérit avec le montant de son choix parmi trois boutons : **+5 M**, **+10 M**
@@ -78,9 +84,20 @@ noire pendant la partie (elle fait tourner le serveur) ; la fermer arrête le se
      à nouveau le maître qui décide quand tirer l'image suivante.
    - La partie s'arrête automatiquement quand il n'y a plus d'images, quand tous les joueurs ont
      atteint leur nombre d'achats max, ou quand plus personne n'a de quoi enchérir (< 10 M).
-8. Le bouton **"Nouvelle partie"** (disponible en fin de partie, en Mode A comme en Mode B)
+9. Le bouton **"Nouvelle partie"** (disponible en fin de partie, en Mode A comme en Mode B)
    réinitialise entièrement la partie : joueurs, argent, images restantes, enchères et objets
-   déjà achetés repartent à zéro, pour reconfigurer une nouvelle partie depuis le même écran.
+   déjà achetés repartent à zéro, pour reconfigurer une nouvelle partie **dans le même salon**
+   (le code et les liens joueurs restent valables, inutile de les repartager).
+
+## Salons (plusieurs parties séparées en simultané)
+
+Le mode Temps réel fonctionne par **salons** : chaque salon a son propre code (4 caractères,
+ex. `AB7K`), sa propre partie isolée (joueurs, argent, images, enchères), et son URL dédiée
+(`/{CODE}` pour le maître, `/{CODE}/joueur1`…`/joueur8` pour les joueurs). Plusieurs salons
+peuvent tourner en même temps sur le même serveur, sans jamais interférer entre eux — utile pour
+faire jouer plusieurs groupes en parallèle (par ex. une fratrie et ses cousins dans deux pièces
+différentes, chacun avec son propre code). Un salon sans personne connectée depuis 4h est
+automatiquement supprimé pour libérer la mémoire du serveur.
 
 ## Miniatures des achats
 
@@ -100,9 +117,10 @@ critère de son choix) jusqu'à ce qu'il n'en reste plus qu'un seul, qui est alo
 
 ## Notes
 
-- Une seule partie en Mode A est active à la fois sur le serveur.
 - Les images sont transmises aux joueurs via le serveur (pas besoin de les copier sur chaque
   appareil).
-- Si un joueur rafraîchit sa page, il peut se reconnecter sur la même URL `/joueurN` : son état
-  (argent, achats) est conservé côté serveur.
+- Si un joueur rafraîchit sa page, il peut se reconnecter sur la même URL `/{CODE}/joueurN` : son
+  état (argent, achats) est conservé côté serveur.
 - Pour retrouver l'image de fond du marteau (mode B), copiez `Marteau.png` dans ce même dossier.
+- Les anciennes adresses sans code de salon (`/joueur1`, `/maitre`) ne fonctionnent plus depuis
+  l'ajout des salons ; elles redirigent vers la page d'accueil.

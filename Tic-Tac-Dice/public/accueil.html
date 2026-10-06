@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Dice — Accueil</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="home-hero">
+    <h1>🎲 Tic-Tac-Dice</h1>
+    <p>Le jeu de plateau où les dés décident où jouer. Chaque groupe joue dans son
+       propre <strong>salon</strong>, avec son propre plateau, ses propres joueurs
+       (humains ou IA) — plusieurs parties peuvent tourner en même temps sur ce serveur.</p>
+  </div>
+
+  <div class="home-cards">
+    <section class="home-card">
+      <h2>Créer un salon</h2>
+      <p>Tu deviens le maître du jeu : un salon est créé avec un code à donner aux joueurs (ou à scanner en QR code).</p>
+      <button id="createBtn" style="width:100%;">➕ Créer un salon</button>
+      <details class="home-details">
+        <summary>Choisir mon propre code</summary>
+        <div class="home-row" style="margin-top:8px;">
+          <input type="text" id="customCode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off">
+          <button id="createCustomBtn">Créer</button>
+        </div>
+        <p style="margin:6px 0 0;">3 à 10 lettres ou chiffres. Pratique pour retrouver le même salon.</p>
+      </details>
+      <div id="createError" class="home-error" style="display:none;"></div>
+    </section>
+
+    <section class="home-card">
+      <h2>Rejoindre un salon</h2>
+      <p>Entre le code donné par le maître du jeu, ou scanne son QR code.</p>
+      <div class="home-row">
+        <input type="text" id="joinCode" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button id="joinBtn">Rejoindre</button>
+      </div>
+      <div id="joinError" class="home-error" style="display:none;"></div>
+    </section>
+  </div>
+
+  <div class="home-recent" id="recentBox" style="display:none;">
+    <h2 style="font-size:1rem; text-align:left;">Salons récents sur cet appareil</h2>
+    <ul id="recentList"></ul>
+  </div>
+</div>
+
+<script src="/accueil.js"></script>
+</body>
+</html>

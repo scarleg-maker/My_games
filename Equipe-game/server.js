@@ -9,15 +9,10 @@ const { Server } = require('socket.io');
 
 const PORT = 3500;
 const DATA_DIR = path.join(__dirname, 'data');
-const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
-const CURRENT_DIR = path.join(UPLOADS_DIR, 'current');
-const PLAYERS_FILE = path.join(DATA_DIR, 'players.json');
+const ROOMS_DIR = path.join(DATA_DIR, 'rooms');
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
-// --- Préparation des dossiers / fichiers ---
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-if (!fs.existsSync(CURRENT_DIR)) fs.mkdirSync(CURRENT_DIR, { recursive: true });
-if (!fs.existsSync(PLAYERS_FILE)) fs.writeFileSync(PLAYERS_FILE, JSON.stringify({ names: [] }, null, 2));
+if (!fs.existsSync(ROOMS_DIR)) fs.mkdirSync(ROOMS_DIR, { recursive: true });
 
 const IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
@@ -26,70 +21,18 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
-app.use('/uploads', express.static(UPLOADS_DIR));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(PUBLIC_DIR));
 
-// --- Upload zip (multer en mémoire) ---
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
 
 function stripExt(filename) {
   return filename.replace(/\.[^/.]+$/, '');
 }
-
 function clearDir(dir) {
   for (const f of fs.readdirSync(dir)) {
     fs.rmSync(path.join(dir, f), { recursive: true, force: true });
   }
 }
-
-// --- Etat du jeu (une seule partie active à la fois) ---
-function freshState() {
-  return {
-    phase: 'setup', // setup | playing | elimination | finished
-    mode: null,     // 'A' | 'B' | 'C' | 'D'
-    theme: '',
-    numDraws: 5,
-    numRounds: 5,   // nombre de manches à jouer (mode D uniquement)
-    maxGifts: 2,    // nombre de dons possibles par joueur sur toute la partie (mode D uniquement)
-    players: [],    // [{name, eliminated:false, team:[{file,url,name}], giftsUsed:0}]
-    images: [],     // [{file, url}] - toutes les images disponibles pour cette partie
-    pool: [],        // fichiers restants à tirer
-    currentPlayerIndex: 0,
-    winner: null,
-    lastEvent: null, // {id, type, ...} pour déclencher les animations côté client
-    candidates: null, // pour le mode B : {playerIndex, images:[...]}
-    // --- Mode D (Défi) ---
-    round: 0,             // numéro de la manche en cours (1..numRounds, mode D)
-    roundPhase: 'ready',  // ready | deciding | trimming
-    pendingDraws: {},     // {playerIndex: image} images tirées en attente de décision
-    decisions: {},        // {playerIndex: {action, targetIndex}} décisions de la manche en cours
-    decidedPlayers: [],   // playerIndex ayant déjà validé leur décision pour la manche en cours
-    trimNeeded: []        // playerIndex devant supprimer des images en trop
-  };
-}
-
-let state = freshState();
-let eventCounter = 0;
-
-function pushEvent(evt) {
-  eventCounter += 1;
-  state.lastEvent = { id: eventCounter, ...evt };
-}
-
-function broadcast() {
-  io.emit('state', state);
-}
-
-function checkForWinner() {
-  const remaining = state.players.filter(p => !p.eliminated);
-  if (remaining.length === 1 && state.players.length > 1) {
-    state.phase = 'finished';
-    state.winner = remaining[0];
-  } else if (remaining.length === 0) {
-    // sécurité : ne devrait pas arriver
-  }
-}
-
 function randomPick(arr, n) {
   const copy = [...arr];
   const picked = [];
@@ -101,143 +44,82 @@ function randomPick(arr, n) {
   return picked;
 }
 
-// ---------- ROUTES API ----------
+// ================================================================ SALONS
+// Chaque salon (code court, ex. K7QF) contient une partie complète et indépendante :
+// ses propres joueurs, ses propres photos, son propre état de jeu.
+const CODE_RE = /^[A-Z0-9]{3,10}$/;
+const RESERVED = new Set(['API', 'UPLOADS', 'STATIC', 'FAVICON', 'COMMON', 'MASTER', 'JOUEUR', 'ACCUEIL']);
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O, 1/I/L (confusions)
+const ROOM_IDLE_MS = 12 * 60 * 60 * 1000; // un salon sans page ouverte depuis 12h est supprimé
+const MAX_ROOMS = 300;
 
-app.get('/api/players', (req, res) => {
-  const data = JSON.parse(fs.readFileSync(PLAYERS_FILE, 'utf-8'));
-  res.json(data);
-});
+const cleanCode = c => String(c || '').trim().toUpperCase();
+const validCode = c => CODE_RE.test(c) && !RESERVED.has(c) && !/^JOUEUR\d+$/.test(c);
 
-app.post('/api/players', (req, res) => {
-  const { names } = req.body;
-  if (!Array.isArray(names)) return res.status(400).json({ error: 'names doit être un tableau' });
-  fs.writeFileSync(PLAYERS_FILE, JSON.stringify({ names }, null, 2));
-  res.json({ ok: true });
-});
+function roomDir(code) { return path.join(ROOMS_DIR, code); }
+function roomUploadsDir(code) { return path.join(roomDir(code), 'uploads'); }
+function roomPlayersFile(code) { return path.join(roomDir(code), 'players.json'); }
+function ensureRoomDirs(code) {
+  fs.mkdirSync(roomUploadsDir(code), { recursive: true });
+  if (!fs.existsSync(roomPlayersFile(code))) fs.writeFileSync(roomPlayersFile(code), JSON.stringify({ names: [] }, null, 2));
+}
 
-// Toile cible de redimensionnement des photos à l'upload : ratio 3:4 (portrait), identique au
-// ratio utilisé par toutes les vignettes/affichages côté client (90x120, 150x200, 375x500, 240x320…).
-// En calant chaque image sur ce même ratio dès l'upload (avec un fond neutre pour combler
-// l'espace éventuel), on évite qu'une image "carrée" ou "large" paraisse plus petite que les autres.
-const CANVAS_W = 500;
-const CANVAS_H = 667;
-const JPEG_QUALITY = 85;
-const PAD_COLOR = { r: 238, g: 238, b: 238, alpha: 1 }; // #eeeeee, identique au fond CSS des cases
-
-app.post('/api/upload-zip', upload.single('zipfile'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
-    clearDir(CURRENT_DIR);
-    const zip = new AdmZip(req.file.buffer);
-    const entries = zip.getEntries();
-    const images = [];
-    let skipped = 0;
-    for (const entry of entries) {
-      if (entry.isDirectory) continue;
-      const base = path.basename(entry.entryName);
-      const ext = path.extname(base).toLowerCase();
-      if (!IMAGE_EXT.includes(ext)) continue;
-
-      // ré-encodage + mise à un format 3:4 constant : PNG (transparence préservée, complété par du
-      // transparent) si l'image a un canal alpha, JPEG (complété par un gris neutre) sinon
-      let outputBuffer;
-      let outExt;
-      try {
-        const img = sharp(entry.getData()).rotate(); // corrige l'orientation EXIF
-        const meta = await img.metadata();
-        const hasAlpha = !!meta.hasAlpha;
-        const resized = img.resize({
-          width: CANVAS_W,
-          height: CANVAS_H,
-          fit: 'contain',
-          withoutEnlargement: true,
-          background: hasAlpha ? { r: 0, g: 0, b: 0, alpha: 0 } : PAD_COLOR
-        });
-        if (hasAlpha) {
-          outExt = '.png';
-          outputBuffer = await resized.png({ compressionLevel: 9 }).toBuffer();
-        } else {
-          outExt = '.jpg';
-          outputBuffer = await resized.jpeg({ quality: JPEG_QUALITY }).toBuffer();
-        }
-      } catch (imgErr) {
-        console.error(`Image ignorée (illisible) : ${base} — ${imgErr.message}`);
-        skipped++;
-        continue;
-      }
-
-      let finalName = `${stripExt(base)}${outExt}`;
-      let counter = 1;
-      while (fs.existsSync(path.join(CURRENT_DIR, finalName))) {
-        finalName = `${stripExt(base)}_${counter}${outExt}`;
-        counter++;
-      }
-
-      fs.writeFileSync(path.join(CURRENT_DIR, finalName), outputBuffer);
-      images.push({ file: finalName, url: `/uploads/current/${encodeURIComponent(finalName)}`, name: stripExt(finalName) });
+function newUniqueCode() {
+  for (let len = 4; ; len++) {
+    for (let i = 0; i < 50; i++) {
+      let c = '';
+      for (let k = 0; k < len; k++) c += CODE_ALPHABET[(Math.random() * CODE_ALPHABET.length) | 0];
+      if (!rooms.has(c) && !fs.existsSync(roomDir(c)) && validCode(c)) return c;
     }
-    state.images = images;
-    res.json({ ok: true, count: images.length, images, skipped });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur lors de la lecture du zip : ' + err.message });
   }
-});
+}
 
-app.post('/api/start-game', (req, res) => {
-  const { mode, players, theme, numDraws, numRounds, maxGifts } = req.body;
-  if (!['A', 'B', 'C', 'D'].includes(mode)) return res.status(400).json({ error: 'Mode invalide' });
-  if (!Array.isArray(players) || players.length < 2) return res.status(400).json({ error: 'Il faut au moins 2 joueurs' });
-  if (state.images.length === 0) return res.status(400).json({ error: 'Aucune image chargée' });
-  const nd = parseInt(numDraws, 10);
-  if (isNaN(nd) || nd < 3 || nd > 10) return res.status(400).json({ error: 'Nombre de tirages invalide (3 à 10)' });
+// ---------- état de jeu d'un salon (logique identique aux modes A/B/C/D précédents) ----------
+function freshState(code) {
+  return {
+    code,
+    phase: 'setup', // setup | playing | elimination | finished
+    mode: null,     // 'A' | 'B' | 'C' | 'D'
+    theme: '',
+    numDraws: 5,
+    numRounds: 5,
+    maxGifts: 2,
+    players: [],
+    images: [],
+    pool: [],
+    currentPlayerIndex: 0,
+    winner: null,
+    lastEvent: null,
+    candidates: null,
+    round: 0,
+    roundPhase: 'ready',
+    pendingDraws: {},
+    decisions: {},
+    decidedPlayers: [],
+    trimNeeded: []
+  };
+}
 
-  let nr = nd; // pour les modes A/B/C, le nombre de tours = nombre de tirages
-  let mg = 2;
-  if (mode === 'D') {
-    nr = parseInt(numRounds, 10);
-    if (isNaN(nr) || nr < 1 || nr > 30) return res.status(400).json({ error: 'Nombre de tours invalide (1 à 30)' });
-    mg = parseInt(maxGifts, 10);
-    if (isNaN(mg) || mg < 1 || mg > 5) return res.status(400).json({ error: 'Nombre de dons possible invalide (1 à 5)' });
+function createRoom(code) {
+  let state = freshState(code);
+  let eventCounter = 0;
+  let lastActivity = Date.now();
+
+  function touch() { lastActivity = Date.now(); }
+  function pushEvent(evt) {
+    eventCounter += 1;
+    state.lastEvent = { id: eventCounter, ...evt };
+  }
+  function broadcast() { io.to(code).emit('state', state); }
+  function checkForWinner() {
+    const remaining = state.players.filter(p => !p.eliminated);
+    if (remaining.length === 1 && state.players.length > 1) {
+      state.phase = 'finished';
+      state.winner = remaining[0];
+    }
   }
 
-  // persister les noms
-  fs.writeFileSync(PLAYERS_FILE, JSON.stringify({ names: players }, null, 2));
-
-  state = freshState();
-  state.mode = mode;
-  state.theme = theme || '';
-  state.numDraws = nd;
-  state.numRounds = nr;
-  state.maxGifts = mg;
-  // recharger la liste d'images (celles déjà uploadées restent sur disque)
-  const files = fs.readdirSync(CURRENT_DIR).filter(f => IMAGE_EXT.includes(path.extname(f).toLowerCase()));
-  state.images = files.map(f => ({ file: f, url: `/uploads/current/${encodeURIComponent(f)}`, name: stripExt(f) }));
-  state.pool = state.images.map(i => i.file);
-  state.players = players.map(name => ({ name, eliminated: false, team: [], giftsUsed: 0 }));
-  state.phase = 'playing';
-  state.currentPlayerIndex = 0;
-
-  const playerUrls = players.map((name, i) => `/joueur${i + 1}`);
-  broadcast();
-  res.json({ ok: true, playerUrls });
-});
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'master.html'));
-});
-
-app.get(/^\/joueur(\d+)$/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'joueur.html'));
-});
-
-// ---------- SOCKET.IO : logique de jeu temps réel ----------
-
-io.on('connection', (socket) => {
-  socket.emit('state', state);
-
-  // Mode A & C : tirage direct d'une image dans le pool pour un joueur
-  socket.on('draw-single', ({ playerIndex }) => {
+  function drawSingle({ playerIndex }) {
     if (state.phase !== 'playing') return;
     const player = state.players[playerIndex];
     if (!player || player.eliminated) return;
@@ -247,11 +129,9 @@ io.on('connection', (socket) => {
     const img = state.images.find(i => i.file === fileName);
     player.team.push(img);
     pushEvent({ type: 'draw', playerIndex, image: img });
-    broadcast();
-  });
+  }
 
-  // Mode C : tirage simultané pour tous les joueurs actifs
-  socket.on('draw-all', () => {
+  function drawAll() {
     if (state.phase !== 'playing') return;
     const active = state.players.map((p, idx) => ({ p, idx })).filter(x => !x.p.eliminated);
     const results = [];
@@ -264,11 +144,9 @@ io.on('connection', (socket) => {
       results.push({ playerIndex: idx, image: img });
     }
     pushEvent({ type: 'draw-all', results });
-    broadcast();
-  });
+  }
 
-  // Mode B : proposer 5 candidats (sans les retirer du pool)
-  socket.on('draw-candidates', ({ playerIndex }) => {
+  function drawCandidates({ playerIndex }) {
     if (state.phase !== 'playing') return;
     const player = state.players[playerIndex];
     if (!player || player.eliminated) return;
@@ -276,11 +154,9 @@ io.on('connection', (socket) => {
     const imgs = files.map(f => state.images.find(i => i.file === f));
     state.candidates = { playerIndex, images: imgs };
     pushEvent({ type: 'candidates', playerIndex, images: imgs });
-    broadcast();
-  });
+  }
 
-  // Mode B : confirmer le choix parmi les candidats
-  socket.on('choice-confirm', ({ playerIndex, file }) => {
+  function choiceConfirm({ playerIndex, file }) {
     if (state.phase !== 'playing') return;
     if (!state.candidates || state.candidates.playerIndex !== playerIndex) return;
     const player = state.players[playerIndex];
@@ -290,11 +166,9 @@ io.on('connection', (socket) => {
     player.team.push(img);
     state.candidates = null;
     pushEvent({ type: 'choice-result', playerIndex, image: img });
-    broadcast();
-  });
+  }
 
-  // Passer au joueur suivant (modes A & B)
-  socket.on('next-player', () => {
+  function nextPlayer() {
     if (state.phase !== 'playing') return;
     let idx = state.currentPlayerIndex;
     const n = state.players.length;
@@ -307,17 +181,12 @@ io.on('connection', (socket) => {
     }
     state.candidates = null;
     pushEvent({ type: 'next-player', playerIndex: state.currentPlayerIndex });
-    broadcast();
-  });
+  }
 
-  // ---------- Mode D (Défi) ----------
-
-  // Lancer une nouvelle manche : un tirage simultané par joueur actif, en attente de décision
-  socket.on('draw-round-d', () => {
+  function drawRoundD() {
     if (state.phase !== 'playing' || state.mode !== 'D') return;
     if (state.roundPhase !== 'ready') return;
     if (state.round >= state.numRounds) return;
-
     const active = state.players.map((p, idx) => ({ p, idx })).filter(x => !x.p.eliminated);
     const pending = {};
     for (const { idx } of active) {
@@ -332,14 +201,12 @@ io.on('connection', (socket) => {
     state.roundPhase = 'deciding';
     state.round += 1;
     pushEvent({ type: 'draw-round-d', pending });
-    broadcast();
-  });
+  }
 
-  // Un joueur décide de garder son image ou de la donner à un autre joueur (max 2 dons/partie)
-  socket.on('decision', ({ playerIndex, action, targetIndex }) => {
+  function decision({ playerIndex, action, targetIndex }) {
     if (state.phase !== 'playing' || state.mode !== 'D' || state.roundPhase !== 'deciding') return;
     if (!(playerIndex in state.pendingDraws)) return;
-    if (state.decisions[playerIndex]) return; // déjà décidé
+    if (state.decisions[playerIndex]) return;
 
     if (action === 'give') {
       if (targetIndex === playerIndex) return;
@@ -383,11 +250,9 @@ io.on('connection', (socket) => {
     } else {
       pushEvent({ type: 'decision-made-d', playerIndex });
     }
-    broadcast();
-  });
+  }
 
-  // Un joueur en surplus d'images supprime une image de sa colonne
-  socket.on('trim-image', ({ playerIndex, file }) => {
+  function trimImage({ playerIndex, file }) {
     if (state.roundPhase !== 'trimming') return;
     if (!state.trimNeeded.includes(playerIndex)) return;
     const player = state.players[playerIndex];
@@ -403,33 +268,266 @@ io.on('connection', (socket) => {
       if (state.round >= state.numRounds) state.phase = 'elimination';
     }
     pushEvent({ type: 'trim-d', playerIndex });
-    broadcast();
-  });
+  }
 
-  // Passage manuel à la phase d'élimination
-  socket.on('go-to-elimination', () => {
+  function goToElimination() {
     state.phase = 'elimination';
     pushEvent({ type: 'elimination-start' });
-    broadcast();
-  });
+  }
 
-  // Eliminer un joueur (après validation côté client)
-  socket.on('eliminate-player', ({ playerIndex }) => {
+  function eliminatePlayer({ playerIndex }) {
     if (state.phase !== 'elimination' && state.phase !== 'playing') return;
     const player = state.players[playerIndex];
     if (!player) return;
     player.eliminated = true;
     pushEvent({ type: 'eliminated', playerIndex });
     checkForWinner();
-    broadcast();
-  });
+  }
 
-  // Réinitialiser la partie (retour à l'accueil, garde les joueurs enregistrés)
-  socket.on('reset-game', () => {
-    state = freshState();
+  function resetGame() {
+    state = freshState(code);
     pushEvent({ type: 'reset' });
-    broadcast();
-  });
+  }
+
+  function startGame({ mode, players, theme, numDraws, numRounds, maxGifts }) {
+    state = freshState(code);
+    state.mode = mode;
+    state.theme = theme || '';
+    state.numDraws = numDraws;
+    state.numRounds = numRounds;
+    state.maxGifts = maxGifts;
+    const files = fs.readdirSync(roomUploadsDir(code)).filter(f => IMAGE_EXT.includes(path.extname(f).toLowerCase()));
+    state.images = files.map(f => ({ file: f, url: `/uploads/${code}/${encodeURIComponent(f)}`, name: stripExt(f) }));
+    state.pool = state.images.map(i => i.file);
+    state.players = players.map(name => ({ name, eliminated: false, team: [], giftsUsed: 0 }));
+    state.phase = 'playing';
+    state.currentPlayerIndex = 0;
+  }
+
+  return {
+    code,
+    get state() { return state; },
+    touch,
+    idleMs: () => Date.now() - lastActivity,
+    broadcast,
+    startGame,
+    setUploadedImages(images) { state.images = images; },
+    socketCount: () => (io.sockets.adapter.rooms.get(code) || new Set()).size,
+    destroy() { /* rien à nettoyer en mémoire au-delà du retrait du registre */ },
+    actions: {
+      'draw-single': drawSingle, 'draw-all': drawAll, 'draw-candidates': drawCandidates,
+      'choice-confirm': choiceConfirm, 'next-player': nextPlayer, 'go-to-elimination': goToElimination,
+      'eliminate-player': eliminatePlayer, 'reset-game': resetGame,
+      'draw-round-d': drawRoundD, decision, 'trim-image': trimImage
+    }
+  };
+}
+
+// ---------- registre des salons ----------
+const rooms = new Map(); // code -> room
+
+function getRoom(code, create) {
+  if (rooms.has(code)) return rooms.get(code);
+  if (!create) return null;
+  if (rooms.size >= MAX_ROOMS) purgeIdleRooms(true);
+  ensureRoomDirs(code);
+  const room = createRoom(code);
+  rooms.set(code, room);
+  return room;
+}
+function purgeIdleRooms(force) {
+  for (const [code, room] of rooms) {
+    if (room.socketCount() === 0 && (force || room.idleMs() > ROOM_IDLE_MS)) {
+      room.destroy();
+      rooms.delete(code);
+    }
+  }
+}
+setInterval(() => purgeIdleRooms(false), 15 * 60 * 1000);
+
+// ================================================================ ROUTES API
+
+app.post('/api/rooms', (req, res) => {
+  const requested = req.body && req.body.code ? cleanCode(req.body.code) : null;
+  const code = requested || newUniqueCode();
+  if (!validCode(code)) return res.status(400).json({ error: 'Code invalide : 3 à 10 lettres ou chiffres' });
+  if (rooms.has(code)) return res.status(400).json({ error: `Le salon ${code} est déjà utilisé. Choisissez un autre code.` });
+  getRoom(code, true);
+  res.json({ ok: true, code });
+});
+
+app.get('/api/rooms/:code', (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.json({ exists: false });
+  const room = getRoom(code, false);
+  if (room) {
+    const s = room.state;
+    return res.json({ exists: true, phase: s.phase, mode: s.mode, players: s.players.map(p => ({ name: p.name, eliminated: p.eliminated })) });
+  }
+  if (fs.existsSync(roomDir(code))) return res.json({ exists: true, phase: 'setup', mode: null, players: [] });
+  res.json({ exists: false });
+});
+
+app.get('/api/rooms/:code/players', (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide' });
+  ensureRoomDirs(code);
+  const data = JSON.parse(fs.readFileSync(roomPlayersFile(code), 'utf-8'));
+  res.json(data);
+});
+
+app.post('/api/rooms/:code/players', (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide' });
+  const { names } = req.body;
+  if (!Array.isArray(names)) return res.status(400).json({ error: 'names doit être un tableau' });
+  ensureRoomDirs(code);
+  fs.writeFileSync(roomPlayersFile(code), JSON.stringify({ names }, null, 2));
+  res.json({ ok: true });
+});
+
+// Toile cible de redimensionnement : ratio 3:4, identique à toutes les vignettes côté client.
+const CANVAS_W = 500;
+const CANVAS_H = 667;
+const JPEG_QUALITY = 85;
+const PAD_COLOR = { r: 238, g: 238, b: 238, alpha: 1 };
+
+app.post('/api/rooms/:code/upload-zip', upload.single('zipfile'), async (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide' });
+  const room = getRoom(code, true);
+  room.touch();
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
+    const uploadsDir = roomUploadsDir(code);
+    clearDir(uploadsDir);
+    const zip = new AdmZip(req.file.buffer);
+    const entries = zip.getEntries();
+    const images = [];
+    let skipped = 0;
+    for (const entry of entries) {
+      if (entry.isDirectory) continue;
+      const base = path.basename(entry.entryName);
+      const ext = path.extname(base).toLowerCase();
+      if (!IMAGE_EXT.includes(ext)) continue;
+
+      let outputBuffer, outExt;
+      try {
+        const img = sharp(entry.getData()).rotate();
+        const meta = await img.metadata();
+        const hasAlpha = !!meta.hasAlpha;
+        const resized = img.resize({
+          width: CANVAS_W, height: CANVAS_H, fit: 'contain', withoutEnlargement: true,
+          background: hasAlpha ? { r: 0, g: 0, b: 0, alpha: 0 } : PAD_COLOR
+        });
+        if (hasAlpha) { outExt = '.png'; outputBuffer = await resized.png({ compressionLevel: 9 }).toBuffer(); }
+        else { outExt = '.jpg'; outputBuffer = await resized.jpeg({ quality: JPEG_QUALITY }).toBuffer(); }
+      } catch (imgErr) {
+        console.error(`Image ignorée (illisible) : ${base} — ${imgErr.message}`);
+        skipped++;
+        continue;
+      }
+
+      let finalName = `${stripExt(base)}${outExt}`;
+      let counter = 1;
+      while (fs.existsSync(path.join(uploadsDir, finalName))) {
+        finalName = `${stripExt(base)}_${counter}${outExt}`;
+        counter++;
+      }
+      fs.writeFileSync(path.join(uploadsDir, finalName), outputBuffer);
+      images.push({ file: finalName, url: `/uploads/${code}/${encodeURIComponent(finalName)}`, name: stripExt(finalName) });
+    }
+    room.setUploadedImages(images);
+    res.json({ ok: true, count: images.length, images, skipped });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur lors de la lecture du zip : ' + err.message });
+  }
+});
+
+app.post('/api/rooms/:code/start-game', (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide' });
+  const room = getRoom(code, true);
+  room.touch();
+
+  const { mode, players, theme, numDraws, numRounds, maxGifts } = req.body;
+  if (!['A', 'B', 'C', 'D'].includes(mode)) return res.status(400).json({ error: 'Mode invalide' });
+  if (!Array.isArray(players) || players.length < 2) return res.status(400).json({ error: 'Il faut au moins 2 joueurs' });
+  const uploadsDir = roomUploadsDir(code);
+  const existingImages = fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir).filter(f => IMAGE_EXT.includes(path.extname(f).toLowerCase())) : [];
+  if (existingImages.length === 0) return res.status(400).json({ error: 'Aucune image chargée' });
+  const nd = parseInt(numDraws, 10);
+  if (isNaN(nd) || nd < 3 || nd > 10) return res.status(400).json({ error: 'Nombre de tirages invalide (3 à 10)' });
+
+  let nr = nd, mg = 2;
+  if (mode === 'D') {
+    nr = parseInt(numRounds, 10);
+    if (isNaN(nr) || nr < 1 || nr > 30) return res.status(400).json({ error: 'Nombre de tours invalide (1 à 30)' });
+    mg = parseInt(maxGifts, 10);
+    if (isNaN(mg) || mg < 1 || mg > 5) return res.status(400).json({ error: 'Nombre de dons possible invalide (1 à 5)' });
+  }
+
+  ensureRoomDirs(code);
+  fs.writeFileSync(roomPlayersFile(code), JSON.stringify({ names: players }, null, 2));
+
+  room.startGame({ mode, players, theme, numDraws: nd, numRounds: nr, maxGifts: mg });
+  const playerUrls = players.map((name, i) => `/${code}/joueur${i + 1}`);
+  room.broadcast();
+  res.json({ ok: true, code, playerUrls });
+});
+
+// Photos redimensionnées du salon
+app.get(/^\/uploads\/([A-Za-z0-9]{3,10})\/(.+)$/, (req, res) => {
+  const code = cleanCode(req.params[0]);
+  if (!validCode(code)) return res.status(400).end();
+  const filename = path.basename(req.params[1]);
+  const filePath = path.join(roomUploadsDir(code), filename);
+  res.sendFile(filePath, err => { if (err) res.status(404).end(); });
+});
+
+// ================================================================ PAGES
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'accueil.html'));
+});
+
+app.get(/^\/([A-Za-z0-9]{3,10})$/, (req, res) => {
+  const code = cleanCode(req.params[0]);
+  if (!validCode(code)) return res.status(404).send('Salon introuvable.');
+  getRoom(code, true);
+  res.sendFile(path.join(PUBLIC_DIR, 'master.html'));
+});
+
+app.get(/^\/([A-Za-z0-9]{3,10})\/joueur(\d+)$/, (req, res) => {
+  const code = cleanCode(req.params[0]);
+  if (!validCode(code)) return res.status(404).send('Salon introuvable.');
+  res.sendFile(path.join(PUBLIC_DIR, 'joueur.html'));
+});
+
+// ================================================================ SOCKET.IO
+
+io.on('connection', (socket) => {
+  const code = cleanCode(socket.handshake.query.room);
+  const room = validCode(code) ? getRoom(code, false) : null;
+  if (!room) {
+    socket.emit('room-not-found');
+    socket.disconnect(true);
+    return;
+  }
+  socket.join(code);
+  room.touch();
+  socket.emit('state', room.state);
+
+  for (const [name, fn] of Object.entries(room.actions)) {
+    socket.on(name, (payload) => {
+      room.touch();
+      fn(payload || {});
+      room.broadcast();
+    });
+  }
+
+  socket.on('disconnect', () => { room.touch(); });
 });
 
 server.listen(PORT, () => {

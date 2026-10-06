@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Composez votre équipe</title>
+<link rel="stylesheet" href="/static/styles.css">
+<style>
+  .hero { text-align: center; margin-bottom: 28px; }
+  .hero p { opacity: 0.85; max-width: 42rem; margin: 10px auto 0; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 700px) { .cards { grid-template-columns: 1fr; } }
+  .code-row { display: flex; gap: 10px; }
+  .code-row input {
+    flex: 1; text-transform: uppercase; letter-spacing: 0.15em;
+    font-family: 'Cinzel', serif; font-weight: 700; text-align: center;
+  }
+  details.custom-code { margin-top: 14px; color: var(--cream); opacity: 0.9; }
+  details.custom-code summary { cursor: pointer; font-size: 0.85rem; }
+  details.custom-code .code-row { margin-top: 10px; }
+  .seats { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .seat-link {
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid rgba(217,164,65,0.4); border-radius: 10px;
+    padding: 10px 14px; text-decoration: none; color: var(--cream);
+    background: rgba(251,244,223,0.06);
+  }
+  .seat-link:hover { border-color: var(--gold-bright); }
+  .seat-link[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
+  .seat-link small { display: block; opacity: 0.7; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; }
+  .recent-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .recent-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid rgba(217,164,65,0.4); border-radius: 999px;
+    padding: 4px 6px 4px 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+  }
+  .recent-chip a { color: var(--gold-bright); text-decoration: none; }
+  .recent-chip button {
+    background: none; border: none; color: var(--cream); opacity: 0.6;
+    cursor: pointer; font-size: 0.9rem; padding: 2px 6px;
+  }
+  .recent-chip button:hover { opacity: 1; color: var(--red-suit); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Composez votre équipe</div>
+    <h1>Bienvenue à la table</h1>
+    <p>Chaque groupe joue dans son propre salon, avec son propre thème et ses propres
+    règles. Créez un salon pour devenir le maître du jeu, ou rejoignez celui d'un ami
+    avec son code.</p>
+  </div>
+
+  <div id="error-box" class="error-box hidden"></div>
+
+  <div class="cards">
+    <section class="panel">
+      <h2>Créer un salon</h2>
+      <p style="opacity:0.8; margin-top:-6px;">Vous devenez le maître du jeu : un code est généré, à partager avec les joueurs.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-gold" id="create-btn">Créer un salon</button>
+      </div>
+      <details class="custom-code">
+        <summary>Choisir mon propre code</summary>
+        <div class="code-row">
+          <input type="text" id="custom-code" maxlength="10" placeholder="EX. PIRATES" autocomplete="off">
+          <button type="button" class="btn" id="create-custom-btn">Créer</button>
+        </div>
+        <p style="font-size:0.8rem; opacity:0.7; margin-top:8px;">3 à 10 lettres ou chiffres.</p>
+      </details>
+    </section>
+
+    <section class="panel">
+      <h2>Rejoindre un salon</h2>
+      <p style="opacity:0.8; margin-top:-6px;">Entrez le code donné par le maître du jeu, puis choisissez votre nom.</p>
+      <div class="code-row">
+        <input type="text" id="join-code" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button type="button" class="btn btn-gold" id="join-btn">Rejoindre</button>
+      </div>
+      <div id="found"></div>
+    </section>
+  </div>
+
+  <div class="panel hidden" id="recent-panel">
+    <h2>Salons récents sur cet appareil</h2>
+    <div class="recent-list" id="recent-list"></div>
+  </div>
+</div>
+
+<script src="/static/accueil.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+ "EHXY": {
+  "names": [
+   "Joueur 1",
+   "Joueur 2",
+   "Joueur 3",
+   "Joueur 4",
+   "Joueur 5",
+   "Joueur 6"
+  ],
+  "scores": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "playerCount": 2,
+  "target": 10,
+  "themeId": "pokemon",
+  "round": 0,
+  "started": false,
+  "mode": "speed",
+  "t": 1791290664474
+ }
+}

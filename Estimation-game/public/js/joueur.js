@@ -1,6 +1,10 @@
 const socket = io();
 
-const playerId = window.location.pathname.replace('/', '').trim(); // ex: "joueur3"
+// URL du type /CODE/joueur3 -> segments ["", "CODE", "joueur3"]
+const pathSegments = window.location.pathname.split('/').filter(Boolean);
+const ROOM_CODE = (pathSegments[0] || '').toUpperCase();
+const playerId = (pathSegments[1] || '').toLowerCase(); // ex: "joueur3"
+
 let isBM = false;
 let hasGuessed = false;
 let myTheme = '';
@@ -28,7 +32,7 @@ function resetPanels() {
 }
 
 function tryJoin() {
-  socket.emit('player:join', { playerId });
+  socket.emit('player:join', { code: ROOM_CODE, playerId });
 }
 
 socket.on('connect', tryJoin);

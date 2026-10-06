@@ -1,9 +1,13 @@
+// Adresse : /CODE/joueurN
 const pathParts = location.pathname.split('/').filter(Boolean);
+const ROOM = (pathParts[0] || '').toUpperCase();
 const lastPart = pathParts[pathParts.length - 1] || '';
 const playerId = parseInt(lastPart.replace(/^joueur/, ''), 10);
 
 const socket = io();
-socket.emit('join-player', { playerId });
+// À chaque (re)connexion on rejoint le salon : sans cela, une coupure Wi-Fi ferait perdre les mises à jour.
+socket.on('connect', () => socket.emit('join-player', { room: ROOM, playerId }));
+socket.on('no-room', () => { location.href = `/?introuvable=${encodeURIComponent(ROOM)}`; });
 
 const playerLabel = document.getElementById('playerLabel');
 const noGame = document.getElementById('noGame');
@@ -298,7 +302,7 @@ finishBtn.addEventListener('click', () => {
 
 socket.on('state', render);
 socket.on('notification', (data) => showToast(data.message, data.type));
-socket.on('reset', () => { location.reload(); });
+socket.on('reset', () => { location.href = `/${ROOM}/rejoindre`; });
 
 socket.on('review-data', (data) => {
   liveReviewData = data;

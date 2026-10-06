@@ -1,5 +1,28 @@
+// Le code du salon est le premier segment de l'adresse : /CODE
+const ROOM = (location.pathname.split('/').filter(Boolean)[0] || '').toUpperCase();
+
 const socket = io();
-socket.emit('join-master');
+// À chaque (re)connexion on rejoint le salon : sans cela, une coupure Wi-Fi ferait perdre les mises à jour.
+socket.on('connect', () => socket.emit('join-master', { room: ROOM }));
+socket.on('no-room', () => { location.href = `/?introuvable=${encodeURIComponent(ROOM)}`; });
+
+document.getElementById('roomCode').textContent = ROOM;
+document.getElementById('roomCode2').textContent = ROOM;
+['configLink', 'reconfigLink', 'newGameLink'].forEach(id => {
+  document.getElementById(id).href = `/${ROOM}/config`;
+});
+
+// Invitation : QR code + lien « rejoindre » (adresse du réseau local si le maître est sur localhost)
+document.getElementById('qrImg').src = `/api/rooms/${ROOM}/qr.svg`;
+fetch(`/api/rooms/${ROOM}`).then(r => r.json()).then(info => {
+  if (!info || !info.joinUrl) return;
+  document.getElementById('joinUrl').textContent = info.joinUrl;
+  const btn = document.getElementById('copyJoinBtn');
+  btn.onclick = async () => {
+    try { await navigator.clipboard.writeText(info.joinUrl); btn.textContent = 'Lien copié ✓'; }
+    catch (e) { window.prompt('Copiez ce lien :', info.joinUrl); }
+  };
+}).catch(() => { });
 
 const noGame = document.getElementById('noGame');
 const gameArea = document.getElementById('gameArea');
@@ -41,7 +64,7 @@ function renderLinks(players) {
   masterLinkList.innerHTML = '';
   players.forEach(p => {
     const li = document.createElement('li');
-    li.innerHTML = `<span>${p.name}</span><a href="${base}/joueur${p.id}" target="_blank">${base}/joueur${p.id}</a>`;
+    li.innerHTML = `<span>${p.name}</span><a href="${base}/${ROOM}/joueur${p.id}" target="_blank">${base}/${ROOM}/joueur${p.id}</a>`;
     masterLinkList.appendChild(li);
   });
 }
@@ -281,4 +304,4 @@ endGameBtn.addEventListener('click', () => {
 socket.on('state', render);
 socket.on('review-data', renderReview);
 socket.on('notification', (data) => showToast(data.message, data.type));
-socket.on('reset', () => { location.href = '/'; });
+socket.on('reset', () => { location.href = `/${ROOM}/config`; });

@@ -1,5 +1,39 @@
+const ROOM_CODE = (location.pathname.split('/')[1] || '').toUpperCase();
+const api = (p) => `/api/${ROOM_CODE}${p}`;
+
 const setupView = document.getElementById('setup-view');
 const gameView = document.getElementById('game-view');
+
+document.getElementById('room-code-label').textContent = ROOM_CODE;
+
+// ---------- QR code vers la page de connexion du salon ----------
+function drawRoomQR() {
+  const box = document.getElementById('room-qr');
+  if (!box || !window.QRCode) return;
+  box.innerHTML = '';
+  new QRCode(box, {
+    text: `${location.origin}/${ROOM_CODE}/rejoindre`,
+    width: 112,
+    height: 112,
+    colorDark: '#1c2417',
+    colorLight: '#fbf4df',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+drawRoomQR();
+
+document.getElementById('copy-link-btn').addEventListener('click', async () => {
+  const url = `${location.origin}/${ROOM_CODE}/rejoindre`;
+  const btn = document.getElementById('copy-link-btn');
+  try {
+    await navigator.clipboard.writeText(url);
+    const original = btn.textContent;
+    btn.textContent = 'Lien copié !';
+    setTimeout(() => { btn.textContent = original; }, 1800);
+  } catch (e) {
+    prompt('Copiez ce lien :', url);
+  }
+});
 
 let selectedMode = null;
 let playerCount = 4;
@@ -26,15 +60,21 @@ document.querySelectorAll('.mode-card').forEach((card) => {
 // ---------- player count ----------
 function renderPlayerRows() {
   const container = document.getElementById('player-rows');
+  const previousAI = {};
+  container.querySelectorAll('.ai-checkbox').forEach((cb) => { previousAI[cb.dataset.i] = cb.checked; });
   container.innerHTML = '';
   for (let i = 0; i < playerCount; i++) {
     const row = document.createElement('div');
     row.className = 'player-row';
-    const existing = container.dataset;
+    const wasAI = previousAI[i] || false;
     row.innerHTML = `
       <div class="idx">${i + 1}</div>
       <input type="text" class="player-name-input" data-i="${i}" placeholder="Nom du joueur ${i + 1}"
         value="${(savedNames[i] || '').replace(/"/g, '&quot;')}">
+      <label class="ai-toggle">
+        <input type="checkbox" class="ai-checkbox" data-i="${i}" ${wasAI ? 'checked' : ''}>
+        IA
+      </label>
     `;
     container.appendChild(row);
   }
@@ -101,14 +141,14 @@ photosInput.addEventListener('change', () => {
 // ---------- init ----------
 async function init() {
   try {
-    const res = await fetch('/api/saved-players');
+    const res = await fetch(api('/saved-players'));
     const data = await res.json();
     savedNames = data.players || [];
     if (savedNames.length >= 2) playerCount = Math.min(6, Math.max(2, savedNames.length));
   } catch (e) { /* ignore */ }
   renderPlayerRows();
 
-  const stateRes = await fetch('/api/state');
+  const stateRes = await fetch(api('/state'));
   const state = await stateRes.json();
   if (state.configured) {
     showGameView();
@@ -133,6 +173,10 @@ document.getElementById('setup-form').addEventListener('submit', async (e) => {
   fd.append('totalRounds', rounds);
   fd.append('pointsToWin', points);
   fd.append('handSize', handSizeOptions[handSizeIndex]);
+  const aiNames = Array.from(document.querySelectorAll('.ai-checkbox'))
+    .map((cb, i) => (cb.checked ? names[i] : null))
+    .filter(Boolean);
+  fd.append('aiPlayers', JSON.stringify(aiNames));
   if (selectedMode === 'B') {
     if (!selectedZip) return showError('Sélectionnez une archive ZIP de photos.');
     fd.append('photos', selectedZip);
@@ -142,7 +186,7 @@ document.getElementById('setup-form').addEventListener('submit', async (e) => {
   btn.disabled = true;
   btn.textContent = 'Préparation...';
   try {
-    const res = await fetch('/api/start-game', { method: 'POST', body: fd });
+    const res = await fetch(api('/start-game'), { method: 'POST', body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur inconnue.');
     showGameView();
@@ -167,7 +211,7 @@ function showGameView() {
 
 // ---------- game control view ----------
 async function refreshState() {
-  const res = await fetch('/api/state');
+  const res = await fetch(api('/state'));
   const state = await res.json();
   if (!state.configured) {
     gameView.classList.add('hidden');
@@ -191,8 +235,40 @@ function renderGameState(state) {
   // player links
   const linksEl = document.getElementById('player-links');
   linksEl.innerHTML = state.players
-    .map((p, i) => `<div><strong>${p}</strong> — <a href="/joueur${i + 1}" target="_blank">localhost:4000/joueur${i + 1}</a></div>`)
+    .map((p, i) => `<div><strong>${p}</strong> — <a href="/${ROOM_CODE}/joueur${i + 1}" target="_blank">${location.host}/${ROOM_CODE}/joueur${i + 1}</a></div>`)
     .join('');
+
+  // AI toggle panel
+  const aiList = document.getElementById('ai-panel-list');
+  aiList.innerHTML = state.players
+    .map((p, i) => {
+      const checked = state.aiPlayers.includes(p);
+      const isCurrent = state.status === 'playing' && state.currentPlayer === p;
+      return `
+        <div class="ai-panel-row">
+          <span class="name">${p}${isCurrent ? ' <span class="turn-tag">(à son tour)</span>' : ''}</span>
+          <label class="ai-toggle">
+            <input type="checkbox" class="ai-toggle-input" data-index="${i + 1}" ${checked ? 'checked' : ''}>
+            IA
+          </label>
+        </div>
+      `;
+    })
+    .join('');
+  aiList.querySelectorAll('.ai-toggle-input').forEach((cb) => {
+    cb.addEventListener('change', async () => {
+      cb.disabled = true;
+      try {
+        await fetch(api('/toggle-ai'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerIndex: cb.dataset.index, isAI: cb.checked })
+        });
+      } finally {
+        cb.disabled = false;
+      }
+    });
+  });
 
   // table zone
   const tableZone = document.getElementById('table-zone');
@@ -201,7 +277,7 @@ function renderGameState(state) {
       ? `<div class="level-badge">Niv. ${String(state.masterExtra.level).padStart(2, '0')}</div>`
       : '';
     const face = state.mode === 'B'
-      ? `<img src="/api/image/${state.table.imageId}" alt="">`
+      ? `<img src="${api('/image/' + state.table.imageId)}" alt="">`
       : `<img src="/static/assets/cards/${state.table.spriteId}.svg" alt="${state.table.label}">`;
     tableZone.innerHTML = `
       <div class="played-card">${levelBadge}${face}</div>
@@ -221,7 +297,7 @@ function renderGameState(state) {
       btn.textContent = state.status === 'ready' ? 'Lancer le tour 1' : `Lancer le tour ${state.round + 1}`;
       btn.addEventListener('click', async () => {
         btn.disabled = true;
-        await fetch('/api/start-round', { method: 'POST' });
+        await fetch(api('/start-round'), { method: 'POST' });
       });
       controls.appendChild(btn);
     }
@@ -259,7 +335,7 @@ function renderGameState(state) {
 
 document.getElementById('new-game-btn').addEventListener('click', async () => {
   if (!confirm('Démarrer une nouvelle partie ? La partie en cours sera perdue.')) return;
-  await fetch('/api/new-game', { method: 'POST' });
+  await fetch(api('/new-game'), { method: 'POST' });
   gameView.classList.add('hidden');
   setupView.classList.remove('hidden');
   location.reload();
@@ -267,6 +343,7 @@ document.getElementById('new-game-btn').addEventListener('click', async () => {
 
 // ---------- realtime ----------
 const socket = io();
+socket.emit('join-room', ROOM_CODE);
 socket.on('state-updated', refreshState);
 
 init();

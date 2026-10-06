@@ -3,15 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>7 Familles - Joueur</title>
-<link rel="stylesheet" href="/css/style.css">
+<title>7 Familles — Joueur</title>
+<link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 <div class="wrap">
+  <div class="topbar"><a href="/">← Accueil</a><span class="room-tag">Salon <strong id="roomCode"></strong></span></div>
   <h1 id="playerTitle">🎴 Joueur</h1>
 
-  <div id="waitingBox" class="card-panel">
-    <p>En attente du lancement de la partie par le maître du jeu...</p>
+  <div id="messageBox" class="card-panel hidden"></div>
+
+  <div id="waitingBox" class="card-panel hidden">
+    <p>En attente du lancement de la partie par l'arbitre...</p>
   </div>
 
   <div id="dealBox" class="card-panel hidden">
@@ -19,7 +22,7 @@
   </div>
 
   <div id="readyBox" class="card-panel hidden">
-    <p>Vérifiez vos cartes ci-dessous, puis cliquez sur "Je suis prêt" quand vous êtes prêt à jouer.</p>
+    <p>Vérifiez vos cartes ci-dessous, puis cliquez sur « Je suis prêt » quand vous êtes prêt à jouer.</p>
     <button id="readyBtn">✅ Je suis prêt</button>
     <p id="readyStatus"></p>
   </div>
@@ -27,13 +30,12 @@
   <div id="gameArea" class="hidden">
     <div id="turnBanner" class="turn-banner">En attente...</div>
 
-    <div id="requestedBanner" class="turn-banner requested hidden">
-      Cliquez sur la carte demandée à l'oral si vous l'avez, sinon ne faites rien.
-    </div>
+    <div id="requestedBanner" class="turn-banner requested hidden"></div>
 
     <div id="myTurnControls" class="card-panel hidden">
       <h3>Choisissez un adversaire à interroger</h3>
       <div class="opponent-grid" id="opponentGrid"></div>
+      <p id="askingInfo" class="muted hidden"></p>
       <div class="action-row">
         <button class="pioche-btn" id="piocheBtn">🎲 Pioche</button>
         <div class="families-panel" id="handFamiliesSummary"></div>
@@ -72,11 +74,13 @@
     <div class="modal-box">
       <h2>🏆 Partie terminée</h2>
       <p id="gameOverText"></p>
+      <button id="gameOverClose">Fermer</button>
     </div>
   </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="/joueur.js"></script>
+<script src="/static/common.js"></script>
+<script src="/static/joueur.js"></script>
 </body>
 </html>

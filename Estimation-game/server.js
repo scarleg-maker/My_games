@@ -1,137 +1,184 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const os = require('os');
 const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const PORT = 2500;
+const PORT = process.env.PORT || 2500;
 const MAX_PLAYERS = 8;
+const ROOM_IDLE_MS = 6 * 3600 * 1000; // un salon vide depuis 6h est supprimé
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-// Routes joueurs statiques /joueur1 .. /joueur8
-for (let i = 1; i <= MAX_PLAYERS; i++) {
-  app.get(`/joueur${i}`, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'joueur.html'));
-  });
+// ---------------------------------------------------------------------
+// Utilitaires salons
+// ---------------------------------------------------------------------
+const CODE_RE = /^[A-Z0-9]{3,10}$/;
+const RESERVED = new Set(['API', 'CSS', 'JS', 'FAVICON', 'ACCUEIL', 'JOUEUR', 'MAITRE', 'STATIC']);
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O, 1/I/L (évite les confusions)
+
+const cleanCode = c => String(c || '').trim().toUpperCase();
+const validCode = c => CODE_RE.test(c) && !RESERVED.has(c) && !/^JOUEUR[1-8]$/.test(c);
+
+function newCode() {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    let c = '';
+    for (let k = 0; k < 4; k++) c += ALPHABET[(Math.random() * ALPHABET.length) | 0];
+    if (!rooms.has(c) && validCode(c)) return c;
+  }
+  return 'R' + Date.now().toString(36).toUpperCase(); // secours improbable
 }
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'master.html'));
-});
+
+function lanUrls() {
+  const nets = os.networkInterfaces();
+  const urls = [];
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) urls.push(`http://${net.address}:${PORT}`);
+    }
+  }
+  return urls;
+}
 
 // ---------------------------------------------------------------------
-// Etat du jeu (une seule partie active à la fois, usage local)
+// Logique d'un salon (une partie indépendante)
 // ---------------------------------------------------------------------
-let game = null;
+const rooms = new Map(); // code -> room
 
-function resetGame() {
-  game = {
+function createRoom(code) {
+  const room = {
+    code,
     players: [],       // { id, name, score, socketId }
     theme: '',
     targetScore: 50,
     started: false,
     bmOrderIndex: 0,
-    round: null,        // voir startRound()
+    round: null,
+    createdAt: Date.now(),
+    lastActivity: Date.now(),
   };
-}
-resetGame();
-
-function currentBM() {
-  return game.players[game.bmOrderIndex] || null;
+  rooms.set(code, room);
+  return room;
 }
 
-function advanceBM() {
-  game.bmOrderIndex = (game.bmOrderIndex + 1) % game.players.length;
+function touch(room) { room.lastActivity = Date.now(); }
+
+function roomHasConnectedClients(room) {
+  if (room.players.some(p => p.socketId)) return true;
+  for (const [, s] of io.sockets.sockets) {
+    if (s.data && s.data.code === room.code && s.data.isMaster) return true;
+  }
+  return false;
 }
 
-function publicPlayers() {
-  return game.players.map(p => ({
+function purgeRooms() {
+  const now = Date.now();
+  for (const [code, room] of rooms) {
+    if (!roomHasConnectedClients(room) && now - room.lastActivity > ROOM_IDLE_MS) {
+      rooms.delete(code);
+    }
+  }
+}
+setInterval(purgeRooms, 10 * 60 * 1000);
+
+function currentBM(room) {
+  return room.players[room.bmOrderIndex] || null;
+}
+function advanceBM(room) {
+  room.bmOrderIndex = (room.bmOrderIndex + 1) % room.players.length;
+}
+function publicPlayers(room) {
+  return room.players.map(p => ({
     id: p.id,
     name: p.name,
     score: p.score,
     connected: !!p.socketId,
   }));
 }
-
-function masterState() {
+function masterState(room) {
   return {
-    players: publicPlayers(),
-    theme: game.theme,
-    targetScore: game.targetScore,
-    started: game.started,
+    code: room.code,
+    players: publicPlayers(room),
+    theme: room.theme,
+    targetScore: room.targetScore,
+    started: room.started,
   };
 }
-
-function roundSummaryForMaster() {
-  const bm = currentBM();
+function roomInfoPublic(room) {
   return {
-    phase: game.round ? game.round.phase : null,
+    exists: true,
+    code: room.code,
+    started: room.started,
+    theme: room.theme,
+    targetScore: room.targetScore,
+    players: publicPlayers(room),
+  };
+}
+function roundSummaryForMaster(room) {
+  const bm = currentBM(room);
+  return {
+    phase: room.round ? room.round.phase : null,
     bmName: bm ? bm.name : null,
-    guessedCount: game.round ? Object.keys(game.round.guesses).length : 0,
-    totalNeeded: game.players.length ? game.players.length - 1 : 0,
+    guessedCount: room.round ? Object.keys(room.round.guesses).length : 0,
+    totalNeeded: room.players.length ? room.players.length - 1 : 0,
   };
 }
 
+// Groupes Socket.io : `${code}` (tout le salon), `${code}:master`, `${code}:${playerId}`
+const roomTopic = code => code;
+const masterTopic = code => `${code}:master`;
+const playerTopic = (code, playerId) => `${code}:${playerId}`;
+
 // ---------------------------------------------------------------------
-// Déroulement d'une manche
+// Déroulement d'une manche (paramétré par room pour supporter plusieurs salons)
 // ---------------------------------------------------------------------
-function startRound() {
-  const bm = currentBM();
+function startRound(room) {
+  const bm = currentBM(room);
   if (!bm) return;
 
-  game.round = {
-    phase: 'bm-announce',
-    target: null,
-    clue: '',
-    guesses: {},
-    lastResults: null,
-  };
+  room.round = { phase: 'bm-announce', target: null, clue: '', guesses: {}, lastResults: null };
 
-  game.players.forEach(p => {
-    io.to(p.id).emit('round:bm-announced', {
-      isYou: p.id === bm.id,
-      bmName: bm.name,
-    });
+  room.players.forEach(p => {
+    io.to(playerTopic(room.code, p.id)).emit('round:bm-announced', { isYou: p.id === bm.id, bmName: bm.name });
   });
-  io.to('master').emit('round:bm-announced', { bmName: bm.name });
-  io.to('master').emit('round:update', roundSummaryForMaster());
+  io.to(masterTopic(room.code)).emit('round:bm-announced', { bmName: bm.name });
+  io.to(masterTopic(room.code)).emit('round:update', roundSummaryForMaster(room));
 
   setTimeout(() => {
-    if (!game.round || game.round.phase !== 'bm-announce') return;
-    game.round.phase = 'bm-turn';
-    game.round.target = Math.floor(Math.random() * 101);
+    if (!room.round || room.round.phase !== 'bm-announce') return;
+    room.round.phase = 'bm-turn';
+    room.round.target = Math.floor(Math.random() * 101);
 
-    io.to(bm.id).emit('round:your-turn', {
-      target: game.round.target,
-      theme: game.theme,
-    });
-    game.players.forEach(p => {
+    io.to(playerTopic(room.code, bm.id)).emit('round:your-turn', { target: room.round.target, theme: room.theme });
+    room.players.forEach(p => {
       if (p.id !== bm.id) {
-        io.to(p.id).emit('round:waiting-bm', { bmName: bm.name, theme: game.theme });
+        io.to(playerTopic(room.code, p.id)).emit('round:waiting-bm', { bmName: bm.name, theme: room.theme });
       }
     });
-    io.to('master').emit('round:update', roundSummaryForMaster());
+    io.to(masterTopic(room.code)).emit('round:update', roundSummaryForMaster(room));
   }, 2000);
 }
 
-function checkAllGuessed() {
-  const bm = currentBM();
-  const others = game.players.filter(p => p.id !== bm.id);
-  const allGuessed = others.every(p => game.round.guesses[p.id] !== undefined);
-  if (allGuessed) computeResults();
+function checkAllGuessed(room) {
+  const bm = currentBM(room);
+  const others = room.players.filter(p => p.id !== bm.id);
+  const allGuessed = others.every(p => room.round.guesses[p.id] !== undefined);
+  if (allGuessed) computeResults(room);
 }
 
-function computeResults() {
-  const bm = currentBM();
-  const target = game.round.target;
+function computeResults(room) {
+  const bm = currentBM(room);
+  const target = room.round.target;
   const results = [];
 
-  game.players.forEach(p => {
+  room.players.forEach(p => {
     if (p.id === bm.id) return;
-    const guess = game.round.guesses[p.id];
+    const guess = room.round.guesses[p.id];
     const diff = Math.abs(guess - target);
     let pts = 0;
     if (diff === 0) pts = 5;
@@ -142,158 +189,238 @@ function computeResults() {
     results.push({ playerId: p.id, name: p.name, guess, points: pts });
   });
 
-  game.round.phase = 'results';
-  const winner = game.players.find(p => p.score >= game.targetScore) || null;
+  room.round.phase = 'results';
+  const winner = room.players.find(p => p.score >= room.targetScore) || null;
 
   const payload = {
     target,
-    clue: game.round.clue,
+    clue: room.round.clue,
     bmName: bm.name,
     bmId: bm.id,
     results,
-    scores: publicPlayers(),
+    scores: publicPlayers(room),
     gameOver: !!winner,
     winner: winner ? { id: winner.id, name: winner.name, score: winner.score } : null,
   };
-  game.round.lastResults = payload;
+  room.round.lastResults = payload;
 
-  io.emit('round:results', payload);
-  io.to('master').emit('round:results', payload);
-
-  if (winner) {
-    game.started = false;
-  }
+  io.to(roomTopic(room.code)).emit('round:results', payload);
+  if (winner) room.started = false;
 }
 
-function sendRoundStateTo(socket, player) {
-  if (!game.round) return;
-  const bm = currentBM();
-  const phase = game.round.phase;
+function sendRoundStateTo(socket, room, player) {
+  if (!room.round) return;
+  const bm = currentBM(room);
+  const phase = room.round.phase;
 
   if (phase === 'bm-announce') {
     socket.emit('round:bm-announced', { isYou: player.id === bm.id, bmName: bm.name });
   } else if (phase === 'bm-turn') {
-    if (player.id === bm.id) {
-      socket.emit('round:your-turn', { target: game.round.target, theme: game.theme });
-    } else {
-      socket.emit('round:waiting-bm', { bmName: bm.name, theme: game.theme });
-    }
+    if (player.id === bm.id) socket.emit('round:your-turn', { target: room.round.target, theme: room.theme });
+    else socket.emit('round:waiting-bm', { bmName: bm.name, theme: room.theme });
   } else if (phase === 'guessing') {
     if (player.id === bm.id) {
-      socket.emit('round:your-turn', { target: game.round.target, theme: game.theme, clueSent: true });
-    } else if (game.round.guesses[player.id] === undefined) {
-      socket.emit('round:clue', { clue: game.round.clue, theme: game.theme, bmName: bm.name });
+      socket.emit('round:your-turn', { target: room.round.target, theme: room.theme, clueSent: true });
+    } else if (room.round.guesses[player.id] === undefined) {
+      socket.emit('round:clue', { clue: room.round.clue, theme: room.theme, bmName: bm.name });
     } else {
       socket.emit('player:guess-received');
     }
-  } else if (phase === 'results' && game.round.lastResults) {
-    socket.emit('round:results', game.round.lastResults);
+  } else if (phase === 'results' && room.round.lastResults) {
+    socket.emit('round:results', room.round.lastResults);
   }
 }
+
+// ---------------------------------------------------------------------
+// Routes HTTP
+// ---------------------------------------------------------------------
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'accueil.html')));
+
+app.get('/api/server-info', (req, res) => {
+  res.json({ port: PORT, lanUrls: lanUrls() });
+});
+
+app.post('/api/rooms', (req, res) => {
+  const body = req.body || {};
+  let code = body.code ? cleanCode(body.code) : newCode();
+  if (!validCode(code)) {
+    return res.json({ ok: false, error: 'Code invalide : 3 à 10 lettres ou chiffres.' });
+  }
+  if (rooms.has(code)) {
+    return res.json({ ok: false, error: `Le salon « ${code} » est déjà utilisé.` });
+  }
+  createRoom(code);
+  res.json({ ok: true, code });
+});
+
+app.get('/api/rooms/:code', (req, res) => {
+  const code = cleanCode(req.params.code);
+  const room = validCode(code) ? rooms.get(code) : null;
+  if (!room) return res.json({ exists: false, code });
+  res.json(roomInfoPublic(room));
+});
+
+// Page "rejoindre" avec le code pré-rempli (lien du QR code) -> même page que l'accueil
+app.get(/^\/([A-Za-z0-9]{3,10})\/rejoindre$/, (req, res, next) => {
+  const code = cleanCode(req.params[0]);
+  if (!validCode(code)) return next();
+  res.sendFile(path.join(__dirname, 'public', 'accueil.html'));
+});
+
+// Page joueur : /CODE/joueur1 .. /CODE/joueur8
+app.get(/^\/([A-Za-z0-9]{3,10})\/joueur([1-8])$/, (req, res, next) => {
+  const code = cleanCode(req.params[0]);
+  if (!validCode(code)) return next();
+  res.sendFile(path.join(__dirname, 'public', 'joueur.html'));
+});
+
+// Page maître d'un salon : /CODE
+app.get(/^\/([A-Za-z0-9]{3,10})$/, (req, res, next) => {
+  const code = cleanCode(req.params[0]);
+  if (!validCode(code)) return next();
+  res.sendFile(path.join(__dirname, 'public', 'maitre.html'));
+});
 
 // ---------------------------------------------------------------------
 // Socket.io
 // ---------------------------------------------------------------------
 io.on('connection', socket => {
-  socket.on('master:join', () => {
-    socket.join('master');
-    socket.emit('game:state', masterState());
-    if (game.round) {
-      io.to('master').emit('round:update', roundSummaryForMaster());
-      if (game.round.phase === 'results' && game.round.lastResults) {
-        socket.emit('round:results', game.round.lastResults);
-      }
+  socket.on('master:join', ({ code }) => {
+    code = cleanCode(code);
+    const room = rooms.get(code);
+    if (!room) { socket.emit('room:error', { message: "Ce salon n'existe plus." }); return; }
+    socket.data.code = code;
+    socket.data.isMaster = true;
+    socket.join(roomTopic(code));
+    socket.join(masterTopic(code));
+    socket.emit('game:state', masterState(room));
+    if (room.round) {
+      socket.emit('round:update', roundSummaryForMaster(room));
+      if (room.round.phase === 'results' && room.round.lastResults) socket.emit('round:results', room.round.lastResults);
     }
   });
 
-  socket.on('master:configure', ({ numPlayers, names, theme, targetScore }) => {
-    resetGame();
+  socket.on('master:configure', ({ code, numPlayers, names, theme, targetScore }) => {
+    code = cleanCode(code);
+    const room = rooms.get(code);
+    if (!room) return;
+    touch(room);
+    room.players = [];
+    room.started = false;
+    room.round = null;
     const n = Math.max(2, Math.min(MAX_PLAYERS, parseInt(numPlayers, 10) || 2));
-    game.theme = (theme || '').trim();
-    game.targetScore = parseInt(targetScore, 10) || 50;
+    room.theme = (theme || '').trim();
+    room.targetScore = parseInt(targetScore, 10) || 50;
     for (let i = 0; i < n; i++) {
       const name = (names[i] || '').trim() || `Joueur ${i + 1}`;
-      game.players.push({ id: `joueur${i + 1}`, name, score: 0, socketId: null });
+      room.players.push({ id: `joueur${i + 1}`, name, score: 0, socketId: null });
     }
-    io.to('master').emit('game:state', masterState());
+    io.to(masterTopic(code)).emit('game:state', masterState(room));
   });
 
-  socket.on('master:start', () => {
-    if (!game.players.length) return;
-    game.started = true;
-    game.players.forEach(p => (p.score = 0));
-    game.bmOrderIndex = Math.floor(Math.random() * game.players.length);
-    io.emit('game:started', masterState());
-    io.to('master').emit('game:state', masterState());
-    startRound();
+  socket.on('master:start', ({ code }) => {
+    code = cleanCode(code);
+    const room = rooms.get(code);
+    if (!room || !room.players.length) return;
+    touch(room);
+    room.started = true;
+    room.players.forEach(p => (p.score = 0));
+    room.bmOrderIndex = Math.floor(Math.random() * room.players.length);
+    io.to(roomTopic(code)).emit('game:started', masterState(room));
+    io.to(masterTopic(code)).emit('game:state', masterState(room));
+    startRound(room);
   });
 
-  socket.on('player:join', ({ playerId }) => {
-    const p = game.players.find(pl => pl.id === playerId);
-    if (!p) {
-      socket.emit('player:error', { message: 'La partie n\'est pas encore configurée pour ce joueur.' });
-      return;
-    }
+  socket.on('player:join', ({ code, playerId }) => {
+    code = cleanCode(code);
+    const room = rooms.get(code);
+    if (!room) { socket.emit('player:error', { message: "Ce salon n'existe plus." }); return; }
+    const p = room.players.find(pl => pl.id === playerId);
+    if (!p) { socket.emit('player:error', { message: "La partie n'est pas encore configurée pour ce joueur." }); return; }
+    touch(room);
     p.socketId = socket.id;
+    socket.data.code = code;
     socket.data.playerId = playerId;
-    socket.join(playerId);
-    socket.emit('player:joined', { name: p.name, theme: game.theme });
-    io.to('master').emit('game:state', masterState());
-    sendRoundStateTo(socket, p);
+    socket.join(roomTopic(code));
+    socket.join(playerTopic(code, playerId));
+    socket.emit('player:joined', { name: p.name, theme: room.theme, code });
+    io.to(masterTopic(code)).emit('game:state', masterState(room));
+    sendRoundStateTo(socket, room, p);
   });
 
   socket.on('bm:submit-clue', ({ clue }) => {
-    const playerId = socket.data.playerId;
-    const bm = currentBM();
-    if (!game.round || game.round.phase !== 'bm-turn' || !bm || bm.id !== playerId) return;
-    game.round.clue = (clue || '').trim();
-    game.round.phase = 'guessing';
-    game.players.forEach(p => {
-      if (p.id !== bm.id) {
-        io.to(p.id).emit('round:clue', { clue: game.round.clue, theme: game.theme, bmName: bm.name });
-      }
+    const { code, playerId } = socket.data;
+    const room = code && rooms.get(code);
+    if (!room) return;
+    const bm = currentBM(room);
+    if (!room.round || room.round.phase !== 'bm-turn' || !bm || bm.id !== playerId) return;
+    touch(room);
+    room.round.clue = (clue || '').trim();
+    room.round.phase = 'guessing';
+    room.players.forEach(p => {
+      if (p.id !== bm.id) io.to(playerTopic(code, p.id)).emit('round:clue', { clue: room.round.clue, theme: room.theme, bmName: bm.name });
     });
-    io.to(bm.id).emit('bm:clue-sent');
-    io.to('master').emit('round:update', roundSummaryForMaster());
+    io.to(playerTopic(code, bm.id)).emit('bm:clue-sent');
+    io.to(masterTopic(code)).emit('round:update', roundSummaryForMaster(room));
   });
 
   socket.on('player:guess', ({ value }) => {
-    const playerId = socket.data.playerId;
-    const bm = currentBM();
-    if (!game.round || game.round.phase !== 'guessing' || !bm || playerId === bm.id) return;
-    if (game.round.guesses[playerId] !== undefined) return;
+    const { code, playerId } = socket.data;
+    const room = code && rooms.get(code);
+    if (!room) return;
+    const bm = currentBM(room);
+    if (!room.round || room.round.phase !== 'guessing' || !bm || playerId === bm.id) return;
+    if (room.round.guesses[playerId] !== undefined) return;
+    touch(room);
     const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
-    game.round.guesses[playerId] = v;
-    io.to(playerId).emit('player:guess-received');
-    io.to('master').emit('round:update', roundSummaryForMaster());
-    checkAllGuessed();
+    room.round.guesses[playerId] = v;
+    io.to(playerTopic(code, playerId)).emit('player:guess-received');
+    io.to(masterTopic(code)).emit('round:update', roundSummaryForMaster(room));
+    checkAllGuessed(room);
   });
 
   socket.on('bm:next-round', () => {
-    const playerId = socket.data.playerId;
-    const bm = currentBM();
-    if (!game.round || game.round.phase !== 'results' || !bm || bm.id !== playerId) return;
-    if (!game.started) return; // partie terminée
-    advanceBM();
-    startRound();
+    const { code, playerId } = socket.data;
+    const room = code && rooms.get(code);
+    if (!room) return;
+    const bm = currentBM(room);
+    if (!room.round || room.round.phase !== 'results' || !bm || bm.id !== playerId) return;
+    if (!room.started) return; // partie terminée
+    touch(room);
+    advanceBM(room);
+    startRound(room);
   });
 
-  socket.on('master:new-game', () => {
-    resetGame();
-    io.emit('game:reset');
-    io.to('master').emit('game:state', masterState());
+  socket.on('master:new-game', ({ code }) => {
+    code = cleanCode(code);
+    const room = rooms.get(code);
+    if (!room) return;
+    room.players = [];
+    room.started = false;
+    room.round = null;
+    room.theme = '';
+    touch(room);
+    io.to(roomTopic(code)).emit('game:reset');
+    io.to(masterTopic(code)).emit('game:state', masterState(room));
   });
 
   socket.on('disconnect', () => {
-    const playerId = socket.data.playerId;
-    if (playerId && game.players) {
-      const p = game.players.find(pl => pl.id === playerId);
+    const { code, playerId } = socket.data;
+    if (!code) return;
+    const room = rooms.get(code);
+    if (!room) return;
+    if (playerId) {
+      const p = room.players.find(pl => pl.id === playerId);
       if (p && p.socketId === socket.id) p.socketId = null;
-      io.to('master').emit('game:state', masterState());
+      io.to(masterTopic(code)).emit('game:state', masterState(room));
     }
+    touch(room);
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`✅ Serveur du jeu d'estimation lancé sur http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n✅ Jeu d'estimation lancé !`);
+  console.log(`   Accueil (créer ou rejoindre un salon) : http://localhost:${PORT}/`);
+  for (const u of lanUrls()) console.log(`   Depuis le réseau local                 : ${u}/`);
+  console.log('');
 });

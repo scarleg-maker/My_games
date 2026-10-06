@@ -80,6 +80,7 @@ select, input[type="text"] {
   background: rgba(255,255,255,0.08);
   padding: 10px;
   border-radius: 10px;
+  flex-wrap: wrap;
 }
 
 .player-row .swatch {
@@ -92,10 +93,12 @@ select, input[type="text"] {
 
 .player-row input[type="text"] {
   flex: 1;
+  min-width: 100px;
 }
 
 .player-row select {
   flex: 1;
+  min-width: 100px;
 }
 
 button {
@@ -111,15 +114,15 @@ button {
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
+button:hover:not(:disabled) { transform: translateY(-2px); }
+button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
 #rollBtn {
   padding: 20px 44px;
   font-size: 24px;
   border-radius: 32px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
-
-button:hover:not(:disabled) { transform: translateY(-2px); }
-button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 .btn-row {
   display: flex;
@@ -161,6 +164,11 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* ---------- Joueur page ---------- */
 
+.status-bar {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
 .identity-banner {
   text-align: center;
   font-weight: 700;
@@ -179,11 +187,6 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .identity-banner.single-screen {
   background: linear-gradient(90deg, rgba(34,197,94,0.35), rgba(126,34,206,0.35));
   border: 1px solid rgba(255,255,255,0.4);
-}
-
-.status-bar {
-  text-align: center;
-  margin-bottom: 18px;
 }
 
 .current-player {
@@ -380,6 +383,16 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   outline: 2px solid #facc15;
 }
 
+.ai-tag {
+  font-size: 11px;
+  font-weight: 800;
+  background: rgba(126,34,206,0.55);
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 .winner-banner {
   text-align: center;
   font-size: 26px;
@@ -432,31 +445,6 @@ a.link-btn {
   height: 16px;
   border-radius: 50%;
   border: 2px solid rgba(255,255,255,0.8);
-}
-
-/* ---------- Mobile adjustments ---------- */
-@media (max-width: 640px) {
-  body {
-    padding: 12px 6px 40px;
-  }
-  .container {
-    padding: 14px 10px;
-    border-radius: 12px;
-  }
-  #rollBtn {
-    width: 100%;
-    padding: 18px 20px;
-    font-size: 20px;
-  }
-  .dice-area {
-    gap: 32px;
-  }
-  .btn-row {
-    gap: 10px;
-  }
-  h1 {
-    font-size: 26px;
-  }
 }
 
 /* ---------- AI controls ---------- */
@@ -545,12 +533,217 @@ a.link-btn {
   visibility: hidden;
 }
 
-.ai-tag {
-  font-size: 11px;
+/* ---------- Salons (rooms) & QR code ---------- */
+
+.room-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.room-banner .room-code {
+  font-family: 'Courier New', monospace;
   font-weight: 800;
-  background: rgba(126,34,206,0.55);
-  padding: 1px 6px;
+  letter-spacing: 0.15em;
+  font-size: 20px;
+  background: rgba(255,255,255,0.15);
+  padding: 3px 12px;
   border-radius: 8px;
-  margin-left: 4px;
-  vertical-align: middle;
+}
+
+.invite-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.invite-qr {
+  width: 128px;
+  height: 128px;
+  background: #f1ede4;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invite-qr img, .invite-qr canvas {
+  display: block;
+}
+
+.invite-text {
+  flex: 1;
+  min-width: 180px;
+}
+
+.invite-text p {
+  margin: 4px 0;
+}
+
+.invite-url {
+  font-family: 'Courier New', monospace;
+  background: rgba(0,0,0,0.25);
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  word-break: break-all;
+}
+
+/* ---------- Accueil (home) page ---------- */
+
+.home-hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.home-hero p {
+  opacity: 0.9;
+  max-width: 560px;
+  margin: 10px auto 0;
+}
+
+.home-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.home-card {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.home-card h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.home-card p {
+  opacity: 0.85;
+  font-size: 14px;
+}
+
+.home-row {
+  display: flex;
+  gap: 8px;
+}
+
+.home-row input {
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.home-details {
+  margin-top: 14px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.home-details summary {
+  cursor: pointer;
+}
+
+.home-recent {
+  margin-top: 24px;
+}
+
+.home-recent ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-recent li {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.2);
+}
+
+.home-recent li a {
+  padding: 6px 6px 6px 14px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.home-recent li button {
+  border: none;
+  background: none;
+  color: rgba(255,255,255,0.7);
+  padding: 4px 12px;
+  border-radius: 0;
+}
+
+.home-recent li button:hover {
+  color: #ef4444;
+}
+
+.home-error {
+  color: #ffdddd;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .home-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Mobile adjustments ---------- */
+@media (max-width: 640px) {
+  body {
+    padding: 12px 6px 40px;
+  }
+  .container {
+    padding: 14px 10px;
+    border-radius: 12px;
+  }
+  #rollBtn {
+    width: 100%;
+    padding: 18px 20px;
+    font-size: 20px;
+  }
+  .dice-area {
+    gap: 32px;
+  }
+  .btn-row {
+    gap: 10px;
+  }
+  h1 {
+    font-size: 26px;
+  }
+  .invite-box {
+    flex-direction: column;
+    text-align: center;
+  }
 }

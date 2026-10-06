@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monopoly-SLG — Table de jeu</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="board-wrap">
+    <div id="board" class="board"></div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="room-tag" id="room-tag"></div>
+    <div class="players-panel" id="players-panel"></div>
+
+    <div class="turn-panel">
+      <div id="current-player-banner" class="current-player-banner">Connexion…</div>
+      <div class="dice-row">
+        <div class="die" id="die1">?</div>
+        <div class="die" id="die2">?</div>
+      </div>
+      <button id="manage-btn" class="btn ghost wide">🏠 Gérer mes propriétés</button>
+      <div class="action-buttons" id="action-buttons"></div>
+    </div>
+
+    <div class="log-panel">
+      <h3>Journal</h3>
+      <div id="log" class="log"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- salle d'attente (avant le début de la partie) -->
+<div id="lobby-overlay" class="overlay hidden">
+  <div class="setup-card" id="lobby-card">
+    <h2 id="lobby-title">Salon</h2>
+    <div id="lobby-form"></div>
+    <h3 class="seats-title">Joueurs du salon</h3>
+    <div id="lobby-seats" class="seats"></div>
+    <p class="small muted" id="lobby-wait"></p>
+    <a href="/" class="small">← Accueil</a>
+  </div>
+</div>
+
+<div id="modal-overlay" class="overlay hidden">
+  <div id="modal-card" class="modal-card"></div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/common.js"></script>
+<script src="/static/tokens.js"></script>
+<script src="/static/client.js"></script>
+</body>
+</html>

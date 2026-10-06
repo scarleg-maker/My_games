@@ -1,0 +1,98 @@
+{
+ "rooms": {
+  "TEST": {
+   "boardId": "starwars",
+   "nbPlayers": 2,
+   "seats": [
+    {
+     "type": "human",
+     "name": "1"
+    },
+    {
+     "type": "ai",
+     "name": "2"
+    },
+    {
+     "type": "ai",
+     "name": "3"
+    },
+    {
+     "type": "ai",
+     "name": ""
+    },
+    {
+     "type": "human",
+     "name": ""
+    },
+    {
+     "type": "human",
+     "name": ""
+    },
+    {
+     "type": "human",
+     "name": ""
+    },
+    {
+     "type": "human",
+     "name": ""
+    }
+   ],
+   "t": 1791200687780
+  },
+  "BRK7": {
+   "boardId": "paris",
+   "nbPlayers": 2,
+   "seats": [
+    {
+     "type": "human",
+     "name": "cxv",
+     "token": "fer",
+     "color": "#457b9d"
+    },
+    {
+     "type": "ai",
+     "name": "",
+     "token": "chien",
+     "color": "#8d5a34"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "bateau",
+     "color": "#f4a261"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "voiture",
+     "color": "#e63946"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "chapeau",
+     "color": "#2a9d8f"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "de",
+     "color": "#ffbe0b"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "brouette",
+     "color": "#ef476f"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "canon",
+     "color": "#06d6a0"
+    }
+   ],
+   "t": 1791292903809
+  }
+ }
+}

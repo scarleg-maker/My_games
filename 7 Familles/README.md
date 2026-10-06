@@ -1,82 +1,75 @@
-# 🎴 Jeu des 7 Familles — Multijoueur (2 à 10 joueurs)
+# 🎴 Jeu des 7 Familles — Multijoueur avec salons (2 à 10 joueurs)
 
-Application Node.js à héberger sur le PC "maître". Les joueurs se connectent
-depuis leur téléphone/PC via le réseau local (Wi-Fi).
+Application Node.js à héberger sur le PC « maître ». Plusieurs parties **séparées** peuvent se jouer en même
+temps, chacune dans son propre **salon** (code court + QR code). Les joueurs se connectent depuis leur
+téléphone ou leur PC, sur le même réseau Wi-Fi.
 
 ## 1. Installation (sur le PC maître)
 
-Prérequis : [Node.js](https://nodejs.org/) installé (version 18+).
+Prérequis : [Node.js](https://nodejs.org/) 18 ou plus.
 
 ```bash
 cd sept-familles
-npm install
+npm install      # à refaire après chaque mise à jour (nouvelles dépendances)
 npm start
 ```
 
-Le serveur démarre sur le port **1500**.
+Le serveur démarre sur le port **1500** (modifiable : variable d'environnement `PORT`).
+Au démarrage, il affiche aussi l'adresse à utiliser depuis le réseau local.
 
-## 2. Ouvrir la page maître
+## 2. Les salons
 
-Sur le PC maître, ouvrez un navigateur à l'adresse :
+| Adresse | Rôle |
+|---|---|
+| `http://IP:1500/` | Accueil : créer un salon ou rejoindre avec un code |
+| `http://IP:1500/K7QF` | Page de l'**arbitre** du salon K7QF |
+| `http://IP:1500/K7QF/rejoindre` | Page « rejoindre » (adresse du **QR code**) : liste des sièges |
+| `http://IP:1500/K7QF/joueur1.html` | Page du joueur 1 (`joueur2.html`, … jusqu'à `joueur10.html`) |
 
-```
-http://localhost:1500
-```
+Chaque salon a **sa propre partie, ses propres cartes et ses propres joueurs** : rien n'est partagé entre salons.
 
-### Onglet 1 — Cartes
-Chargez un fichier **.zip contenant 42 images**, nommées ainsi :
-```
-Famille NN - Nom.png
-```
-Exemples : `Pirate 01 - Monkey D. Luffy.png`, `Marine 03 - Kizaru.png`
+### Côté arbitre
+1. Sur l'accueil, **« Créer un salon »** (code aléatoire) — ou « Choisir mon propre code » (3 à 10 lettres/chiffres,
+   ex. `FAMILLE`) pour retrouver le même salon d'une fois sur l'autre.
+2. La page arbitre affiche le **code**, un **QR code** et un lien à donner aux joueurs.
+   Si le PC a plusieurs adresses réseau (WSL, VPN…), un menu permet de choisir celle du Wi-Fi.
+3. Onglet **Cartes** : charger le `.zip` de 42 images nommées `Famille NN - Nom.png`
+   (ex. `Pirate 01 - Monkey D. Luffy.png`).
+4. Onglet **Joueurs** : nombre de joueurs (2 à 10) et leurs noms → « Enregistrer ».
+5. Onglet **Partie** : « Lancer la partie ». Le suivi en direct (cartes en main, prêts, joueurs connectés,
+   pioche, familles) s'affiche. À la fin, **« Nouvelle partie »** relance dans le même salon, avec les mêmes
+   cartes et les mêmes joueurs.
 
-Les familles et leurs couleurs sont détectées automatiquement à partir des
-noms de fichiers.
+### Côté joueurs
+Scanner le QR code (ou taper le code sur l'accueil), puis toucher son siège. Chaque joueur :
+1. clique sur **« Recevoir mes cartes »** (6 cartes chacun, le reste forme la pioche) ;
+2. vérifie sa main, puis clique sur **« Je suis prêt »** ;
+3. quand tous sont prêts, le premier joueur est tiré au sort.
 
-### Onglet 2 — Joueurs
-Choisissez le nombre de joueurs (2 à 10), saisissez leurs noms, puis
-« Enregistrer les joueurs ».
+Recharger la page ou perdre le Wi-Fi quelques secondes ne casse rien : la main et le tour sont restaurés.
 
-### Onglet 3 — Partie
-Cliquez sur **« Lancer la partie »**. Les liens des pages joueurs
-s'affichent, au format :
-```
-http://<IP-du-PC-maître>:1500/joueur1.html
-http://<IP-du-PC-maître>:1500/joueur2.html
-...
-```
+## 3. Déroulement d'un tour
 
-Pour trouver l'IP locale du PC maître : `ipconfig` (Windows) ou
-`ifconfig`/`ip a` (Mac/Linux). Tous les joueurs doivent être sur le même
-réseau Wi-Fi/local.
+- Le joueur actif choisit un **adversaire** et annonce **à l'oral** la carte demandée.
+- Si l'adversaire l'a, il **clique dessus** : elle passe chez le demandeur, qui garde la main.
+- Sinon, le demandeur clique sur **« Pioche »** : une carte au hasard s'affiche. Il indique si c'était la carte
+  demandée (il rejoue) ou non (joueur suivant, dans l'ordre croissant).
+- **Pioche vide** : le bouton devient **« Passer mon tour »**.
+- Avec 6 cartes d'une même famille, un bouton **« Famille »** apparaît : les 6 cartes quittent la main et la
+  famille s'affiche dans le panneau des familles complétées. On peut ensuite rejouer.
+- La partie se termine quand les 7 familles sont constituées ; le vainqueur est celui qui en a le plus
+  (égalité possible, elle est annoncée).
 
-## 3. Côté joueurs
+## 4. À savoir
 
-Chaque joueur ouvre son lien sur son téléphone ou son PC, puis :
-1. Clique sur **« Recevoir mes cartes »** (distribution aléatoire).
-2. Vérifie sa main, clique sur **« Je suis prêt »**.
-3. Une fois tous les joueurs prêts, un joueur de départ est tiré au sort.
-
-## 4. Déroulement d'un tour
-
-- Le joueur actif choisit un **adversaire** sur son écran.
-- Il annonce **à l'oral** la carte demandée (ce n'est pas saisi dans l'app).
-- Si l'adversaire a la carte : il clique dessus, elle est transférée à
-  l'écran du demandeur, qui peut continuer à jouer.
-- Si l'adversaire n'a pas la carte : le demandeur clique sur **« Pioche »**,
-  une carte aléatoire est tirée. Le joueur indique alors si c'était la bonne
-  carte (il rejoue) ou non (tour du joueur suivant, ordre croissant).
-- Dès qu'un joueur a 6 cartes d'une même famille, un bouton **« Famille »**
-  apparaît : il valide, les cartes sont retirées de sa main et la famille
-  s'affiche dans le panneau des familles complétées. Il peut alors rejouer.
-- Un joueur sans carte peut piocher à son tour si la pioche n'est pas vide.
-- La partie se termine quand les 7 familles sont complétées. Le vainqueur
-  est le joueur ayant complété le plus grand nombre de familles.
-
-## Notes techniques
-- Le suivi (mains, pioche, familles, tour en cours) est visible en direct
-  sur la page maître, onglet « Partie ».
-- Chaque carte n'existe qu'en un seul exemplaire pour toute la partie
-  (distribuées au départ + celles restantes en pioche).
-- Si le port 1500 est déjà utilisé, modifiez la constante `PORT` dans
-  `server.js`.
+- **Pare-feu Windows** : à la première exécution, autoriser Node.js sur le réseau privé, sinon les téléphones
+  ne pourront pas se connecter.
+- Le serveur mémorise, par salon, les **cartes chargées** et les **noms des joueurs** (fichier
+  `sauvegarde.json` + dossier `uploads/cards/CODE`) : après un redémarrage, un salon retrouvé avec son code est
+  prêt à rejouer sans recharger le zip. Les 40 salons les plus récents sont conservés. La **partie en cours**,
+  elle, n'est pas conservée.
+- Un salon que plus personne n'a ouvert depuis 6 h est libéré de la mémoire (il se recrée avec ses cartes et
+  ses joueurs enregistrés).
+- La page arbitre est accessible à quiconque connaît le code du salon : ne donnez aux joueurs que le QR code /
+  le lien « rejoindre ».
+- Le QR code est généré par le serveur : aucune connexion internet n'est nécessaire.

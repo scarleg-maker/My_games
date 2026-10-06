@@ -9,6 +9,22 @@
 <body>
 <div class="wrap">
 
+  <!-- ===================== ROOM BANNER ===================== -->
+  <div class="panel room-banner">
+    <div class="room-banner-info">
+      <div class="eyebrow">Salon</div>
+      <div class="room-code" id="room-code-label">—</div>
+      <p style="font-size:0.85rem; opacity:0.8; margin:6px 0 0;">
+        Les joueurs rejoignent avec ce code sur la page d'accueil, ou en scannant le QR code.
+      </p>
+      <div class="btn-row" style="margin-top:10px;">
+        <button type="button" class="btn btn-outline" id="copy-link-btn">Copier le lien pour rejoindre</button>
+        <a class="btn btn-outline" href="/">🏠 Nouveau salon</a>
+      </div>
+    </div>
+    <div class="room-qr" id="room-qr"></div>
+  </div>
+
   <!-- ===================== SETUP VIEW ===================== -->
   <div id="setup-view">
     <div class="eyebrow">Table du maître</div>
@@ -124,6 +140,15 @@
     </div>
 
     <div class="panel">
+      <h2>Adversaires IA</h2>
+      <p style="font-size:0.85rem; opacity:0.75; margin-top:-6px; margin-bottom:14px;">
+        Cochez un joueur pour que l'IA joue à sa place. Vous pouvez décocher à
+        tout moment, y compris en pleine partie, pour reprendre la main.
+      </p>
+      <div class="ai-panel-list" id="ai-panel-list"></div>
+    </div>
+
+    <div class="panel">
       <h2>Carte sur la table <span id="master-only-tag" class="status-pill">vous seul voyez le niveau</span></h2>
       <div class="table-zone" id="table-zone"></div>
       <div class="btn-row" id="round-controls"></div>
@@ -148,6 +173,7 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="/static/master.js"></script>
 </body>
 </html>

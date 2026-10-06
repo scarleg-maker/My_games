@@ -1,7 +1,17 @@
 const socket = io();
 
-const match = window.location.pathname.match(/joueur(\d+)\.html/);
-const myPlayerNum = match ? parseInt(match[1], 10) : null; // null = solo or spectator
+const pathMatch = window.location.pathname.match(/^\/([A-Z0-9]{4,10})\/(joueur(\d+)|jeu)\.html$/i);
+const ROOM_CODE = pathMatch ? pathMatch[1].toUpperCase() : null;
+const myPlayerNum = pathMatch && pathMatch[3] ? parseInt(pathMatch[3], 10) : null; // null = solo or spectator
+
+if (!ROOM_CODE) {
+  // No room code in the URL (e.g. stale bookmark): back to the home page.
+  window.location.href = '/';
+}
+
+socket.on('connect', () => {
+  socket.emit('joinRoom', { code: ROOM_CODE });
+});
 
 let state = null;
 let selectedPoolItem = null;   // itemId selected from pool (to place)
@@ -23,8 +33,10 @@ const recapContent = document.getElementById('recapContent');
 const newGameBtn = document.getElementById('newGameBtn');
 const screenshotBtn = document.getElementById('screenshotBtn');
 
+let stateReceived = false;
 socket.on('state', (s) => {
   state = s;
+  stateReceived = true;
   render();
 });
 
@@ -39,6 +51,9 @@ function render() {
   if (!state) {
     loadingEl.style.display = 'block';
     appEl.style.display = 'none';
+    loadingEl.innerHTML = stateReceived
+      ? `Aucune partie en cours dans le salon <strong>${ROOM_CODE}</strong>. <a href="/${ROOM_CODE}/setup.html">Configurer une partie</a>.`
+      : 'Chargement de la partie...';
     return;
   }
   loadingEl.style.display = 'none';
@@ -51,7 +66,7 @@ function render() {
     if (state.suddenDeath) extra = ' · Mort subite';
     if (state.lastChance) extra = ' · Dernière chance';
   }
-  subText.textContent = modeLabel + extra + (myPlayerNum ? ` · Tu es ${playerName(myPlayerNum)}` : (state.mode === 'multi' ? ' · Écran spectateur' : ''));
+  subText.textContent = `Salon ${ROOM_CODE} · ` + modeLabel + extra + (myPlayerNum ? ` · Tu es ${playerName(myPlayerNum)}` : (state.mode === 'multi' ? ' · Écran spectateur' : ''));
 
   renderTurnBanner();
   renderRows();
@@ -405,7 +420,7 @@ function renderRecap() {
 const saveBtn = document.getElementById('saveBtn');
 saveBtn.addEventListener('click', async () => {
   try {
-    const res = await fetch('/api/export');
+    const res = await fetch(`/api/${ROOM_CODE}/export`);
     const data = await res.json();
     if (!res.ok || !data.ok) { alert(data.error || 'Impossible de sauvegarder pour le moment.'); return; }
     const blob = new Blob([JSON.stringify(data.save, null, 2)], { type: 'text/plain' });
@@ -444,6 +459,6 @@ screenshotBtn.addEventListener('click', async () => {
 });
 
 newGameBtn.addEventListener('click', async () => {
-  await fetch('/api/new-game', { method: 'POST' });
-  window.location.href = '/setup.html';
+  await fetch(`/api/${ROOM_CODE}/new-game`, { method: 'POST' });
+  window.location.href = `/${ROOM_CODE}/setup.html`; // same room code, reconfigure for the next round
 });

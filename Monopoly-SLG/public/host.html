@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monopoly-SLG — Hôte du salon</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="lobby-body">
+<main class="home host">
+  <header class="host-head">
+    <a class="logo small-logo" href="/">MONOPOLY-SLG</a>
+    <span class="muted">Hôte du salon <strong class="code-big" id="room-code"></strong></span>
+  </header>
+
+  <section class="setup-card" id="invite-card">
+    <h2>Inviter les joueurs</h2>
+    <div class="invite">
+      <div class="qr" id="qr"></div>
+      <div>
+        <p class="small muted" style="margin:0 0 .5rem">Scanner le QR code, ouvrir le lien, ou taper le code sur la page d'accueil. Chacun choisit ensuite son siège.</p>
+        <code id="join-url"></code>
+        <div style="margin-top:.6rem"><button class="btn small" id="copy-join">Copier le lien</button>
+        <a class="btn small ghost" id="watch-link" target="_blank">👁 Écran de suivi</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="setup-card" id="lobby-card">
+    <h2>Configuration</h2>
+    <label class="field-label">Plateau</label>
+    <select id="board-select" class="select"></select>
+
+    <div class="count-row">
+      <label class="field-label" style="margin:0">Joueurs</label>
+      <div class="count-controls">
+        <button type="button" id="count-minus" class="btn ghost small">−</button>
+        <span id="count-display">2</span>
+        <button type="button" id="count-plus" class="btn ghost small">+</button>
+      </div>
+      <button type="button" id="solo-ai-btn" class="btn ghost small">1 contre IA</button>
+    </div>
+
+    <div id="seat-rows"></div>
+    <p class="small muted" id="start-hint"></p>
+    <button id="start-btn" class="btn primary wide">Démarrer la partie</button>
+  </section>
+
+  <section class="setup-card hidden" id="game-card">
+    <h2 id="game-title">Partie en cours</h2>
+    <div id="game-players" class="players-panel flat"></div>
+    <div class="row" style="margin-top:1rem">
+      <button class="btn primary" id="rematch-btn">Revanche</button>
+      <button class="btn ghost" id="reset-btn">Retour au salon</button>
+    </div>
+    <p class="small muted">« Retour au salon » arrête la partie et permet de changer les réglages ; les joueurs restent installés.</p>
+  </section>
+</main>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/common.js"></script>
+<script src="/static/tokens.js"></script>
+<script src="/static/host.js"></script>
+</body>
+</html>

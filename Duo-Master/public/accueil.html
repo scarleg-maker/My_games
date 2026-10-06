@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Duo-Master</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="bg"></div>
+
+  <main class="wrap">
+    <header class="top">
+      <a class="logo" href="/" aria-label="Duo-Master">
+        <svg viewBox="0 0 46 30" aria-hidden="true">
+          <circle cx="16" cy="15" r="12" fill="#ffd60a" stroke="#0a1f44" stroke-width="3"/>
+          <circle cx="30" cy="15" r="12" fill="#ff4d6d" stroke="#0a1f44" stroke-width="3"/>
+          <path d="M23 5.2a12 12 0 0 1 0 19.6a12 12 0 0 1 0-19.6z" fill="#fff" stroke="#0a1f44" stroke-width="2"/>
+        </svg>
+        <b>Duo-Master</b>
+      </a>
+    </header>
+
+    <div class="hero">
+      <p class="muted">Le jeu des associations à deux critères, de 2 à 6 joueurs. Chaque groupe joue dans son propre salon, indépendant des autres.</p>
+    </div>
+
+    <div class="cards two-col">
+      <section class="card">
+        <h2>Créer une partie</h2>
+        <p class="muted" style="margin-top:0">Tu deviens l'arbitre : un salon est créé avec un code à donner aux joueurs.</p>
+        <button class="btn big" id="create" type="button">Créer un salon</button>
+        <details style="margin-top:12px">
+          <summary class="more-toggle">Choisir mon propre code</summary>
+          <div class="row-inline" style="margin-top:10px">
+            <input type="text" id="mycode" maxlength="8" placeholder="ex. FAMILLE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+            <button class="btn small white" id="createCustom" type="button">Créer</button>
+          </div>
+          <p class="muted small" style="margin:8px 0 0">3 à 8 lettres ou chiffres (sans 0, O, 1, I, L pour éviter les confusions). Pratique pour retrouver le même salon d'une fois sur l'autre.</p>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2>Rejoindre une partie</h2>
+        <p class="muted" style="margin-top:0">Entre le code donné par l'arbitre, puis touche ton nom.</p>
+        <div class="row-inline">
+          <input type="text" id="code" maxlength="8" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button class="btn" id="join" type="button">Chercher</button>
+        </div>
+        <div id="found"></div>
+      </section>
+    </div>
+
+    <section class="card" id="recentCard" hidden>
+      <h2>Salons récents sur cet appareil</h2>
+      <div class="recent-list" id="recent"></div>
+    </section>
+  </main>
+
+  <script src="/common.js"></script>
+  <script src="/accueil.js"></script>
+</body>
+</html>

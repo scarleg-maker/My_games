@@ -5,11 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Créer une Tier List</title>
 <link rel="stylesheet" href="/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div class="wrap">
   <h1>Créateur de Tier List</h1>
   <div class="subtitle">Configure ta liste, puis joue seul ou à plusieurs, tour par tour, en temps réel.</div>
+
+  <div class="panel" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div class="help" style="margin:0 0 2px;">Salon</div>
+      <div id="roomCodeDisplay" style="font-size:22px; font-weight:800; letter-spacing:0.15em; color:var(--accent);">----</div>
+    </div>
+    <a href="/" class="btn secondary" style="text-decoration:none;">← Retour à l'accueil</a>
+  </div>
 
   <div class="panel">
     <h3>Reprendre une partie sauvegardée</h3>

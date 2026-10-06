@@ -1,44 +1,42 @@
-# 💣 Jeu de la Bombe
+# 💣 Jeu de la Bombe — multi-salons
 
-## Installation
+## Lancement
+
+Double-cliquer sur `Lancer_BombeGame.bat` (Windows), ou :
 
 ```bash
 npm install
 npm start
 ```
 
-Le serveur démarre sur **http://localhost:8000**
+Le serveur démarre sur **http://localhost:8000** (changer de port : variable d'environnement `PORT`).
 
-## Utilisation
+## Les salons
 
-1. Ouvrez `http://localhost:8000` — c'est la **page maître / arbitre**.
-2. Choisissez le nombre de joueurs (2 à 8), entrez leurs noms (les noms des
-   parties précédentes sont proposés en auto-complétion et pré-remplis).
-3. Sélectionnez une archive **.zip** contenant des images (jpg, png, gif,
-   webp) et cliquez sur "Charger l'archive".
-4. Réglez :
-   - Nombre d'images en jeu (25 à 75)
-   - Nombre max de cartes par joueur pour gagner (5 à 10)
-   - Nombre de bombes par joueur (1 à 5)
-5. Cliquez sur **Lancer la partie**.
-6. La page maître affiche les liens `/joueur1`, `/joueur2`, ... à distribuer
-   à chaque joueur (sur d'autres onglets/appareils du même réseau).
-7. **Phase de pose des bombes** : chaque joueur place ses bombes sur le
-   plateau (visible uniquement par lui, sauf pour l'arbitre qui voit tout
-   en temps réel), puis valide.
-8. Une fois tout le monde validé, la **phase de tirage** commence : l'ordre
-   est tiré au hasard, chacun pioche une image à son tour. Une image piégée
-   fait perdre la carte piochée + la dernière carte "saine" du joueur
-   (mécanique en cascade).
-9. La manche se termine quand toutes les équipes sont complètes ou que
-   toutes les images ont été piochées.
-10. L'arbitre élimine les joueurs de son choix puis peut relancer une
-    **nouvelle manche** avec les mêmes images (nouvel ordre aléatoire), et
-    ainsi de suite jusqu'à ce qu'il ne reste qu'un vainqueur.
+Chaque salon est une **partie indépendante** (joueurs, images, plateau, réglages) : plusieurs groupes peuvent jouer en même temps sur le même serveur.
+
+| Adresse                 | Rôle                                                        |
+|-------------------------|-------------------------------------------------------------|
+| `/`                     | Accueil : créer un salon, rejoindre avec un code            |
+| `/CODE`                 | Page de l'arbitre du salon                                  |
+| `/CODE/rejoindre`       | Choix du siège (cible du QR code)                           |
+| `/CODE/joueur1` … `8`   | Page d'un joueur                                            |
+
+1. **Créer un salon** depuis l'accueil (code aléatoire de 4 caractères, ou code personnalisé de 3 à 10 lettres/chiffres).
+2. Sur la page de l'arbitre, un **QR code**, le code et un lien sont affichés. Les joueurs scannent le QR code (même Wi-Fi), ou tapent le code sur l'accueil, puis touchent leur siège.
+3. L'arbitre règle la partie (joueurs, archive ZIP d'images, nombre d'images, cartes, bombes, règles Intouchable / Multi-boom) et la lance.
+
+Chaque salon mémorise ses propres **noms de joueurs, réglages et images** (fichier `data/salons.json`, dossier `images_pool/<CODE>/`) : en réutilisant le même code, on retrouve tout. Les 100 salons les plus récents sont conservés ; un salon sans aucun écran ouvert depuis 6 h est libéré de la mémoire (sa partie en cours est perdue, ses réglages et images restent).
+
+## Règles
+
+- Chacun pose ses bombes en secret (l'arbitre voit tout, en couleur), puis on tire à tour de rôle.
+- Image piégée : elle est perdue, ainsi que la dernière image sûre du joueur.
+- **Multi-boom** : une image à N bombes (N ≥ 2) fait perdre N images ; à 0 image restante, le joueur est éliminé.
+- **Intouchable** : le premier à compléter son équipe gagne toute la partie.
+- Fin de manche : l'arbitre élimine les équipes de son choix et relance une manche avec les mêmes images, jusqu'au vainqueur.
 
 ## Notes techniques
 
-- Temps réel via Socket.IO.
-- Les noms de joueurs sont persistés dans `data/players.json`.
-- Les images extraites de l'archive sont stockées dans `images_pool/`
-  (écrasées à chaque nouvel upload).
+- Temps réel via Socket.IO ; le QR code est généré par le serveur (fonctionne sans Internet).
+- Un joueur ne peut agir que pour son propre siège ; les actions d'arbitrage sont réservées à la page arbitre.

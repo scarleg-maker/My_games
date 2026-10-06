@@ -2,9 +2,9 @@
 (() => {
   const { $, esc } = DM;
 
-  const m = location.pathname.match(/^\/joueur([1-6])$/);
+  const m = location.pathname.match(/^\/[^/]+\/joueur([1-6])\/?$/);
   const me = m ? Number(m[1]) : 0; // 0 = écran commun
-  document.title = me ? `Duo-Master · Joueur ${me}` : 'Duo-Master · Écran';
+  document.title = me ? `Duo-Master · ${DM.room} · Joueur ${me}` : `Duo-Master · ${DM.room} · Écran`;
   if (!me) { $('.wrap').classList.add('wide'); $('#board').classList.add('board-xl'); }
 
   const view = new DM.DrawView($('#draw'));
@@ -16,6 +16,7 @@
   let submitting = false;
 
   DM.connect(
+    me || 'ecran',
     (st) => { chain = chain.then(() => render(st)).catch(console.error); },
     (ok) => { $('#offline').style.display = ok ? 'none' : 'block'; }
   );

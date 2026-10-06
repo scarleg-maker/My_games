@@ -20,7 +20,6 @@ if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 app.use(express.json());
 app.use('/uploads', express.static(UPLOAD_DIR));
-app.use(express.static(path.join(__dirname, 'public')));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024 * 1024 } });
 
@@ -61,8 +60,24 @@ function shuffleItems(items) {
   }
 }
 
-// ---------- State ----------
-let game = null; // current game session (single active session on this server)
+// ---------- Rooms (salons) ----------
+// Each group plays in its own room, identified by a short code (e.g. "F7K2"),
+// so several separate tier lists can run at the same time on the same server.
+const rooms = new Map(); // code -> game object (same shape as before, plus `code`)
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O, 1/I/L (avoids confusion)
+const CODE_RE = /^[A-Z0-9]{4,10}$/;
+const RESERVED_CODES = new Set(['API', 'UPLOADS', 'SETUP', 'JEU', 'ACCUEIL', 'FAVICON', 'STATIC']);
+
+function cleanCode(c) { return String(c || '').trim().toUpperCase(); }
+function validCode(c) { return CODE_RE.test(c) && !RESERVED_CODES.has(c) && !/^JOUEUR\d+$/.test(c); }
+function generateCode() {
+  for (let attempt = 0; attempt < 300; attempt++) {
+    let c = '';
+    for (let k = 0; k < 4; k++) c += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    if (!rooms.has(c)) return c;
+  }
+  return uuidv4().slice(0, 6).toUpperCase(); // extremely unlikely fallback
+}
 
 function readLastPlayers() {
   try { return JSON.parse(fs.readFileSync(LAST_PLAYERS_FILE, 'utf8')); } catch (e) { return []; }
@@ -75,9 +90,30 @@ app.get('/api/last-players', (req, res) => {
   res.json({ names: readLastPlayers() });
 });
 
-// ---------- Setup ----------
-app.post('/api/setup', upload.single('zipfile'), (req, res) => {
+app.get('/api/new-code', (req, res) => {
+  res.json({ code: generateCode() });
+});
+
+app.get('/api/rooms/:code', (req, res) => {
+  const code = cleanCode(req.params.code);
+  const room = rooms.get(code);
+  if (!room) return res.json({ exists: false, code });
+  res.json({
+    exists: true,
+    code,
+    title: room.title,
+    mode: room.mode,
+    finished: room.finished,
+    players: room.players.map(p => ({ num: p.num, name: p.name }))
+  });
+});
+
+// ---------- Setup (creates/overwrites the game of a room) ----------
+app.post('/api/:code/setup', upload.single('zipfile'), (req, res) => {
   try {
+    const code = cleanCode(req.params.code);
+    if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide.' });
+
     const body = req.body;
     const title = (body.title || 'Ma Tier List').toString().slice(0, 120);
     const rows = JSON.parse(body.rows); // [{name, color}]
@@ -109,7 +145,8 @@ app.post('/api/setup', upload.single('zipfile'), (req, res) => {
 
     shuffleItems(items); // shuffle for pool order
 
-    game = {
+    const room = {
+      code,
       sessionId,
       title,
       rows,
@@ -129,47 +166,46 @@ app.post('/api/setup', upload.single('zipfile'), (req, res) => {
       finished: false,
       history: [] // log of actions for recap
     };
+    rooms.set(code, room);
 
-    if (mode === 'multi') {
-      assignPendingIfNeeded();
-    }
+    if (mode === 'multi') assignPendingIfNeeded(room);
 
-    const playerLinks = players.map(p => ({ num: p.num, name: p.name, url: `/joueur${p.num}.html` }));
-    res.json({ ok: true, sessionId, mode, playerLinks, redirect: mode === 'solo' ? '/jeu.html' : null });
+    const playerLinks = players.map(p => ({ num: p.num, name: p.name, url: `/${code}/joueur${p.num}.html` }));
+    res.json({ ok: true, code, mode, playerLinks, redirect: mode === 'solo' ? `/${code}/jeu.html` : null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur: ' + err.message });
   }
 });
 
-function assignPendingIfNeeded() {
-  if (!game || !game.suddenDeath || game.finished) return;
-  const unplaced = game.items.filter(it => !(it.id in game.placements));
-  if (unplaced.length === 0) { game.pendingRandomItem = null; return; }
+function assignPendingIfNeeded(room) {
+  if (!room || !room.suddenDeath || room.finished) return;
+  const unplaced = room.items.filter(it => !(it.id in room.placements));
+  if (unplaced.length === 0) { room.pendingRandomItem = null; return; }
   const pick = unplaced[Math.floor(Math.random() * unplaced.length)];
-  game.pendingRandomItem = pick.id;
+  room.pendingRandomItem = pick.id;
 }
 
-function currentPlayerNum() {
-  if (!game || game.turnOrder.length === 0) return null;
-  return game.turnOrder[game.currentTurnIdx % game.turnOrder.length];
+function currentPlayerNum(room) {
+  if (!room || room.turnOrder.length === 0) return null;
+  return room.turnOrder[room.currentTurnIdx % room.turnOrder.length];
 }
 
-function rowCount(rowIndex) {
-  return game.rowItems[rowIndex] ? game.rowItems[rowIndex].length : 0;
+function rowCount(room, rowIndex) {
+  return room.rowItems[rowIndex] ? room.rowItems[rowIndex].length : 0;
 }
 
-function removeFromRowItems(itemId) {
-  const oldRow = game.placements[itemId];
+function removeFromRowItems(room, itemId) {
+  const oldRow = room.placements[itemId];
   if (oldRow === undefined) return;
-  const arr = game.rowItems[oldRow];
+  const arr = room.rowItems[oldRow];
   if (!arr) return;
   const idx = arr.indexOf(itemId);
   if (idx !== -1) arr.splice(idx, 1);
 }
 
-function insertIntoRowItems(itemId, rowIndex, targetItemId) {
-  const arr = game.rowItems[rowIndex];
+function insertIntoRowItems(room, itemId, rowIndex, targetItemId) {
+  const arr = room.rowItems[rowIndex];
   if (targetItemId && arr.includes(targetItemId)) {
     arr.splice(arr.indexOf(targetItemId), 0, itemId);
   } else {
@@ -177,73 +213,96 @@ function insertIntoRowItems(itemId, rowIndex, targetItemId) {
   }
 }
 
-function checkFinished() {
-  const unplaced = game.items.filter(it => !(it.id in game.placements));
-  if (unplaced.length === 0) game.finished = true;
+function checkFinished(room) {
+  const unplaced = room.items.filter(it => !(it.id in room.placements));
+  if (unplaced.length === 0) room.finished = true;
 }
 
-function advanceTurn() {
-  game.turnPlaceUsed = false;
-  game.turnMoveUsed = false;
-  checkFinished();
-  if (!game.finished) {
-    game.currentTurnIdx = (game.currentTurnIdx + 1) % game.turnOrder.length;
-    assignPendingIfNeeded();
+function advanceTurn(room) {
+  room.turnPlaceUsed = false;
+  room.turnMoveUsed = false;
+  checkFinished(room);
+  if (!room.finished) {
+    room.currentTurnIdx = (room.currentTurnIdx + 1) % room.turnOrder.length;
+    assignPendingIfNeeded(room);
   } else {
-    game.pendingRandomItem = null;
+    room.pendingRandomItem = null;
   }
 }
 
-function publicState() {
-  if (!game) return null;
+function publicState(room) {
+  if (!room) return null;
   return {
-    sessionId: game.sessionId,
-    title: game.title,
-    rows: game.rows,
-    maxPerRow: game.maxPerRow,
-    mode: game.mode,
-    suddenDeath: game.suddenDeath,
-    lastChance: game.lastChance,
-    items: game.items,
-    placements: game.placements,
-    rowItems: game.rowItems,
-    players: game.players,
-    currentPlayer: game.mode === 'multi' ? currentPlayerNum() : null,
-    pendingRandomItem: game.pendingRandomItem,
-    turnPlaceUsed: game.turnPlaceUsed,
-    turnMoveUsed: game.turnMoveUsed,
-    finished: game.finished,
-    history: game.history
+    code: room.code,
+    sessionId: room.sessionId,
+    title: room.title,
+    rows: room.rows,
+    maxPerRow: room.maxPerRow,
+    mode: room.mode,
+    suddenDeath: room.suddenDeath,
+    lastChance: room.lastChance,
+    items: room.items,
+    placements: room.placements,
+    rowItems: room.rowItems,
+    players: room.players,
+    currentPlayer: room.mode === 'multi' ? currentPlayerNum(room) : null,
+    pendingRandomItem: room.pendingRandomItem,
+    turnPlaceUsed: room.turnPlaceUsed,
+    turnMoveUsed: room.turnMoveUsed,
+    finished: room.finished,
+    history: room.history
   };
 }
 
-function broadcast() {
-  io.emit('state', publicState());
+function broadcastRoom(room) {
+  io.to(room.code).emit('state', publicState(room));
 }
 
-// dynamic player page routes: /joueur1.html ... /joueur8.html
-app.get(/^\/joueur(\d+)\.html$/, (req, res) => {
+// ---------- Pages ----------
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'accueil.html')));
+
+// Legacy bookmark without a room code: mint a fresh room and redirect to it.
+app.get('/setup.html', (req, res) => res.redirect(`/${generateCode()}/setup.html`));
+app.get(['/jeu.html', /^\/joueur\d+\.html$/], (req, res) => res.redirect('/'));
+
+app.get('/:code/setup.html', (req, res, next) => {
+  if (!validCode(cleanCode(req.params.code))) return next();
+  res.sendFile(path.join(__dirname, 'public', 'setup.html'));
+});
+app.get('/:code/jeu.html', (req, res, next) => {
+  if (!validCode(cleanCode(req.params.code))) return next();
+  res.sendFile(path.join(__dirname, 'public', 'game.html'));
+});
+app.get(/^\/([A-Z0-9]{4,10})\/joueur\d+\.html$/i, (req, res, next) => {
+  if (!validCode(cleanCode(req.params[0]))) return next();
   res.sendFile(path.join(__dirname, 'public', 'game.html'));
 });
 
-app.get('/jeu.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'game.html'));
-});
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.post('/api/new-game', (req, res) => {
-  game = null;
-  broadcast();
+app.post('/api/:code/new-game', (req, res) => {
+  const code = cleanCode(req.params.code);
+  const room = rooms.get(code);
+  if (room) {
+    rooms.delete(code);
+    io.to(code).emit('state', null);
+  }
   res.json({ ok: true });
 });
 
 // ---------- Sauvegarde / reprise ----------
-app.get('/api/export', (req, res) => {
-  if (!game) return res.status(404).json({ error: 'Aucune partie en cours à sauvegarder.' });
-  res.json({ ok: true, save: game });
+app.get('/api/:code/export', (req, res) => {
+  const code = cleanCode(req.params.code);
+  const room = rooms.get(code);
+  if (!room) return res.status(404).json({ error: 'Aucune partie en cours à sauvegarder dans ce salon.' });
+  res.json({ ok: true, save: room });
 });
 
-app.post('/api/import', upload.single('zipfile'), (req, res) => {
+app.post('/api/:code/import', upload.single('zipfile'), (req, res) => {
   try {
+    const code = cleanCode(req.params.code);
+    if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide.' });
+
     const body = req.body;
     let save;
     try {
@@ -254,20 +313,22 @@ app.post('/api/import', upload.single('zipfile'), (req, res) => {
     if (!save || !Array.isArray(save.items) || !Array.isArray(save.rows)) {
       return res.status(400).json({ error: 'Fichier de sauvegarde invalide ou corrompu.' });
     }
-    game = save;
-    if (!game.placements) game.placements = {};
-    if (!Array.isArray(game.players)) game.players = [];
-    if (!Array.isArray(game.turnOrder)) game.turnOrder = game.players.map(p => p.num);
-    if (typeof game.currentTurnIdx !== 'number') game.currentTurnIdx = 0;
-    if (typeof game.turnPlaceUsed !== 'boolean') game.turnPlaceUsed = false;
-    if (typeof game.turnMoveUsed !== 'boolean') game.turnMoveUsed = false;
-    if (typeof game.finished !== 'boolean') game.finished = false;
-    if (!Array.isArray(game.history)) game.history = [];
-    if (game.maxPerRow === undefined) game.maxPerRow = null;
-    if (!Array.isArray(game.rowItems)) {
-      game.rowItems = game.rows.map(() => []);
-      Object.entries(game.placements).forEach(([id, r]) => {
-        if (game.rowItems[r]) game.rowItems[r].push(id);
+
+    const room = save;
+    room.code = code; // the save is loaded into the room identified by this URL's code
+    if (!room.placements) room.placements = {};
+    if (!Array.isArray(room.players)) room.players = [];
+    if (!Array.isArray(room.turnOrder)) room.turnOrder = room.players.map(p => p.num);
+    if (typeof room.currentTurnIdx !== 'number') room.currentTurnIdx = 0;
+    if (typeof room.turnPlaceUsed !== 'boolean') room.turnPlaceUsed = false;
+    if (typeof room.turnMoveUsed !== 'boolean') room.turnMoveUsed = false;
+    if (typeof room.finished !== 'boolean') room.finished = false;
+    if (!Array.isArray(room.history)) room.history = [];
+    if (room.maxPerRow === undefined) room.maxPerRow = null;
+    if (!Array.isArray(room.rowItems)) {
+      room.rowItems = room.rows.map(() => []);
+      Object.entries(room.placements).forEach(([id, r]) => {
+        if (room.rowItems[r]) room.rowItems[r].push(id);
       });
     }
 
@@ -290,143 +351,163 @@ app.post('/api/import', upload.single('zipfile'), (req, res) => {
       }
       shuffleItems(items);
 
-      game.sessionId = sessionId;
-      game.items = items;
-      game.placements = {};
-      game.rowItems = game.rows.map(() => []);
-      game.pendingRandomItem = null;
-      game.turnPlaceUsed = false;
-      game.turnMoveUsed = false;
-      game.finished = false;
-      game.history = [];
-      game.currentTurnIdx = 0;
+      room.sessionId = sessionId;
+      room.items = items;
+      room.placements = {};
+      room.rowItems = room.rows.map(() => []);
+      room.pendingRandomItem = null;
+      room.turnPlaceUsed = false;
+      room.turnMoveUsed = false;
+      room.finished = false;
+      room.history = [];
+      room.currentTurnIdx = 0;
     }
 
-    if (game.mode === 'multi') assignPendingIfNeeded();
+    rooms.set(code, room);
+    if (room.mode === 'multi') assignPendingIfNeeded(room);
 
-    broadcast();
-    const playerLinks = game.players.map(p => ({ num: p.num, name: p.name, url: `/joueur${p.num}.html` }));
-    res.json({ ok: true, mode: game.mode, playerLinks, redirect: game.mode === 'solo' ? '/jeu.html' : null });
+    broadcastRoom(room);
+    const playerLinks = room.players.map(p => ({ num: p.num, name: p.name, url: `/${code}/joueur${p.num}.html` }));
+    res.json({ ok: true, code, mode: room.mode, playerLinks, redirect: room.mode === 'solo' ? `/${code}/jeu.html` : null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur lors du chargement : ' + err.message });
   }
 });
 
-// ---------- Sockets ----------
+// ---------- Sockets (each connection joins exactly one room, by its code) ----------
 io.on('connection', (socket) => {
-  socket.emit('state', publicState());
+  socket.on('joinRoom', ({ code }) => {
+    code = cleanCode(code);
+    if (!validCode(code)) return;
+    socket.data.code = code;
+    socket.join(code);
+    const room = rooms.get(code);
+    socket.emit('state', publicState(room));
+  });
 
   socket.on('place', ({ itemId, rowIndex, targetItemId, playerNum }) => {
-    if (!game) return;
-    if (game.finished) return;
-    if (!(rowIndex >= 0 && rowIndex < game.rows.length)) return;
-    if (game.maxPerRow !== null && rowCount(rowIndex) >= game.maxPerRow) return;
-    if (itemId in game.placements) return;
+    const room = rooms.get(socket.data.code);
+    if (!room || room.finished) return;
+    if (!(rowIndex >= 0 && rowIndex < room.rows.length)) return;
+    if (room.maxPerRow !== null && rowCount(room, rowIndex) >= room.maxPerRow) return;
+    if (itemId in room.placements) return;
 
-    if (game.mode === 'multi') {
-      if (playerNum !== currentPlayerNum()) return;
-      if (game.turnPlaceUsed) return; // only one "place new item" action per turn, must validate to continue
-      if (game.suddenDeath) {
-        if (itemId !== game.pendingRandomItem) return;
-        game.placements[itemId] = rowIndex;
-        insertIntoRowItems(itemId, rowIndex, targetItemId);
-        game.turnPlaceUsed = true;
-        game.history.push({ player: playerNum, action: 'place-random', itemId, rowIndex, turn: game.currentTurnIdx });
-        checkFinished();
-        broadcast();
+    if (room.mode === 'multi') {
+      if (playerNum !== currentPlayerNum(room)) return;
+      if (room.turnPlaceUsed) return; // only one "place new item" action per turn, must validate to continue
+      if (room.suddenDeath) {
+        if (itemId !== room.pendingRandomItem) return;
+        room.placements[itemId] = rowIndex;
+        insertIntoRowItems(room, itemId, rowIndex, targetItemId);
+        room.turnPlaceUsed = true;
+        room.history.push({ player: playerNum, action: 'place-random', itemId, rowIndex, turn: room.currentTurnIdx });
+        checkFinished(room);
+        broadcastRoom(room);
         return;
       }
-      game.placements[itemId] = rowIndex;
-      insertIntoRowItems(itemId, rowIndex, targetItemId);
-      game.turnPlaceUsed = true;
-      game.history.push({ player: playerNum, action: 'place', itemId, rowIndex, turn: game.currentTurnIdx });
-      checkFinished();
-      broadcast();
+      room.placements[itemId] = rowIndex;
+      insertIntoRowItems(room, itemId, rowIndex, targetItemId);
+      room.turnPlaceUsed = true;
+      room.history.push({ player: playerNum, action: 'place', itemId, rowIndex, turn: room.currentTurnIdx });
+      checkFinished(room);
+      broadcastRoom(room);
     } else {
       // solo: free placement, no turns, game never "ends"
-      game.placements[itemId] = rowIndex;
-      insertIntoRowItems(itemId, rowIndex, targetItemId);
-      broadcast();
+      room.placements[itemId] = rowIndex;
+      insertIntoRowItems(room, itemId, rowIndex, targetItemId);
+      broadcastRoom(room);
     }
   });
 
   socket.on('move', ({ itemId, rowIndex, targetItemId, playerNum }) => {
-    if (!game || game.finished) return;
-    if (!(rowIndex >= 0 && rowIndex < game.rows.length)) return;
-    if (!(itemId in game.placements)) return;
-    if (game.maxPerRow !== null && rowCount(rowIndex) >= game.maxPerRow) return;
+    const room = rooms.get(socket.data.code);
+    if (!room || room.finished) return;
+    if (!(rowIndex >= 0 && rowIndex < room.rows.length)) return;
+    if (!(itemId in room.placements)) return;
+    if (room.maxPerRow !== null && rowCount(room, rowIndex) >= room.maxPerRow) return;
 
-    if (game.mode === 'multi') {
-      if (!game.lastChance) return;
-      if (playerNum !== currentPlayerNum()) return;
-      if (game.turnMoveUsed) return; // only one "move" action per turn
-      removeFromRowItems(itemId);
-      game.placements[itemId] = rowIndex;
-      insertIntoRowItems(itemId, rowIndex, targetItemId);
-      game.turnMoveUsed = true;
-      game.history.push({ player: playerNum, action: 'move', itemId, rowIndex, turn: game.currentTurnIdx });
-      broadcast();
+    if (room.mode === 'multi') {
+      if (!room.lastChance) return;
+      if (playerNum !== currentPlayerNum(room)) return;
+      if (room.turnMoveUsed) return; // only one "move" action per turn
+      removeFromRowItems(room, itemId);
+      room.placements[itemId] = rowIndex;
+      insertIntoRowItems(room, itemId, rowIndex, targetItemId);
+      room.turnMoveUsed = true;
+      room.history.push({ player: playerNum, action: 'move', itemId, rowIndex, turn: room.currentTurnIdx });
+      broadcastRoom(room);
     } else {
-      removeFromRowItems(itemId);
-      game.placements[itemId] = rowIndex;
-      insertIntoRowItems(itemId, rowIndex, targetItemId);
-      broadcast();
+      removeFromRowItems(room, itemId);
+      room.placements[itemId] = rowIndex;
+      insertIntoRowItems(room, itemId, rowIndex, targetItemId);
+      broadcastRoom(room);
     }
   });
 
   // reorder an already-placed item within its own row (drag position, e.g. slot 3 -> slot 1)
   socket.on('reorder', ({ itemId, targetItemId, playerNum }) => {
-    if (!game || game.finished) return;
-    if (!(itemId in game.placements) || !(targetItemId in game.placements)) return;
-    const rowIndex = game.placements[itemId];
-    if (game.placements[targetItemId] !== rowIndex) return; // must stay within the same row
+    const room = rooms.get(socket.data.code);
+    if (!room || room.finished) return;
+    if (!(itemId in room.placements) || !(targetItemId in room.placements)) return;
+    const rowIndex = room.placements[itemId];
+    if (room.placements[targetItemId] !== rowIndex) return; // must stay within the same row
     if (itemId === targetItemId) return;
 
-    if (game.mode === 'multi') {
-      if (!game.lastChance) return;
-      if (playerNum !== currentPlayerNum()) return;
-      if (game.turnMoveUsed) return; // shares the same "1 modification per turn" budget as move
-      removeFromRowItems(itemId);
-      insertIntoRowItems(itemId, rowIndex, targetItemId);
-      game.turnMoveUsed = true;
-      game.history.push({ player: playerNum, action: 'reorder', itemId, rowIndex, turn: game.currentTurnIdx });
-      broadcast();
+    if (room.mode === 'multi') {
+      if (!room.lastChance) return;
+      if (playerNum !== currentPlayerNum(room)) return;
+      if (room.turnMoveUsed) return; // shares the same "1 modification per turn" budget as move
+      removeFromRowItems(room, itemId);
+      insertIntoRowItems(room, itemId, rowIndex, targetItemId);
+      room.turnMoveUsed = true;
+      room.history.push({ player: playerNum, action: 'reorder', itemId, rowIndex, turn: room.currentTurnIdx });
+      broadcastRoom(room);
     } else {
-      removeFromRowItems(itemId);
-      insertIntoRowItems(itemId, rowIndex, targetItemId);
-      broadcast();
+      removeFromRowItems(room, itemId);
+      insertIntoRowItems(room, itemId, rowIndex, targetItemId);
+      broadcastRoom(room);
     }
   });
 
-
   socket.on('endTurn', ({ playerNum }) => {
-    if (!game || game.mode !== 'multi' || game.finished) return;
-    if (playerNum !== currentPlayerNum()) return;
-    if (!game.turnPlaceUsed) return; // must place your item (or the imposed random one) before validating
-    advanceTurn();
-    broadcast();
+    const room = rooms.get(socket.data.code);
+    if (!room || room.mode !== 'multi' || room.finished) return;
+    if (playerNum !== currentPlayerNum(room)) return;
+    if (!room.turnPlaceUsed) return; // must place your item (or the imposed random one) before validating
+    advanceTurn(room);
+    broadcastRoom(room);
   });
 
   socket.on('updateRow', ({ rowIndex, name, color }) => {
-    if (!game) return;
-    if (game.mode !== 'solo') return; // row names/colors are only editable live in solo mode
-    if (!game.rows[rowIndex]) return;
+    const room = rooms.get(socket.data.code);
+    if (!room) return;
+    if (room.mode !== 'solo') return; // row names/colors are only editable live in solo mode
+    if (!room.rows[rowIndex]) return;
     if (typeof name === 'string' && name.trim()) {
-      game.rows[rowIndex].name = name.trim().slice(0, 20);
+      room.rows[rowIndex].name = name.trim().slice(0, 20);
     }
     if (typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color)) {
-      game.rows[rowIndex].color = color;
+      room.rows[rowIndex].color = color;
     }
-    broadcast();
-  });
-
-  socket.on('newGame', () => {
-    game = null;
-    broadcast();
+    broadcastRoom(room);
   });
 });
 
+// Rooms with nobody connected and no activity for a while are freed from memory.
+const ROOM_IDLE_MS = 6 * 60 * 60 * 1000; // 6h
+setInterval(() => {
+  for (const [code, room] of rooms) {
+    const sockets = io.sockets.adapter.rooms.get(code);
+    if (!sockets || sockets.size === 0) {
+      room._idleSince = room._idleSince || Date.now();
+      if (Date.now() - room._idleSince > ROOM_IDLE_MS) rooms.delete(code);
+    } else {
+      room._idleSince = null;
+    }
+  }
+}, 15 * 60 * 1000);
+
 server.listen(PORT, () => {
-  console.log(`Tier List server lancé : http://localhost:${PORT}/setup.html`);
+  console.log(`Tier List server lancé : http://localhost:${PORT}/`);
 });

@@ -1,3 +1,19 @@
+const ROOM_CODE = (window.location.pathname.match(/^\/([A-Z0-9]{4,10})\/setup\.html$/i) || [])[1];
+if (!ROOM_CODE) {
+  // No room code in the URL: send the visitor to the home page to create or join one.
+  window.location.href = '/';
+}
+document.getElementById('roomCodeDisplay').textContent = ROOM_CODE || '----';
+
+function renderQrCodes() {
+  document.querySelectorAll('.qr-box').forEach(box => {
+    box.innerHTML = '';
+    if (window.QRCode) {
+      new QRCode(box, { text: box.dataset.url, width: 110, height: 110, colorDark: '#0a0a0a', colorLight: '#ffffff' });
+    }
+  });
+}
+
 const rowCountInput = document.getElementById('rowCount');
 const rowsConfigEl = document.getElementById('rowsConfig');
 const maxPerRowSelect = document.getElementById('maxPerRow');
@@ -112,7 +128,7 @@ playerCountSelect.addEventListener('change', renderPlayersConfig);
 
 // mutually exclusive mode buttons are handled above (updateModeButtons)
 
-fetch('/api/last-players').then(r => r.json()).then(d => {
+fetch(`/api/last-players`).then(r => r.json()).then(d => {
   lastPlayerNames = d.names || [];
   renderPlayersConfig();
 }).catch(() => renderPlayersConfig());
@@ -159,7 +175,7 @@ document.getElementById('setupForm').addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Création en cours...';
 
   try {
-    const res = await fetch('/api/setup', { method: 'POST', body: fd });
+    const res = await fetch(`/api/${ROOM_CODE}/setup`, { method: 'POST', body: fd });
     const data = await res.json();
     if (!res.ok) { showError(data.error || 'Erreur inconnue.'); submitBtn.disabled = false; submitBtn.textContent = 'Valider et créer la partie'; return; }
 
@@ -168,23 +184,42 @@ document.getElementById('setupForm').addEventListener('submit', async (e) => {
       return;
     }
 
-    const resultBlock = document.getElementById('resultBlock');
-    const resultContent = document.getElementById('resultContent');
-    resultContent.innerHTML = `
-      <p>Partage un lien à chaque joueur (ouvre chacun dans un onglet différent) :</p>
-      <div class="link-list">
-        ${data.playerLinks.map(p => `<a href="${p.url}" target="_blank">${p.name} → localhost:9500${p.url}</a>`).join('')}
-      </div>
-      <p style="margin-top:14px;"><a href="/jeu.html" target="_blank">Ouvrir en mode spectateur / écran commun</a></p>
-    `;
-    resultBlock.style.display = 'block';
-    resultBlock.scrollIntoView({ behavior: 'smooth' });
+    showPlayerLinks(data.playerLinks, 'Partie créée !');
   } catch (err) {
     showError('Erreur réseau : ' + err.message);
   }
   submitBtn.disabled = false;
   submitBtn.textContent = 'Valider et créer la partie';
 });
+
+function showPlayerLinks(playerLinks, title) {
+  const origin = window.location.origin;
+  const resultBlock = document.getElementById('resultBlock');
+  const resultContent = document.getElementById('resultContent');
+  resultBlock.querySelector('h3').textContent = title;
+  resultContent.innerHTML = `
+    <p>Code du salon : <strong style="color:var(--accent); letter-spacing:0.15em;">${ROOM_CODE}</strong> — chaque joueur peut aussi le taper sur la page d'accueil.</p>
+    <div class="link-list" style="gap:14px;">
+      ${playerLinks.map(p => `
+        <div style="display:flex; align-items:center; gap:14px; padding:10px 14px; background:rgba(255,255,255,0.05); border:1px solid var(--panel-border); border-radius:10px;">
+          <div class="qr-box" data-url="${origin}${p.url}" style="flex:0 0 auto; background:#fff; border-radius:6px; padding:4px; line-height:0;"></div>
+          <div style="flex:1;">
+            <a href="${p.url}" target="_blank" style="display:block; font-weight:700;">${escapeHtmlLite(p.name)}</a>
+            <span class="help" style="margin:4px 0 0;">${origin}${p.url}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <p style="margin-top:14px;"><a href="/${ROOM_CODE}/jeu.html" target="_blank">Ouvrir en mode spectateur / écran commun</a></p>
+  `;
+  resultBlock.style.display = 'block';
+  resultBlock.scrollIntoView({ behavior: 'smooth' });
+  renderQrCodes();
+}
+
+function escapeHtmlLite(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 document.getElementById('replaceContentCb').addEventListener('change', () => {
   document.getElementById('replaceContentBlock').style.display =
@@ -231,7 +266,7 @@ document.getElementById('loadBtn').addEventListener('click', () => {
     }
 
     try {
-      const res = await fetch('/api/import', { method: 'POST', body: fd });
+      const res = await fetch(`/api/${ROOM_CODE}/import`, { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) { showError(data.error || 'Impossible de charger cette sauvegarde.'); return; }
 
@@ -240,17 +275,7 @@ document.getElementById('loadBtn').addEventListener('click', () => {
         return;
       }
 
-      const resultBlock = document.getElementById('resultBlock');
-      const resultContent = document.getElementById('resultContent');
-      resultContent.innerHTML = `
-        <p>Partie rechargée ! Repartage un lien à chaque joueur :</p>
-        <div class="link-list">
-          ${data.playerLinks.map(p => `<a href="${p.url}" target="_blank">${p.name} → localhost:9500${p.url}</a>`).join('')}
-        </div>
-        <p style="margin-top:14px;"><a href="/jeu.html" target="_blank">Ouvrir en mode spectateur / écran commun</a></p>
-      `;
-      resultBlock.style.display = 'block';
-      resultBlock.scrollIntoView({ behavior: 'smooth' });
+      showPlayerLinks(data.playerLinks, 'Partie rechargée !');
     } catch (err) {
       showError('Erreur réseau : ' + err.message);
     }

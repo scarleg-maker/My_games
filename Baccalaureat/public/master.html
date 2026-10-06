@@ -11,11 +11,11 @@
 
 <div class="wrap">
   <h1 class="title">🎓 Baccalauréat</h1>
-  <p class="subtitle">Poste Maître du jeu</p>
+  <p class="subtitle">Poste Maître du jeu — salon <span class="code-big" id="roomCode">…</span></p>
 
   <div id="noGame" class="panel center">
-    <p>Aucune partie en cours.</p>
-    <a class="btn" href="/">Créer une partie</a>
+    <p>Cette partie n'est pas encore configurée.</p>
+    <a class="btn" id="configLink" href="#">Configurer la partie</a>
   </div>
 
   <div id="gameArea" style="display:none;">
@@ -60,9 +60,24 @@
       </div>
     </div>
 
+    <div class="panel" id="invitePanel">
+      <h3>Inviter les joueurs</h3>
+      <div class="invite">
+        <img class="qr" id="qrImg" alt="QR code pour rejoindre le salon" width="150" height="150">
+        <div>
+          <p style="margin:0 0 6px;">Code du salon : <span class="code-big" id="roomCode2"></span></p>
+          <p class="subtitle" style="margin:0 0 8px;">Scanner le QR code, ou ouvrir <code id="joinUrl"></code>, ou taper le code sur la page d'accueil. Chacun choisit ensuite son nom dans la liste.</p>
+          <button class="btn secondary" id="copyJoinBtn" type="button">Copier le lien</button>
+        </div>
+      </div>
+    </div>
+
     <div class="panel" id="playerLinksPanel">
-      <h3>Liens des joueurs</h3>
+      <h3>Liens directs des joueurs</h3>
       <ul class="link-list" id="masterLinkList"></ul>
+      <div class="center mt">
+        <a class="btn secondary" id="reconfigLink" href="#">⚙ Reconfigurer (nouvelle partie dans ce salon)</a>
+      </div>
     </div>
   </div>
 </div>
@@ -80,7 +95,7 @@
 <div id="winnerOverlay" class="overlay" style="display:none;">
   <div class="caption">🏆 Fin de la partie 🏆</div>
   <div class="winner-name" id="winnerName"></div>
-  <a class="btn mt" href="/">Nouvelle partie</a>
+  <a class="btn mt" id="newGameLink" href="#">Nouvelle partie</a>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>

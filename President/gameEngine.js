@@ -65,6 +65,7 @@ class GameManager {
   reset() {
     this.config = null; // { mode, players, theme, totalRounds, pointsToWin, images }
     this.state = null; // full runtime state
+    this.aiPlayers = new Set();
   }
 
   isConfigured() {
@@ -73,6 +74,7 @@ class GameManager {
 
   configure(config) {
     this.config = config;
+    this.aiPlayers = new Set(config.aiPlayers || []);
     this.state = {
       status: 'ready', // ready -> playing -> round-end -> game-over
       round: 0,
@@ -132,6 +134,48 @@ class GameManager {
 
   currentPlayer() {
     return this.state.order[this.state.turnIndex];
+  }
+
+  // ---- AI opponents ----
+
+  isAI(playerName) {
+    return this.aiPlayers.has(playerName);
+  }
+
+  setAI(playerName, isAI) {
+    if (!this.config || !this.config.players.includes(playerName)) {
+      throw new Error('Joueur inconnu.');
+    }
+    if (isAI) this.aiPlayers.add(playerName);
+    else this.aiPlayers.delete(playerName);
+  }
+
+  // Decides the next action for an AI-controlled player: play the smallest
+  // legal card (to conserve strong cards), pass if none is playable, or
+  // end the trick once they've already won it (unless finishing their hand
+  // quickly is within reach).
+  chooseAIMove(playerName) {
+    if (this.state.status !== 'playing') return null;
+    if (this.currentPlayer() !== playerName) return null;
+
+    const hand = this.state.hands[playerName] || [];
+    const tableLevel = this.state.table ? this.state.table.card.level : null;
+    const playable = hand.filter((c) => tableLevel === null || c.level > tableLevel);
+    const isTrickLeaderReplay = this.state.lastPlayedName === playerName && this.trickIsClosed();
+
+    if (isTrickLeaderReplay) {
+      if (playable.length > 0 && hand.length <= 2) {
+        const smallest = playable.reduce((a, b) => (a.level < b.level ? a : b));
+        return { type: 'play', cardId: smallest.id };
+      }
+      return { type: 'endTrick' };
+    }
+
+    if (playable.length === 0) {
+      return { type: 'pass' };
+    }
+    const smallest = playable.reduce((a, b) => (a.level < b.level ? a : b));
+    return { type: 'play', cardId: smallest.id };
   }
 
   isPlayerActive(name) {
@@ -265,6 +309,7 @@ class GameManager {
       mode,
       theme: this.config.theme,
       players: this.config.players,
+      aiPlayers: Array.from(this.aiPlayers),
       totalRounds: this.config.totalRounds,
       pointsToWin: this.config.pointsToWin,
       handSize: this.config.handSize,
