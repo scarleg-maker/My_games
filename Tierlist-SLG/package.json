@@ -1,0 +1,16 @@
+{
+  "name": "tierlist-slg",
+  "version": "1.0.0",
+  "description": "Tierlist-SLG : createur de tier lists (solo ou multijoueur en temps reel, par salons)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.7.5",
+    "uuid": "^9.0.1"
+  }
+}
