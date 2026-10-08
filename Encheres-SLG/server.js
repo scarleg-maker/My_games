@@ -418,7 +418,7 @@ io.on('connection', (socket) => {
 
 // Page d'accueil : choix du mode, et pour le mode A, création/rejoint d'un salon
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Jeu_des_Encheres.html'));
+    res.sendFile(path.join(__dirname, 'Encheres-SLG.html'));
 });
 
 app.get('/favicon.ico', (req, res) => { res.status(204).end(); });
@@ -450,7 +450,7 @@ app.get(/^\/(joueur[1-8]|maitre)\/?$/i, (req, res) => {
 app.get(/^\/([A-Za-z0-9]{3,10})$/, (req, res, next) => {
     const code = cleanCode(req.params[0]);
     if (!validCode(code)) return next();
-    res.sendFile(path.join(__dirname, 'Jeu_des_Encheres.html'));
+    res.sendFile(path.join(__dirname, 'Encheres-SLG.html'));
 });
 
 // Pages joueurs d'un salon : /{CODE}/joueur1 à /{CODE}/joueur8
@@ -477,7 +477,7 @@ function lanUrls() {
 }
 
 server.listen(PORT, () => {
-    console.log(`Jeu des Enchères démarré.`);
+    console.log(`Encheres-SLG démarré.`);
     console.log(`Accueil (créer un salon) : http://localhost:${PORT}/`);
     for (const u of lanUrls()) console.log(`Depuis le réseau local   : ${u}/`);
 });

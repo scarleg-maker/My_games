@@ -1,7 +1,7 @@
 {
-  "name": "jeu-des-encheres-mode-a",
+  "name": "encheres-slg",
   "version": "1.0.0",
-  "description": "Mode A - Temps réel : serveur Node.js pour le Jeu des Enchères (multi-appareils)",
+  "description": "Mode A - Temps réel : serveur Node.js pour Encheres-SLG (multi-appareils)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

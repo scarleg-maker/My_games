@@ -1,23 +1,23 @@
-# Jeu des Enchères
+# Encheres-SLG
 
-Tout est regroupé dans **ce seul dossier**. La page `Jeu_des_Encheres.html` est le point d'entrée
+Tout est regroupé dans **ce seul dossier**. La page `Encheres-SLG.html` est le point d'entrée
 unique : c'est elle qui permet de choisir le mode de jeu, **🅱️ Enchères décalées** ou
 **🅰️ Temps réel**, en haut de l'écran de réglages (avant même le nombre de joueurs, l'argent de
 départ, etc.).
 
 ## Fichiers
 
-- `Jeu_des_Encheres.html` — page principale (réglages + sélecteur de mode + jeu)
+- `Encheres-SLG.html` — page principale (réglages + sélecteur de mode + jeu)
 - `joueur.html` — page ouverte par chaque joueur sur son propre appareil, uniquement utile en mode A
 - `shared.css` — styles de `joueur.html`
 - `server.js` — serveur Node.js, uniquement nécessaire pour le mode A
 - `package.json` — dépendances du serveur (Express, Socket.IO)
-- `Lancer_Encheres.bat` — raccourci Windows : installe si besoin et démarre le serveur du mode A,
+- `Encheres-SLG.bat` — raccourci Windows : installe si besoin et démarre le serveur du mode A,
   puis ouvre la page maître automatiquement
 
 ## Mode 🅱️ Enchères décalées (local, sans serveur)
 
-Double-cliquez simplement sur `Jeu_des_Encheres.html`. Choisissez le mode "Enchères décalées"
+Double-cliquez simplement sur `Encheres-SLG.html`. Choisissez le mode "Enchères décalées"
 (coché par défaut) et jouez comme avant : un seul écran, un maître qui enregistre les achats.
 
 ## Mode 🅰️ Temps réel (réseau, plusieurs appareils)
@@ -26,7 +26,7 @@ Ce mode nécessite [Node.js](https://nodejs.org/) et le petit serveur inclus dan
 
 ### Démarrage rapide (Windows)
 
-Double-cliquez sur `Lancer_Encheres.bat` : il installe les dépendances si besoin, démarre le
+Double-cliquez sur `Encheres-SLG.bat` : il installe les dépendances si besoin, démarre le
 serveur et ouvre automatiquement la page maître dans votre navigateur. Ne fermez pas la fenêtre
 noire pendant la partie (elle fait tourner le serveur) ; la fermer arrête le serveur.
 
@@ -34,7 +34,7 @@ noire pendant la partie (elle fait tourner le serveur) ; la fermer arrête le se
 
 1. Installer les dépendances (une seule fois) :
    ```bash
-   cd Jeu-des-Encheres
+   cd Encheres-SLG
    npm install
    ```
 2. Démarrer le serveur :

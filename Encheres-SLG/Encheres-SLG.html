@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jeu des Enchères</title>
+    <title>Encheres-SLG</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Nécessaire uniquement pour le Mode A "Temps réel" : disponible seulement si cette page est
          ouverte via le serveur Node.js du mode A (ex: http://localhost:5500/). Si la page est ouverte
@@ -144,7 +144,7 @@
 <body>
 
     <header>
-        <h1>Jeu des Enchères</h1>
+        <h1>Encheres-SLG</h1>
     </header>
 
     <!-- ÉTAPE 1 : Configuration -->
@@ -152,7 +152,7 @@
         <div class="setup-group" id="modeSelectGroup">
             <label>Mode de jeu :</label>
             <div class="mode-toggle">
-                <label class="mode-option" id="modeOptionA" title="Chaque joueur enchérit en direct depuis son propre téléphone/tablette/ordinateur, connecté au même réseau Wi-Fi. Nécessite de lancer le petit serveur Node.js inclus dans ce dossier (voir README ou Lancer_Encheres.bat).">
+                <label class="mode-option" id="modeOptionA" title="Chaque joueur enchérit en direct depuis son propre téléphone/tablette/ordinateur, connecté au même réseau Wi-Fi. Nécessite de lancer le petit serveur Node.js inclus dans ce dossier (voir README ou Encheres-SLG.bat).">
                     <input type="radio" name="gameMode" value="A">
                     <span class="mode-title">🅰️ Temps réel</span>
                     <span class="mode-desc">En réseau, chaque joueur enchérit en direct sur son appareil.</span>
@@ -946,7 +946,7 @@
         async function startModeAGame(playerCount, startingMoney, maxPurchases, playerNames) {
             const socket = ensureModeASocket();
             if (!socket) {
-                showCustomAlert("Le Mode Temps réel nécessite le serveur Node.js. Lancez-le (\"npm start\" dans ce dossier, ou double-cliquez sur Lancer_Encheres.bat) puis ouvrez cette page via http://localhost:5500/.");
+                showCustomAlert("Le Mode Temps réel nécessite le serveur Node.js. Lancez-le (\"npm start\" dans ce dossier, ou double-cliquez sur Encheres-SLG.bat) puis ouvrez cette page via http://localhost:5500/.");
                 return;
             }
             startBtn.disabled = true;
