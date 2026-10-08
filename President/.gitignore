@@ -1,5 +1,0 @@
-node_modules/
-uploads/*
-!uploads/.gitkeep
-data/rooms/*
-!data/rooms/.gitkeep
