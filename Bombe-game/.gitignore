@@ -1,0 +1,5 @@
+node_modules/
+data/
+images_pool/
+uploads_tmp/
+*.log
