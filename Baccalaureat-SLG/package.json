@@ -1,7 +1,7 @@
 {
-  "name": "baccalaureat-game",
+  "name": "baccalaureat-slg",
   "version": "2.0.0",
-  "description": "Jeu du Baccalauréat en réseau local, avec salons",
+  "description": "Baccalauréat-SLG : jeu du Baccalauréat en réseau local, avec salons",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

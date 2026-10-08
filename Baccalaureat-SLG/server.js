@@ -509,7 +509,7 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n  Baccalauréat lancé !`);
+  console.log(`\n  Baccalauréat-SLG lancé !`);
   console.log(`  Accueil (créer ou rejoindre un salon) : http://localhost:${PORT}/`);
   for (const u of lanUrls()) console.log(`  Depuis le réseau local                : ${u}/`);
   console.log('');

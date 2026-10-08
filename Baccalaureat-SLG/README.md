@@ -1,4 +1,4 @@
-# 🎓 Baccalauréat — Jeu en réseau local, avec salons
+# 🎓 Baccalauréat-SLG — Jeu en réseau local, avec salons
 
 Plusieurs parties peuvent se dérouler **en même temps**, chacune dans son propre **salon** (un code court, par exemple `K7QF`). Chaque salon a sa configuration, ses joueurs, ses scores et son maître du jeu ; ils ne se voient pas entre eux.
 
@@ -8,7 +8,7 @@ Installez [Node.js](https://nodejs.org/) (version 18 ou plus récente) si ce n'e
 
 ### Option A — Windows, en un clic
 
-Double-cliquez sur **`lancer-le-jeu.bat`**. Ce fichier vérifie Node.js, installe les dépendances (au premier lancement), démarre le serveur et ouvre l'accueil dans votre navigateur.
+Double-cliquez sur **`Lancer_Baccalaureat-SLG.bat`**. Ce fichier vérifie Node.js, installe les dépendances (au premier lancement), démarre le serveur et ouvre l'accueil dans votre navigateur.
 Laissez la fenêtre noire ouverte pendant toute la partie ; fermez-la pour arrêter le serveur.
 
 ### Option B — Terminal (Windows / Mac / Linux)
