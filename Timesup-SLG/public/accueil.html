@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Time's Up SLG</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f1b2d 0%, #0d3b2e 60%, #0a2e3a 100%);
+  color: #e0e8f0;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 2rem 1rem 4rem;
+}
+h1 {
+  font-size: clamp(2.2rem, 7vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: .04em;
+  background: linear-gradient(90deg, #7dd4c0, #a3c6ff, #ffcf77);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: .4rem; text-align: center;
+}
+.subtitle { color: rgba(255,255,255,.5); font-size: .95rem; margin-bottom: 2.5rem; text-align: center; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem; width: 100%; max-width: 680px; margin-bottom: 2rem;
+}
+.card {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  backdrop-filter: blur(10px);
+  border-radius: 16px; padding: 1.6rem;
+}
+.card h2 { font-size: 1.15rem; margin-bottom: .5rem; color: #fff; }
+.card p { color: rgba(255,255,255,.55); font-size: .88rem; margin-bottom: 1.1rem; line-height: 1.5; }
+input[type=text] {
+  width: 100%; padding: 11px 14px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.1); color: #fff;
+  font-size: 1rem; font-family: inherit; margin-bottom: 10px;
+  letter-spacing: .1em; text-transform: uppercase;
+}
+input[type=text]::placeholder { color: rgba(255,255,255,.35); text-transform: none; letter-spacing: 0; }
+input[type=text]:focus { outline: none; border-color: #7dd4c0; }
+.btn {
+  width: 100%; padding: 12px; font-size: .95rem; font-weight: 600;
+  cursor: pointer; border-radius: 10px; border: none;
+  font-family: inherit; transition: filter .15s, transform .1s;
+}
+.btn:active { transform: scale(.97); }
+.btn:hover { filter: brightness(.88); }
+.btn-teal  { background: #2cb8a0; color: #fff; }
+.btn-blue  { background: #3d8ef0; color: #fff; }
+.btn-red   { background: #e24b4a; color: #fff; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
+#found-zone { margin-top: 1rem; }
+#found-info { display: none; background: rgba(255,255,255,.07); border-radius: 10px; padding: 1rem; }
+#found-info .code-badge {
+  font-size: 1.8rem; font-weight: 800; letter-spacing: .2em;
+  color: #ffcf77; display: block; margin-bottom: .5rem;
+}
+#found-info .phase { color: rgba(255,255,255,.6); font-size: .85rem; }
+#error-msg { color: #f87171; font-size: .88rem; margin-top: .5rem; display: none; }
+.recent-section { width: 100%; max-width: 680px; }
+.recent-section h3 { font-size: .9rem; color: rgba(255,255,255,.45); margin-bottom: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+#recent-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.recent-chip {
+  display: inline-flex; align-items: center; gap: 0;
+  border: 1px solid rgba(255,255,255,.15); border-radius: 999px;
+  overflow: hidden; background: rgba(255,255,255,.07);
+}
+.recent-chip a {
+  padding: .35rem .8rem; color: #e0e8f0; text-decoration: none;
+  font-size: .88rem;
+}
+.recent-chip a strong { color: #7dd4c0; font-family: monospace; letter-spacing: .1em; margin-right: .3rem; }
+.recent-chip a:hover { background: rgba(255,255,255,.08); }
+.recent-chip button {
+  border: none; background: none; color: rgba(255,255,255,.35);
+  padding: 0 .65rem; cursor: pointer; font-size: 1rem;
+}
+.recent-chip button:hover { color: #e24b4a; }
+.or-divider { text-align: center; color: rgba(255,255,255,.3); font-size: .85rem; margin: .5rem 0; }
+</style>
+</head>
+<body>
+<h1>Time's Up</h1>
+<p class="subtitle">Chaque groupe joue dans son propre salon</p>
+
+<div class="cards">
+  <section class="card">
+    <h2>Creer un salon</h2>
+    <p>Un code court est genere. Donnez-le aux joueurs pour qu'ils rejoignent votre partie.</p>
+    <button class="btn btn-teal" id="btn-create">Creer un salon</button>
+    <div class="or-divider">ou choisissez votre code</div>
+    <input type="text" id="custom-code" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off"/>
+    <button class="btn btn-blue" id="btn-create-custom">Creer avec ce code</button>
+  </section>
+
+  <section class="card">
+    <h2>Rejoindre un salon</h2>
+    <p>Entrez le code donne par le maitre du jeu, puis rejoignez la partie.</p>
+    <input type="text" id="join-code" maxlength="10" placeholder="CODE DU SALON" autocomplete="off"/>
+    <button class="btn btn-blue" id="btn-join">Rejoindre</button>
+    <div id="found-zone">
+      <div id="found-info">
+        <span class="code-badge" id="found-code"></span>
+        <span class="phase" id="found-phase"></span>
+        <div style="margin-top:.8rem;">
+          <button class="btn btn-teal" id="btn-go">Aller dans ce salon</button>
+        </div>
+      </div>
+      <div id="error-msg"></div>
+    </div>
+  </section>
+</div>
+
+<div class="recent-section" id="recent-section" style="display:none">
+  <h3>Salons recents</h3>
+  <div id="recent-list"></div>
+</div>
+
+<script>
+const RECENT_KEY = 'timesup_slg_recent';
+
+function getRecent() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch { return []; }
+}
+function addRecent(code) {
+  let r = getRecent().filter(c => c !== code);
+  r.unshift(code);
+  r = r.slice(0, 8);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(r)); } catch {}
+}
+function removeRecent(code) {
+  const r = getRecent().filter(c => c !== code);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(r)); } catch {}
+  renderRecent();
+}
+function renderRecent() {
+  const r = getRecent();
+  const sec = document.getElementById('recent-section');
+  const list = document.getElementById('recent-list');
+  if (r.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  list.innerHTML = r.map(code => `
+    <span class="recent-chip">
+      <a href="/${code}"><strong>${code}</strong> rejoindre</a>
+      <button onclick="removeRecent('${code}')" title="Supprimer">&#x2715;</button>
+    </span>`).join('');
+}
+
+async function createSalon(code) {
+  const body = code ? { code } : {};
+  const r = await fetch('/api/salons', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const d = await r.json();
+  if (!d.ok) { alert(d.error); return; }
+  addRecent(d.code);
+  location.href = '/' + d.code;
+}
+
+document.getElementById('btn-create').onclick = () => createSalon();
+document.getElementById('btn-create-custom').onclick = () => {
+  const c = document.getElementById('custom-code').value.trim();
+  if (!c) return alert('Entrez un code');
+  createSalon(c);
+};
+
+let foundCode = null;
+async function lookupCode(code) {
+  code = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const fi = document.getElementById('found-info');
+  const em = document.getElementById('error-msg');
+  fi.style.display = 'none'; em.style.display = 'none'; foundCode = null;
+  if (!code || code.length < 3) return;
+  const r = await fetch('/api/salons/' + code);
+  const d = await r.json();
+  if (!d.exists) {
+    em.style.display = 'block';
+    em.textContent = `Salon "${code}" introuvable.`;
+    return;
+  }
+  foundCode = code;
+  document.getElementById('found-code').textContent = code;
+  const phases = { setup:'Configuration', collecting_single:'Saisie des mots', collecting_multi:'Saisie des mots', ready:'Pret a demarrer', countdown:'Compte a rebours', playing:'En jeu', roundEnd:'Fin de tour', roundEnd_noMore:'Fin de manche', finished:'Terminee' };
+  document.getElementById('found-phase').textContent = `Phase : ${phases[d.phase] || d.phase}`;
+  fi.style.display = 'block';
+}
+
+const joinInput = document.getElementById('join-code');
+joinInput.addEventListener('input', () => lookupCode(joinInput.value));
+document.getElementById('btn-join').onclick = () => {
+  const code = joinInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!code) { document.getElementById('error-msg').textContent = 'Entrez un code'; document.getElementById('error-msg').style.display = 'block'; return; }
+  addRecent(code);
+  location.href = '/' + code;
+};
+document.getElementById('btn-go').onclick = () => {
+  if (foundCode) { addRecent(foundCode); location.href = '/' + foundCode; }
+};
+
+renderRecent();
+</script>
+</body>
+</html>
