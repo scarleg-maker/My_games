@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Manrope:wght@400;600;700;800&family=Barlow+Condensed:wght@500;600;700&display=swap');
+
+:root {
+  --bg-deep: #0a1712;
+  --felt: #0d3b29;
+  --felt-light: #124d36;
+  --felt-line: #1f6b48;
+  --gold: #d8b25c;
+  --gold-bright: #f4dfa0;
+  --burgundy: #7c1f2b;
+  --burgundy-bright: #a5293a;
+  --black-num: #16130f;
+  --cream: #f3ead8;
+  --muted: #a9c2b3;
+  --shadow: rgba(0,0,0,.55);
+  --green0: #0d7a44;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(216,178,92,.08), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.015) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, #0a1712 0%, #0c231a 40%, #0a1712 100%);
+  color: var(--cream);
+  font-family: 'Manrope', sans-serif;
+}
+
+.felt-noise {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,.03), transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(255,255,255,.025), transparent 40%);
+}
+
+h1, h2, h3, .display {
+  font-family: 'Cinzel', serif;
+  letter-spacing: .02em;
+  color: var(--gold-bright);
+  margin: 0;
+}
+
+.gold-rule {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  border: none;
+  margin: 10px 0 18px;
+}
+
+button {
+  font-family: 'Manrope', sans-serif;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.btn {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold) 70%);
+  color: #241a06;
+  font-weight: 800;
+  padding: 12px 26px;
+  border-radius: 8px;
+  font-size: 15px;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  box-shadow: 0 3px 0 #8a6a24, 0 6px 14px var(--shadow);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #8a6a24, 0 3px 8px var(--shadow); }
+.btn:disabled {
+  filter: grayscale(.6);
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 3px 0 #555, 0 6px 14px var(--shadow);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--gold);
+  color: var(--gold-bright);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+.btn-outline:hover { background: rgba(216,178,92,.1); }
+
+.card {
+  background: linear-gradient(180deg, var(--felt-light), var(--felt));
+  border: 1px solid var(--felt-line);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px var(--shadow), inset 0 1px 0 rgba(255,255,255,.05);
+  padding: 22px;
+}
+
+/* ---------------- Wheel signature element ---------------- */
+.wheel-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,.6));
+}
+.wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 18px solid var(--gold-bright);
+  z-index: 5;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.6));
+}
+.wheel-canvas {
+  border-radius: 50%;
+  display: block;
+}
+.wheel-hub {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  background: radial-gradient(circle at 35% 30%, #f4dfa0, #a1791f 70%, #6b4f13);
+  box-shadow: 0 0 0 3px #0a1712, 0 3px 6px rgba(0,0,0,.6);
+}
+
+@keyframes idleSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------- scrollbars ---------------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,.2); }
+
+.history-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--cream);
+  border: 1px solid rgba(0,0,0,.35);
+  flex-shrink: 0;
+}
+.c-red { background: linear-gradient(180deg,#b3283a,#7c1f2b); }
+.c-black { background: linear-gradient(180deg,#3a3a3a,#161310); }
+.c-green { background: linear-gradient(180deg,#1fa568,#0d5c3a); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
