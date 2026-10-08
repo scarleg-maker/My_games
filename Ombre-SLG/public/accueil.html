@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ombre-SLG — Accueil</title>
+<link rel="stylesheet" href="/css/style.css" />
+<style>
+  .hero { text-align: center; margin-bottom: 28px; }
+  .hero h1 { font-size: 2.4rem; margin-bottom: 8px; }
+  .hero p { color: #999; max-width: 480px; margin: 0 auto; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .cards { grid-template-columns: 1fr; } }
+  .code-input {
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+  details { margin-top: 14px; color: #999; }
+  details summary { cursor: pointer; font-size: 14px; }
+  details .row { margin-top: 10px; }
+  .recent { margin-top: 28px; }
+  .recent h2 { font-size: 15px; color: #999; margin-bottom: 10px; }
+  .recent ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .recent li { display: flex; align-items: center; border: 1px solid #2a2a33; border-radius: 999px; overflow: hidden; background: #17171c; }
+  .recent li a { padding: 7px 6px 7px 14px; color: inherit; text-decoration: none; font-size: 14px; }
+  .recent li a strong { color: #8ab4f8; letter-spacing: 0.08em; margin-right: 6px; }
+  .recent li button { border: 0; background: none; color: #777; padding: 0 12px; cursor: pointer; font-size: 14px; }
+  .recent li button:hover { color: #ff5c5c; }
+  #foundMsg { margin-top: 12px; font-size: 14px; color: #ff8080; }
+</style>
+</head>
+<body>
+<div class="container" style="max-width:800px">
+  <div class="hero">
+    <h1>🕶️ Ombre-SLG</h1>
+    <p>Devine le nom derrière la silhouette. Crée un salon pour ta partie, ou rejoins celui d'un ami avec son code.</p>
+  </div>
+
+  <div class="cards">
+    <section class="card">
+      <h2>Créer une partie</h2>
+      <p style="color:#999;margin-bottom:14px">Tu deviens le maître du jeu : un salon est créé avec un code à donner aux joueurs.</p>
+      <button id="btnCreate">Créer un salon</button>
+      <details>
+        <summary>Choisir mon propre code</summary>
+        <div class="row">
+          <input type="text" id="customCode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off" />
+          <button class="secondary" id="btnCreateCustom">Créer</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Rejoindre une partie</h2>
+      <p style="color:#999;margin-bottom:14px">Entre le code donné par le maître du jeu.</p>
+      <div class="row">
+        <input type="text" id="joinCode" class="code-input" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+        <button id="btnJoin">Rejoindre</button>
+      </div>
+      <div id="foundMsg"></div>
+    </section>
+  </div>
+
+  <div class="recent" id="recent"></div>
+</div>
+
+<script>
+const el = (id) => document.getElementById(id);
+
+async function createRoom(code) {
+  const res = await fetch("/api/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(code ? { code } : {}),
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    alert(data.error);
+    return;
+  }
+  addRecent(data.code, "maitre");
+  location.href = "/" + data.code;
+}
+
+el("btnCreate").addEventListener("click", () => createRoom());
+el("btnCreateCustom").addEventListener("click", () => {
+  const c = el("customCode").value.trim();
+  if (!c) return alert("Indique un code.");
+  createRoom(c);
+});
+
+el("btnJoin").addEventListener("click", () => joinRoom());
+el("joinCode").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") joinRoom();
+});
+
+async function joinRoom() {
+  const code = el("joinCode").value.trim().toUpperCase();
+  if (!code) {
+    el("foundMsg").textContent = "Indique le code du salon.";
+    return;
+  }
+  el("foundMsg").textContent = "";
+  try {
+    const res = await fetch("/api/rooms/" + encodeURIComponent(code));
+    const data = await res.json();
+    if (!data.exists) {
+      el("foundMsg").textContent = `Aucun salon « ${code} ». Vérifie le code avec le maître du jeu.`;
+      return;
+    }
+    addRecent(code, "joueur");
+    location.href = "/" + code + "/joueur";
+  } catch {
+    el("foundMsg").textContent = "Serveur injoignable.";
+  }
+}
+
+// ---------- Salons recents (localStorage, par appareil) ----------
+const RECENT_KEY = "ombre_salons_recents";
+function getRecent() {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+function addRecent(code, role) {
+  try {
+    const list = getRecent().filter((x) => x.code !== code);
+    list.unshift({ code, role, t: Date.now() });
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8)));
+  } catch {}
+}
+function removeRecent(code) {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(getRecent().filter((x) => x.code !== code)));
+  } catch {}
+  renderRecent();
+}
+function renderRecent() {
+  const box = el("recent");
+  const list = getRecent();
+  if (!list.length) {
+    box.innerHTML = "";
+    return;
+  }
+  box.innerHTML =
+    "<h2>Salons récents sur cet appareil</h2><ul>" +
+    list
+      .map((x) => {
+        const href = x.role === "maitre" ? "/" + x.code : "/" + x.code + "/joueur";
+        return `<li><a href="${href}"><strong>${x.code}</strong>${x.role === "maitre" ? "maître" : "joueur"}</a><button data-rm="${x.code}" title="Retirer">✕</button></li>`;
+      })
+      .join("") +
+    "</ul>";
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-rm]");
+  if (b) removeRecent(b.dataset.rm);
+});
+renderRecent();
+</script>
+</body>
+</html>
