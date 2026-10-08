@@ -124,3 +124,16 @@ critère de son choix) jusqu'à ce qu'il n'en reste plus qu'un seul, qui est alo
 - Pour retrouver l'image de fond du marteau (mode B), copiez `Marteau.png` dans ce même dossier.
 - Les anciennes adresses sans code de salon (`/joueur1`, `/maitre`) ne fonctionnent plus depuis
   l'ajout des salons ; elles redirigent vers la page d'accueil.
+
+## Archives d'images (dossier `archives/`)
+
+Déposez vos fichiers `.zip` d'images dans le dossier `archives/` : ils apparaissent
+dans la page de réglages (« OU choisir une archive d'images du serveur »), sans upload.
+Les sous-dossiers du zip sont acceptés. Gardez des archives de taille raisonnable.
+
+## Déploiement sur Render
+
+- Le port est lu via la variable `PORT` (5500 par défaut en local).
+- Le dossier `archives/` doit être commité dans le dépôt déployé.
+- Les liens joueurs utilisent l'adresse réelle du site.
+- Seuls `shared.css` et `Marteau.png` sont servis en statique (`server.js` et `package.json` ne sont pas exposés).

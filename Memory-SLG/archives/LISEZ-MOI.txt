@@ -1,0 +1,24 @@
+DOSSIER « archives » — packs d'images prêts à jouer
+====================================================
+
+Tout ce qui est déposé ici apparaît dans la page arbitre, rubrique « Archives du serveur » :
+l'arbitre clique sur un pack et ses images sont chargées dans son salon, sans rien envoyer depuis son appareil.
+
+Deux façons d'ajouter un pack :
+  1. Déposer un fichier .zip contenant des images        ex. Animaux.zip
+  2. Créer un sous-dossier contenant des images           ex. Drapeaux/  (drapeau1.png, drapeau2.png…)
+
+Le nom du fichier (sans « .zip ») ou du dossier devient le nom du pack affiché.
+
+Règles :
+  - Formats acceptés : JPG, PNG, WebP, GIF (les autres fichiers sont ignorés).
+  - 3 Mo maximum par image, 100 images maximum par salon.
+  - Les images sont prises dans l'ordre alphabétique ; les fichiers cachés sont ignorés.
+  - Une archive peut contenir des sous-dossiers.
+  - Une image par paire : 10 images donnent 20 cartes.
+
+Avec Render (ou tout autre hébergeur) : ajoutez vos archives dans ce dossier avant de déployer
+(commit + push). Elles font partie du site et survivent aux redémarrages, contrairement aux images
+chargées depuis l'appareil de l'arbitre, qui sont stockées dans le dossier « donnees ».
+
+« Exemple-Formes.zip » est un pack de démonstration : vous pouvez le supprimer.

@@ -26,6 +26,11 @@ APP_ROOT = Path(__file__).parent.resolve()
 UPLOAD_ROOT = APP_ROOT / "uploads"
 UPLOAD_ROOT.mkdir(exist_ok=True)
 
+# Archives intégrées : chaque .zip (ou sous-dossier d'images) placé dans
+# "archives/" est proposé dans la page de préparation, sans rien envoyer.
+ARCHIVES_DIR = APP_ROOT / "archives"
+ARCHIVES_DIR.mkdir(exist_ok=True)
+
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
 CARD_TARGET_HEIGHT = 500  # hauteur (px) à laquelle chaque portrait est normalisé
 GUESS_TURN_THRESHOLD = 6  # la proposition de réponse s'ouvre à partir de la fin de ce tour
@@ -347,6 +352,33 @@ def api_room_info(code):
 
 # ------------------------------------------------------------------ API partie (scopée à un salon) ----
 
+def list_archives():
+    """Archives disponibles : [{id, label, count}] (zip ou sous-dossier)."""
+    out = []
+    for p in sorted(ARCHIVES_DIR.iterdir(), key=lambda x: x.name.lower()):
+        if p.name.startswith("."):
+            continue
+        try:
+            if p.is_file() and p.suffix.lower() == ".zip":
+                with zipfile.ZipFile(p) as z:
+                    n = sum(1 for m in z.namelist()
+                            if Path(m).suffix.lower() in IMAGE_EXTS and not Path(m).name.startswith("."))
+            elif p.is_dir():
+                n = sum(1 for f in p.rglob("*") if f.is_file() and f.suffix.lower() in IMAGE_EXTS)
+            else:
+                continue
+        except Exception:
+            continue
+        if n:
+            out.append({"id": p.name, "label": p.stem if p.is_file() else p.name, "count": n})
+    return out
+
+
+@app.route("/api/archives")
+def api_archives():
+    return jsonify(archives=list_archives())
+
+
 @app.route("/<code>/api/setup", methods=["POST"])
 def api_setup(code):
     with ROOMS_LOCK:
@@ -374,10 +406,34 @@ def api_setup(code):
         dest.mkdir(parents=True, exist_ok=True)
 
         files = request.files.getlist("files")
-        if not files:
+        archive_id = (request.form.get("archive") or "").strip()
+        if not files and not archive_id:
             return jsonify(ok=False, error="Aucun fichier reçu."), 400
 
         saved_any = False
+        if archive_id:
+            # Archive intégrée : on ne prend que les noms listés (pas de chemin libre).
+            src = next((ARCHIVES_DIR / a["id"] for a in list_archives() if a["id"] == archive_id), None)
+            if src is None:
+                shutil.rmtree(dest, ignore_errors=True)
+                return jsonify(ok=False, error="Archive introuvable."), 400
+            if src.is_dir():
+                for f in sorted(src.rglob("*")):
+                    if f.is_file() and f.suffix.lower() in IMAGE_EXTS and not f.name.startswith("."):
+                        target = dest / f.name
+                        shutil.copyfile(f, target)
+                        normalize_portrait(target)
+                        saved_any = True
+            else:
+                with zipfile.ZipFile(src) as z:
+                    for member in z.namelist():
+                        mp = Path(member)
+                        if mp.suffix.lower() in IMAGE_EXTS and not mp.name.startswith("."):
+                            target = dest / mp.name
+                            with z.open(member) as srcf, open(target, "wb") as out:
+                                shutil.copyfileobj(srcf, out)
+                            normalize_portrait(target)
+                            saved_any = True
         for f in files:
             if not f.filename:
                 continue

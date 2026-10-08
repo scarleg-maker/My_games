@@ -43,6 +43,118 @@ function lanUrls() {
   return out;
 }
 
+// ---------------------------------------------------------------- archives d'images (dossier « archives »)
+// Chaque archive .zip, ou chaque sous-dossier, déposé dans archives/ devient un « pack » d'images que l'arbitre
+// peut charger en un clic dans son salon. Ces fichiers font partie du site (ils sont déployés avec lui).
+const ARCHIVES_DIR = process.env.ARCHIVES_DIR || path.join(__dirname, 'archives');
+const EXT_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+const mimeOf = name => EXT_MIME[String(name).split('.').pop().toLowerCase()] || null;
+const isHiddenPath = n => /(^|\/)(__MACOSX|\.)/.test(n);
+const naturalSort = (a, b) => a.localeCompare(b, 'fr', { numeric: true, sensitivity: 'base' });
+const MAX_ARCHIVE_BYTES = 150 * 1024 * 1024;   // total décompressé maximum lu dans une archive
+
+// lecture minimale d'un .zip (méthodes « stocké » et « deflate »), sans dépendance
+function zipEntries(buf) {
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 22 - 65535); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('archive zip invalide');
+  const total = buf.readUInt16LE(eocd + 10);
+  let p = buf.readUInt32LE(eocd + 16);
+  const out = [];
+  for (let k = 0; k < total && p + 46 <= buf.length && buf.readUInt32LE(p) === 0x02014b50; k++) {
+    const flags = buf.readUInt16LE(p + 8), method = buf.readUInt16LE(p + 10);
+    const csize = buf.readUInt32LE(p + 20), usize = buf.readUInt32LE(p + 24);
+    const nl = buf.readUInt16LE(p + 28), el = buf.readUInt16LE(p + 30), cl = buf.readUInt16LE(p + 32);
+    const off = buf.readUInt32LE(p + 42);
+    const name = buf.toString(flags & 0x800 ? 'utf8' : 'latin1', p + 46, p + 46 + nl);
+    out.push({ name, method, csize, usize, off });
+    p += 46 + nl + el + cl;
+  }
+  return out;
+}
+function zipRead(buf, e) {
+  if (buf.readUInt32LE(e.off) !== 0x04034b50) throw new Error('entrée zip invalide');
+  const start = e.off + 30 + buf.readUInt16LE(e.off + 26) + buf.readUInt16LE(e.off + 28);
+  const raw = buf.subarray(start, start + e.csize);
+  if (e.method === 0) return raw;
+  if (e.method === 8) return require('zlib').inflateRawSync(raw, { maxOutputLength: MAX_IMG_BYTES });
+  throw new Error('compression zip non gérée');
+}
+const zipImages = buf => zipEntries(buf)
+  .filter(e => !e.name.endsWith('/') && mimeOf(e.name) && !isHiddenPath(e.name) && e.usize <= MAX_IMG_BYTES)
+  .sort((a, b) => naturalSort(a.name, b.name));
+function dirImages(dir, depth = 0) {
+  let out = [];
+  let list = [];
+  try { list = fs.readdirSync(dir, { withFileTypes: true }); } catch { }
+  for (const d of list.sort((a, b) => naturalSort(a.name, b.name))) {
+    if (d.name.startsWith('.') || d.name === '__MACOSX') continue;
+    const full = path.join(dir, d.name);
+    if (d.isDirectory() && depth < 2) out = out.concat(dirImages(full, depth + 1));
+    else if (d.isFile() && mimeOf(d.name)) out.push(full);
+  }
+  return out;
+}
+
+const archiveCache = new Map();   // nom de fichier → { sig, pack }
+function listArchives() {
+  let list = [];
+  try { list = fs.readdirSync(ARCHIVES_DIR, { withFileTypes: true }); } catch { return []; }
+  const packs = [];
+  for (const d of list) {
+    if (d.name.startsWith('.') || d.name === '__MACOSX') continue;
+    const full = path.join(ARCHIVES_DIR, d.name);
+    let sig = null;
+    try {
+      const st = fs.statSync(full);
+      sig = st.mtimeMs + ':' + st.size;
+      const c = archiveCache.get(d.name);
+      if (c && c.sig === sig) { if (c.pack) packs.push(c.pack); continue; }
+      let pack = null;
+      if (d.isFile() && /\.zip$/i.test(d.name)) {
+        const n = zipImages(fs.readFileSync(full)).length;
+        if (n) pack = { file: d.name, nom: d.name.replace(/\.zip$/i, ''), kind: 'zip', count: n };
+      } else if (d.isDirectory()) {
+        const n = dirImages(full).length;
+        if (n) pack = { file: d.name, nom: d.name, kind: 'dossier', count: n };
+      }
+      archiveCache.set(d.name, { sig, pack });
+      if (pack) packs.push(pack);
+    } catch (e) {
+      console.log(`Archive ignorée (${d.name}) : ${e.message}`);
+      if (sig) archiveCache.set(d.name, { sig, pack: null });   // on ne réessaie pas tant que le fichier ne change pas
+    }
+  }
+  return packs.sort((a, b) => naturalSort(a.nom, b.nom));
+}
+// lit les images d'un pack (jamais de chemin fourni par l'utilisateur : le pack est retrouvé dans la liste)
+function archiveImages(file, limit = MAX_IMAGES, onlyFirst = false) {
+  const pack = listArchives().find(p => p.file === file);
+  if (!pack) return null;
+  const full = path.join(ARCHIVES_DIR, pack.file), items = []; let skipped = 0, bytes = 0;
+  if (pack.kind === 'zip') {
+    const buf = fs.readFileSync(full), all = zipImages(buf);
+    for (const e of all) {
+      if (items.length >= (onlyFirst ? 1 : limit)) { skipped++; continue; }
+      try {
+        const data = zipRead(buf, e); bytes += data.length;
+        if (bytes > MAX_ARCHIVE_BYTES) { skipped++; continue; }
+        items.push({ name: e.name.split('/').pop(), mime: mimeOf(e.name), buf: data });
+      } catch { skipped++; }
+    }
+  } else {
+    for (const f of dirImages(full)) {
+      if (items.length >= (onlyFirst ? 1 : limit)) { skipped++; continue; }
+      try {
+        const st = fs.statSync(f);
+        if (st.size > MAX_IMG_BYTES || (bytes += st.size) > MAX_ARCHIVE_BYTES) { skipped++; continue; }
+        items.push({ name: path.basename(f), mime: mimeOf(f), buf: fs.readFileSync(f) });
+      } catch { skipped++; }
+    }
+  }
+  return { pack, items, skipped };
+}
+
 // ---------------------------------------------------------------- sauvegarde (réglages, noms et images de chaque salon)
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch { }
 let savedRooms = {};
@@ -122,34 +234,46 @@ function createRoom(code, saved, onDestroy) {
   const elapsed = () => state.elapsedBase + (state.runningSince !== null ? Date.now() - state.runningSince : 0);
 
   // ---------------------------------------------------------------- images
+  // enregistre une image (contenu binaire) dans le salon ; false si elle est refusée
+  function storeImage(name, mime, buf) {
+    if (state.images.length >= MAX_IMAGES || !MIME_EXT[mime] || !buf.length || buf.length > MAX_IMG_BYTES) return false;
+    const id = crypto.randomBytes(5).toString('hex');
+    const file = `${id}.${MIME_EXT[mime]}`;
+    try { fs.mkdirSync(roomDir(code), { recursive: true }); fs.writeFileSync(path.join(roomDir(code), file), buf); }
+    catch (e) { throw new Error('Impossible d\'enregistrer les images sur le serveur'); }
+    state.images.push({ id, name: String(name || '').slice(0, 80), mime, file });
+    return true;
+  }
   function addImages(list) {
     if (state.phase !== 'setup') throw new Error('Les images se changent avant le début de la partie');
     let added = 0, skipped = 0;
-    fs.mkdirSync(roomDir(code), { recursive: true });
     for (const it of Array.isArray(list) ? list : []) {
-      if (state.images.length >= MAX_IMAGES) { skipped++; continue; }
       const data = String((it && it.data) || '');
       const comma = data.indexOf(',');
       const m = comma > 0 && /^data:(image\/(?:jpeg|png|webp|gif));base64$/.exec(data.slice(0, comma));
-      if (!m) { skipped++; continue; }
-      const buf = Buffer.from(data.slice(comma + 1), 'base64');
-      if (!buf.length || buf.length > MAX_IMG_BYTES) { skipped++; continue; }
-      const id = crypto.randomBytes(5).toString('hex');
-      const file = `${id}.${MIME_EXT[m[1]]}`;
-      try { fs.writeFileSync(path.join(roomDir(code), file), buf); }
-      catch (e) { throw new Error('Impossible d\'enregistrer les images sur le serveur'); }
-      state.images.push({ id, name: String(it.name || '').slice(0, 80), mime: m[1], file });
-      added++;
+      if (m && storeImage(it.name, m[1], Buffer.from(data.slice(comma + 1), 'base64'))) added++; else skipped++;
     }
     save();
     return { added, skipped };
   }
-  function removeImage(id) {
+  // charge un pack du dossier archives (remplace les images actuelles si replace)
+  function loadArchive(file, replace) {
+    if (state.phase !== 'setup') throw new Error('Les images se changent avant le début de la partie');
+    const room = replace ? MAX_IMAGES : MAX_IMAGES - state.images.length;
+    const res = archiveImages(String(file || ''), Math.max(0, room));
+    if (!res) throw new Error('Archive introuvable');
+    if (replace) for (const x of [...state.images]) removeImage(x.id, true);
+    let added = 0, skipped = res.skipped;
+    for (const it of res.items) { if (storeImage(it.name, it.mime, it.buf)) added++; else skipped++; }
+    save();
+    return { added, skipped, archive: res.pack.nom };
+  }
+  function removeImage(id, noSave) {
     const i = state.images.findIndex(x => x.id === id);
     if (i < 0) return;
     const [x] = state.images.splice(i, 1);
     try { fs.unlinkSync(path.join(roomDir(code), x.file)); } catch { }
-    save();
+    if (!noSave) save();
   }
   function readImage(id) {
     const x = state.images.find(i => i.id === id);
@@ -244,6 +368,7 @@ function createRoom(code, saved, onDestroy) {
         for (const x of [...state.images]) removeImage(x.id);
         break;
       }
+      case 'loadArchive': { masterOnly(); return loadArchive(a.name, a.replace !== false); }
       case 'start': {
         masterOnly(); need(state.phase === 'setup', 'Partie déjà lancée');
         need(state.images.length >= MIN_IMAGES, `Charge au moins ${MIN_IMAGES} images`);
@@ -315,7 +440,7 @@ function createRoom(code, saved, onDestroy) {
       if (presence() !== b) broadcast();
     });
   }
-  function act(who, a) { touch(); handle(who, a); broadcast(); }
+  function act(who, a) { touch(); const out = handle(who, a); broadcast(); return out; }
   function destroy() { clearLock(); state.gameId++; }
   function info() {
     return {
@@ -410,6 +535,16 @@ const server = http.createServer((req, res) => {
       if (!f.startsWith(PUBLIC + path.sep)) { res.writeHead(403); return res.end(); }
       return sendFile(res, f);
     }
+    if (p === '/api/archives') return json(res, { archives: listArchives() });
+    if (p === '/api/archives/preview') {     // première image du pack, pour la vignette
+      const cache = 'private, max-age=600';
+      let r = null;
+      try { r = archiveImages(url.searchParams.get('name') || '', 1, true); } catch { }
+      const it = r && r.items[0];
+      if (!it) { res.writeHead(404); return res.end(); }
+      res.writeHead(200, { 'Content-Type': it.mime, 'Cache-Control': cache, 'X-Content-Type-Options': 'nosniff' });
+      return res.end(it.buf);
+    }
     if ((m = p.match(/^\/api\/rooms\/([A-Za-z0-9]{1,12})\/img\/([a-f0-9]{10})$/))) {
       const code = cleanCode(m[1]), r = validCode(code) ? getRoom(code, false) : null;
       const img = r && r.readImage(m[2]);
@@ -470,7 +605,7 @@ const server = http.createServer((req, res) => {
           if (a.who !== 'master') throw new Error("Action réservée à l'arbitre");
           destroyRoom(code); return json(res, { ok: true });
         }
-        r.act(a.who, a); json(res, { ok: true });
+        const out = r.act(a.who, a); json(res, { ok: true, ...(out || {}) });
       } catch (e) { json(res, { ok: false, error: e.message }); }
     });
   }

@@ -40,8 +40,13 @@
 
     <!-- ONGLET CARTES -->
     <div class="tab-content active" id="tab-cartes">
+      <div class="card-panel hidden" id="archivesPanel">
+        <h2>Jeux de cartes disponibles</h2>
+        <p class="muted">Archives fournies avec le serveur : un clic suffit, rien à envoyer.</p>
+        <div id="archivesList" class="archives"></div>
+      </div>
       <div class="card-panel">
-        <h2>Charger les images (fichier .zip — 42 fichiers)</h2>
+        <h2><span id="uploadTitle">Charger les images</span> (fichier .zip — 42 fichiers)</h2>
         <p>Format attendu des noms de fichiers : <code>Famille NN - Nom.png</code><br>
         Exemple : <code>Pirate 01 - Monkey D. Luffy.png</code>, <code>Marine 03 - Kizaru.png</code></p>
         <input type="file" id="zipInput" accept=".zip">

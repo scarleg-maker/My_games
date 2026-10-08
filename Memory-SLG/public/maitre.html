@@ -27,9 +27,18 @@ const app = document.getElementById('app');
 document.getElementById('roomCode').textContent = SLG.room;
 SLG.recent.add(SLG.room, 'arbitre');
 let uploading = null;            // { done, total } pendant l'envoi des images
+let archives = [];               // packs d'images du dossier « archives » du serveur
+let loadingArch = null;          // fichier du pack en cours de chargement
+let lastPhase = null;
+
+async function loadArchives() {
+  try { archives = (await (await fetch('/api/archives', { cache: 'no-store' })).json()).archives || []; SLG.redraw(); } catch { }
+}
 
 // ------------------------------------------------------------------ affichage
 function render(s) {
+  if (s.phase === 'setup' && lastPhase !== 'setup') loadArchives();
+  lastPhase = s.phase;
   if (s.phase === 'setup') renderSetup(s); else renderGame(s);
 }
 SLG.redraw = () => { if (SLG.state) SLG.keepInputs(() => render(SLG.state)); };
@@ -40,8 +49,15 @@ function renderSetup(s) {
   let h = '<main>';
 
   // 1. images
-  h += `<section class="panel"><div class="section-title"><span class="num">1</span> Images du jeu</div>
-    <div class="row">
+  h += `<section class="panel"><div class="section-title"><span class="num">1</span> Images du jeu</div>`;
+  if (archives.length) {
+    h += `<p class="small muted" style="margin:0 0 .6rem">📦 Archives du serveur — un clic et les images sont chargées :</p>
+      <div class="archives">${archives.map(a => `<button class="arch${loadingArch === a.file ? ' busy' : ''}" data-arch="${SLG.esc(a.file)}" ${loadingArch ? 'disabled' : ''}>
+        <img src="/api/archives/preview?name=${encodeURIComponent(a.file)}" alt="" loading="lazy">
+        <strong>${SLG.esc(a.nom)}</strong><small>${loadingArch === a.file ? 'Chargement…' : `${a.count} image${a.count > 1 ? 's' : ''}`}</small></button>`).join('')}</div>
+      <p class="small muted" style="margin:1rem 0 .6rem">Ou depuis cet appareil :</p>`;
+  }
+  h += `<div class="row">
       <button class="btn" data-pick="fileImages">🖼️ Charger des images</button>
       <button class="btn" data-pick="fileFolder">📁 Charger un dossier</button>
       <button class="btn" data-pick="fileZip">🗜️ Charger une archive .zip</button>
@@ -209,6 +225,16 @@ document.addEventListener('click', e => {
   if (t.dataset.count) return SLG.act('config', { nbJoueurs: +t.dataset.count });
   if (t.dataset.single) return SLG.act('config', { singleScreen: t.dataset.single === '1' });
   if (t.dataset.rmimg) return SLG.act('removeImage', { id: t.dataset.rmimg });
+  if (t.dataset.arch) {
+    const pack = archives.find(a => a.file === t.dataset.arch), n = s.images.length;
+    if (!pack || loadingArch) return;
+    if (n && !confirm(`Remplacer les ${n} image${n > 1 ? 's' : ''} actuelle${n > 1 ? 's' : ''} par celles de « ${pack.nom} » ?`)) return;
+    loadingArch = pack.file; SLG.redraw();
+    return SLG.act('loadArchive', { name: pack.file, replace: true }).then(r => {
+      loadingArch = null; SLG.redraw();
+      if (r.ok) SLG.toast(`${r.added} image${r.added > 1 ? 's' : ''} chargée${r.added > 1 ? 's' : ''} depuis « ${r.archive} »${r.skipped ? ` — ${r.skipped} ignorée${r.skipped > 1 ? 's' : ''}` : ''}`, r.skipped ? 'info' : 'ok');
+    });
+  }
   if (t.id === 'destroy') {
     if (!confirm('Supprimer définitivement ce salon, ses images et ses noms ?')) return;
     return SLG.act('destroy').then(r => { if (r.ok) { SLG.recent.remove(SLG.room); location.href = '/'; } });

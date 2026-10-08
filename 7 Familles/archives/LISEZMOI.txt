@@ -1,0 +1,17 @@
+DOSSIER « archives » — jeux de cartes fournis avec le serveur
+=============================================================
+
+Chaque fichier .zip placé ici apparait automatiquement dans l'onglet « Cartes »
+de la page arbitre (rubrique « Jeux de cartes disponibles »), avec un bouton « Utiliser ».
+Aucun envoi de fichier n'est necessaire : pratique sur Render, ou les fichiers
+envoyes depuis le navigateur disparaissent a chaque redemarrage du serveur.
+
+Contenu d'une archive : 42 images (png, jpg, webp ou gif), une par carte, nommees
+    Famille NN - Nom.png          ex.  Pirate 01 - Monkey D. Luffy.png
+                                       Marine 03 - Kizaru.png
+Les images peuvent etre a la racine du zip ou dans un sous-dossier. 7 familles de 6 cartes.
+Le nom du fichier .zip est le nom affiche dans la liste (ex. « One Piece.zip »).
+
+Pour ajouter un jeu : copier le .zip ici (puis, sur Render, le commiter dans le depot
+et redeployer). Le serveur relit le dossier a chaque ouverture de la page arbitre :
+pas besoin de le redemarrer en local.

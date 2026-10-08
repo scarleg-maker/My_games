@@ -1,0 +1,14 @@
+Dossier des archives d'images (mode B - "Carte au choix")
+
+Deposez ici vos archives .zip : elles apparaissent automatiquement dans la liste
+"Archives disponibles sur le serveur" de la page maitre. Inutile de les envoyer
+a chaque partie, ce qui est pratique sur Render.
+
+Regles pour chaque archive :
+ - au moins 42 images (jpg, jpeg, png, gif, webp)
+ - noms de fichiers au format  Nom (niveau).ext  avec le niveau sur deux chiffres
+   de 01 a 20, par exemple  Krillin (07).png  ou  Garlic (03).jpg
+ - le nom affiche aux joueurs est "Nom" ; le niveau reste cache
+
+Pour Render : ces fichiers doivent etre dans le depot Git (commit + push) pour etre
+deployes. Evitez les archives de plus de ~50 Mo chacune.

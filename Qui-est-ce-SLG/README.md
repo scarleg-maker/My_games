@@ -1,5 +1,15 @@
 # Qui-est-ce-SLG — jeu en salons, Python/Flask
 
+## Archives intégrées (dossier `archives/`)
+
+Dépose dans `archives/` des archives `.zip` de portraits (ou des sous-dossiers
+d'images). Elles apparaissent dans l'onglet **Archives intégrées** de la page
+de préparation : il suffit de choisir dans la liste, sans rien téléverser.
+C'est le plus simple sur Render, où les fichiers du dépôt sont déployés avec
+l'application. Le nom du `.zip` est le nom affiché ; le nom de chaque image
+devient celui du suspect. Pense à `git add archives` avant de redéployer et
+garde des archives légères (quelques Mo).
+
 ## Lancement rapide
 
 - **macOS / Linux** : double-clique sur `lancer.sh` (ou lance `./lancer.sh` dans

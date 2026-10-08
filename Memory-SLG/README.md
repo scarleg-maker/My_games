@@ -23,6 +23,25 @@ Sur un hébergeur (Render, etc.), la commande de démarrage est `node server.js`
 3. **Règles** : on retourne deux cartes. Identiques : elles restent visibles, entourées de la couleur du joueur, qui rejoue. Différentes : elles restent affichées 3 secondes (le chrono est en pause) puis se recachent, et c'est au joueur suivant. La partie se termine quand toutes les paires sont trouvées ; en multijoueur, le vainqueur est celui qui a le plus de paires.
 4. Le bouton **Pause** de l'arbitre arrête le chronomètre et masque le plateau.
 
+## Le dossier `archives/` (packs d'images livrés avec le site)
+
+Déposez dans `archives/` des fichiers `.zip` d'images, ou des sous-dossiers d'images. Chacun devient un pack proposé dans la page arbitre, rubrique « Archives du serveur » : un clic charge ses images dans le salon (elles remplacent celles déjà chargées). Plus besoin d'envoyer les images depuis son appareil.
+
+- Formats : JPG, PNG, WebP, GIF — 3 Mo maximum par image, 100 images maximum par salon.
+- Le nom du fichier (sans `.zip`) ou du dossier est le nom affiché du pack ; une vignette est tirée de la première image.
+- `Exemple-Formes.zip` est un pack de démonstration, à supprimer ou à remplacer.
+- Détails dans `archives/LISEZ-MOI.txt`.
+
+Le chargement depuis l'appareil de l'arbitre (images, dossier, zip) reste disponible.
+
+## Mettre en ligne sur Render
+
+1. Mettre ce dossier dans un dépôt GitHub (avec vos archives dans `archives/`).
+2. Sur Render : « New + » → « Web Service » → choisir le dépôt. (Ou « Blueprint » : le fichier `render.yaml` est prêt.)
+3. Runtime **Node**, Build Command `npm install`, Start Command `node server.js`.
+
+Les archives font partie du dépôt : elles sont donc toujours présentes après un redémarrage ou un nouveau déploiement. En revanche, sur l'offre gratuite de Render le disque est éphémère : les images envoyées depuis un appareil et les noms enregistrés (dossier `donnees/`) sont perdus à chaque redémarrage. Pour les conserver, ajoutez un « Disk » Render monté sur un dossier (ex. `/data`) et définissez la variable d'environnement `DATA_DIR=/data`.
+
 ## Ce qui est conservé
 
 Pour chaque salon, le serveur garde dans le dossier `donnees/` : les images chargées, les noms des joueurs et les réglages. En revenant avec le même code, on retrouve tout (utile avec un code personnalisé comme `FAMILLE`). Le bouton « Supprimer ce salon » efface ces données. Les 100 salons les plus récents sont conservés.
@@ -31,7 +50,9 @@ Pour chaque salon, le serveur garde dans le dossier `donnees/` : les images char
 
 - `server.js` — serveur (aucune dépendance) : salons, règles du jeu, chronomètre, temps réel.
 - `public/` — pages du site : `accueil.html`, `maitre.html` (arbitre), `joueur.html`, `common.js`, `style.css`.
+- `archives/` — packs d'images (zip ou dossiers) proposés à l'arbitre.
 - `donnees/` — créé automatiquement (sauvegarde des salons).
+- `render.yaml` — configuration prête pour Render.
 - `hors-ligne/Memory-SLG.html` — l'ancienne version, un seul fichier à ouvrir dans un navigateur, sans salons ni serveur.
 
 Les cartes cachées ne révèlent jamais leur image avant d'être retournées : le serveur n'envoie aux écrans que les cartes visibles.

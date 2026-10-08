@@ -1,0 +1,5 @@
+Deposez ici vos archives d'images (.zip).
+Elles apparaitront dans la liste "Archives disponibles" de la page maitre,
+sans avoir a les envoyer a chaque partie (pratique sur Render : le dossier
+est livre avec le projet).
+Nom du fichier = nom affiche (les _ deviennent des espaces).

@@ -39,6 +39,19 @@ $('solo-ai-btn').onclick = () => {
   act({ type: 'config', nbPlayers: 4 });
   for (let i = 0; i < 4; i++) act({ type: 'config', seat: i, seatType: i === 0 ? 'human' : 'ai' });
 };
+// ---------- règles
+const moneyInput = $('start-money');
+function sendMoney() { act({ type: 'config', options: { startMoney: +moneyInput.value || 1500 } }); }
+moneyInput.onchange = sendMoney;
+moneyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { moneyInput.blur(); } });
+document.querySelectorAll('[data-money]').forEach((b) => { b.onclick = () => { moneyInput.value = b.dataset.money; sendMoney(); }; });
+$('double-go').onchange = (e) => act({ type: 'config', options: { doubleGo: e.target.checked } });
+$('park-mode').onchange = (e) => act({ type: 'config', options: { parkMode: e.target.value } });
+const PARK_HINTS = {
+  off: '',
+  cards: 'Dès qu\'une carte (Chance ou Caisse de Communauté) fait payer la banque, la somme est mise de côté ; le joueur qui s\'arrête sur le Parc gratuit récupère le total.',
+};
+
 $('start-btn').onclick = () => act({ type: 'start' });
 $('rematch-btn').onclick = () => act({ type: 'rematch' });
 $('reset-btn').onclick = () => act({ type: 'reset' });
@@ -76,6 +89,12 @@ function seatRowHtml(s) {
 function renderLobby() {
   const typing = seatRows.contains(document.activeElement) && document.activeElement.tagName === 'INPUT';
   $('count-display').textContent = room.nbPlayers;
+  if (room.options) {
+    if (document.activeElement !== moneyInput) moneyInput.value = room.options.startMoney;
+    $('double-go').checked = !!room.options.doubleGo;
+    if (document.activeElement !== $('park-mode')) $('park-mode').value = room.options.parkMode;
+    $('park-hint').textContent = PARK_HINTS[room.options.parkMode] || '';
+  }
   if (document.activeElement !== boardSelect) boardSelect.value = room.boardId;
   if (typing) {
     // on ne reconstruit pas les lignes pendant la saisie : on met seulement à jour les statuts

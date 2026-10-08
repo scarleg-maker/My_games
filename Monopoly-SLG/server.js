@@ -65,6 +65,7 @@ class Room {
     this.channel = `room-${code}`;
     this.boardId = DEFAULT_BOARD;
     this.nbPlayers = 2;
+    this.options = { startMoney: 1500, doubleGo: false, parkMode: "off" }; // règles choisies par l'hôte
     this.seats = Array.from({ length: MAX_SEATS }, (_, i) => ({
       type: "human", name: "", claimed: false, token: TOKENS[i].id, color: COLORS[i].hex,
     }));
@@ -73,6 +74,7 @@ class Room {
     this.lastActivity = Date.now();
     if (saved) {
       if (boardExists(saved.boardId)) this.boardId = saved.boardId;
+      if (saved.options) this.setOptions(saved.options);
       if (saved.nbPlayers) this.nbPlayers = Math.max(2, Math.min(MAX_SEATS, saved.nbPlayers | 0));
       (saved.seats || []).slice(0, MAX_SEATS).forEach((s, i) => {
         if (!s) return;
@@ -87,6 +89,11 @@ class Room {
       this.seats.forEach((s, i) => { if (dupT) s.token = TOKENS[i].id; if (dupC) s.color = COLORS[i].hex; });
     }
   }
+  setOptions(o) {
+    if (o.startMoney !== undefined) this.options.startMoney = Math.max(100, Math.min(50000, Math.round(Number(o.startMoney) || 1500)));
+    if (o.doubleGo !== undefined) this.options.doubleGo = !!o.doubleGo;
+    if (o.parkMode !== undefined) this.options.parkMode = o.parkMode === "off" ? "off" : "cards"; // « chance » (ancien) = « cards »
+  }
   touch() { this.lastActivity = Date.now(); }
   idle() { return Date.now() - this.lastActivity; }
   get phase() { return !this.game ? "lobby" : this.game.gameOver ? "over" : "playing"; }
@@ -95,7 +102,7 @@ class Room {
 
   save() {
     saveRoom(this.code, {
-      boardId: this.boardId, nbPlayers: this.nbPlayers,
+      boardId: this.boardId, nbPlayers: this.nbPlayers, options: this.options,
       seats: this.seats.map((s) => ({ type: s.type, name: s.name, token: s.token, color: s.color })),
     });
   }
@@ -104,7 +111,7 @@ class Room {
   view() {
     return {
       code: this.code, phase: this.phase, boardId: this.boardId, boardName: this.boardName(),
-      nbPlayers: this.nbPlayers, lanUrls: lanUrls(),
+      nbPlayers: this.nbPlayers, options: this.options, lanUrls: lanUrls(),
       seats: this.seats.slice(0, this.nbPlayers).map((s, i) => ({
         index: i, type: s.type, color: s.color, token: s.token,
         name: s.type === "ai" ? s.name || `IA ${i + 1}` : s.name,
@@ -137,7 +144,7 @@ class Room {
     const players = this.seats.slice(0, n).map((s, i) => ({
       type: s.type, name: s.type === "ai" ? s.name || `IA ${i + 1}` : s.name, token: s.token, color: s.color,
     }));
-    this.game = new MonopolySLGGame(this.code, loadBoard(this.boardId), players);
+    this.game = new MonopolySLGGame(this.code, loadBoard(this.boardId), players, this.options);
     const g = this.game;
     g.on("update", () => {
       io.to(this.channel).emit("state", g.getPublicState());
@@ -191,6 +198,7 @@ class Room {
         need(isHost, "Action réservée à l'hôte.");
         need(this.phase === "lobby", "Configuration impossible pendant une partie.");
         if (a.boardId !== undefined) { need(boardExists(a.boardId), "Plateau introuvable."); this.boardId = a.boardId; }
+        if (a.options !== undefined) this.setOptions(a.options);
         if (a.nbPlayers !== undefined) this.nbPlayers = Math.max(2, Math.min(MAX_SEATS, a.nbPlayers | 0));
         if (a.seat !== undefined) {
           const i = a.seat | 0;
@@ -263,6 +271,17 @@ class Room {
         else if (a.type === "useJailCard") g.useJailCard(seat);
         else if (a.type === "endTurn") g.endTurn(seat);
         else g.manageProperty(seat, a.spaceId | 0, a.action);
+        break;
+      }
+      // ----- échanges entre joueurs (à tout moment)
+      case "tradePropose": case "tradeAccept": case "tradeDecline": case "tradeCancel": {
+        need(role === "seat", "Les spectateurs ne peuvent pas échanger.");
+        need(this.game, "La partie n'a pas commencé.");
+        const g = this.game;
+        if (a.type === "tradePropose") g.proposeTrade(seat, a.to | 0, a.give, a.get);
+        else if (a.type === "tradeAccept") g.respondTrade(seat, a.id | 0, true);
+        else if (a.type === "tradeDecline") g.respondTrade(seat, a.id | 0, false);
+        else g.cancelTrade(seat, a.id | 0);
         break;
       }
       default: throw new Error("Action inconnue.");

@@ -1,0 +1,13 @@
+DOSSIER ARCHIVES
+================
+Déposez ici vos archives d'images au format .zip (une archive = un jeu d'images).
+
+- Elles apparaissent automatiquement dans la liste "choisir une archive d'images du serveur"
+  sur la page du maître (l'écran de réglages), sans rien téléverser.
+- Chaque image du .zip (png, jpg, jpeg, gif, webp, bmp...) devient une image à mettre aux
+  enchères ; le nom du fichier, sans son extension, sert de nom à l'image.
+- Les sous-dossiers à l'intérieur du .zip sont acceptés.
+- Le nom du .zip (sans ".zip") est celui affiché dans la liste.
+
+Pour la version en ligne (Render) : ce dossier doit faire partie de ce que vous déployez
+(commité dans votre dépôt). Prévoyez des archives raisonnables (quelques dizaines de Mo au plus).

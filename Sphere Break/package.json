@@ -1,0 +1,12 @@
+{
+  "name": "sphere-break",
+  "version": "1.0.0",
+  "description": "Un clone jouable du mini-jeu Sphere Break de Final Fantasy X-2",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

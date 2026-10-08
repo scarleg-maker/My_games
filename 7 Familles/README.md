@@ -33,7 +33,8 @@ Chaque salon a **sa propre partie, ses propres cartes et ses propres joueurs** :
    ex. `FAMILLE`) pour retrouver le même salon d'une fois sur l'autre.
 2. La page arbitre affiche le **code**, un **QR code** et un lien à donner aux joueurs.
    Si le PC a plusieurs adresses réseau (WSL, VPN…), un menu permet de choisir celle du Wi-Fi.
-3. Onglet **Cartes** : charger le `.zip` de 42 images nommées `Famille NN - Nom.png`
+3. Onglet **Cartes** : choisir un jeu dans **« Jeux de cartes disponibles »** (archives du dossier `archives/`,
+   un clic sur « Utiliser »), ou envoyer son propre `.zip` de 42 images nommées `Famille NN - Nom.png`
    (ex. `Pirate 01 - Monkey D. Luffy.png`).
 4. Onglet **Joueurs** : nombre de joueurs (2 à 10) et leurs noms → « Enregistrer ».
 5. Onglet **Partie** : « Lancer la partie ». Le suivi en direct (cartes en main, prêts, joueurs connectés,
@@ -60,7 +61,18 @@ Recharger la page ou perdre le Wi-Fi quelques secondes ne casse rien : la main e
 - La partie se termine quand les 7 familles sont constituées ; le vainqueur est celui qui en a le plus
   (égalité possible, elle est annoncée).
 
-## 4. À savoir
+## 4. Le dossier `archives/` (jeux de cartes fournis avec le serveur)
+
+Tout `.zip` déposé dans `archives/` apparaît dans la page arbitre avec son nombre de cartes et ses familles.
+Le nom du fichier est le nom affiché (`One Piece.zip` → « One Piece »). Le dossier est relu à chaque ouverture de la
+page arbitre : pas besoin de redémarrer le serveur. Un zip inutilisable est listé avec un avertissement.
+Un jeu d'exemple (`Exemple - Animaux.zip`) est fourni : vous pouvez le supprimer.
+
+**Sur Render** : les fichiers envoyés depuis le navigateur sont effacés à chaque redémarrage du service, alors que
+le contenu du dépôt reste. Il suffit donc de **commiter les `.zip` dans `archives/`** puis de redéployer.
+Le fichier `.gitignore` fourni exclut `node_modules/`, `uploads/` et `sauvegarde.json` du dépôt, pas `archives/`.
+
+## 5. À savoir
 
 - **Pare-feu Windows** : à la première exécution, autoriser Node.js sur le réseau privé, sinon les téléphones
   ne pourront pas se connecter.

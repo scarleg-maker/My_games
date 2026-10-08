@@ -113,11 +113,22 @@
 
       <div class="panel" id="photos-panel">
         <h2>Archive de photos (mode B)</h2>
+        <p style="font-size:0.85rem; opacity:0.8; margin-top:-6px;">
+          Noms attendus dans l'archive : "Nom (niveau).jpg", niveau sur deux chiffres de 01 à 20
+          (le zéro devant est obligatoire pour 01 à 09). Minimum 42 images.
+        </p>
+        <div class="field" id="archive-field">
+          <label for="archive-select">Archives disponibles sur le serveur</label>
+          <select id="archive-select"></select>
+          <p id="archive-empty" class="hidden" style="font-size:0.85rem; opacity:0.75; margin-top:6px;">
+            Aucune archive dans le dossier « archives » du serveur : envoyez un fichier ZIP ci-dessous.
+          </p>
+        </div>
         <div class="field">
-          <label>Fichier ZIP — noms attendus : "Nom (niveau).jpg", niveau sur deux chiffres de 01 à 20 (le zéro devant est obligatoire pour 01 à 09)</label>
+          <label>Ou envoyer ma propre archive</label>
           <div class="dropzone" id="dropzone">
             <input type="file" id="photos-input" accept=".zip">
-            <div id="dropzone-label">Cliquez pour choisir une archive .zip (minimum 42 images, niveaux 01 à 20)</div>
+            <div id="dropzone-label">Cliquez pour choisir une archive .zip (facultatif)</div>
           </div>
         </div>
       </div>

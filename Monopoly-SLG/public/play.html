@@ -29,6 +29,11 @@
       <div class="action-buttons" id="action-buttons"></div>
     </div>
 
+    <div class="trade-panel" id="trade-panel">
+      <button id="trade-btn" class="btn ghost wide">🤝 Proposer un échange</button>
+      <div id="trade-list"></div>
+    </div>
+
     <div class="log-panel">
       <h3>Journal</h3>
       <div id="log" class="log"></div>
@@ -43,9 +48,15 @@
     <div id="lobby-form"></div>
     <h3 class="seats-title">Joueurs du salon</h3>
     <div id="lobby-seats" class="seats"></div>
+    <p class="small" id="lobby-rules"></p>
     <p class="small muted" id="lobby-wait"></p>
     <a href="/" class="small">← Accueil</a>
   </div>
+</div>
+
+<!-- composition d'un échange (au-dessus des autres fenêtres) -->
+<div id="trade-overlay" class="overlay hidden" style="z-index:70">
+  <div id="trade-card" class="modal-card trade-card"></div>
 </div>
 
 <div id="modal-overlay" class="overlay hidden">

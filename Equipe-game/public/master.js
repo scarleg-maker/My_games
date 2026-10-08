@@ -83,6 +83,39 @@ uploadBtn.addEventListener('click', () => {
     .catch(e => { uploadStatus.textContent = ' Erreur réseau.'; });
 });
 
+// Archives pré-installées sur le serveur (dossier /archives)
+const archivesBlock = document.getElementById('archives-block');
+const archiveSelect = document.getElementById('archive-select');
+fetch('/api/archives').then(r => r.json()).then(data => {
+  const list = data.archives || [];
+  if (!list.length) return;
+  archiveSelect.innerHTML = '';
+  list.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.name;
+    o.textContent = `${a.label} (${(a.size / 1048576).toFixed(1)} Mo)`;
+    archiveSelect.appendChild(o);
+  });
+  archivesBlock.style.display = '';
+}).catch(() => {});
+
+document.getElementById('archive-btn').addEventListener('click', () => {
+  uploadStatus.textContent = ' Chargement de l\'archive...';
+  fetch(`/api/rooms/${ROOM_CODE}/use-archive`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: archiveSelect.value })
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { uploadStatus.textContent = ' Erreur : ' + data.error; return; }
+      uploadedImagesCount = data.count;
+      uploadStatus.textContent = ` ✓ ${data.count} images chargées.` + (data.skipped ? ` (${data.skipped} ignorée(s))` : '');
+      checkStartReady();
+    })
+    .catch(() => { uploadStatus.textContent = ' Erreur réseau.'; });
+});
+
 function getPlayerNames() {
   return Array.from(document.querySelectorAll('.player-name-input')).map(i => i.value.trim());
 }

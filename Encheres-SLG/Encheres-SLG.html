@@ -230,6 +230,12 @@
             <label for="filePicker">Sélectionner des images OU un fichier .ZIP :</label>
             <input type="file" id="filePicker" multiple accept="image/*,.zip">
         </div>
+        <!-- Archives d'images hébergées sur le serveur (dossier "archives/"), affichées seulement si le serveur en propose -->
+        <div class="setup-group" id="archiveGroup" style="display:none;">
+            <label for="archiveSelect">OU choisir une archive d'images du serveur :</label>
+            <select id="archiveSelect"></select>
+            <p class="info-text" id="archiveStatus" style="margin-top:6px;"></p>
+        </div>
         <button class="btn btn-start" id="startBtn" disabled>Lancer la partie</button>
     </div>
 
@@ -337,6 +343,9 @@
 
     <script>
         const filePicker = document.getElementById('filePicker');
+        const archiveGroup = document.getElementById('archiveGroup');
+        const archiveSelect = document.getElementById('archiveSelect');
+        const archiveStatus = document.getElementById('archiveStatus');
         const playerCountSelect = document.getElementById('playerCount');
         const startingMoneyInput = document.getElementById('startingMoney');
         const maxPurchasesSelect = document.getElementById('maxPurchases');
@@ -443,11 +452,13 @@
 
         function buildAddressesHtml(count) {
             if (!urlRoomCode) return '';
-            const port = 5500;
-            let html = `<p class="info-text" style="text-align:left; margin-bottom:6px;">Adresses des pages joueurs (à ouvrir sur chaque appareil, même réseau) :</p>`;
+            // Adresse réelle de la page : "localhost:5500" en local, "mon-jeu.onrender.com" une fois en ligne
+            const host = window.location.host;
+            const base = window.location.protocol + '//' + host;
+            let html = `<p class="info-text" style="text-align:left; margin-bottom:6px;">Adresses des pages joueurs (à ouvrir sur chaque appareil) :</p>`;
             html += '<div class="lobby-list">';
             for (let i = 1; i <= count; i++) {
-                html += `<a class="lobby-slot" href="http://localhost:${port}/${urlRoomCode}/joueur${i}" target="_blank" rel="noopener">Joueur ${i} : localhost:${port}/${urlRoomCode}/joueur${i}</a>`;
+                html += `<a class="lobby-slot" href="${base}/${urlRoomCode}/joueur${i}" target="_blank" rel="noopener">Joueur ${i} : ${host}/${urlRoomCode}/joueur${i}</a>`;
             }
             html += '</div>';
             return html;
@@ -654,7 +665,7 @@
         modeAResetBtn.addEventListener('click', () => {
             if (modeASocket) modeASocket.emit('resetGame');
             parsedFilesArray = [];
-            filePicker.value = '';
+            filePicker.value = ''; archiveSelect.value = ''; archiveStatus.innerText = '';
             startBtn.disabled = true;
             setupArea.style.display = 'block';
             gameOverAreaA.style.display = 'none';
@@ -826,33 +837,35 @@
         playerCountSelect.addEventListener('change', updatePlayerInputs);
         updatePlayerInputs();
 
+        // Extrait toutes les images d'un ZIP (File, Blob ou ArrayBuffer) -> [{name, url, blob}]
+        async function extractZipImages(source) {
+            const zip = await JSZip.loadAsync(source);
+            const out = [];
+            const promises = [];
+            zip.forEach((relativePath, zipEntry) => {
+                if (!zipEntry.dir && !relativePath.includes('__MACOSX') && /\.(jfif|pjpeg|jpeg|pjpg|png|jpg|gif|webp|bmp)$/i.test(zipEntry.name)) {
+                    promises.push(zipEntry.async("blob").then(blob => {
+                        out.push({ name: zipEntry.name.split('/').pop(), url: URL.createObjectURL(blob), blob: blob });
+                    }));
+                }
+            });
+            await Promise.all(promises);
+            return out;
+        }
+
         filePicker.addEventListener('change', async (e) => {
             startBtn.disabled = true;
             parsedFilesArray = [];
+            archiveSelect.value = '';
+            archiveStatus.innerText = '';
             const files = Array.from(e.target.files);
             
             if (files.length === 0) return;
 
-            if (files.length === 1 && files[0].name.endsWith('.zip')) {
+            if (files.length === 1 && files[0].name.toLowerCase().endsWith('.zip')) {
                 infoText.innerText = "Déchiffrement du fichier ZIP...";
                 try {
-                    const zip = await JSZip.loadAsync(files[0]);
-                    const promises = [];
-                    
-                    zip.forEach((relativePath, zipEntry) => {
-                        if (!zipEntry.dir && !relativePath.includes('__MACOSX') && /\.(jfif|pjpeg|jpeg|pjpg|png|jpg|gif|webp|bmp)$/i.test(zipEntry.name)) {
-                            const promise = zipEntry.async("blob").then(blob => {
-                                parsedFilesArray.push({
-                                    name: zipEntry.name.split('/').pop(),
-                                    url: URL.createObjectURL(blob),
-                                    blob: blob
-                                });
-                            });
-                            promises.push(promise);
-                        }
-                    });
-                    
-                    await Promise.all(promises);
+                    parsedFilesArray = await extractZipImages(files[0]);
                     infoText.innerText = `${parsedFilesArray.length} images chargées depuis le ZIP avec succès !`;
                 } catch (err) {
                     showCustomAlert("Erreur lors de la lecture du fichier ZIP.");
@@ -869,6 +882,42 @@
             }
             startBtn.disabled = parsedFilesArray.length === 0;
         });
+
+        // --- Archives d'images hébergées par le serveur (dossier "archives/") ---
+        // Pratique en ligne (Render) : le maître n'a rien à téléverser, il choisit une archive dans la liste.
+        async function loadArchiveList() {
+            try {
+                const res = await fetch('/api/archives');
+                if (!res.ok) return;
+                const list = await res.json();
+                if (!Array.isArray(list) || list.length === 0) return;
+                archiveSelect.innerHTML = '<option value="">— Aucune —</option>' +
+                    list.map(a => `<option value="${encodeURIComponent(a.name)}">${a.name.replace(/\.zip$/i, '')} (${(a.size / 1048576).toFixed(1)} Mo)</option>`).join('');
+                archiveGroup.style.display = 'block';
+            } catch (e) { /* page ouverte en local sans serveur : pas d'archives, on ignore */ }
+        }
+
+        archiveSelect.addEventListener('change', async () => {
+            const file = archiveSelect.value;
+            startBtn.disabled = true;
+            parsedFilesArray = [];
+            if (!file) { archiveStatus.innerText = ''; return; }
+            filePicker.value = '';
+            archiveStatus.innerText = 'Téléchargement de l\'archive...';
+            try {
+                const res = await fetch('/archives/' + file);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                archiveStatus.innerText = 'Lecture des images...';
+                parsedFilesArray = await extractZipImages(await res.blob());
+                archiveStatus.innerText = `${parsedFilesArray.length} image(s) chargée(s) depuis l'archive.`;
+            } catch (err) {
+                archiveStatus.innerText = '';
+                showCustomAlert("Impossible de charger cette archive depuis le serveur.");
+                return;
+            }
+            startBtn.disabled = parsedFilesArray.length === 0;
+        });
+        loadArchiveList();
 
         startBtn.addEventListener('click', async () => {
             const count = parseInt(playerCountSelect.value);
@@ -1087,7 +1136,7 @@
             remainingFiles = [];
             parsedFilesArray = [];
             eliminatedPlayerIds = new Set();
-            filePicker.value = '';
+            filePicker.value = ''; archiveSelect.value = ''; archiveStatus.innerText = '';
             startBtn.disabled = true;
             leftSidebar.innerHTML = '';
             rightSidebar.innerHTML = '';

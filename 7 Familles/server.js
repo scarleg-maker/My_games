@@ -411,47 +411,91 @@ app.get('/api/rooms/:code', (req, res) => {
   res.set('Cache-Control', 'no-store').json(r ? r.info() : { exists: false, code });
 });
 
-// chargement du zip de cartes d'un salon
+// ---------------------------------------------------------------- import d'un zip de cartes
+const ARCHIVES_DIR = path.join(__dirname, 'archives');     // jeux de cartes fournis avec le serveur (*.zip)
+fs.mkdirSync(ARCHIVES_DIR, { recursive: true });
+const httpError = (status, msg) => Object.assign(new Error(msg), { status });
+const imageEntries = zip => zip.getEntries()
+  .filter(e => !e.isDirectory && /\.(png|jpe?g|webp|gif)$/i.test(e.entryName) && !/(^|\/)__MACOSX\//.test(e.entryName));
+
+// Lit un zip, écrit les images dans uploads/cards/CODE et enregistre les cartes dans le salon.
+function importZip(room, code, zipPath) {
+  if (!room.canUpload()) throw httpError(409, 'Impossible de changer les cartes pendant une partie');
+  let entries;
+  try { entries = imageEntries(new AdmZip(zipPath)); }
+  catch (e) { throw httpError(400, "Ce fichier n'est pas une archive .zip valide"); }
+  if (!entries.length) throw httpError(400, "Aucune image (png, jpg, webp, gif) dans l'archive");
+  if (entries.length > 200) throw httpError(400, 'Archive trop volumineuse (200 images maximum)');
+
+  const dir = path.join(CARDS_DIR, code);
+  rmCards(code); fs.mkdirSync(dir, { recursive: true });
+  const stamp = Date.now().toString(36);              // évite le cache du navigateur après un nouveau zip
+  const cards = [], colorOf = new Map();
+  let skipped = 0;
+  entries.forEach((entry, idx) => {
+    const parsed = parseFilename(path.basename(entry.entryName));
+    if (!parsed || entry.header.size > 15e6) { skipped++; return; }
+    const file = `card_${idx}_${stamp}${parsed.ext.toLowerCase()}`;
+    fs.writeFileSync(path.join(dir, file), entry.getData());
+    if (!colorOf.has(parsed.family)) colorOf.set(parsed.family, FAMILY_COLORS[colorOf.size % FAMILY_COLORS.length]);
+    cards.push({ id: `c${idx}`, family: parsed.family, number: parsed.number, name: parsed.name, file: `/cards/${code}/${file}` });
+  });
+  if (!cards.length) throw httpError(400, 'Aucun nom de fichier au format « Famille NN - Nom.png »');
+  const families = [...colorOf].map(([name, color]) => ({ name, color, size: cards.filter(c => c.family === name).length }));
+  room.setCards(cards, families);
+  const warnings = [];
+  if (cards.length !== 42) warnings.push(`${cards.length} cartes chargées (42 attendues pour 7 familles de 6)`);
+  families.filter(f => f.size !== DEFAULT_FAMILY_SIZE).forEach(f => warnings.push(`Famille « ${f.name} » : ${f.size} carte(s) au lieu de ${DEFAULT_FAMILY_SIZE}`));
+  return { success: true, count: cards.length, skipped, families, warnings };
+}
+const roomFor = codeParam => { const c = cleanCode(codeParam); return validCode(c) ? { code: c, room: getRoom(c, false) } : { code: c, room: null }; };
+
+// zip envoyé par l'arbitre
 app.post('/api/rooms/:code/upload-zip', (req, res) => {
   upload.single('zipfile')(req, res, err => {
     const cleanup = () => { if (req.file) fs.unlink(req.file.path, () => { }); };
     const fail = (status, error) => { cleanup(); res.status(status).json({ error }); };
     if (err) return fail(400, 'Envoi impossible : ' + err.message);
-    const code = cleanCode(req.params.code);
-    const room = validCode(code) ? getRoom(code, false) : null;
+    const { code, room } = roomFor(req.params.code);
     if (!room) return fail(404, "Ce salon n'existe plus");
-    if (!room.canUpload()) return fail(409, 'Impossible de changer les cartes pendant une partie');
     if (!req.file) return fail(400, 'Aucun fichier reçu');
-    try {
-      const entries = new AdmZip(req.file.path).getEntries()
-        .filter(e => !e.isDirectory && /\.(png|jpe?g|webp|gif)$/i.test(e.entryName) && !/(^|\/)__MACOSX\//.test(e.entryName));
-      if (entries.length > 200) return fail(400, 'Archive trop volumineuse (200 images maximum)');
-
-      const dir = path.join(CARDS_DIR, code);
-      rmCards(code); fs.mkdirSync(dir, { recursive: true });
-      const stamp = Date.now().toString(36);              // évite le cache du navigateur après un nouveau zip
-      const cards = [], colorOf = new Map();
-      let skipped = 0;
-      entries.forEach((entry, idx) => {
-        const parsed = parseFilename(path.basename(entry.entryName));
-        if (!parsed || entry.header.size > 15e6) { skipped++; return; }
-        const file = `card_${idx}_${stamp}${parsed.ext.toLowerCase()}`;
-        fs.writeFileSync(path.join(dir, file), entry.getData());
-        if (!colorOf.has(parsed.family)) colorOf.set(parsed.family, FAMILY_COLORS[colorOf.size % FAMILY_COLORS.length]);
-        cards.push({ id: `c${idx}`, family: parsed.family, number: parsed.number, name: parsed.name, file: `/cards/${code}/${file}` });
-      });
-      cleanup();
-      const families = [...colorOf].map(([name, color]) => ({ name, color, size: cards.filter(c => c.family === name).length }));
-      room.setCards(cards, families);
-      const warnings = [];
-      if (cards.length !== 42) warnings.push(`${cards.length} cartes chargées (42 attendues pour 7 familles de 6)`);
-      families.filter(f => f.size !== DEFAULT_FAMILY_SIZE).forEach(f => warnings.push(`Famille « ${f.name} » : ${f.size} carte(s) au lieu de ${DEFAULT_FAMILY_SIZE}`));
-      res.json({ success: true, count: cards.length, skipped, families, warnings });
-    } catch (e) {
-      console.error(e);
-      fail(500, 'Erreur lors du traitement du zip : ' + e.message);
-    }
+    try { const r = importZip(room, code, req.file.path); cleanup(); res.json(r); }
+    catch (e) { if (!e.status) console.error(e); fail(e.status || 500, e.status ? e.message : 'Erreur lors du traitement du zip : ' + e.message); }
   });
+});
+
+// archives fournies avec le serveur : dossier « archives »
+const archiveCache = new Map();                           // fichier → { mt, info }
+function listArchives() {
+  let files = [];
+  try { files = fs.readdirSync(ARCHIVES_DIR).filter(f => /\.zip$/i.test(f)).sort((a, b) => a.localeCompare(b, 'fr', { numeric: true })); } catch { }
+  return files.map(f => {
+    const full = path.join(ARCHIVES_DIR, f);
+    let st; try { st = fs.statSync(full); } catch { return null; }
+    const c = archiveCache.get(f);
+    if (c && c.mt === st.mtimeMs) return c.info;
+    const info = { file: f, name: f.replace(/\.zip$/i, ''), size: st.size, ok: false, count: 0, families: [] };
+    try {
+      const fam = new Map();
+      for (const e of imageEntries(new AdmZip(full))) {
+        const p = parseFilename(path.basename(e.entryName));
+        if (p) { info.count++; fam.set(p.family, (fam.get(p.family) || 0) + 1); }
+      }
+      info.families = [...fam.keys()]; info.ok = info.count > 0;
+      if (!info.ok) info.error = 'aucune carte au format « Famille NN - Nom.png »';
+    } catch (e) { info.error = 'archive illisible'; }
+    archiveCache.set(f, { mt: st.mtimeMs, info });
+    return info;
+  }).filter(Boolean);
+}
+app.get('/api/archives', (req, res) => res.set('Cache-Control', 'no-store').json(listArchives()));
+app.post('/api/rooms/:code/use-archive', (req, res) => {
+  const { code, room } = roomFor(req.params.code);
+  if (!room) return res.status(404).json({ error: "Ce salon n'existe plus" });
+  const file = path.basename(String((req.body || {}).file || ''));          // jamais de chemin : uniquement un fichier du dossier
+  if (!listArchives().some(a => a.file === file && a.ok)) return res.status(404).json({ error: 'Archive introuvable' });
+  try { res.json({ ...importZip(room, code, path.join(ARCHIVES_DIR, file)), archive: file }); }
+  catch (e) { if (!e.status) console.error(e); res.status(e.status || 500).json({ error: e.status ? e.message : 'Erreur lors du traitement du zip : ' + e.message }); }
 });
 
 // QR code en SVG (généré par le serveur : fonctionne aussi sans connexion internet)

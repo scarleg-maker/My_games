@@ -58,11 +58,18 @@
     <fieldset>
       <p class="section-label">03 — PORTRAITS DES SUSPECTS</p>
       <div class="source-tabs">
-        <div class="source-tab active" data-source="folder">Dossier d'images</div>
+        <div class="source-tab active" data-source="library" id="library-tab">Archives intégrées</div>
+        <div class="source-tab" data-source="folder">Dossier d'images</div>
         <div class="source-tab" data-source="archive">Archive .zip</div>
       </div>
 
-      <div class="drop-zone" id="folder-zone">
+      <div class="drop-zone" id="library-zone">
+        Choisis une archive déjà présente sur le serveur (dossier <code>archives/</code>) : rien à envoyer.
+        <br>
+        <select id="library-select"><option value="">Chargement…</option></select>
+      </div>
+
+      <div class="drop-zone" id="folder-zone" style="display:none;">
         Sélectionne un dossier contenant les portraits (un fichier = un suspect, le nom du fichier devient son nom).
         <br>
         <input type="file" id="folder-input" webkitdirectory directory multiple>

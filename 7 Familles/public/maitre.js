@@ -66,6 +66,34 @@ socket.on('server-info', d => {
 });
 
 // ---- Cartes
+// Archives du serveur (dossier « archives ») : liste + chargement en un clic
+let archives = [];
+async function loadArchives() {
+  try { archives = await (await fetch('/api/archives', { cache: 'no-store' })).json(); } catch { archives = []; }
+  $('archivesPanel').classList.toggle('hidden', !archives.length);
+  $('uploadTitle').textContent = archives.length ? 'Ou envoyer mon propre jeu de cartes' : 'Charger les images';
+  renderArchives();
+}
+function renderArchives() {
+  $('archivesList').innerHTML = archives.map(a => `<div class="archive${a.ok ? '' : ' bad'}">
+      <div class="archive-info"><strong>${SF.esc(a.name)}</strong>
+        <span class="small muted">${a.ok ? `${a.count} cartes · ${a.families.length} familles : ${a.families.map(SF.esc).join(', ')}` : '⚠️ ' + SF.esc(a.error || 'archive inutilisable')}</span></div>
+      <button data-archive="${SF.esc(a.file)}" ${a.ok && !started ? '' : 'disabled'}>Utiliser</button></div>`).join('');
+}
+$('archivesList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-archive]');
+  if (!b) return;
+  b.disabled = true; $('uploadStatus').textContent = 'Chargement en cours...';
+  try {
+    const r = await (await fetch(`/api/rooms/${encodeURIComponent(SF.room)}/use-archive`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ file: b.dataset.archive }) })).json();
+    if (r.error) { $('uploadStatus').textContent = '❌ ' + r.error; SF.toast(r.error, 'bad'); }
+    else $('uploadStatus').textContent = `✅ « ${r.archive.replace(/\.zip$/i, '')} » : ${r.count} cartes chargées` + (r.warnings.length ? ' — ⚠️ ' + r.warnings.join(' ; ') : '');
+  } catch (err) { $('uploadStatus').textContent = '❌ Erreur réseau : ' + err.message; }
+  renderArchives();
+});
+loadArchives();
+
 $('uploadBtn').addEventListener('click', async () => {
   const input = $('zipInput');
   if (!input.files.length) { $('uploadStatus').textContent = 'Choisissez un fichier .zip.'; return; }
@@ -149,6 +177,7 @@ function applyLocks() {
   $('genNamesBtn').disabled = started;
   $('uploadBtn').disabled = started;
   $('zipInput').disabled = started;
+  if (typeof renderArchives === 'function') renderArchives();
 }
 
 socket.on('game-started', ({ piocheCount }) => {

@@ -2,7 +2,7 @@ const EventEmitter = require("events");
 const { TOKENS, COLORS } = require("./public/tokens.js");
 
 const PALETTE = COLORS.map((c) => c.hex);
-const STEP_MS = 500; // 2 cases par seconde
+const STEP_MS = 250; // 4 cases par seconde (0,25 s par case)
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function shuffledCopy(arr) {
@@ -15,8 +15,18 @@ function shuffledCopy(arr) {
 }
 
 class MonopolySLGGame extends EventEmitter {
-  constructor(id, boardData, playerConfigs) {
+  constructor(id, boardData, playerConfigs, options = {}) {
     super();
+    // Règles choisies par l'hôte : argent de départ, Départ doublé, cagnotte du Parc
+    this.options = {
+      startMoney: Math.max(100, Math.min(50000, Math.round(Number(options.startMoney) || 1500))),
+      doubleGo: !!options.doubleGo,
+      // une ancienne valeur « chance » est traitée comme « cards » (toutes les cartes)
+      parkMode: options.parkMode === "off" || !options.parkMode ? "off" : "cards",
+    };
+    this.parkPot = 0;   // cagnotte du Parc
+    this.trades = [];   // propositions d'échange en attente
+    this._tradeSeq = 0;
     this.id = id;
     this.boardName = boardData.name;
     this.board = boardData.spaces;
@@ -34,7 +44,7 @@ class MonopolySLGGame extends EventEmitter {
       type: cfg.type === "ai" ? "ai" : "human",
       color: cfg.color || PALETTE[i % PALETTE.length],
       token: cfg.token || TOKENS[i % TOKENS.length].id,
-      money: 1500,
+      money: this.options.startMoney,
       position: 0,
       inJail: false,
       jailTurns: 0,
@@ -100,6 +110,9 @@ class MonopolySLGGame extends EventEmitter {
       doublesCount: this.doublesCount,
       hasRolled: this.hasRolled,
       moving: this.moving,
+      options: this.options,
+      parkPot: this.parkPot,
+      trades: this.trades,
       gameOver: this.gameOver,
       winnerId: this.winnerId,
       pendingAction: this.pendingAction,
@@ -253,17 +266,21 @@ class MonopolySLGGame extends EventEmitter {
   }
 
   // ---------- déplacement / atterrissage ----------
-  // Le pion avance case par case (2 cases par seconde) ; chaque pas est diffusé à tous les joueurs.
-  // Pour un très long trajet (cartes), le rythme s'accélère afin de ne pas dépasser ~7 s.
+  // Le pion avance case par case (0,25 s par case) ; chaque pas est diffusé à tous les joueurs.
+  // Pour un très long trajet (> 28 cases), le rythme s'accélère afin de ne pas dépasser ~7 s.
   async walk(player, steps, dir, collectGo) {
     this.moving = true;
-    const ms = steps > 14 ? Math.max(120, Math.floor(7000 / steps)) : STEP_MS;
+    const ms = steps > 28 ? Math.max(100, Math.floor(7000 / steps)) : STEP_MS;
     for (let k = 0; k < steps; k++) {
       if (this._destroyed) break;
       player.position = (player.position + dir + 40) % 40;
       if (collectGo && dir === 1 && player.position === 0) {
-        player.money += 200;
-        this.addLog(`${player.name} passe par la case Départ et reçoit 200 M€.`);
+        const stops = k === steps - 1;                       // le pion s'arrête sur Départ
+        const bonus = stops && this.options.doubleGo ? 200 : 0;
+        player.money += 200 + bonus;
+        this.addLog(bonus
+          ? `${player.name} s'arrête sur Départ : salaire doublé, il reçoit 400 M€ !`
+          : `${player.name} passe par la case Départ et reçoit 200 M€.`);
       }
       this.emit("update");
       await sleep(ms);
@@ -322,7 +339,7 @@ class MonopolySLGGame extends EventEmitter {
       case "chest": {
         const deckName = space.type;
         const card = this.drawCard(deckName);
-        this.pendingAction = { type: "card", deck: deckName === "chance" ? "Chance" : "Caisse de Communauté", card };
+        this.pendingAction = { type: "card", deckType: deckName, deck: deckName === "chance" ? "Chance" : "Caisse de Communauté", card };
         this.addLog(`${player.name} pioche une carte ${this.pendingAction.deck}.`);
         this.emit("update");
         this._maybeScheduleAI();
@@ -330,6 +347,14 @@ class MonopolySLGGame extends EventEmitter {
       }
       case "gotojail":
         this.sendToJail(player);
+        this.afterActionSettled();
+        return;
+      case "freeparking":
+        if (this.options.parkMode !== "off" && this.parkPot > 0) {
+          player.money += this.parkPot;
+          this.addLog(`🎉 ${player.name} récupère la cagnotte du Parc : ${this.parkPot} M€ !`);
+          this.parkPot = 0;
+        }
         this.afterActionSettled();
         return;
       default:
@@ -416,6 +441,7 @@ class MonopolySLGGame extends EventEmitter {
   handleBankruptcy(player, creditorId) {
     if (player.bankrupt) return;
     player.bankrupt = true;
+    this.trades = this.trades.filter((t) => t.from !== player.id && t.to !== player.id);
     this.addLog(`💥 ${player.name} est en faillite !`);
     Object.keys(this.properties).forEach((id) => {
       const prop = this.properties[id];
@@ -440,9 +466,18 @@ class MonopolySLGGame extends EventEmitter {
     const active = this.players.filter((p) => !p.bankrupt);
     if (active.length === 1 && this.players.length > 1) {
       this.gameOver = true;
+      this.trades = [];
       this.winnerId = active[0].id;
       this.addLog(`🏆 ${active[0].name} remporte la partie !`);
     }
+  }
+
+  // ---------- cagnotte du Parc ----------
+  // Toute somme versée à la banque à cause d'une carte (Chance ou Caisse de Communauté) alimente le Parc.
+  addToPot(amount) {
+    if (this.options.parkMode === "off" || !(amount > 0)) return;
+    this.parkPot += amount;
+    this.addLog(`💰 ${amount} M€ rejoignent la cagnotte du Parc (total : ${this.parkPot} M€).`);
   }
 
   // ---------- cartes ----------
@@ -460,6 +495,7 @@ class MonopolySLGGame extends EventEmitter {
     if (!this.pendingAction || this.pendingAction.type !== "card") return;
     if (this.currentPlayerIndex !== playerIndex) return;
     const card = this.pendingAction.card;
+    this._cardDeck = this.pendingAction.deckType;
     this.pendingAction = null;
     return this.applyCard(card, this.currentPlayer());
   }
@@ -471,6 +507,7 @@ class MonopolySLGGame extends EventEmitter {
       case "pay":
         player.money -= card.value;
         this.addLog(`${player.name} paie ${card.value} M€.`);
+        this.addToPot(card.value);
         this.checkBankruptcyToBank(player);
         this.afterActionSettled();
         return;
@@ -510,6 +547,7 @@ class MonopolySLGGame extends EventEmitter {
         });
         player.money -= cost;
         this.addLog(`${player.name} paie ${cost} M€ de réparations.`);
+        this.addToPot(cost);
         this.checkBankruptcyToBank(player);
         this.afterActionSettled();
         return;
@@ -527,6 +565,107 @@ class MonopolySLGGame extends EventEmitter {
       default:
         this.afterActionSettled();
     }
+  }
+
+  // ---------- échanges entre joueurs ----------
+  // Un échange peut être proposé à tout moment (même hors de son tour) et contient des propriétés, de l'argent
+  // et/ou des cartes « sortie de prison ». Le destinataire accepte ou refuse ; l'expéditeur peut annuler.
+  isTradable(spaceId) {
+    const space = this.board[spaceId], prop = this.properties[spaceId];
+    if (!space || !prop) return false;
+    if (space.type !== "property") return true;
+    // pas d'échange tant qu'un bâtiment existe dans le groupe de couleur
+    return !this.board.some((s) => s.group === space.group && this.properties[s.id] && this.properties[s.id].houses > 0);
+  }
+
+  _normSide(side) {
+    side = side || {};
+    const int = (v) => Math.max(0, Math.floor(Number(v) || 0));
+    const props = [...new Set((Array.isArray(side.props) ? side.props : []).map((x) => Math.floor(Number(x))))]
+      .filter((x) => Number.isInteger(x) && x >= 0 && x < this.board.length);
+    return { money: int(side.money), props, jail: int(side.jail) };
+  }
+
+  _checkTrade(from, to, give, get) {
+    const need = (c, m) => { if (!c) throw new Error(m); };
+    need(give.money <= from.money, `${from.name} n'a pas assez d'argent (${from.money} M€).`);
+    need(get.money <= to.money, `${to.name} n'a pas assez d'argent (${to.money} M€).`);
+    need(give.jail <= from.jailCards, `${from.name} n'a pas assez de cartes de sortie de prison.`);
+    need(get.jail <= to.jailCards, `${to.name} n'a pas assez de cartes de sortie de prison.`);
+    for (const id of give.props) {
+      need(this.properties[id] && this.properties[id].ownerId === from.id, `${this.board[id].name} n'appartient pas à ${from.name}.`);
+      need(this.isTradable(id), `${this.board[id].name} : vendez d'abord les bâtiments du groupe.`);
+    }
+    for (const id of get.props) {
+      need(this.properties[id] && this.properties[id].ownerId === to.id, `${this.board[id].name} n'appartient pas à ${to.name}.`);
+      need(this.isTradable(id), `${this.board[id].name} : vendez d'abord les bâtiments du groupe.`);
+    }
+  }
+
+  proposeTrade(fromIdx, toIdx, giveRaw, getRaw) {
+    const need = (c, m) => { if (!c) throw new Error(m); };
+    need(!this.gameOver, "La partie est terminée.");
+    const from = this.players[fromIdx], to = this.players[toIdx];
+    need(from && to && fromIdx !== toIdx, "Choisis un autre joueur.");
+    need(!from.bankrupt && !to.bankrupt, "Ce joueur est en faillite.");
+    const give = this._normSide(giveRaw), get = this._normSide(getRaw);
+    const size = (x) => x.money + x.props.length + x.jail;
+    need(size(give) + size(get) > 0, "L'échange est vide.");
+    this._checkTrade(from, to, give, get);
+    this.trades = this.trades.filter((t) => !(t.from === fromIdx && t.to === toIdx)); // remplace l'ancienne proposition
+    const trade = { id: ++this._tradeSeq, from: fromIdx, to: toIdx, give, get };
+    this.trades.push(trade);
+    this.addLog(`🤝 ${from.name} propose un échange à ${to.name}.`);
+    this.emit("update");
+    if (to.type === "ai") this._aiConsiderTrade(trade);
+  }
+
+  respondTrade(playerIdx, id, accept) {
+    const need = (c, m) => { if (!c) throw new Error(m); };
+    const t = this.trades.find((x) => x.id === id);
+    need(t, "Cette proposition n'existe plus.");
+    need(t.to === playerIdx, "Cette proposition ne t'est pas adressée.");
+    const from = this.players[t.from], to = this.players[t.to];
+    this.trades = this.trades.filter((x) => x.id !== id);
+    if (!accept) {
+      this.addLog(`✘ ${to.name} refuse l'échange de ${from.name}.`);
+      this.emit("update");
+      return;
+    }
+    try { this._checkTrade(from, to, t.give, t.get); }
+    catch (e) { this.emit("update"); throw new Error("L'échange n'est plus valide : " + e.message); }
+    from.money += t.get.money - t.give.money;
+    to.money += t.give.money - t.get.money;
+    from.jailCards += t.get.jail - t.give.jail;
+    to.jailCards += t.give.jail - t.get.jail;
+    t.give.props.forEach((sid) => { this.properties[sid].ownerId = to.id; });
+    t.get.props.forEach((sid) => { this.properties[sid].ownerId = from.id; });
+    this.addLog(`✅ ${from.name} et ${to.name} concluent un échange.`);
+    // les autres propositions devenues impossibles disparaissent
+    this.trades = this.trades.filter((x) => {
+      try { this._checkTrade(this.players[x.from], this.players[x.to], x.give, x.get); return true; } catch { return false; }
+    });
+    this.emit("update");
+  }
+
+  cancelTrade(playerIdx, id) {
+    const t = this.trades.find((x) => x.id === id);
+    if (!t) throw new Error("Cette proposition n'existe plus.");
+    if (t.from !== playerIdx) throw new Error("Tu ne peux annuler que tes propositions.");
+    this.trades = this.trades.filter((x) => x.id !== id);
+    this.addLog(`${this.players[t.from].name} retire sa proposition d'échange.`);
+    this.emit("update");
+  }
+
+  // L'IA accepte un échange si elle reçoit au moins 15 % de valeur en plus de ce qu'elle cède
+  _aiConsiderTrade(trade) {
+    setTimeout(() => {
+      if (this._destroyed || !this.trades.some((x) => x.id === trade.id)) return;
+      const value = (side) => side.money + side.jail * 50 +
+        side.props.reduce((a, id) => a + (this.board[id].price || 0) * (this.properties[id] && this.properties[id].mortgaged ? 0.5 : 1), 0);
+      const ok = value(trade.give) >= value(trade.get) * 1.15;
+      try { this.respondTrade(trade.to, trade.id, ok); } catch (e) { /* proposition devenue invalide */ }
+    }, 1500 + Math.random() * 1000);
   }
 
   // ---------- gestion des propriétés ----------

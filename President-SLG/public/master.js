@@ -126,16 +126,33 @@ document.getElementById('handsize-plus').addEventListener('click', () => {
 });
 renderHandSize();
 
-// ---------- zip dropzone ----------
+// ---------- archives du serveur + envoi manuel ----------
+const archiveSelect = document.getElementById('archive-select');
 const dropzone = document.getElementById('dropzone');
 const photosInput = document.getElementById('photos-input');
+
+async function loadArchives() {
+  let archives = [];
+  try {
+    archives = (await (await fetch('/api/archives')).json()).archives || [];
+  } catch (e) { /* ignore */ }
+  archiveSelect.innerHTML = '<option value="">— Choisir une archive —</option>' +
+    archives.map((a) => `<option value="${a.file.replace(/"/g, '&quot;')}">${a.name} (${a.images} image${a.images > 1 ? 's' : ''})</option>`).join('');
+  const none = archives.length === 0;
+  document.getElementById('archive-empty').classList.toggle('hidden', !none);
+  archiveSelect.classList.toggle('hidden', none);
+  // une seule archive disponible : on la présélectionne
+  if (archives.length === 1) archiveSelect.value = archives[0].file;
+}
+loadArchives();
+
 dropzone.addEventListener('click', () => photosInput.click());
 photosInput.addEventListener('change', () => {
   selectedZip = photosInput.files[0] || null;
   dropzone.classList.toggle('has-file', !!selectedZip);
   document.getElementById('dropzone-label').textContent = selectedZip
-    ? `Archive sélectionnée : ${selectedZip.name}`
-    : 'Cliquez pour choisir une archive .zip (minimum 42 images)';
+    ? `Archive envoyée : ${selectedZip.name} (remplace la liste ci-dessus)`
+    : 'Cliquez pour choisir une archive .zip (facultatif)';
 });
 
 // ---------- init ----------
@@ -178,8 +195,10 @@ document.getElementById('setup-form').addEventListener('submit', async (e) => {
     .filter(Boolean);
   fd.append('aiPlayers', JSON.stringify(aiNames));
   if (selectedMode === 'B') {
-    if (!selectedZip) return showError('Sélectionnez une archive ZIP de photos.');
-    fd.append('photos', selectedZip);
+    // un fichier envoyé a priorité sur l'archive choisie dans la liste
+    if (selectedZip) fd.append('photos', selectedZip);
+    else if (archiveSelect.value) fd.append('archive', archiveSelect.value);
+    else return showError('Choisissez une archive dans la liste ou envoyez un fichier ZIP de photos.');
   }
 
   const btn = document.getElementById('launch-btn');

@@ -20,13 +20,14 @@ const actionButtonsEl = document.getElementById("action-buttons");
 const manageBtn = document.getElementById("manage-btn");
 const logEl = document.getElementById("log");
 document.getElementById("room-tag").textContent = `Salon ${ROOM}${isSpectator ? " · spectateur" : ` · siège ${myPlayerIndex + 1}`}`;
-if (isSpectator) manageBtn.classList.add("hidden");
+if (isSpectator) { manageBtn.classList.add("hidden"); document.getElementById("trade-panel").classList.add("hidden"); }
 MP.recent.add(ROOM, isSpectator ? "spectateur" : "joueur");
 
 // envoi d'une action au serveur (affiche l'erreur éventuelle)
-function act(type, data = {}) {
+function act(type, data = {}, cb) {
   socket.emit("act", { type, ...data }, (r) => {
     if (r && !r.ok) { MP.toast(r.error, "bad"); if (r.noroom) showNoRoom(r.error); }
+    if (cb) cb(r);
   });
 }
 function showNoRoom(msg) {
@@ -53,12 +54,21 @@ function renderRoom(room) {
   latestRoom = room;
   const overlay = document.getElementById("lobby-overlay");
   if (room.phase === "lobby") {
-    if (prev && prev.phase !== "lobby") { boardBuilt = false; latestState = null; manageModalOpen = false; closeModal(); }
+    if (prev && prev.phase !== "lobby") { boardBuilt = false; latestState = null; manageModalOpen = false; seenTrades = new Set(); closeModal(); closeTrade(); }
     overlay.classList.remove("hidden");
     renderLobby(room);
   } else {
     overlay.classList.add("hidden");
   }
+}
+
+// Résumé des règles choisies par l'hôte
+function rulesText(o) {
+  if (!o) return "";
+  const parts = [`${o.startMoney} M€ de départ`];
+  if (o.doubleGo) parts.push("Départ doublé (400 M€ si on s'arrête dessus)");
+  if (o.parkMode !== "off") parts.push("Parc : cagnotte des cartes");
+  return parts.join(" · ");
 }
 
 let draftName = null; // nom en cours de saisie (conservé quand le formulaire est redessiné)
@@ -81,6 +91,7 @@ function pickerHtml(room, me) {
 
 function renderLobby(room) {
   document.getElementById("lobby-title").textContent = `Salon ${room.code} — ${room.boardName}`;
+  document.getElementById("lobby-rules").textContent = "Règles : " + rulesText(room.options);
   const me = isSpectator ? null : room.seats[myPlayerIndex];
   const form = document.getElementById("lobby-form");
   const key = isSpectator ? "spec" : me ? [me.claimed, me.claimed ? me.name : "", me.token, me.color, room.seats.map((x) => x.claimed + x.token + x.color).join()].join("|") : "none";
@@ -169,12 +180,24 @@ function buildBoard(state) {
     housesEl.id = `houses-${space.id}`;
     cell.appendChild(housesEl);
 
+    if (space.type === "go") {
+      const g = document.createElement("div");
+      g.className = "price";
+      g.textContent = state.options && state.options.doubleGo ? "Arrêt : +400 M€" : "+200 M€";
+      cell.appendChild(g);
+    }
+    if (space.type === "freeparking" && state.options && state.options.parkMode !== "off") {
+      const pot = document.createElement("div");
+      pot.className = "pot"; pot.id = "pot";
+      cell.appendChild(pot);
+    }
+
     boardEl.appendChild(cell);
   });
 
   const centerLogo = document.createElement("div");
   centerLogo.className = "center-logo";
-  centerLogo.innerHTML = `<span>MONOPOLY-SLG</span><small>${MP.esc(state.boardName)}</small>`;
+  centerLogo.innerHTML = `<span>MONOPOLY-SLG</span><small>${MP.esc(state.boardName)}</small><small class="rules-line">${MP.esc(rulesText(state.options))}</small>`;
   boardEl.appendChild(centerLogo);
 
   const layer = document.createElement("div");
@@ -397,6 +420,130 @@ function renderControls(state) {
 // un clic sur un bouton d'action le désactive aussitôt (évite les doubles envois)
 actionButtonsEl.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) b.disabled = true; });
 
+// ===================== CAGNOTTE DU PARC =====================
+function renderPot(state) {
+  const el = document.getElementById("pot");
+  if (el) el.textContent = `💰 ${state.parkPot} M€`;
+}
+
+// ===================== ÉCHANGES =====================
+let seenTrades = new Set();
+const tradeBtn = document.getElementById("trade-btn");
+const tradeOverlay = document.getElementById("trade-overlay");
+const tradeCard = document.getElementById("trade-card");
+
+function describeSide(state, side) {
+  const items = side.props.map((id) => state.spaces[id].name);
+  if (side.money) items.push(`${side.money} M€`);
+  if (side.jail) items.push(`${side.jail} carte${side.jail > 1 ? "s" : ""} « sortie de prison »`);
+  return items.length ? items.map(MP.esc).join(", ") : "rien";
+}
+
+function renderTrades(state) {
+  if (isSpectator) return;
+  const me = state.players[myPlayerIndex];
+  tradeBtn.disabled = state.gameOver || !me || me.bankrupt;
+  const mine = (state.trades || []).filter((t) => t.from === myPlayerIndex || t.to === myPlayerIndex);
+  mine.forEach((t) => {
+    if (t.to === myPlayerIndex && !seenTrades.has(t.id)) {
+      seenTrades.add(t.id);
+      MP.toast(`🤝 ${state.players[t.from].name} te propose un échange`, "ok");
+    }
+  });
+  const list = document.getElementById("trade-list");
+  list.innerHTML = mine.map((t) => {
+    if (t.to === myPlayerIndex) {
+      return `<div class="trade-item incoming">
+        <div><strong>${MP.esc(state.players[t.from].name)}</strong> te propose un échange</div>
+        <div class="trade-line">Tu reçois : <b>${describeSide(state, t.give)}</b></div>
+        <div class="trade-line">Tu donnes : <b>${describeSide(state, t.get)}</b></div>
+        <div class="trade-actions"><button class="btn primary small" data-acc="${t.id}">Accepter</button>
+        <button class="btn ghost small" data-dec="${t.id}">Refuser</button></div></div>`;
+    }
+    return `<div class="trade-item outgoing">
+      <div>Ta proposition à <strong>${MP.esc(state.players[t.to].name)}</strong> (en attente)</div>
+      <div class="trade-line">Tu donnes : <b>${describeSide(state, t.give)}</b></div>
+      <div class="trade-line">Tu reçois : <b>${describeSide(state, t.get)}</b></div>
+      <div class="trade-actions"><button class="btn ghost small" data-cancel="${t.id}">Annuler</button></div></div>`;
+  }).join("");
+  list.querySelectorAll("[data-acc]").forEach((b) => { b.onclick = () => { b.disabled = true; act("tradeAccept", { id: +b.dataset.acc }); }; });
+  list.querySelectorAll("[data-dec]").forEach((b) => { b.onclick = () => { b.disabled = true; act("tradeDecline", { id: +b.dataset.dec }); }; });
+  list.querySelectorAll("[data-cancel]").forEach((b) => { b.onclick = () => { b.disabled = true; act("tradeCancel", { id: +b.dataset.cancel }); }; });
+}
+
+function closeTrade() { tradeOverlay.classList.add("hidden"); }
+tradeBtn.onclick = () => openTradeComposer();
+
+// Fenêtre de composition : choix du partenaire puis des deux côtés de l'échange
+function openTradeComposer(partner) {
+  const st = latestState;
+  if (!st || isSpectator) return;
+  const me = st.players[myPlayerIndex];
+  const others = st.players.filter((p) => p.id !== myPlayerIndex && !p.bankrupt);
+  if (!others.length) return;
+  if (partner === undefined) {
+    if (others.length === 1) return openTradeComposer(others[0].id);
+    tradeCard.innerHTML = `<h2>Échanger avec…</h2><div class="trade-partners">${others.map((p) =>
+      `<button class="btn ghost trade-partner" data-p="${p.id}"><span class="stok">${MPT.tokenSvg(p.token, p.color)}</span>${MP.esc(p.name)}${p.type === "ai" ? " 🤖" : ""}</button>`).join("")}</div>
+      <div class="modal-buttons"><button class="btn ghost" id="trade-close">Fermer</button></div>`;
+    tradeCard.querySelectorAll("[data-p]").forEach((b) => { b.onclick = () => openTradeComposer(+b.dataset.p); });
+    document.getElementById("trade-close").onclick = closeTrade;
+    tradeOverlay.classList.remove("hidden");
+    return;
+  }
+  const other = st.players[partner];
+  const ownedBy = (pid) => st.spaces.filter((s) => st.properties[s.id] && st.properties[s.id].ownerId === pid);
+  const blocked = (s) => s.type === "property" && st.spaces.some((x) => x.group === s.group && st.properties[x.id] && st.properties[x.id].houses > 0);
+  const propRows = (pid, side) => {
+    const rows = ownedBy(pid).map((s) => {
+      const b = blocked(s), mort = st.properties[s.id].mortgaged;
+      return `<label class="trade-prop${b ? " blocked" : ""}" title="${b ? "Vendez d'abord les bâtiments du groupe" : ""}">
+        <input type="checkbox" data-side="${side}" value="${s.id}"${b ? " disabled" : ""}>
+        <span class="dotc" style="background:${s.group ? st.groupColors[s.group] : "#9aa"}"></span>
+        <span>${MP.esc(s.name)}${mort ? " <em>(hypothéquée)</em>" : ""}</span></label>`;
+    }).join("");
+    return rows || `<p class="small muted">Aucune propriété.</p>`;
+  };
+  const jailRow = (p, side) => p.jailCards > 0
+    ? `<label class="trade-money">Cartes « sortie de prison » (max ${p.jailCards})
+        <input type="number" min="0" max="${p.jailCards}" value="0" data-jail="${side}"></label>` : "";
+  tradeCard.innerHTML = `
+    <h2>Échange avec ${MP.esc(other.name)}${other.type === "ai" ? " 🤖" : ""}</h2>
+    <div class="trade-cols">
+      <div class="trade-col">
+        <h3>Tu donnes</h3>
+        <div class="trade-props">${propRows(me.id, "give")}</div>
+        <label class="trade-money">Argent (solde : ${me.money} M€)
+          <input type="number" min="0" max="${me.money}" step="10" value="0" data-money="give"></label>
+        ${jailRow(me, "give")}
+      </div>
+      <div class="trade-col">
+        <h3>Tu reçois</h3>
+        <div class="trade-props">${propRows(other.id, "get")}</div>
+        <label class="trade-money">Argent (solde de ${MP.esc(other.name)} : ${other.money} M€)
+          <input type="number" min="0" max="${other.money}" step="10" value="0" data-money="get"></label>
+        ${jailRow(other, "get")}
+      </div>
+    </div>
+    ${other.type === "ai" ? `<p class="small muted">🤖 L'IA accepte si elle reçoit au moins 15 % de valeur en plus de ce qu'elle cède.</p>` : ""}
+    <div class="modal-buttons">
+      <button class="btn primary" id="trade-send">Envoyer la proposition</button>
+      <button class="btn ghost" id="trade-close">Fermer</button>
+    </div>`;
+  const side = (name) => ({
+    props: [...tradeCard.querySelectorAll(`input[data-side="${name}"]:checked`)].map((i) => +i.value),
+    money: +(tradeCard.querySelector(`input[data-money="${name}"]`).value || 0),
+    jail: +((tradeCard.querySelector(`input[data-jail="${name}"]`) || { value: 0 }).value || 0),
+  });
+  document.getElementById("trade-close").onclick = closeTrade;
+  document.getElementById("trade-send").onclick = () => {
+    act("tradePropose", { to: partner, give: side("give"), get: side("get") }, (r) => {
+      if (r && r.ok) { closeTrade(); MP.toast("Proposition envoyée", "ok"); }
+    });
+  };
+  tradeOverlay.classList.remove("hidden");
+}
+
 // ===================== MODALES =====================
 function openModal(html) {
   document.getElementById("modal-card").innerHTML = html;
@@ -523,6 +670,8 @@ function applyState(state) {
   syncDice(state);
   renderOwnership(state);
   renderPawns(state);
+  renderPot(state);
+  renderTrades(state);
   renderPlayersPanel(state);
   renderLog(state);
   renderControls(state);

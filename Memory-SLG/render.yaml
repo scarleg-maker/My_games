@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: memory-slg
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js

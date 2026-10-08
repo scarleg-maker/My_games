@@ -294,3 +294,10 @@ details summary { cursor: pointer; font-size: 14px; }
 .toast.bad { background: #9b1c1c; }
 .offline-bar { display: none; position: fixed; top: 0; left: 0; right: 0; background: #9b1c1c; color: #fff; text-align: center; padding: 6px; z-index: 90; font-weight: 600; }
 body.offline .offline-bar { display: block; }
+
+/* archives fournies avec le serveur */
+.archives { display: grid; gap: 8px; }
+.archive { display: flex; align-items: center; gap: 12px; border: 2px solid #e0b27a; background: #fff; border-radius: 12px; padding: 10px 14px; }
+.archive.bad { opacity: .6; }
+.archive-info { flex: 1; min-width: 0; }
+.archive-info strong { display: block; }

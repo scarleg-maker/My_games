@@ -11,6 +11,8 @@ const PORT = 3500;
 const DATA_DIR = path.join(__dirname, 'data');
 const ROOMS_DIR = path.join(DATA_DIR, 'rooms');
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const ARCHIVES_DIR = path.join(__dirname, 'archives');
+fs.mkdirSync(ARCHIVES_DIR, { recursive: true });
 
 if (!fs.existsSync(ROOMS_DIR)) fs.mkdirSync(ROOMS_DIR, { recursive: true });
 
@@ -392,6 +394,50 @@ const CANVAS_H = 667;
 const JPEG_QUALITY = 85;
 const PAD_COLOR = { r: 238, g: 238, b: 238, alpha: 1 };
 
+// Traite un buffer de zip : redimensionne les images et les enregistre dans le salon
+async function processZipForRoom(code, room, zipBuffer) {
+  const uploadsDir = roomUploadsDir(code);
+  clearDir(uploadsDir);
+  const zip = new AdmZip(zipBuffer);
+  const images = [];
+  let skipped = 0;
+  for (const entry of zip.getEntries()) {
+    if (entry.isDirectory) continue;
+    const base = path.basename(entry.entryName);
+    if (base.startsWith('.') || entry.entryName.includes('__MACOSX')) continue;
+    const ext = path.extname(base).toLowerCase();
+    if (!IMAGE_EXT.includes(ext)) continue;
+
+    let outputBuffer, outExt;
+    try {
+      const img = sharp(entry.getData()).rotate();
+      const meta = await img.metadata();
+      const hasAlpha = !!meta.hasAlpha;
+      const resized = img.resize({
+        width: CANVAS_W, height: CANVAS_H, fit: 'contain', withoutEnlargement: true,
+        background: hasAlpha ? { r: 0, g: 0, b: 0, alpha: 0 } : PAD_COLOR
+      });
+      if (hasAlpha) { outExt = '.png'; outputBuffer = await resized.png({ compressionLevel: 9 }).toBuffer(); }
+      else { outExt = '.jpg'; outputBuffer = await resized.jpeg({ quality: JPEG_QUALITY }).toBuffer(); }
+    } catch (imgErr) {
+      console.error(`Image ignorée (illisible) : ${base} — ${imgErr.message}`);
+      skipped++;
+      continue;
+    }
+
+    let finalName = `${stripExt(base)}${outExt}`;
+    let counter = 1;
+    while (fs.existsSync(path.join(uploadsDir, finalName))) {
+      finalName = `${stripExt(base)}_${counter}${outExt}`;
+      counter++;
+    }
+    fs.writeFileSync(path.join(uploadsDir, finalName), outputBuffer);
+    images.push({ file: finalName, url: `/uploads/${code}/${encodeURIComponent(finalName)}`, name: stripExt(finalName) });
+  }
+  room.setUploadedImages(images);
+  return { ok: true, count: images.length, images, skipped };
+}
+
 app.post('/api/rooms/:code/upload-zip', upload.single('zipfile'), async (req, res) => {
   const code = cleanCode(req.params.code);
   if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide' });
@@ -399,49 +445,41 @@ app.post('/api/rooms/:code/upload-zip', upload.single('zipfile'), async (req, re
   room.touch();
   try {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
-    const uploadsDir = roomUploadsDir(code);
-    clearDir(uploadsDir);
-    const zip = new AdmZip(req.file.buffer);
-    const entries = zip.getEntries();
-    const images = [];
-    let skipped = 0;
-    for (const entry of entries) {
-      if (entry.isDirectory) continue;
-      const base = path.basename(entry.entryName);
-      const ext = path.extname(base).toLowerCase();
-      if (!IMAGE_EXT.includes(ext)) continue;
-
-      let outputBuffer, outExt;
-      try {
-        const img = sharp(entry.getData()).rotate();
-        const meta = await img.metadata();
-        const hasAlpha = !!meta.hasAlpha;
-        const resized = img.resize({
-          width: CANVAS_W, height: CANVAS_H, fit: 'contain', withoutEnlargement: true,
-          background: hasAlpha ? { r: 0, g: 0, b: 0, alpha: 0 } : PAD_COLOR
-        });
-        if (hasAlpha) { outExt = '.png'; outputBuffer = await resized.png({ compressionLevel: 9 }).toBuffer(); }
-        else { outExt = '.jpg'; outputBuffer = await resized.jpeg({ quality: JPEG_QUALITY }).toBuffer(); }
-      } catch (imgErr) {
-        console.error(`Image ignorée (illisible) : ${base} — ${imgErr.message}`);
-        skipped++;
-        continue;
-      }
-
-      let finalName = `${stripExt(base)}${outExt}`;
-      let counter = 1;
-      while (fs.existsSync(path.join(uploadsDir, finalName))) {
-        finalName = `${stripExt(base)}_${counter}${outExt}`;
-        counter++;
-      }
-      fs.writeFileSync(path.join(uploadsDir, finalName), outputBuffer);
-      images.push({ file: finalName, url: `/uploads/${code}/${encodeURIComponent(finalName)}`, name: stripExt(finalName) });
-    }
-    room.setUploadedImages(images);
-    res.json({ ok: true, count: images.length, images, skipped });
+    res.json(await processZipForRoom(code, room, req.file.buffer));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur lors de la lecture du zip : ' + err.message });
+  }
+});
+
+// Archives d'images pré-installées (dossier /archives, versionné avec le projet,
+// donc disponible sur Render sans upload)
+app.get('/api/archives', (req, res) => {
+  try {
+    const files = fs.readdirSync(ARCHIVES_DIR)
+      .filter(f => f.toLowerCase().endsWith('.zip'))
+      .sort((a, b) => a.localeCompare(b, 'fr'))
+      .map(f => ({ name: f, label: stripExt(f).replace(/[_]+/g, ' '), size: fs.statSync(path.join(ARCHIVES_DIR, f)).size }));
+    res.json({ archives: files });
+  } catch (e) {
+    res.json({ archives: [] });
+  }
+});
+
+app.post('/api/rooms/:code/use-archive', async (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!validCode(code)) return res.status(400).json({ error: 'Code de salon invalide' });
+  const room = getRoom(code, true);
+  room.touch();
+  try {
+    const name = path.basename(String((req.body && req.body.name) || ''));
+    if (!name.toLowerCase().endsWith('.zip')) return res.status(400).json({ error: 'Archive invalide' });
+    const file = path.join(ARCHIVES_DIR, name);
+    if (!fs.existsSync(file)) return res.status(404).json({ error: 'Archive introuvable' });
+    res.json(await processZipForRoom(code, room, fs.readFileSync(file)));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de la lecture de l'archive : " + err.message });
   }
 });
 

@@ -11,13 +11,29 @@ const launchBtn = document.getElementById('launch-btn');
 const postLaunch = document.getElementById('post-launch');
 const copyLinkBtn = document.getElementById('copy-link-btn');
 
-let activeSource = 'folder';
+const libraryZone = document.getElementById('library-zone');
+const librarySelect = document.getElementById('library-select');
+const libraryTab = document.getElementById('library-tab');
+let activeSource = 'library';
+
+fetch('/api/archives').then(r => r.json()).then(d => {
+  const list = d.archives || [];
+  if (!list.length) {
+    librarySelect.innerHTML = '<option value="">(aucune archive intégrée)</option>';
+    libraryTab.click && document.querySelector('[data-source="folder"]').click();
+    libraryTab.style.display = 'none';
+    return;
+  }
+  librarySelect.innerHTML = list.map(a =>
+    `<option value="${a.id.replace(/"/g, '&quot;')}">${a.label} — ${a.count} portraits</option>`).join('');
+}).catch(() => { libraryTab.style.display = 'none'; document.querySelector('[data-source="folder"]').click(); });
 
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
     tabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     activeSource = tab.dataset.source;
+    libraryZone.style.display = activeSource === 'library' ? 'block' : 'none';
     folderZone.style.display = activeSource === 'folder' ? 'block' : 'none';
     archiveZone.style.display = activeSource === 'archive' ? 'block' : 'none';
     statusLine.className = 'status-line';
@@ -35,7 +51,13 @@ validateBtn.addEventListener('click', async () => {
   launchBtn.style.display = 'none';
 
   const files = activeSource === 'folder' ? folderInput.files : archiveInput.files;
-  if (!files || files.length === 0) {
+  const useLibrary = activeSource === 'library';
+  if (useLibrary && !librarySelect.value) {
+    statusLine.textContent = "Choisis d'abord une archive intégrée.";
+    statusLine.classList.add('warn');
+    return;
+  }
+  if (!useLibrary && (!files || files.length === 0)) {
     statusLine.textContent = activeSource === 'folder'
       ? "Sélectionne d'abord un dossier d'images."
       : "Sélectionne d'abord une archive .zip.";
@@ -47,7 +69,8 @@ validateBtn.addEventListener('click', async () => {
   formData.append('size', getSelectedSize());
   formData.append('name1', document.getElementById('name1').value.trim() || 'Joueur 1');
   formData.append('name2', document.getElementById('name2').value.trim() || 'Joueur 2');
-  for (const f of files) formData.append('files', f);
+  if (useLibrary) formData.append('archive', librarySelect.value);
+  else for (const f of files) formData.append('files', f);
 
   validateBtn.disabled = true;
   validateBtn.textContent = 'Analyse du dossier…';

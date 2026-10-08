@@ -93,6 +93,61 @@
     }
    ],
    "t": 1791292903809
+  },
+  "TESTR": {
+   "boardId": "paris",
+   "nbPlayers": 3,
+   "seats": [
+    {
+     "type": "human",
+     "name": "cxv",
+     "token": "voiture",
+     "color": "#7cb518"
+    },
+    {
+     "type": "ai",
+     "name": "",
+     "token": "bateau",
+     "color": "#457b9d"
+    },
+    {
+     "type": "ai",
+     "name": "",
+     "token": "canon",
+     "color": "#2a9d8f"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "chien",
+     "color": "#f4a261"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "chapeau",
+     "color": "#8338ec"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "fer",
+     "color": "#ffbe0b"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "de",
+     "color": "#06d6a0"
+    },
+    {
+     "type": "human",
+     "name": "",
+     "token": "brouette",
+     "color": "#ef476f"
+    }
+   ],
+   "t": 1791455228722
   }
  }
 }

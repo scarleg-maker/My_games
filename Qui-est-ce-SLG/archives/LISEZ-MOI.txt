@@ -1,0 +1,12 @@
+DOSSIER ARCHIVES - portraits intégrés au jeu (utile pour Render)
+
+Dépose ici :
+  - des archives .zip de portraits (un fichier image = un suspect,
+    le nom du fichier devient le nom du suspect), ou
+  - des sous-dossiers contenant les images.
+
+Chaque archive apparaît automatiquement dans l'onglet "Archives intégrées"
+de la page de préparation. Le nom du .zip (ou du dossier) est le nom affiché.
+
+Conseil Render : garde chaque archive sous quelques Mo et ajoute ce dossier
+dans le dépôt Git (git add archives) avant de redéployer.

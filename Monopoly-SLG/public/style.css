@@ -257,13 +257,13 @@ h1, h2, h3, .logo { font-family: 'Fraunces', serif; }
   width: calc(var(--cell) * 0.56 * var(--s, 1));
   height: calc(var(--cell) * 0.56 * var(--s, 1));
   transform: translate(-50%, -50%);
-  transition: left .45s linear, top .45s linear, margin .45s ease, width .3s ease, height .3s ease;
+  transition: left .23s linear, top .23s linear, margin .23s ease, width .2s ease, height .2s ease;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
   z-index: 1;
 }
 .pawn svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .pawn.active { z-index: 3; filter: drop-shadow(0 0 5px #ffd54a) drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
-.pawn.hop svg { animation: pawn-hop .45s ease-out; }
+.pawn.hop svg { animation: pawn-hop .23s ease-out; }
 @keyframes pawn-hop {
   0% { transform: translateY(0); }
   40% { transform: translateY(-24%) scale(1.1); }
@@ -546,3 +546,44 @@ a.btn { text-decoration: none; display: inline-block; }
 .player-row .stok { width: 34px; height: 34px; flex: none; }
 .player-row .stok svg { width: 100%; height: 100%; display: block; }
 .host-head .code-big { color: var(--gold); }
+
+/* ---------- Règles (page hôte) ---------- */
+.rules-title { margin: 1.2rem 0 .2rem; font-size: 1rem; }
+.rules .row input[type=number] { max-width: 8rem; }
+.check { display: flex; gap: .6rem; align-items: flex-start; margin: .9rem 0 .2rem; font-size: .92rem; cursor: pointer; }
+.check input { margin-top: .25rem; width: 18px; height: 18px; flex: none; }
+.center-logo small.rules-line { font-size: calc(var(--cell) * 0.17); opacity: .6; margin-top: calc(var(--cell) * 0.06); letter-spacing: .03em; }
+
+/* ---------- Cagnotte du Parc ---------- */
+.cell .pot {
+  position: absolute; left: 6%; right: 6%; bottom: 6%;
+  background: var(--gold); color: var(--ink); border: 2px solid var(--ink); border-radius: 999px;
+  text-align: center; font-weight: 900; font-size: calc(var(--cell) * 0.14); padding: 1px 0;
+  box-shadow: 0 2px 0 rgba(0,0,0,.25);
+}
+
+/* ---------- Échanges ---------- */
+.trade-panel { background: var(--cream); border-radius: 14px; border: 2px solid var(--ink); padding: 10px; }
+.trade-panel.hidden { display: none; }
+.trade-panel .btn { margin-top: 0; }
+.trade-item { margin-top: 10px; padding: 10px; border-radius: 10px; background: white; border: 2px solid var(--line); font-size: .85rem; }
+.trade-item.incoming { border-color: var(--brick); box-shadow: 0 0 0 3px rgba(168,65,47,.15); }
+.trade-line { margin-top: 4px; }
+.trade-actions { display: flex; gap: 8px; margin-top: 8px; }
+.trade-actions .btn { margin: 0; }
+.trade-card { width: min(680px, 94vw); text-align: left; max-height: 92vh; overflow: auto; }
+.trade-card h2 { text-align: center; }
+.trade-card h3 { margin: 0 0 .4rem; font-size: 1rem; }
+.trade-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .trade-cols { grid-template-columns: 1fr; } }
+.trade-col { background: white; border: 2px solid var(--line); border-radius: 12px; padding: 10px; }
+.trade-props { max-height: 220px; overflow: auto; margin-bottom: .6rem; }
+.trade-prop { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-bottom: 1px solid var(--line); font-size: .85rem; cursor: pointer; }
+.trade-prop.blocked { opacity: .45; cursor: not-allowed; }
+.trade-prop .dotc { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--ink); flex: none; }
+.trade-money { display: block; font-size: .8rem; margin-top: .5rem; font-weight: 700; }
+.trade-money input { display: block; width: 100%; margin-top: 4px; font-family: 'Karla', sans-serif; font-size: 1rem; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--line); }
+.trade-partners { display: grid; gap: 8px; margin-top: 10px; }
+.trade-partner { display: flex; align-items: center; gap: 10px; justify-content: flex-start; margin: 0; }
+.trade-partner .stok { width: 32px; height: 32px; }
+.trade-partner .stok svg { width: 100%; height: 100%; display: block; }

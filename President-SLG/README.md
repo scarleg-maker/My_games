@@ -53,7 +53,9 @@ en ont besoin).
 5. Cochez la case "IA" à côté d'un joueur pour que le serveur joue
    automatiquement à sa place (carte la plus faible jouable, passe si
    impossible, relance ou continue selon la situation).
-6. En mode B, importez une archive `.zip` contenant au minimum 42 images.
+6. En mode B, choisissez une archive d'images dans la liste « Archives
+   disponibles sur le serveur » (dossier `archives/`, voir plus bas) ou
+   envoyez votre propre `.zip`, contenant au minimum 42 images.
    Chaque fichier doit être nommé `Nom (niveau).extension`, le niveau étant
    écrit sur **deux chiffres, de 01 (le plus faible) à 20 (le plus fort)** —
    le zéro devant est obligatoire pour les niveaux 01 à 09, par exemple
@@ -61,6 +63,18 @@ en ont besoin).
    le maître le voit une fois la carte posée sur la table.
 7. Cliquez sur « Lancer la partie », puis partagez le code/QR du salon ou les
    liens joueurs affichés sur la page maître.
+
+## Dossier `archives/` (images du mode B, idéal pour Render)
+
+Déposez vos archives `.zip` d'images dans le dossier `archives/` : elles
+apparaissent automatiquement dans la liste de la page maître, avec le nombre
+d'images valides détectées. Plus besoin de les envoyer à chaque partie. Les
+mêmes règles s'appliquent (noms `Nom (niveau).ext`, niveau `01` à `20`,
+minimum 42 images). Un fichier envoyé manuellement reste possible et a
+priorité sur la liste.
+
+Sur Render, ces archives doivent faire partie du dépôt Git (commit + push) pour
+être déployées avec le projet ; évitez de dépasser ~50 Mo par archive.
 
 ## Adversaires IA
 
@@ -123,6 +137,7 @@ public/
   joueur.html/js        page d'un joueur d'un salon
   styles.css           styles partagés (dégradé, cartes, panneaux)
   assets/cards/        visuels des 52 cartes standard (mode A)
+archives/             archives .zip d'images proposées dans la page maître (mode B)
 data/rooms/<CODE>.json  noms des joueurs mémorisés, par salon
 uploads/<CODE>/          images extraites des archives zip envoyées, par salon (mode B)
 ```

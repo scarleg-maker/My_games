@@ -43,6 +43,26 @@
       <button type="button" id="solo-ai-btn" class="btn ghost small">1 contre IA</button>
     </div>
 
+    <h3 class="rules-title">Règles de la partie</h3>
+    <div class="rules">
+      <label class="field-label" for="start-money">Argent de départ (M€)</label>
+      <div class="row">
+        <input type="number" id="start-money" min="100" max="50000" step="100" value="1500">
+        <button type="button" class="btn ghost small" data-money="1000">1000</button>
+        <button type="button" class="btn ghost small" data-money="1500">1500</button>
+        <button type="button" class="btn ghost small" data-money="2000">2000</button>
+        <button type="button" class="btn ghost small" data-money="5000">5000</button>
+      </div>
+      <label class="check"><input type="checkbox" id="double-go"> <span><strong>Doubler la case Départ</strong> : 400 M€ au lieu de 200 quand un pion s'arrête dessus</span></label>
+      <label class="field-label" for="park-mode">Parc gratuit</label>
+      <select id="park-mode" class="select">
+        <option value="off">Aucune cagnotte (le Parc ne donne rien)</option>
+        <option value="cards">Cagnotte : toutes les sommes payées à la banque avec les cartes</option>
+      </select>
+      <p class="small muted" id="park-hint"></p>
+    </div>
+
+    <h3 class="rules-title">Joueurs</h3>
     <div id="seat-rows"></div>
     <p class="small muted" id="start-hint"></p>
     <button id="start-btn" class="btn primary wide">Démarrer la partie</button>

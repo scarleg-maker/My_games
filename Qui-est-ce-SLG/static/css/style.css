@@ -614,3 +614,10 @@ fieldset { border: none; padding: 0; margin: 0 0 2rem; }
   .game-area { grid-template-columns: 1fr; }
   .size-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Liste des archives intégrées */
+#library-select {
+  margin-top: 0.7rem; padding: 0.5rem 0.7rem; font: inherit;
+  min-width: 16rem; max-width: 100%; border: 1px solid #8a7a5c;
+  background: #f1ede4; color: #2A2118;
+}

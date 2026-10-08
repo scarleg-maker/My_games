@@ -15,16 +15,23 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { maxHttpBufferSize: 5e8 }); // limite haute pour transférer les images en base64
 
-const PORT = 5500;
+const PORT = process.env.PORT || 5500; // Render (et autres hébergeurs) fournissent leur propre port via PORT
+const ARCHIVES_DIR = path.join(__dirname, 'archives'); // archives .zip d'images proposées au maître
 
 app.use(express.json());
-// Sert les fichiers statiques (shared.css, socket.io client, etc.) depuis ce dossier
-app.use(express.static(__dirname));
+// Fichiers statiques : uniquement ce dont les pages ont besoin (le reste du dossier, comme
+// server.js ou package.json, n'est pas exposé — important une fois le jeu en ligne).
+for (const f of ['shared.css', 'Marteau.png']) {
+    app.get('/' + f, (req, res) => {
+        res.sendFile(path.join(__dirname, f), (err) => { if (err && !res.headersSent) res.status(404).end(); });
+    });
+}
 
 // -------------------------------------------------------------------
 //  CONSTANTES DE JEU
@@ -423,6 +430,29 @@ app.get('/', (req, res) => {
 
 app.get('/favicon.ico', (req, res) => { res.status(204).end(); });
 
+// Liste des archives d'images (.zip) présentes dans le dossier "archives/"
+app.get('/api/archives', (req, res) => {
+    fs.readdir(ARCHIVES_DIR, (err, files) => {
+        if (err) return res.json([]);
+        const list = [];
+        for (const name of files.sort((a, b) => a.localeCompare(b, 'fr'))) {
+            if (!/\.zip$/i.test(name)) continue;
+            try {
+                const st = fs.statSync(path.join(ARCHIVES_DIR, name));
+                if (st.isFile()) list.push({ name, size: st.size });
+            } catch (e) { /* fichier disparu entre-temps : on l'ignore */ }
+        }
+        res.json(list);
+    });
+});
+
+// Téléchargement d'une archive (nom nettoyé : aucun accès hors du dossier archives/)
+app.get('/archives/:file', (req, res) => {
+    const name = path.basename(req.params.file);
+    if (!/\.zip$/i.test(name)) return res.status(404).send('Introuvable');
+    res.sendFile(path.join(ARCHIVES_DIR, name), (err) => { if (err && !res.headersSent) res.status(404).send('Introuvable'); });
+});
+
 // Crée un nouveau salon (bouton "Créer un salon" sur la page d'accueil)
 app.post('/api/rooms', (req, res) => {
     if (rooms.size >= MAX_ROOMS) purgeRooms(true);
@@ -476,7 +506,7 @@ function lanUrls() {
     return urls;
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Encheres-SLG démarré.`);
     console.log(`Accueil (créer un salon) : http://localhost:${PORT}/`);
     for (const u of lanUrls()) console.log(`Depuis le réseau local   : ${u}/`);

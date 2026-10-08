@@ -12,9 +12,12 @@ const { GameManager } = require('./gameEngine');
 const PORT = 4000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
+// Archives ZIP d'images fournies avec le projet (utile sur Render : pas besoin de les envoyer à chaque partie)
+const ARCHIVES_DIR = path.join(__dirname, 'archives');
 const ROOMS_DATA_DIR = path.join(__dirname, 'data', 'rooms');
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+if (!fs.existsSync(ARCHIVES_DIR)) fs.mkdirSync(ARCHIVES_DIR, { recursive: true });
 if (!fs.existsSync(ROOMS_DATA_DIR)) fs.mkdirSync(ROOMS_DATA_DIR, { recursive: true });
 
 const app = express();
@@ -212,6 +215,42 @@ app.get('/api/rooms/:code', (req, res) => {
   res.json(room ? roomInfo(room) : { exists: false, code });
 });
 
+
+// ================================================================ archives d'images du projet
+const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp)$/i;
+// Le niveau doit être écrit sur deux chiffres, zéro devant obligatoire (01 à 20).
+const NAME_LEVEL_RE = /^(.+?)\s*\((\d{2})\)\.[a-zA-Z0-9]+$/;
+
+function listArchives() {
+  let files = [];
+  try {
+    files = fs.readdirSync(ARCHIVES_DIR).filter((f) => /\.zip$/i.test(f));
+  } catch (e) {
+    return [];
+  }
+  return files
+    .sort((a, b) => a.localeCompare(b, 'fr'))
+    .map((file) => {
+      let valid = 0;
+      try {
+        const zip = new AdmZip(path.join(ARCHIVES_DIR, file));
+        for (const e of zip.getEntries()) {
+          if (e.isDirectory) continue;
+          const base = path.basename(e.entryName);
+          const m = base.match(NAME_LEVEL_RE);
+          if (IMAGE_EXT_RE.test(base) && m && +m[2] >= 1 && +m[2] <= 20) valid++;
+        }
+      } catch (err) {
+        /* archive illisible : 0 image valide */
+      }
+      return { file, name: file.replace(/\.zip$/i, ''), images: valid };
+    });
+}
+
+app.get('/api/archives', (req, res) => {
+  res.json({ archives: listArchives() });
+});
+
 // ================================================================ API : jeu (scopée par salon)
 app.get('/api/:code/saved-players', requireRoom, (req, res) => {
   res.json({ players: loadSavedPlayers(req.room.code) });
@@ -259,17 +298,29 @@ app.post('/api/:code/start-game', requireRoom, upload.single('photos'), (req, re
 
     let images = [];
     if (mode === 'B') {
-      if (!req.file) return res.status(400).json({ error: 'Merci de sélectionner une archive ZIP de photos.' });
+      let zipSource;
+      const archiveName = String(req.body.archive || '').trim();
+      if (archiveName) {
+        // archive du dossier archives/ : on n'accepte qu'un nom de fichier simple, présent dans ce dossier
+        const safe = path.basename(archiveName);
+        const archivePath = path.join(ARCHIVES_DIR, safe);
+        if (safe !== archiveName || !/\.zip$/i.test(safe) || !fs.existsSync(archivePath))
+          return res.status(400).json({ error: `Archive « ${archiveName} » introuvable dans le dossier archives.` });
+        zipSource = archivePath;
+      } else if (req.file) {
+        zipSource = req.file.buffer;
+      } else {
+        return res.status(400).json({ error: 'Choisissez une archive dans la liste ou envoyez un fichier ZIP de photos.' });
+      }
 
       // on repart d'un dossier propre pour ce salon à chaque nouvel import
       fs.rmSync(room.uploadDir, { recursive: true, force: true });
       fs.mkdirSync(room.uploadDir, { recursive: true });
 
-      const zip = new AdmZip(req.file.buffer);
+      const zip = new AdmZip(zipSource);
       const entries = zip.getEntries().filter((e) => !e.isDirectory);
-      const imageExt = /\.(jpe?g|png|gif|webp)$/i;
-      // Le niveau doit être écrit sur deux chiffres, zéro devant obligatoire (01 à 20).
-      const nameLevelRegex = /^(.+?)\s*\((\d{2})\)\.[a-zA-Z0-9]+$/;
+      const imageExt = IMAGE_EXT_RE;
+      const nameLevelRegex = NAME_LEVEL_RE;
 
       for (const entry of entries) {
         const baseName = path.basename(entry.entryName);

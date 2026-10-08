@@ -69,3 +69,7 @@ equipe-game/
 - Les photos de l'archive zip précédente d'un salon sont remplacées à chaque nouveau chargement dans ce même salon.
 - Le nom affiché sous chaque miniature est le nom du fichier image sans son extension.
 - **Redimensionnement et cadrage automatiques des photos** : à chaque chargement d'archive zip, chaque image est automatiquement mise à un format constant 3:4 (500×667px, orientation EXIF corrigée) côté serveur avant d'être servie aux joueurs — l'espace vide éventuel (pour les images qui n'ont pas ce ratio d'origine) est comblé par un fond neutre, ce qui garantit que toutes les images apparaissent à la même taille visuelle, quel que soit leur format d'origine (portrait, carré, paysage...). Les images **avec transparence** (PNG avec canal alpha) sont ré-encodées en PNG (complétées par du transparent) pour la conserver ; les autres sont ré-encodées en JPEG qualité 85 (complétées par un gris neutre) pour rester légères. Cela allège fortement le poids des fichiers et fluidifie le défilement rapide des tirages — inutile de redimensionner ou recadrer vos photos à la main avant de les zipper.
+
+## Archives d'images pré-installées (dossier `archives/`)
+
+Déposez vos fichiers `.zip` d'images dans le dossier `archives/` : ils sont proposés dans la liste « Archives disponibles » de la page maître (étape 5, Photos), sans upload. Pratique pour la version hébergée sur Render, où le dossier est livré avec le projet (penser à commiter les zips dans le dépôt). Le nom du fichier sert de libellé. L'upload d'un zip personnel reste possible.
