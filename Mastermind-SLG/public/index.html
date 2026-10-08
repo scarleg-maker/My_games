@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mastermind-SLG — Configuration</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="top">
+  <div class="eyebrow">Mastermind-SLG</div>
+  <h1>Trouvez le nombre secret</h1>
+  <p>Choisissez le type de jeu (chiffres ou mots), le nombre de joueurs, la longueur et la difficulté, puis lancez la partie.</p>
+</div>
+
+<div class="carte">
+  <div class="groupe" id="groupe-nom-solo">
+    <span class="label">Votre nom</span>
+    <input type="text" id="champ-nom-solo" class="champ-nom" placeholder="Votre nom" maxlength="24">
+  </div>
+
+  <div class="groupe" id="groupe-noms-duo" style="display:none;">
+    <span class="label">Noms des joueurs (facultatif — chacun peut aussi le faire sur sa page)</span>
+    <input type="text" id="champ-nom1" class="champ-nom" placeholder="Nom du joueur 1" maxlength="24" style="margin-bottom:8px;">
+    <input type="text" id="champ-nom2" class="champ-nom" placeholder="Nom du joueur 2" maxlength="24">
+  </div>
+
+  <div class="groupe">
+    <span class="label">Type de jeu</span>
+    <div class="choix-boutons" id="grp-type">
+      <button class="choix-btn actif" data-valeur="chiffres">🔢 Chiffres</button>
+      <button class="choix-btn" data-valeur="mots">🔤 Mots</button>
+    </div>
+    <p class="info" id="info-type">Trouvez un nombre secret (chiffres de 0 à 9).</p>
+  </div>
+
+  <div class="groupe">
+    <span class="label">Nombre de joueurs</span>
+    <div class="choix-boutons" id="grp-joueurs">
+      <button class="choix-btn actif" data-valeur="1">1 — Solo</button>
+      <button class="choix-btn" data-valeur="2">2 — Duel</button>
+    </div>
+  </div>
+
+  <div class="groupe">
+    <span class="label" id="label-longueur">Nombre de chiffres</span>
+    <div class="choix-boutons" id="grp-chiffres"></div>
+  </div>
+
+  <div class="groupe" id="groupe-repetition">
+    <span class="label">Chiffres</span>
+    <div class="choix-boutons" id="grp-repetition">
+      <button class="choix-btn actif" data-valeur="unique">Chiffre unique</button>
+      <button class="choix-btn" data-valeur="repete">Chiffre répété</button>
+    </div>
+    <p class="info" id="info-repetition">Chaque chiffre n'apparaît qu'une seule fois dans le nombre.</p>
+  </div>
+
+  <div class="groupe">
+    <span class="label">Difficulté</span>
+    <div class="choix-boutons" id="grp-difficulte">
+      <button class="choix-btn actif" data-valeur="facile">Facile — position indiquée</button>
+      <button class="choix-btn" data-valeur="difficile">Difficile — présence seule</button>
+    </div>
+    <p class="info" id="info-difficulte">Facile : vert = bon chiffre bon endroit, orange = bon chiffre mauvais endroit, rouge = absent.</p>
+  </div>
+
+  <button class="btn-principal" id="btn-lancer">Lancer la partie</button>
+  <p class="info" id="erreur-creation" style="color:#D33F49;"></p>
+</div>
+
+<div class="carte">
+  <h3>Rejoindre un salon existant</h3>
+  <p class="info">Vous avez reçu un code à 4 caractères ? Entrez-le pour rejoindre la partie en cours.</p>
+  <div class="saisie">
+    <input type="text" id="champ-code-rejoindre" placeholder="CODE" maxlength="4" style="text-transform:uppercase;letter-spacing:4px;">
+    <button class="btn-principal" style="width:auto;" id="btn-rejoindre">Rejoindre</button>
+  </div>
+  <div id="resultat-rejoindre"></div>
+</div>
+
+<script src="/index.js"></script>
+</body>
+</html>
