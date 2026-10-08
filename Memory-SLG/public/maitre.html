@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory-SLG — Arbitre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/">🧠 Memory-SLG</a>
+  <span class="room-tag">Salon <span class="code-big" id="roomCode"></span>
+    <button class="btn" id="copyLink" style="padding:6px 12px;font-size:.85rem">Copier le lien</button></span>
+</header>
+<div id="app"></div>
+<input type="file" id="fileImages" accept="image/*" multiple>
+<input type="file" id="fileFolder" webkitdirectory multiple>
+<input type="file" id="fileZip" accept=".zip,application/zip">
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/static/common.js"></script>
+<script>
+const app = document.getElementById('app');
+document.getElementById('roomCode').textContent = SLG.room;
+SLG.recent.add(SLG.room, 'arbitre');
+let uploading = null;            // { done, total } pendant l'envoi des images
+
+// ------------------------------------------------------------------ affichage
+function render(s) {
+  if (s.phase === 'setup') renderSetup(s); else renderGame(s);
+}
+SLG.redraw = () => { if (SLG.state) SLG.keepInputs(() => render(SLG.state)); };
+
+function renderSetup(s) {
+  const solo = s.mode === 'solo';
+  const nI = s.images.length, ready = nI >= s.minImages;
+  let h = '<main>';
+
+  // 1. images
+  h += `<section class="panel"><div class="section-title"><span class="num">1</span> Images du jeu</div>
+    <div class="row">
+      <button class="btn" data-pick="fileImages">🖼️ Charger des images</button>
+      <button class="btn" data-pick="fileFolder">📁 Charger un dossier</button>
+      <button class="btn" data-pick="fileZip">🗜️ Charger une archive .zip</button>
+    </div>
+    <p class="small muted" style="margin:.8rem 0 0">${uploading ? `Envoi en cours… ${uploading.done} / ${uploading.total}`
+      : nI ? `${nI} image${nI > 1 ? 's' : ''} chargée${nI > 1 ? 's' : ''} — ${nI * 2} cartes au total. Elles sont conservées pour les prochaines parties de ce salon.`
+      : 'Aucune image chargée pour l\'instant.'}</p>
+    ${uploading ? `<div class="progress"><div style="width:${Math.round(100 * uploading.done / Math.max(1, uploading.total))}%"></div></div>` : ''}
+    <div class="thumbs">${s.images.map(im => `<div class="thumb"><img src="${SLG.imgUrl(im.id)}" alt="${SLG.esc(im.name)}" title="${SLG.esc(im.name)}"><button data-rmimg="${im.id}" title="Retirer cette image" aria-label="Retirer">✕</button></div>`).join('')}</div>
+    ${nI ? '<p style="margin:.6rem 0 0"><button class="link-btn" data-a="clearImages" style="padding-left:0">Tout supprimer</button></p>' : ''}
+  </section>`;
+
+  // 2. mode de jeu
+  h += `<section class="panel"><div class="section-title"><span class="num">2</span> Mode de jeu</div>
+    <div class="mode-choice">
+      <button class="mode-card${solo ? ' active' : ''}" data-mode="solo"><span class="icon">🧍</span>1 joueur</button>
+      <button class="mode-card${solo ? '' : ' active'}" data-mode="multi"><span class="icon">👥</span>2 à ${s.maxSeats} joueurs</button>
+    </div>`;
+  if (!solo) {
+    h += '<div class="count-picker"><span class="small muted" style="margin-right:6px">Nombre de joueurs :</span>' +
+      Array.from({ length: s.maxSeats - 1 }, (_, k) => k + 2).map(n => `<button class="count-btn${n === s.nbJoueurs ? ' active' : ''}" data-count="${n}">${n}</button>`).join('') + '</div>';
+    h += `<div class="mode-choice">
+      <button class="mode-card${s.singleScreen ? ' active' : ''}" data-single="1"><span class="icon">🖥️</span>Un seul écran<small>Tout le monde joue sur cet écran, chacun son tour.</small></button>
+      <button class="mode-card${s.singleScreen ? '' : ' active'}" data-single="0"><span class="icon">📱</span>Un écran par joueur<small>Chacun rejoint le salon avec le code ou le QR code.</small></button>
+    </div>`;
+  }
+  h += '</section>';
+
+  // 3. joueurs
+  h += `<section class="panel"><div class="section-title"><span class="num">3</span> ${solo ? 'Joueur' : 'Joueurs'}</div>`;
+  for (let i = 0; i < s.nbActive; i++) {
+    const p = s.seats[i];
+    h += `<div class="name-field"><span class="swatch" style="background:${p.color}" title="${p.colorName}"></span>
+      <input type="text" id="name-${i}" data-seat="${i}" data-server value="${SLG.esc(p.name)}" placeholder="${solo ? 'Votre nom (facultatif)' : 'Joueur ' + (i + 1)}" maxlength="18" autocomplete="off">
+      ${s.singleScreen ? '' : `<span class="dot${p.online ? ' on' : ''}" title="${p.online ? 'Écran connecté' : 'Écran non connecté'}"></span>`}</div>`;
+  }
+  h += `<p class="small muted" style="margin:.4rem 0 0">Les noms sont conservés dans ce salon pour les prochaines parties.
+    <button class="link-btn" data-a="clearNames">Effacer les noms</button></p>`;
+  if (!solo && !s.singleScreen) h += invitation(s);
+  h += '</section>';
+
+  // 4. démarrer
+  h += `<section class="panel" style="text-align:center"><div class="section-title" style="justify-content:center"><span class="num">4</span> C'est parti</div>
+    <button class="btn primary big" data-a="start" ${ready && !uploading ? '' : 'disabled'}>Démarrer</button>
+    <p class="small muted" style="margin:.7rem 0 0">${ready ? 'Prêt à jouer !' : `Charge au moins ${s.minImages} images pour commencer.`}</p>
+    <p style="margin:1rem 0 0"><button class="link-btn" id="destroy">Supprimer ce salon (images et noms compris)</button></p>
+  </section></main>`;
+  SLG.setHTML(app, h);
+  SLG.drawQR();
+}
+
+function renderGame(s) {
+  const cur = s.seats[s.current];
+  let banner = '';
+  if (s.phase === 'playing') {
+    if (s.paused) banner = 'Partie en pause';
+    else if (s.nbActive > 1) banner = `<span style="color:${cur.color}">●</span> Au tour de <strong>${SLG.esc(cur.label)}</strong>${s.lock === 'miss' ? ' — mémorisez ces cartes…' : ''}`;
+    else if (s.lock === 'miss') banner = 'Mémorisez ces cartes…';
+  }
+  const h = `<div class="game">
+    <div class="hud">${SLG.hud(s, { showOnline: !s.singleScreen })}</div>
+    <div class="row" style="margin-bottom:10px;justify-content:center">
+      <button class="btn" data-a="pause" ${s.phase === 'playing' ? '' : 'disabled'}>${s.paused ? '▶ Reprendre' : '⏸ Pause'}</button>
+      <button class="btn" data-a="rematch">🔄 Nouvelle partie</button>
+      <button class="btn" data-a="reset">⚙️ Configuration</button>
+    </div>
+    <div class="turn-banner">${banner}</div>
+    <div class="board-zone" id="board" data-keep></div>
+  </div>${SLG.endOverlay(s, true)}`;
+  SLG.setHTML(app, h);
+  SLG.renderBoard(document.getElementById('board'), s, {
+    canClick: s.phase === 'playing' && !s.paused && !s.lock,
+    onCard: i => SLG.act('flip', { index: i }),
+  });
+}
+
+// ------------------------------------------------------------------ invitation des joueurs
+const isLocalHost = /^(localhost|127\.|\[::1\]|0\.0\.0\.0)/.test(location.hostname);
+function joinUrl(s) {
+  // en local, « localhost » n'est pas joignable depuis un téléphone : on propose l'adresse du réseau
+  if (isLocalHost && s.lanUrls && s.lanUrls.length) return `${s.lanUrls[0]}/${SLG.room}/rejoindre`;
+  return SLG.roomUrl('/rejoindre');
+}
+function invitation(s) {
+  const url = joinUrl(s);
+  return `<div class="invite" style="margin-top:1.2rem"><div class="qr" id="qr" data-keep data-url="${SLG.esc(url)}"></div><div style="flex:1;min-width:200px">
+    <p style="margin:0 0 .3rem"><strong>Inviter les joueurs</strong> — code du salon : <span class="code-big">${SLG.room}</span></p>
+    <p class="small muted" style="margin:0 0 .6rem">Scanner le QR code, ou ouvrir <code>${SLG.esc(url)}</code>, ou taper le code sur la page d'accueil. Chacun choisit ensuite son siège.</p>
+    <button class="btn" data-copy="${SLG.esc(url)}">Copier le lien</button></div></div>`;
+}
+document.getElementById('copyLink').onclick = () => SLG.copy(SLG.state ? joinUrl(SLG.state) : SLG.roomUrl('/rejoindre'));
+
+// ------------------------------------------------------------------ chargement des images
+const IMG_RE = /\.(png|jpe?g|gif|webp|bmp|svg)$/i;
+function loadImg(file) {
+  return new Promise((ok, ko) => {
+    const u = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { URL.revokeObjectURL(u); ok(im); };
+    im.onerror = () => { URL.revokeObjectURL(u); ko(new Error('image illisible')); };
+    im.src = u;
+  });
+}
+// réduit chaque image (max 600 px, JPEG) : envoi rapide, stockage léger, retournement fluide
+async function shrink(file) {
+  const im = await loadImg(file);
+  const w0 = im.naturalWidth || 300, h0 = im.naturalHeight || 300, k = Math.min(1, 600 / Math.max(w0, h0));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w0 * k)); c.height = Math.max(1, Math.round(h0 * k));
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+  g.drawImage(im, 0, 0, c.width, c.height);
+  return { name: file.name, data: c.toDataURL('image/jpeg', 0.86) };
+}
+async function uploadFiles(files) {
+  const s = SLG.state;
+  files = files.filter(f => (f.type || '').startsWith('image/') || IMG_RE.test(f.name));
+  if (!files.length) return SLG.toast('Aucune image trouvée', 'bad');
+  const room = s.maxImages - s.images.length;
+  if (files.length > room) { SLG.toast(`Maximum ${s.maxImages} images : ${files.length - Math.max(0, room)} ignorée(s)`, 'bad'); files = files.slice(0, Math.max(0, room)); }
+  if (!files.length) return;
+  uploading = { done: 0, total: files.length }; SLG.redraw();
+  let ok = 0, bad = 0;
+  for (let i = 0; i < files.length; i += 6) {
+    const batch = [];
+    for (const f of files.slice(i, i + 6)) { try { batch.push(await shrink(f)); } catch { bad++; } }
+    if (batch.length) {
+      try {
+        const r = await (await fetch(`/api/rooms/${encodeURIComponent(SLG.room)}/images`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ who: 'master', images: batch }) })).json();
+        if (r.ok) { ok += r.added; bad += r.skipped; } else { bad += batch.length; SLG.toast(r.error, 'bad'); }
+      } catch { bad += batch.length; SLG.toast('Envoi impossible', 'bad'); }
+    }
+    uploading.done = Math.min(files.length, i + 6); SLG.redraw();
+  }
+  uploading = null; SLG.redraw();
+  SLG.toast(`${ok} image${ok > 1 ? 's' : ''} ajoutée${ok > 1 ? 's' : ''}${bad ? ` — ${bad} ignorée${bad > 1 ? 's' : ''}` : ''}`, bad ? 'info' : 'ok');
+}
+document.getElementById('fileImages').onchange = e => { uploadFiles([...e.target.files]); e.target.value = ''; };
+document.getElementById('fileFolder').onchange = e => { uploadFiles([...e.target.files]); e.target.value = ''; };
+document.getElementById('fileZip').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  if (!window.JSZip) return SLG.toast('Lecture des archives indisponible (connexion à internet requise)', 'bad');
+  try {
+    const zip = await JSZip.loadAsync(f);
+    const entries = Object.values(zip.files).filter(x => !x.dir && IMG_RE.test(x.name) && !/(^|\/)(__MACOSX|\.)/.test(x.name));
+    const files = [];
+    for (const en of entries) {
+      const b = await en.async('blob');
+      const ext = en.name.split('.').pop().toLowerCase();
+      const type = ext === 'svg' ? 'image/svg+xml' : 'image/' + (ext === 'jpg' ? 'jpeg' : ext);
+      files.push(new File([b], en.name.split('/').pop(), { type }));
+    }
+    uploadFiles(files);
+  } catch { SLG.toast('Impossible de lire cette archive zip', 'bad'); }
+};
+
+// ------------------------------------------------------------------ actions
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, [data-copy]');
+  if (!t) return;
+  const s = SLG.state;
+  if (t.dataset.copy) return SLG.copy(t.dataset.copy);
+  if (t.dataset.pick) return document.getElementById(t.dataset.pick).click();
+  if (t.dataset.mode) return SLG.act('config', { mode: t.dataset.mode });
+  if (t.dataset.count) return SLG.act('config', { nbJoueurs: +t.dataset.count });
+  if (t.dataset.single) return SLG.act('config', { singleScreen: t.dataset.single === '1' });
+  if (t.dataset.rmimg) return SLG.act('removeImage', { id: t.dataset.rmimg });
+  if (t.id === 'destroy') {
+    if (!confirm('Supprimer définitivement ce salon, ses images et ses noms ?')) return;
+    return SLG.act('destroy').then(r => { if (r.ok) { SLG.recent.remove(SLG.room); location.href = '/'; } });
+  }
+  const a = t.dataset.a;
+  if (!a) return;
+  if (a === 'clearImages' && !confirm('Retirer toutes les images de ce salon ?')) return;
+  if (a === 'clearNames' && !confirm('Effacer tous les noms enregistrés ?')) return;
+  if (a === 'reset' && s.phase === 'playing' && !confirm('Abandonner la partie en cours et revenir à la configuration ?')) return;
+  if (a === 'rematch' && s.phase === 'playing' && !confirm('Recommencer une nouvelle partie ?')) return;
+  SLG.act(a);
+});
+// le nom est enregistré tout seul : après une courte pause de frappe, en quittant le champ ou avec Entrée
+const nameTimers = {};
+function saveName(t) {
+  clearTimeout(nameTimers[t.id]);
+  const seat = +t.dataset.seat, s = SLG.state;
+  if (t.value.trim() === (s.seats[seat].name || '')) return;
+  SLG.act('name', { seat, name: t.value });
+}
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.matches('input[id^="name-"]')) { clearTimeout(nameTimers[t.id]); nameTimers[t.id] = setTimeout(() => saveName(t), 700); }
+});
+document.addEventListener('change', e => { if (e.target.matches('input[id^="name-"]')) saveName(e.target); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('input[id^="name-"]')) { saveName(e.target); e.target.blur(); }
+});
+
+// ------------------------------------------------------------------ salon inexistant ou supprimé
+function noRoom() {
+  SLG.recent.remove(SLG.room);
+  app.innerHTML = `<main><section class="panel" style="text-align:center"><h2>Ce salon n'existe plus</h2>
+    <p class="muted">Il a été supprimé ou n'a jamais été créé.</p><a class="btn primary" href="/">Retour à l'accueil</a></section></main>`;
+}
+SLG.connect('master', render, noRoom);
+</script>
+</body>
+</html>

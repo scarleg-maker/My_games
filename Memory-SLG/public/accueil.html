@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory-SLG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top"><a class="logo" href="/">🧠 Memory-SLG</a></header>
+<main style="max-width:980px">
+  <div class="hero">
+    <h1>🧠 Memory-SLG</h1>
+    <p>Le jeu des paires avec vos propres images, de 1 à 8 joueurs. Chaque groupe joue dans son propre salon, séparé des autres.</p>
+  </div>
+
+  <div class="cards">
+    <section class="panel">
+      <h2>Créer une partie</h2>
+      <p>Tu deviens l'arbitre : un salon est créé avec un code à donner aux joueurs.</p>
+      <button class="btn primary big" id="create">Créer un salon</button>
+      <details>
+        <summary>Choisir mon propre code</summary>
+        <div class="row"><input type="text" id="mycode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off"><button class="btn" id="createCustom">Créer</button></div>
+        <p class="small" style="margin:.4rem 0 0">3 à 10 lettres ou chiffres. Pratique pour retrouver le même salon, avec ses images et ses joueurs, d'une fois sur l'autre.</p>
+      </details>
+    </section>
+
+    <section class="panel">
+      <h2>Rejoindre une partie</h2>
+      <p>Entre le code donné par l'arbitre, puis choisis ton siège.</p>
+      <div class="row" style="flex-wrap:nowrap"><input type="text" id="code" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn primary" id="join">Rejoindre</button></div>
+      <div id="found"></div>
+    </section>
+  </div>
+
+  <div class="recent" id="recent"></div>
+</main>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/static/common.js"></script>
+<script>
+const found = document.getElementById('found'), codeInput = document.getElementById('code');
+let watching = null, watchTimer = null;
+
+function toastErr(t) { SLG.toast(t, 'bad'); }
+async function createRoom(code) {
+  try {
+    const r = await (await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(code ? { code } : {}) })).json();
+    if (!r.ok) return toastErr(r.error);
+    SLG.recent.add(r.code, 'arbitre');
+    location.href = '/' + r.code;
+  } catch { toastErr('Serveur injoignable'); }
+}
+document.getElementById('create').onclick = () => createRoom();
+document.getElementById('createCustom').onclick = () => {
+  const c = document.getElementById('mycode').value.trim();
+  if (!c) return toastErr('Indique un code');
+  createRoom(c);
+};
+
+async function lookup(code, quiet) {
+  code = code.trim().toUpperCase();
+  if (!code) { if (!quiet) toastErr('Indique le code du salon'); return; }
+  const info = await SLG.roomInfo(code);
+  if (!info) { if (!quiet) toastErr('Serveur injoignable'); return; }
+  if (!info.exists) {
+    watching = null; clearInterval(watchTimer);
+    found.innerHTML = `<p class="err" style="margin-top:1rem">Aucun salon « ${SLG.esc(code)} ». Vérifie le code avec l'arbitre.</p>`;
+    return;
+  }
+  watching = code;
+  SLG.recent.add(code, 'joueur');
+  renderSeats(info);
+  clearInterval(watchTimer);
+  watchTimer = setInterval(async () => { if (watching) { const i = await SLG.roomInfo(watching); if (i && i.exists) renderSeats(i); } }, 3000);
+  renderRecent();
+}
+function renderSeats(info) {
+  let h = `<div class="found-head"><span>Salon <span class="code-big">${info.code}</span> · ${info.nbActive} joueur${info.nbActive > 1 ? 's' : ''} · ${info.nbImages} image${info.nbImages > 1 ? 's' : ''}</span>
+    <a href="/${info.code}" class="small">page arbitre</a></div>`;
+  if (info.singleScreen) {
+    h += `<p style="margin-top:.8rem">Cette partie se joue <strong>sur un seul écran</strong>, celui de l'arbitre. Tu peux tout de même suivre le plateau ici :</p>`;
+  } else h += '<p class="small muted" style="margin:.6rem 0 0">Touche ton siège :</p>';
+  h += '<div class="seats">' + info.seats.map((x, i) => {
+    const sub = x.name ? (x.online ? 'déjà connecté' : 'inscrit, pas encore connecté') : 'libre';
+    const label = x.name ? SLG.esc(x.name) : `Joueur ${i + 1}`;
+    return `<a class="seat" href="/${info.code}/joueur${i + 1}">
+      <span class="swatch" style="background:${x.color}"></span><span class="who">${label}<small>Siège ${i + 1} — ${sub}</small></span><span class="dot${x.online ? ' on' : ''}"></span><span>→</span></a>`;
+  }).join('') + '</div>';
+  found.innerHTML = h;
+}
+document.getElementById('join').onclick = () => lookup(codeInput.value);
+codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(codeInput.value); });
+document.getElementById('mycode').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('createCustom').click(); });
+
+function renderRecent() {
+  const box = document.getElementById('recent'), list = SLG.recent.list();
+  if (!list.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<h2 style="font-size:1.1rem">Salons récents sur cet appareil</h2><ul>' + list.map(x =>
+    `<li><a href="${x.role === 'arbitre' ? '/' + x.code : '/' + x.code + '/rejoindre'}"><strong>${SLG.esc(x.code)}</strong><span class="small muted">${SLG.esc(x.role)}</span></a>
+     <button data-rm="${SLG.esc(x.code)}" title="Retirer de la liste" aria-label="Retirer ${SLG.esc(x.code)}">✕</button></li>`).join('') + '</ul>';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rm]');
+  if (b) { SLG.recent.remove(b.dataset.rm); renderRecent(); }
+});
+renderRecent();
+
+// adresse /CODE/rejoindre (lien ou QR code de l'arbitre) : le code est déjà rempli
+const m = location.pathname.match(/^\/([A-Za-z0-9]{3,10})\/rejoindre/);
+if (m) { codeInput.value = m[1].toUpperCase(); lookup(m[1], true); }
+</script>
+</body>
+</html>

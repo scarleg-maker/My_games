@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory-SLG — Joueur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/">🧠 Memory-SLG</a>
+  <span class="room-tag">Salon <span class="code-big" id="roomCode"></span>
+    <span id="me" style="display:flex;align-items:center;gap:6px"></span></span>
+</header>
+<div id="app"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/static/common.js"></script>
+<script>
+const app = document.getElementById('app');
+const seat = +(location.pathname.match(/\/joueur([1-8])\/?$/) || [0, 1])[1] - 1;
+document.getElementById('roomCode').textContent = SLG.room;
+SLG.recent.add(SLG.room, 'joueur');
+
+SLG.redraw = () => { if (SLG.state) SLG.keepInputs(() => render(SLG.state)); };
+
+function playersRoster(s) {
+  let h = '<ul style="list-style:none;padding:0;margin:.8rem 0 0;display:grid;gap:.4rem">';
+  for (let i = 0; i < s.nbActive; i++) {
+    const p = s.seats[i];
+    h += `<li class="name-field" style="margin:0"><span class="swatch" style="background:${p.color}"></span><span style="flex:1">${SLG.esc(p.label)}${i === seat ? ' <em class="muted">(toi)</em>' : ''}</span><span class="dot${p.online ? ' on' : ''}"></span></li>`;
+  }
+  return h + '</ul>';
+}
+
+function render(s) {
+  const me = s.seats[seat];
+  document.getElementById('me').innerHTML = `<span class="swatch" style="background:${me.color}"></span>${SLG.esc(me.label)}`;
+
+  if (seat >= s.nbActive) {
+    return SLG.setHTML(app, `<main><section class="panel reg" style="text-align:center"><h2>Siège non utilisé</h2>
+      <p class="muted">Cette partie se joue à ${s.nbActive} joueur${s.nbActive > 1 ? 's' : ''} : le siège ${seat + 1} n'est pas utilisé.</p>
+      <a class="btn primary" href="/${SLG.room}/rejoindre">Choisir un autre siège</a></section></main>`);
+  }
+
+  if (s.phase === 'setup') {
+    let h = `<main><section class="panel reg"><h1>Bienvenue !</h1>
+      <div><label for="name-${seat}" style="font-weight:700;display:block;margin-bottom:.35rem">Ton prénom <span class="muted small">(siège ${seat + 1} — ${SLG.esc(me.colorName)})</span></label>
+      <input type="text" id="name-${seat}" data-server value="${SLG.esc(me.name)}" placeholder="Joueur ${seat + 1}" maxlength="18" autocomplete="off"></div>
+      <p class="muted" style="margin:0">${me.name ? '✔ Inscrit. ' : ''}En attente du lancement de la partie par l'arbitre…</p>`;
+    h += playersRoster(s);
+    h += `<p class="small muted" style="margin:.4rem 0 0">${s.images.length} image${s.images.length > 1 ? 's' : ''} dans ce salon · ${s.singleScreen ? 'partie sur un seul écran (celui de l\'arbitre)' : 'un écran par joueur'}</p></section></main>`;
+    return SLG.setHTML(app, h);
+  }
+
+  const mine = s.phase === 'playing' && !s.singleScreen && s.current === seat;
+  let banner = '';
+  if (s.phase === 'playing') {
+    if (s.paused) banner = 'Partie en pause';
+    else if (s.singleScreen) banner = `Partie sur l'écran de l'arbitre — au tour de <strong>${SLG.esc(s.seats[s.current].label)}</strong>`;
+    else if (mine) banner = s.lock === 'miss' ? 'Mémorise ces cartes…' : "C'est ton tour ! Retourne deux cartes";
+    else banner = `<span style="color:${s.seats[s.current].color}">●</span> Au tour de <strong>${SLG.esc(s.seats[s.current].label)}</strong>${s.lock === 'miss' ? ' — mémorise ces cartes…' : ''}`;
+  }
+  const h = `<div class="game">
+    <div class="hud">${SLG.hud(s)}</div>
+    <div class="turn-banner${mine && !s.paused && !s.lock ? ' mine' : ''}">${banner}</div>
+    <div class="board-zone" id="board" data-keep></div>
+  </div>${SLG.endOverlay(s, false)}`;
+  SLG.setHTML(app, h);
+  SLG.renderBoard(document.getElementById('board'), s, {
+    canClick: mine && !s.paused && !s.lock,
+    onCard: i => SLG.act('flip', { index: i }),
+  });
+}
+
+// le prénom est enregistré tout seul : après une courte pause de frappe, en quittant le champ ou avec Entrée
+let nameTimer;
+function saveName(t) {
+  clearTimeout(nameTimer);
+  const s = SLG.state;
+  if (!s || t.value.trim() === (s.seats[seat].name || '')) return;
+  SLG.act('name', { name: t.value });
+}
+document.addEventListener('input', e => { if (e.target.matches('input[id^="name-"]')) { clearTimeout(nameTimer); nameTimer = setTimeout(() => saveName(e.target), 700); } });
+document.addEventListener('change', e => { if (e.target.matches('input[id^="name-"]')) saveName(e.target); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('input[id^="name-"]')) { saveName(e.target); e.target.blur(); } });
+
+function noRoom() {
+  SLG.recent.remove(SLG.room);
+  app.innerHTML = `<main><section class="panel" style="text-align:center"><h2>Ce salon n'existe plus</h2>
+    <p class="muted">L'arbitre l'a supprimé, ou le code est incorrect.</p><a class="btn primary" href="/">Retour à l'accueil</a></section></main>`;
+}
+SLG.connect('p' + (seat + 1), render, noRoom);
+</script>
+</body>
+</html>
