@@ -1,0 +1,11 @@
+Déposez ici vos archives d'images (fichiers .zip).
+
+Chaque archive apparaît dans la liste « Images du jeu » de la page arbitre,
+avec son nombre d'images : un clic suffit, rien à envoyer.
+
+- Le nom du fichier devient le nom affiché (« Pokemon Gen1.zip » -> « Pokemon Gen1 »).
+- Formats d'images pris en compte : png, jpg, jpeg, gif, webp (les sous-dossiers du zip sont acceptés).
+- Le nom de chaque image (sans extension) est affiché sous l'image pendant la partie.
+- Minimum conseillé : 20 images (75 maximum utilisées par partie).
+- Version Render / GitHub : ajoutez les .zip à ce dossier puis "git add archives && git commit && git push".
+  GitHub refuse les fichiers de plus de 100 Mo : découpez une archive trop lourde en plusieurs.
