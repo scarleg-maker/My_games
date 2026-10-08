@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yam's — Salon</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="logo" href="/" title="Accueil">🎲 Yam's</a>
+  <button class="room-badge" id="roomBadge" title="Copier le lien d'invitation"></button>
+  <span class="meta" id="meta"></span>
+  <div class="actions" id="topActions"></div>
+</header>
+
+<div id="app">
+  <!-- ===== configuration ===== -->
+  <section id="setup" class="hidden"></section>
+
+  <!-- ===== partie ===== -->
+  <section id="play" class="hidden">
+    <div class="game-header">
+      <div id="banner" class="current-player-banner"></div>
+    </div>
+
+    <div class="dice-zone" id="diceZone">
+      <div id="dice" class="dice-container"></div>
+      <div class="dice-controls">
+        <button id="btnRoll" class="btn-primary btn-big">🎲 Lancer les dés</button>
+        <button id="btnStop" class="btn-secondary btn-big" disabled>✅ Arrêter et marquer</button>
+        <span id="rollsLeft" class="rolls-left"></span>
+      </div>
+      <p class="hint">Cliquez sur un dé pour le conserver avant le prochain lancer. Vous pouvez arrêter de lancer et choisir votre ligne dès le 1er lancer.</p>
+    </div>
+
+    <div class="dice-zone" id="sheetZone">
+      <p class="hint" style="margin:0">Cliquez sur la ligne concernée pour <strong>indiquer le score obtenu</strong> par le joueur en cours. Le score saisi est vérifié : seules les valeurs possibles pour cette combinaison sont acceptées.</p>
+    </div>
+
+    <div id="endBox" class="card hidden">
+      <h2>🏆 Partie terminée !</h2>
+      <div id="final-results"></div>
+      <p class="hint" style="margin:14px 0 0">Feuille de score complète ci-dessous (corrections possibles via ✏️).</p>
+      <div class="end-actions" id="endActions"></div>
+    </div>
+
+    <div class="score-table-wrap"><table id="tbl" class="score-table"></table></div>
+  </section>
+</div>
+
+<!-- ===== saisie de score (mode Tableau) ===== -->
+<div id="entry-modal" class="modal hidden">
+  <div class="modal-content modal-narrow">
+    <button id="entryClose" class="btn-close">✕</button>
+    <h2 id="entryTitle">Score</h2>
+    <p id="entryHint" class="score-entry-hint"></p>
+    <input type="number" id="entryInput" class="score-entry-input" min="0" placeholder="Points obtenus">
+    <p id="entryError" class="score-entry-error"></p>
+    <div class="score-entry-buttons">
+      <button id="entryCancel" class="btn-back">Annuler</button>
+      <button id="entryOk" class="btn-primary">✓ Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== palmarès ===== -->
+<div id="hof-modal" class="modal hidden">
+  <div class="modal-content modal-wide">
+    <button id="hofClose" class="btn-close">✕</button>
+    <h2>🏆 Palmarès du salon — 5 meilleurs scores</h2>
+    <div id="hof-list" class="hof-columns"></div>
+    <button id="hofReset" class="btn-link small hidden">🗑 Réinitialiser le palmarès</button>
+  </div>
+</div>
+
+<!-- ===== règles ===== -->
+<div id="rules-modal" class="modal hidden">
+  <div class="modal-content">
+    <button id="rulesClose" class="btn-close">✕</button>
+    <h2>📖 Rappel des combinaisons</h2>
+    <ul class="rules-list">
+      <li><strong>Chiffres (1 à 6)</strong> : somme des dés portant la valeur choisie.</li>
+      <li><strong>Brelan</strong> : au moins 3 dés identiques → somme des 5 dés.</li>
+      <li><strong>Carré</strong> : au moins 4 dés identiques → somme des 5 dés.</li>
+      <li><strong>Full</strong> : 2 dés identiques + 3 dés identiques d'une autre valeur → <strong>25 points</strong>.</li>
+      <li><strong>Petite suite</strong> : 1, 2, 3, 4 et 5 → <strong>30 points</strong>.</li>
+      <li><strong>Grande suite</strong> : 2, 3, 4, 5 et 6 → <strong>40 points</strong>.</li>
+      <li><strong>Yam</strong> : 5 dés identiques → <strong>50 points</strong>.</li>
+      <li><strong>Chance</strong> : aucune combinaison requise, somme des 5 dés.</li>
+    </ul>
+    <p class="rules-note">Règle « Points sup. » : Full, Petite suite, Grande suite ou Yam réalisés dès le premier lancer voient leurs points doublés (50 / 60 / 80 / 100). Si aucune ligne n'est barrée sur tout le tableau : +10 points.</p>
+    <p class="rules-note">Bonus : si le sous-total des chiffres atteint ou dépasse <strong>63 points</strong> : <strong>+35 points</strong>.</p>
+  </div>
+</div>
+
+<script src="/static/common.js"></script>
+<script src="/static/salon.js"></script>
+</body>
+</html>

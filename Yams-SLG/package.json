@@ -1,0 +1,8 @@
+{
+  "name": "yams-slg",
+  "version": "1.0.0",
+  "description": "Yams-SLG",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "license": "ISC"
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yam's — Salons</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="app">
+  <div class="card home-card" style="margin-top:6vh">
+    <h1>🎲 Yam's</h1>
+    <p class="subtitle">Chaque groupe joue dans son propre salon, avec sa partie séparée.</p>
+
+    <div class="cards">
+      <section class="panel-box">
+        <h2>Créer une partie</h2>
+        <p class="muted">Vous devenez l'arbitre : un salon est créé avec un code à donner aux joueurs.</p>
+        <button class="btn-primary btn-big" id="create">Créer un salon</button>
+        <details>
+          <summary>Choisir mon propre code</summary>
+          <div class="row"><input type="text" id="mycode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off"><button class="btn-secondary" id="createCustom">Créer</button></div>
+          <p class="small muted">3 à 10 lettres ou chiffres. Pratique pour retrouver le même salon (et ses joueurs habituels, son palmarès) d'une fois sur l'autre.</p>
+        </details>
+      </section>
+
+      <section class="panel-box">
+        <h2>Rejoindre une partie</h2>
+        <p class="muted">Entrez le code donné par l'arbitre, puis choisissez votre siège.</p>
+        <div class="row"><input type="text" id="code" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn-primary" id="join">Rejoindre</button></div>
+        <div id="found"></div>
+      </section>
+    </div>
+
+    <div class="recent" id="recent"></div>
+  </div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/static/common.js"></script>
+<script>
+const found = document.getElementById('found'), codeInput = document.getElementById('code');
+let watching = null, watchTimer = null;
+
+async function createRoom(code) {
+  try {
+    const r = await (await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(code ? { code } : {}) })).json();
+    if (!r.ok) return Y.toast(r.error, 'bad');
+    Y.recent.add(r.code, 'arbitre');
+    location.href = '/' + r.code;
+  } catch { Y.toast('Serveur injoignable', 'bad'); }
+}
+document.getElementById('create').onclick = () => createRoom();
+document.getElementById('createCustom').onclick = () => {
+  const c = document.getElementById('mycode').value.trim();
+  if (!c) return Y.toast('Indiquez un code', 'bad');
+  createRoom(c);
+};
+
+async function lookup(code, quiet) {
+  code = code.trim().toUpperCase();
+  if (!code) { if (!quiet) Y.toast('Indiquez le code du salon', 'bad'); return; }
+  const info = await Y.roomInfo(code);
+  if (!info) { if (!quiet) Y.toast('Serveur injoignable', 'bad'); return; }
+  if (!info.exists) {
+    watching = null; clearInterval(watchTimer);
+    found.innerHTML = `<p class="err">Aucun salon « ${Y.esc(code)} ». Vérifiez le code avec l'arbitre.</p>`;
+    return;
+  }
+  watching = code;
+  Y.recent.add(code, 'joueur');
+  renderSeats(info);
+  clearInterval(watchTimer);
+  watchTimer = setInterval(async () => { if (watching) { const i = await Y.roomInfo(watching); if (i && i.exists) renderSeats(i); } }, 3000);
+  renderRecent();
+}
+function renderSeats(info) {
+  const modes = { classic: 'Jeu avec dés', sheet: 'Tableau de scores' };
+  let h = `<div class="found-head"><span>Salon <strong>${info.code}</strong> · ${modes[info.mode] || ''} · ${info.nbJoueurs} joueur(s)${info.pointsSup ? ' · Points sup.' : ''}</span><a href="/${info.code}" class="small">page arbitre</a></div>`;
+  h += '<p class="small muted">Touchez votre siège :</p><div class="seats">' + info.seats.map((x, i) => {
+    const sub = x.name ? (x.online ? 'déjà connecté' : 'inscrit, pas encore connecté') : 'libre';
+    return `<a class="seat ${x.online ? 'taken' : ''}" href="/${info.code}/joueur${i + 1}"><span class="dot${x.online ? ' on' : ''}"></span><span class="who">${x.name ? Y.esc(x.name) : 'Joueur ' + (i + 1)}<small>Siège ${i + 1} — ${sub}</small></span><span>→</span></a>`;
+  }).join('') + '</div>';
+  found.innerHTML = h;
+}
+document.getElementById('join').onclick = () => lookup(codeInput.value);
+codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(codeInput.value); });
+document.getElementById('mycode').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('createCustom').click(); });
+
+function renderRecent() {
+  const box = document.getElementById('recent'), list = Y.recent.list();
+  if (!list.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<h2 style="font-size:1rem">Salons récents sur cet appareil</h2><ul>' + list.map(x =>
+    `<li><a href="${x.role === 'arbitre' ? '/' + x.code : '/' + x.code + '/rejoindre'}"><strong>${Y.esc(x.code)}</strong><span class="small muted">${Y.esc(x.role)}</span></a>
+     <button data-rm="${Y.esc(x.code)}" title="Retirer de la liste" aria-label="Retirer ${Y.esc(x.code)}">✕</button></li>`).join('') + '</ul>';
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { Y.recent.remove(b.dataset.rm); renderRecent(); } });
+renderRecent();
+
+// adresse /CODE/rejoindre (lien ou QR code de l'arbitre) : le code est déjà rempli
+const m = location.pathname.match(/^\/([A-Za-z0-9]{3,10})\/rejoindre/);
+if (m) { codeInput.value = m[1].toUpperCase(); lookup(m[1], true); }
+</script>
+</body>
+</html>
