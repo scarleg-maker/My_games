@@ -1,0 +1,21 @@
+{
+ "rooms": {
+  "DG6H": {
+   "t": 1791787330931
+  },
+  "TEST": {
+   "roster": [
+    {
+     "name": "test",
+     "color": "jaune"
+    }
+   ],
+   "nbJoueurs": 3,
+   "nbPions": 6,
+   "nbCases": 8,
+   "competition": true,
+   "singleScreen": false,
+   "t": 1791787387798
+  }
+ }
+}

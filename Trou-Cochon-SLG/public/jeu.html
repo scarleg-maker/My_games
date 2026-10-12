@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trou-cochon-SLG</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/"><span class="pig">🐷</span>Trou-cochon<small>SLG</small></a>
+  <span class="room" id="hroom"></span><span class="sp"></span><span class="role" id="hrole"></span>
+</header>
+<main id="app"><div class="panel center muted">Connexion au salon…</div></main>
+<script src="/static/common.js"></script>
+<script>
+const isMaster = /\/maitre\/?$/i.test(location.pathname);
+const seatNo = +((location.pathname.match(/joueur([1-6])/) || [])[1] || 0);
+const mySeat = isMaster ? -1 : seatNo - 1;
+const app = document.getElementById('app');
+const $ = id => document.getElementById(id);
+const MEDAL = ['🥇', '🥈', '🥉'];
+const pickColor = {};          // couleur choisie (pas encore validée) par siège
+let armed = false;             // bouton « abandonner » en deux temps
+let prev = { gid: null, holes: [] };
+
+document.getElementById('hroom').textContent = 'Salon ' + P.room;
+document.getElementById('hrole').textContent = isMaster ? 'Maître du jeu' : 'Joueur ' + seatNo;
+
+// ------------------------------------------------------------------ utilitaires d'affichage
+const cv = hex => `--c:${hex};--hi:${P.shade(hex, .5)};--lo:${P.shade(hex, -.5)};--ink2:${P.ink(hex)}`;
+const hexOf = (s, i) => (s.seats[i]?.color ? P.hex(s, s.seats[i].color) : '#888');
+const chip = (s, i) => `<span class="chip" style="${cv(hexOf(s, i))}"></span>`;
+const rankLabel = k => (k < 3 ? MEDAL[k] : `${k + 1}e`);
+const canEdit = i => isMaster || (i === mySeat && !P.state?.seats[i]?.ai);
+const aiBtn = (s, i) => `<button class="btn ghost small" data-act="ai" data-seat="${i}" data-on="${s.seats[i].ai ? 0 : 1}" aria-pressed="${!!s.seats[i].ai}">🤖 ${s.seats[i].ai ? 'IA activée — désactiver' : 'Activer l\'IA'}</button>`;
+const takenColors = (s, except) => new Set(s.seats.map((x, i) => (i !== except && i < s.nbJoueurs && x.color ? x.color : null)).filter(Boolean));
+const seg = (cfg, vals, cur, fmt = v => v) => `<div class="seg">${vals.map(v => `<button data-cfg="${cfg}" data-val="${v}" aria-pressed="${v === cur}">${fmt(v)}</button>`).join('')}</div>`;
+
+// ------------------------------------------------------------------ configuration
+function inviteHTML(s) {
+  let base = location.origin;
+  if (/^(localhost|127\.)/.test(location.hostname) && s.lanUrls && s.lanUrls[0]) base = s.lanUrls[0];
+  const url = `${base}/${P.room}/rejoindre`;
+  return `<section class="panel"><div class="invite">
+    <div class="qr" id="qr" data-keep data-url="${P.esc(url)}"></div>
+    <div><div class="small muted">Code du salon</div><div class="code">${P.esc(P.room)}</div>
+    <p class="small muted" style="margin:.4rem 0 0;max-width:34rem">Chaque joueur scanne le QR code ou ouvre <code>${P.esc(url)}</code>, ou tape le code sur la page d'accueil, puis choisit son siège.</p></div></div></section>`;
+}
+function optionsHTML(s) {
+  return `<section class="panel"><h2>Options de la partie</h2><div class="opts">
+    <div class="opt"><h3>Joueurs</h3>${seg('nbJoueurs', [2, 3, 4, 5, 6], s.nbJoueurs)}</div>
+    <div class="opt"><h3>Pions par joueur</h3>${seg('nbPions', [5, 6, 7, 8], s.nbPions)}</div>
+    <div class="opt"><h3>Cases du plateau (dé à ${s.nbCases} faces)</h3>${seg('nbCases', [6, 7, 8, 9, 10], s.nbCases)}
+      <p class="hint">Trous 1 à ${s.nbCases - 1} + le dernier trou n°${s.nbCases} (pion perdu).</p></div>
+    <div class="opt"><h3>Type de partie</h3><div class="seg">
+      <button class="wide" data-cfg="competition" data-val="0" aria-pressed="${!s.competition}"><strong>Partie simple</strong><span>On joue une partie, avec podium.</span></button>
+      <button class="wide" data-cfg="competition" data-val="1" aria-pressed="${s.competition}"><strong>Compétition</strong><span>Le dernier est éliminé à chaque manche, jusqu'à la finale à 2.</span></button></div></div>
+    <div class="opt"><h3>Écrans</h3><div class="seg">
+      <button class="wide" data-cfg="singleScreen" data-val="1" aria-pressed="${s.singleScreen}"><strong>Un seul écran</strong><span>Tout le monde joue sur cette page.</span></button>
+      <button class="wide" data-cfg="singleScreen" data-val="0" aria-pressed="${!s.singleScreen}"><strong>Un écran par joueur</strong><span>Chacun rejoint le salon sur son appareil.</span></button></div></div>
+  </div></section>`;
+}
+function seatHTML(s, i) {
+  const x = s.seats[i], mine = i === mySeat;
+  const head = `<h3><span class="dot${x.online ? ' on' : ''}" title="${x.online ? 'connecté' : 'non connecté'}"></span>Siège ${i + 1}${mine ? ' — c\'est toi' : ''}</h3>`;
+  if (x.name) {
+    return `<div class="seat${mine ? ' mine' : ''}">${head}<div class="done">${chip(s, i)}<span>${P.esc(x.name)}</span><span class="small muted">${P.esc(P.colName(s, x.color))}</span></div>
+      ${x.ai ? '<div class="small muted" style="margin-top:.3rem">🤖 Joué par l\'IA</div>' : ''}
+      ${canEdit(i) ? `<div class="row" style="margin-top:.6rem"><button class="btn ghost small" data-act="unreg" data-seat="${i}">Modifier / libérer</button>${isMaster ? aiBtn(s, i) : ''}</div>` : ''}</div>`;
+  }
+  if (!canEdit(i)) return `<div class="seat">${head}<div class="muted">Libre — en attente d'un joueur…</div></div>`;
+  const taken = takenColors(s, i);
+  let cur = pickColor[i];
+  if (!cur || taken.has(cur)) cur = (s.colors.find(c => !taken.has(c.id)) || {}).id;
+  pickColor[i] = cur;
+  return `<div class="seat${mine ? ' mine' : ''}">${head}
+    <input type="text" id="name-${i}" maxlength="20" placeholder="Nom du joueur" autocomplete="off" data-seat="${i}">
+    <div class="swatches">${s.colors.map(c => `<button class="sw" style="${cv(c.hex)}" data-act="pick" data-seat="${i}" data-color="${c.id}" aria-pressed="${cur === c.id}" ${taken.has(c.id) ? 'disabled' : ''} title="${P.esc(c.nom)}" aria-label="${P.esc(c.nom)}"></button>`).join('')}</div>
+    <div class="row"><button class="btn primary" data-act="reg" data-seat="${i}">Inscrire</button>${isMaster ? aiBtn(s, i) : ''}</div></div>`;
+}
+function rosterHTML(s) {
+  if (!s.roster.length) return '';
+  return `<div class="roster" aria-label="Joueurs habituels"><span class="small muted" style="align-self:center">Joueurs habituels :</span>${s.roster.map(r => `<span class="chipbtn"><button data-act="roster" data-name="${P.esc(r.name)}" data-color="${P.esc(r.color)}"><span class="chip" style="${cv(P.hex(s, r.color))}"></span>${P.esc(r.name)}</button>${isMaster ? `<button data-act="forget" data-name="${P.esc(r.name)}" title="Oublier ce joueur" aria-label="Oublier ${P.esc(r.name)}">✕</button>` : ''}</span>`).join('')}</div>`;
+}
+function setupHTML(s) {
+  let h = '';
+  if (!isMaster && mySeat >= s.nbJoueurs) return `<div class="panel center"><h2>Siège inutilisé</h2><p class="muted">Cette partie se joue à ${s.nbJoueurs} joueurs : le siège ${seatNo} n'est pas utilisé.</p></div>`;
+  if (isMaster) {
+    if (!s.singleScreen) h += inviteHTML(s);
+    h += optionsHTML(s);
+  } else {
+    h += `<section class="panel"><h2>Partie à ${s.nbJoueurs} joueurs${s.competition ? ' — compétition' : ''}</h2><p class="muted" style="margin:0">${s.nbPions} pions chacun · plateau de ${s.nbCases} cases (dé à ${s.nbCases} faces). Inscris ton nom et choisis ta couleur ; le maître du jeu lancera la partie.</p></section>`;
+  }
+  const ready = s.seats.slice(0, s.nbJoueurs).every(x => x.name);
+  h += `<section class="panel"><h2>Joueurs</h2>${rosterHTML(s)}<div class="seats">${Array.from({ length: s.nbJoueurs }, (_, i) => seatHTML(s, i)).join('')}</div>
+    ${isMaster ? `<div class="row" style="margin-top:1rem"><button class="btn primary big" data-act="start" ${ready ? '' : 'disabled'}>🎲 Lancer la partie</button>
+      <button class="btn ghost" data-act="clearSeats">Vider les sièges</button>${ready ? '' : '<span class="muted small">Tous les joueurs doivent être inscrits.</span>'}</div>`
+      : `<p class="muted small" style="margin-bottom:0">${s.seats[mySeat]?.name ? 'Tu es inscrit(e). En attente du lancement de la partie…' : ''}</p>`}</section>`;
+  return h;
+}
+
+// ------------------------------------------------------------------ plateau
+function holeHTML(s, n, cls = '') {
+  const g = s.game, owner = g.holes[n - 1];
+  const was = prev.gid === s.gameId ? prev.holes[n - 1] : undefined;
+  let c = 'hole ' + cls, st = '';
+  if (owner !== null && owner !== undefined) { c += ' occ'; st = cv(hexOf(s, owner)); if (was === null) c += ' new'; }
+  else if (was !== null && was !== undefined) c += ' took';
+  if (s.roll && s.roll.value != null && s.roll.hole === n) c += ' hit';
+  return `<div class="${c}" style="${st}" data-n="${n}" title="Trou ${n}"><span class="num">${n}</span></div>`;
+}
+function boardHTML(s) {
+  const N = s.nbCases, M = N - 1, top = Math.ceil(M / 2), g = s.game;
+  const row = (a, b) => `<div class="row">${Array.from({ length: b - a + 1 }, (_, k) => holeHTML(s, a + k)).join('')}</div>`;
+  const lost = g.lost.slice(0, 16).map(i => `<i style="${cv(hexOf(s, i))}"></i>`).join('');
+  const lastN = s.roll && s.roll.value === N ? ' hit' : '';
+  const html = `<div class="board" role="img" aria-label="Plateau de ${N} trous">
+    ${row(1, top)}${row(top + 1, M)}
+    <div class="sep"></div>
+    <div class="last"><div class="hole final${lastN}" data-n="${N}" title="Dernier trou"><span class="num">${N}</span></div>
+      <div class="lostbar">${lost}</div>${g.lost.length ? `<span class="lostcount">${g.lost.length} pion${g.lost.length > 1 ? 's' : ''} perdu${g.lost.length > 1 ? 's' : ''}</span>` : ''}</div></div>`;
+  prev = { gid: s.gameId, holes: g.holes.slice() };
+  return html;
+}
+
+// ------------------------------------------------------------------ partie en cours
+function playersHTML(s) {
+  const g = s.game, inGame = new Set(g.order);
+  return `<div class="players">${Array.from({ length: s.nbJoueurs }, (_, i) => {
+    const x = s.seats[i], hex = hexOf(s, i);
+    if (!inGame.has(i)) return `<div class="pl out"><span class="ava" style="${cv(hex)}"></span><span class="nm">${P.esc(x.name)}</span><span class="rank">❌</span><span class="hand small muted">Éliminé de la compétition</span></div>`;
+    const k = g.ranking.indexOf(i), fin = k >= 0, cur = i === g.current && s.phase === 'playing' && s.turnPhase !== 'draw';
+    const n = g.hand[i];
+    const discs = Array.from({ length: n }, () => `<i style="${cv(hex)}"></i>`).join('');
+    return `<div class="pl${cur ? ' cur' : ''}${fin ? ' fin' : ''}" style="${cv(hex)}"><span class="ava" style="${cv(hex)}">${cur ? '🎲' : ''}</span>
+      <span class="nm">${P.esc(x.name)}${x.ai ? '<span class="you">🤖 IA</span>' : ''}${i === mySeat ? '<span class="you">toi</span>' : ''}${isMaster ? ` <button class="btn ghost small aitoggle" data-act="ai" data-seat="${i}" data-on="${x.ai ? 0 : 1}" aria-pressed="${!!x.ai}" title="${x.ai ? 'Désactiver l\'IA : un joueur reprend la main' : 'Faire jouer ce joueur par l\'IA'}">🤖 ${x.ai ? 'ON' : 'OFF'}</button>` : ''}</span><span class="rank">${fin ? rankLabel(k) : ''}</span>
+      <span class="hand">${fin ? '<span class="small muted">Tous les pions posés !</span>' : `${discs}<b>${n} en main</b>`}</span></div>`;
+  }).join('')}</div>`;
+}
+function messageFor(s) {
+  const g = s.game, r = s.roll, name = P.pname(s, g.current);
+  if (s.turnPhase === 'draw') return ['Tirage au sort du premier joueur…', ''];
+  if (s.turnPhase === 'rolling') return [`${P.pname(s, r.seat)} lance le dé…`, ''];
+  if (r && r.value != null && (s.turnPhase === 'result' || s.turnPhase === 'over' || r.seat === g.current)) {
+    const who = P.pname(s, r.seat);
+    if (r.kind === 'lost') return [`${r.value} — le pion tombe dans le dernier trou, il est perdu !`, 'bad'];
+    if (r.kind === 'recover') return [`${r.value} — case occupée ! ${who} récupère ${r.from === r.seat ? 'son propre pion' : 'le pion de ' + P.pname(s, r.from)}. Fin du tour.`, 'bad'];
+    if (r.kind === 'place') return [`${r.value} — pion posé dans le trou ${r.value}.${r.finished ? ' Plus aucun pion en main !' : ''}`, 'ok'];
+  }
+  return [`À ${name}${g.current != null && s.seats[g.current].ai ? ' (IA)' : ''} de lancer le dé`, ''];
+}
+function gameHTML(s) {
+  const g = s.game, cur = g.current, hex = hexOf(s, cur);
+  const rolling = s.turnPhase === 'rolling', ready = s.turnPhase === 'ready';
+  const aiTurn = !!s.seats[cur].ai, canRoll = ready && !aiTurn && (isMaster || mySeat === cur);
+  const [msg, kind] = messageFor(s);
+  const used = g.rollsMax - g.rollsLeft;
+  const lbl = isMaster && !s.singleScreen ? `Lancer pour ${P.esc(P.pname(s, cur))}` : isMaster ? `Lancer le dé (${P.esc(P.pname(s, cur))})` : 'Lancer le dé';
+  const compTxt = s.comp ? (s.comp.final ? 'Finale · ' : `Manche ${s.comp.game} · `) : '';
+  let h = `<div class="banner"><div class="who">${s.turnPhase === 'draw' ? '🎲' : chip(s, cur)}<span>${s.turnPhase === 'draw' ? 'Tirage au sort' : P.esc(P.pname(s, cur))}</span></div>
+    <div class="sub">${compTxt}Tour ${g.round} — ${g.round === 1 ? 'un seul lancer chacun' : 'jusqu\'à 3 lancers de suite'}</div><span class="sp"></span>
+    ${s.turnPhase === 'draw' ? '' : `<span class="pips" title="Lancers restants">${Array.from({ length: g.rollsMax }, (_, k) => `<i class="${k >= used ? 'on' : ''}"></i>`).join('')}</span>`}</div>`;
+  if (s.turnPhase === 'draw') h += `<div class="draw"><div class="lbl">Le premier joueur est tiré au sort, puis on joue dans l'ordre des sièges</div><div class="roulette" id="drawbox" data-keep></div></div>`;
+  h += `<div class="stage"><div>${boardHTML(s)}
+    <div class="dice-zone"><div id="diebox" data-keep></div>
+      <div class="dice-info"><div class="msg ${kind}">${P.esc(msg)}</div>
+      <button class="btn primary big" data-act="roll" ${canRoll ? '' : 'disabled'}>🎲 ${canRoll ? lbl : rolling ? 'Le dé roule…' : ready && aiTurn ? 'L\'IA va jouer…' : ready ? `En attente de ${P.esc(P.pname(s, cur))}` : 'Un instant…'}</button></div></div></div>
+    <div>${playersHTML(s)}
+      <section class="panel" style="margin-top:.8rem"><h2>Journal</h2><div class="log">${s.log.map(l => `<div>${P.esc(l.text)}</div>`).join('')}</div></section>
+      ${isMaster ? `<div style="margin-top:.8rem"><button class="btn danger small" data-act="reset">${armed ? 'Confirmer : abandonner la partie' : 'Abandonner la partie'}</button></div>` : ''}
+    </div></div>`;
+  return h;
+}
+
+// ------------------------------------------------------------------ fin de partie
+function podiumHTML(s, list) {
+  const order = list.length >= 3 ? [1, 0, 2] : [1, 0];
+  return `<div class="podium">${order.filter(k => k < list.length).map(k => `<div class="pod p${k + 1}" style="${cv(hexOf(s, list[k]))}">
+    <div class="medal">${MEDAL[k]}</div><div class="who">${P.esc(P.pname(s, list[k]))}</div><div class="step">${k + 1}</div></div>`).join('')}</div>`;
+}
+function overHTML(s) {
+  const r = s.result, c = s.comp, loser = r.loser;
+  let h = '<section class="panel center">';
+  if (c && c.done) {
+    h += `<h2 style="font-size:1.6rem">🏆 ${P.esc(P.pname(s, c.standings[0]))} remporte la compétition !</h2><p class="muted">Classement final</p>${podiumHTML(s, c.standings.slice(0, 3))}`;
+    h += `<div class="ranklist">${c.standings.map((x, k) => `<div><span class="n">${k + 1}</span>${chip(s, x)}<span>${P.esc(P.pname(s, x))}</span></div>`).join('')}</div>`;
+  } else {
+    const title = c ? (c.final ? 'Finale terminée' : `Manche ${c.game} terminée`) : 'Partie terminée';
+    h += `<h2 style="font-size:1.5rem">${title}</h2><p class="muted">${P.esc(P.pname(s, r.ranking[0]))} a posé tous ses pions en premier !</p>${podiumHTML(s, r.podium)}`;
+    h += `<div class="ranklist">${r.ranking.map((x, k) => `<div><span class="n">${k + 1}</span>${chip(s, x)}<span>${P.esc(P.pname(s, x))}</span>${k === r.ranking.length - 1 ? '<span class="tag">dernier — pions restants</span>' : ''}</div>`).join('')}</div>`;
+    if (c) h += `<p><strong>${P.esc(P.pname(s, loser))}</strong> est éliminé(e). Il reste ${c.alive.length} joueurs.</p>`;
+  }
+  if (c) {
+    const out = new Set(c.eliminated.map(e => e.seat));
+    h += `<div class="bracket">${Array.from({ length: s.nbJoueurs }, (_, i) => `<span class="${out.has(i) ? 'out' : ''}">${chip(s, i)}${P.esc(P.pname(s, i))}</span>`).join('')}</div>`;
+  }
+  if (isMaster) {
+    h += '<div class="row" style="justify-content:center">';
+    if (!c) h += '<button class="btn primary big" data-act="rematch">🎲 Rejouer</button>';
+    else if (c.done) h += '<button class="btn primary big" data-act="restartComp">🏆 Nouvelle compétition</button>';
+    else h += `<button class="btn primary big" data-act="nextGame">${c.alive.length === 2 ? '🏆 Lancer la finale' : '🎲 Manche suivante'}</button>`;
+    h += '<button class="btn" data-act="reset">Changer les options</button></div>';
+  } else h += '<p class="muted">En attente du maître du jeu pour la suite…</p>';
+  return h + '</section>';
+}
+
+// ------------------------------------------------------------------ dé « fausse 3D » (animation de 1,5 s) et tirage au sort
+let dieAnim = null, dieEnd = null, dieTick = null, drawShown = null, drawTimers = [];
+function dieEl() {
+  const box = $('diebox');
+  if (!box) return null;
+  if (!box.firstChild) { box.innerHTML = '<div class="die-stage"><div class="die-shadow"></div><div class="die">?</div></div>'; dieAnim = null; }
+  return { die: box.querySelector('.die'), sh: box.querySelector('.die-shadow') };
+}
+function paintDie(d, hex) {
+  d.style.setProperty('--dc', hex); d.style.setProperty('--dh', P.shade(hex, .45)); d.style.setProperty('--dl', P.shade(hex, -.5)); d.style.setProperty('--di', P.ink(hex));
+}
+function syncDie(s) {
+  const e = dieEl();
+  if (!e || !s.game) return;
+  const { die, sh } = e, g = s.game, r = s.roll;
+  if (s.turnPhase === 'rolling' && r) {
+    paintDie(die, hexOf(s, r.seat));
+    if (dieAnim !== r.id) {
+      dieAnim = r.id; clearInterval(dieTick); clearTimeout(dieEnd);
+      for (const el of [die, sh]) { el.classList.remove('rolling', 'result'); void el.offsetWidth; el.style.animationDelay = `${-Math.min(r.elapsed, r.dur - 50)}ms`; el.classList.add('rolling'); }
+      dieTick = setInterval(() => { die.textContent = 1 + Math.floor(Math.random() * s.nbCases); }, 85);
+      dieEnd = setTimeout(() => {
+        clearInterval(dieTick); die.classList.remove('rolling'); sh.classList.remove('rolling'); die.classList.add('result');
+        dieAnim = 'done:' + r.id;
+        const cur = P.state; die.textContent = cur && cur.roll && cur.roll.id === r.id && cur.roll.value != null ? cur.roll.value : '…';
+        if (cur) syncDie(cur);
+      }, Math.max(50, r.dur - r.elapsed));
+    }
+    return;
+  }
+  if (typeof dieAnim === 'number') return;             // animation en cours : on attend sa fin
+  const showVal = r && r.value != null && (s.turnPhase === 'result' || s.turnPhase === 'over' || r.seat === g.current);
+  paintDie(die, hexOf(s, showVal ? r.seat : g.current));
+  die.textContent = showVal ? r.value : '?';
+}
+function syncDraw(s) {
+  const box = $('drawbox');
+  if (!box || !s.draw) return;
+  const d = s.draw;
+  if (drawShown === d.id) return;
+  drawShown = d.id; drawTimers.forEach(clearTimeout); drawTimers = [];
+  const names = d.candidates, final = () => {
+    box.classList.add('final'); box.innerHTML = `${chip(s, d.starter)}<span>${P.esc(P.pname(s, d.starter))} commence !</span>`;
+  };
+  if (d.elapsed > 700) return final();
+  const steps = 20, total = Math.max(600, d.dur - d.elapsed - 500);
+  const w = Array.from({ length: steps }, (_, i) => { const f = i / (steps - 1); return 0.012 + 0.144 * f * f; });   // ralentit vers la fin
+  const W = w.reduce((a, b) => a + b, 0);
+  let t = 0, k = Math.floor(Math.random() * names.length);
+  w.forEach((wi, i) => {
+    t += total * wi / W; const last = i === steps - 1;
+    const idx = last ? names.indexOf(d.starter) : (k = (k + 1) % names.length);
+    drawTimers.push(setTimeout(() => {
+      if (last) final(); else { box.classList.remove('final'); box.innerHTML = `${chip(s, names[idx])}<span>${P.esc(P.pname(s, names[idx]))}</span>`; }
+    }, t));
+  });
+}
+
+// ------------------------------------------------------------------ QR code
+let qrLib = null;
+function drawQR() {
+  const box = $('qr');
+  if (!box || box.dataset.drawn === box.dataset.url) return;
+  if (!qrLib) qrLib = new Promise(ok => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    sc.onload = () => ok(true); sc.onerror = () => ok(false); document.head.appendChild(sc);
+  });
+  qrLib.then(ok => {
+    const b = $('qr');
+    if (!b || b.dataset.drawn === b.dataset.url) return;
+    if (!ok || !window.QRCode) { b.style.display = 'none'; return; }
+    b.innerHTML = ''; b.dataset.drawn = b.dataset.url;
+    new QRCode(b, { text: b.dataset.url, width: 112, height: 112, colorDark: '#04200f', colorLight: '#f1ede4', correctLevel: QRCode.CorrectLevel.M });
+  });
+}
+
+// ------------------------------------------------------------------ rendu principal
+function render(s) {
+  document.getElementById('hrole').textContent = isMaster ? 'Maître du jeu' : `Joueur ${seatNo}${s.seats[mySeat]?.name ? ' — ' + s.seats[mySeat].name : ''}`;
+  if (!isMaster && !P.draft('name-' + mySeat) && s.phase === 'setup') { const me = P.store.get('tc-moi', null); if (me) { P.draft('name-' + mySeat, me.name); if (me.color && pickColor[mySeat] === undefined) pickColor[mySeat] = me.color; } }
+  let h;
+  if (s.phase === 'setup') h = setupHTML(s);
+  else if (s.phase === 'over') h = overHTML(s);
+  else h = gameHTML(s);
+  P.setHTML(app, h);
+  if (s.phase === 'setup') drawQR();
+  if (s.phase === 'playing') { syncDie(s); syncDraw(s); }
+  if (s.phase !== 'playing') { clearInterval(dieTick); clearTimeout(dieEnd); dieAnim = null; drawShown = null; }
+}
+P.connect(isMaster ? 'master' : 'p' + seatNo, render, () => {
+  app.innerHTML = '<div class="panel center"><h2>Ce salon n\'existe plus</h2><p class="muted">Le serveur a été redémarré ou le salon a expiré.</p><a class="btn primary" href="/">Retour à l\'accueil</a></div>';
+});
+P.recent.add(P.room, isMaster ? 'maître' : 'joueur');
+
+// ------------------------------------------------------------------ actions
+async function register(i) {
+  const s = P.state, el = $('name-' + i), name = (el ? el.value : P.draft('name-' + i) || '').trim();
+  if (!name) return P.toast('Indique un nom', 'bad');
+  const r = await P.act('register', { seat: i, name, color: pickColor[i] });
+  if (r.ok) { P.clearDraft('name-' + i); delete pickColor[i]; if (!isMaster) P.store.set('tc-moi', { name, color: pickColor[i] || (P.state.seats[i] || {}).color }); }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.cfg) {
+    const k = b.dataset.cfg, v = b.dataset.val;
+    return void P.act('config', { [k]: k === 'competition' || k === 'singleScreen' ? v === '1' : +v });
+  }
+  const s = P.state, i = +b.dataset.seat;
+  switch (b.dataset.act) {
+    case 'pick': pickColor[i] = b.dataset.color; render(s); break;
+    case 'reg': register(i); break;
+    case 'unreg': P.act('unregister', { seat: i }).then(r => { if (r.ok) { P.draft('name-' + i, s.seats[i].name); pickColor[i] = s.seats[i].color; } }); break;
+    case 'roster': {
+      const taken = new Set(s.seats.map(x => x.color).filter(Boolean));
+      const free = (!taken.has(b.dataset.color) ? b.dataset.color : (s.colors.find(c => !taken.has(c.id)) || {}).id);
+      let seat = isMaster ? s.seats.findIndex((x, k) => k < s.nbJoueurs && !x.name) : (s.seats[mySeat].name ? -1 : mySeat);
+      if (seat < 0) return P.toast(isMaster ? 'Tous les sièges sont déjà occupés' : 'Tu es déjà inscrit(e)', 'bad');
+      P.act('register', { seat, name: b.dataset.name, color: free }).then(r => { if (r.ok && !isMaster) P.store.set('tc-moi', { name: b.dataset.name, color: free }); });
+      break;
+    }
+    case 'ai': P.act('setAI', { seat: i, on: b.dataset.on === '1' }); break;
+    case 'forget': P.act('forget', { name: b.dataset.name }); break;
+    case 'clearSeats': P.act('clearSeats'); break;
+    case 'start': P.act('start'); break;
+    case 'roll': P.act('roll'); break;
+    case 'rematch': P.act('rematch'); break;
+    case 'nextGame': P.act('nextGame'); break;
+    case 'restartComp': P.act('restartComp'); break;
+    case 'reset':
+      if (s.phase === 'playing' && !armed) { armed = true; render(s); setTimeout(() => { armed = false; if (P.state) render(P.state); }, 4000); break; }
+      armed = false; P.act('reset'); break;
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.dataset && e.target.id && e.target.id.startsWith('name-')) register(+e.target.dataset.seat);
+});
+</script>
+</body>
+</html>

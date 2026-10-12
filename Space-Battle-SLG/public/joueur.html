@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Space-Battle-SLG — Joueur</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  header.top .me { display: flex; align-items: center; gap: .6rem; font-family: var(--display); font-weight: 700; }
+  header.top .me.p1 .nm { color: var(--cyan); } header.top .me.p2 .nm { color: var(--magenta); }
+  main { max-width: 1400px; margin: 0 auto; padding: .8rem .8rem 3rem; }
+  .center { max-width: 34rem; margin: 2rem auto; text-align: center; }
+  .center h1 { font-size: clamp(1.5rem, 5vw, 2.2rem); margin-bottom: .6rem; }
+
+  /* placement */
+  .place-wrap { display: grid; grid-template-columns: minmax(250px, 340px) auto; gap: 1.2rem; justify-content: center; align-items: start; }
+  .shipbtn { display: flex; align-items: center; gap: .7rem; width: 100%; text-align: left; border: 2px solid var(--line); background: var(--panel-2); border-radius: 12px; padding: .5rem .7rem; margin-bottom: .45rem; }
+  .shipbtn .mini { min-width: 54px; justify-content: start; align-content: center; }
+  .shipbtn .nm { flex: 1; font-weight: 700; }
+  .shipbtn small { color: var(--muted); display: block; font-weight: 400; }
+  .shipbtn[aria-pressed=true] { border-color: var(--amber); background: #2a2f5c; box-shadow: 0 0 14px rgba(255, 181, 71, .2); }
+  .shipbtn.done::after { content: '✓'; color: var(--ok); font-weight: 700; }
+  .shipbtn .rotate { margin-left: auto; }
+  .hint { color: var(--muted); font-size: .85rem; margin: 0 0 .7rem; }
+  .hint b { color: var(--ink); }
+  .btns { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; }
+  .place-board { display: grid; gap: .5rem; justify-items: center; }
+
+  /* bataille */
+  .battle { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto 1fr; gap: 1rem 1.2rem; align-items: start;
+    grid-template-areas: "zones turn" "zones aside"; }
+  .battle > .turnbox { grid-area: turn; width: 100%; }
+  .battle > aside { grid-area: aside; }
+  .main { grid-area: zones; display: grid; justify-items: center; gap: .6rem; min-width: 0; }
+  .turnbox { text-align: center; padding: .7rem 1rem; }
+  .turnbox.mine { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber), 0 0 30px rgba(255, 181, 71, .18); }
+  .turnbox.win { border-color: var(--ok); box-shadow: 0 0 30px rgba(88, 240, 166, .25); }
+  .turnbox.lose { border-color: var(--bad); }
+  .turnbox .big { font-family: var(--display); font-weight: 700; font-size: clamp(1.2rem, 3.4vw, 1.8rem); }
+  .turnbox p { margin: .2rem 0 0; color: var(--muted); font-size: .92rem; }
+  .turnbox .act { display: flex; gap: .8rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: .5rem; }
+  .zone { display: grid; gap: .35rem; justify-items: center; }
+  .zone .head { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; justify-content: center; width: 100%; }
+  .zone h3 { font-size: .95rem; text-transform: uppercase; letter-spacing: .08em; }
+  .zone.foe h3 { color: var(--amber); } .zone.me h3 { color: var(--cyan); }
+  aside { display: grid; gap: 1rem; }
+  .pip { padding: 2px; } .pip i { width: 7px; height: 7px; }
+
+  @media (min-width: 1000px) {
+    :root { --c: clamp(13px, min(calc((100vw - 470px) / 22.5), calc((100dvh - 240px) / 31.8)), 38px); }
+  }
+  @media (max-width: 1000px) {
+    .battle { grid-template-columns: 1fr; grid-template-rows: auto; grid-template-areas: "turn" "zones" "aside"; }
+    .battle > .turnbox { width: min(100%, 44rem); justify-self: center; }
+  }
+  .shiplist { display: grid; }
+  @media (max-width: 760px) {
+    .place-wrap { grid-template-columns: 1fr; justify-items: center; }
+    .place-wrap .panel { width: 100%; }
+    .place-board { order: -1; }                       /* le plateau d'abord : visible sans défiler */
+    .shiplist { grid-template-columns: 1fr 1fr; gap: .4rem; }
+    .shipbtn { margin-bottom: 0; padding: .35rem .5rem; gap: .5rem; }
+    .shipbtn .mini { min-width: 40px; }
+    .shipbtn .nm small { display: none; }
+    .shipbtn.done::after { margin-left: 0; }
+  }
+  @media (max-width: 560px) { header.top { padding: .5rem .7rem; } main { padding: .5rem .4rem 3rem; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/">Space<b>-</b>Battle<i>-</i>SLG</a>
+  <span class="badge" id="roomTag"></span>
+  <div class="spacer me" id="me"></div>
+</header>
+<main id="app"><div class="center muted">Connexion…</div></main>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/static/fleet.js"></script>
+<script src="/static/common.js"></script>
+<script>
+const seat = +(location.pathname.match(/joueur(\d)/) || [0, 1])[1] - 1;   // 0 ou 1
+const WHO = 'p' + (seat + 1);
+const app = document.getElementById('app');
+const N = 10;
+let S = null;                       // dernier état reçu
+let draft = {};                     // placement en cours : id du vaisseau → {rot, r, c}
+let sel = null, curRot = 0;         // vaisseau sélectionné (à poser) et son orientation (0-3, par quarts de tour)
+let targets = [];                   // cases visées avant de tirer
+let animSeq = null, lastKey = '';
+document.getElementById('roomTag').innerHTML = `Salon <strong>${SB.room}</strong>`;
+SB.recent.add(SB.room, 'joueur ' + (seat + 1));
+
+// ------------------------------------------------------------ placement
+const ids = () => S.fleet;
+const cellsOf = (id, d) => Fleet.place(id, d.rot, d.r, d.c);
+const othersCells = except => Object.keys(draft).filter(id => id !== except).map(id => cellsOf(id, draft[id]));
+const nextUnplaced = () => ids().find(id => !draft[id]) || null;
+function resetDraft() { draft = {}; curRot = 0; sel = ids()[0] || null; }
+
+// coin haut-gauche de la boîte du vaisseau pour que la case visée soit au centre de la forme (recadré dans la grille)
+function anchorFor(id, rot, i) {
+  const { h, w } = Fleet.size(Fleet.shape(id, rot));
+  const r = Math.max(0, Math.min(N - h, Math.floor(i / N) - Math.floor((h - 1) / 2)));
+  const c = Math.max(0, Math.min(N - w, (i % N) - Math.floor((w - 1) / 2)));
+  return { rot, r, c };
+}
+function draftShips() {
+  return Object.keys(draft).map(id => { const t = Fleet.byId(id); return { id, name: t.name, color: t.color, size: t.cells.length, cells: cellsOf(id, draft[id]), sunk: false }; });
+}
+function ownerAt(i) { return Object.keys(draft).find(id => cellsOf(id, draft[id]).includes(i)); }
+
+// toucher un vaisseau déjà posé le fait pivoter de 90° (autour de son centre, avec un léger recalage si besoin)
+function rotatePlaced(id) {
+  const d = draft[id], rot = (d.rot + 1) % 4;
+  const a = Fleet.size(Fleet.shape(id, d.rot)), b = Fleet.size(Fleet.shape(id, rot)), others = othersCells(id);
+  const r0 = d.r + Math.round((a.h - b.h) / 2), c0 = d.c + Math.round((a.w - b.w) / 2);
+  const tries = [];
+  for (let dr = -3; dr <= 3; dr++) for (let dc = -3; dc <= 3; dc++) tries.push([dr, dc]);
+  tries.sort((x, y) => Math.abs(x[0]) + Math.abs(x[1]) - Math.abs(y[0]) - Math.abs(y[1]));
+  for (const [dr, dc] of tries) {
+    const cells = Fleet.place(id, rot, r0 + dr, c0 + dc);
+    if (cells && Fleet.free(cells, others)) { draft[id] = { rot, r: r0 + dr, c: c0 + dc }; return render(S); }
+  }
+  SB.toast('Rotation impossible ici : pas assez de place (1 case libre autour de chaque vaisseau)', 'bad');
+}
+function placeAt(i) {
+  const owner = ownerAt(i);
+  if (owner) return rotatePlaced(owner);
+  if (!sel) return SB.toast('Tous les vaisseaux sont posés : valide ta flotte, ou touche un vaisseau pour le pivoter', 'bad');
+  const p = anchorFor(sel, curRot, i), cells = Fleet.place(sel, p.rot, p.r, p.c);
+  if (!Fleet.free(cells, othersCells(sel))) return SB.toast('Emplacement impossible : les vaisseaux ne doivent pas se toucher (1 case d\'écart)', 'bad');
+  draft[sel] = p;
+  sel = nextUnplaced();
+  render(S);
+}
+let pvEls = [];
+function preview(i) {
+  pvEls.forEach(e => e.classList.remove('pv-ok', 'pv-bad')); pvEls = [];
+  if (i == null || !sel || ownerAt(i)) return;
+  const p = anchorFor(sel, curRot, i), cells = Fleet.place(sel, p.rot, p.r, p.c), ok = Fleet.free(cells, othersCells(sel));
+  cells.forEach(x => { const e = app.querySelector(`.board .cell[data-i="${x}"]`); if (e) { e.classList.add(ok ? 'pv-ok' : 'pv-bad'); pvEls.push(e); } });
+}
+function rotateSelected() {
+  if (!sel) return;
+  curRot = (curRot + 1) % 4;
+  render(S);
+}
+
+function renderPlacement(s) {
+  const me = s.names[seat], list = ids(), placed = list.filter(id => draft[id]).length, all = placed === list.length;
+  const used = new Set(); Object.keys(draft).forEach(id => cellsOf(id, draft[id]).forEach(i => used.add(i)));
+  const halo = new Set(); Fleet.halo([...used]).forEach(i => { if (!used.has(i)) halo.add(i); });
+  app.innerHTML = `
+  <div class="place-wrap">
+    <section class="panel">
+      <h2>Place ta flotte, ${SB.esc(me)}</h2>
+      <p class="hint">Choisis un vaisseau puis touche la grille. <b>Touche un vaisseau posé pour le pivoter de 90°.</b> Pour le déplacer, touche son nom dans la liste. Les vaisseaux ne doivent pas se toucher (zone hachurée).</p>
+      <div class="shiplist">${list.map(id => { const t = Fleet.byId(id), rot = draft[id] ? draft[id].rot : (id === sel ? curRot : 0);
+        return `<button class="shipbtn${draft[id] ? ' done' : ''}" data-ship="${id}" aria-pressed="${sel === id}" style="${sel === id ? '' : `border-color:${t.color}55`}">
+          ${SB.mini(Fleet.shape(id, rot), t.color, 13)}<span class="nm" style="color:${t.color}">${t.name}<small>${t.cells.length} cases</small></span></button>`; }).join('')}</div>
+      <div class="btns">
+        <button class="btn" id="rot"${sel ? '' : ' disabled'}>↻ Pivoter</button>
+        <button class="btn" id="rnd">🎲 Aléatoire</button>
+        <button class="btn" id="clr"${placed ? '' : ' disabled'}>Effacer</button>
+      </div>
+      <div class="btns"><button class="btn go big" id="ok"${all ? '' : ' disabled'}>Valider ma flotte ✓</button></div>
+      <p class="muted small" style="margin-bottom:0">Adversaire : ${SB.esc(s.names[1 - seat])} — ${s.ready[1 - seat] ? '✅ prêt' : '⏳ place sa flotte'}</p>
+    </section>
+    <div class="place-board">${SB.board({ cls: 'place', place: true, ships: draftShips(), halo })}</div>
+  </div>`;
+  app.querySelectorAll('[data-ship]').forEach(b => b.onclick = () => {
+    const id = b.dataset.ship;
+    if (draft[id]) { curRot = draft[id].rot; delete draft[id]; }   // reprise en main pour le déplacer
+    sel = id; render(s);
+  });
+  document.getElementById('rot').onclick = rotateSelected;
+  document.getElementById('rnd').onclick = () => {
+    const r = Fleet.randomPlacement(list, 400);
+    if (!r) return SB.toast('Placement aléatoire impossible, réessaie', 'bad');
+    draft = {}; r.forEach(x => { draft[x.id] = { rot: x.rot, r: x.r, c: x.c }; }); sel = null; render(s);
+  };
+  document.getElementById('clr').onclick = () => { resetDraft(); render(s); };
+  document.getElementById('ok').onclick = async () => {
+    const ships = list.map(id => ({ id, ...draft[id] }));
+    const r = await SB.api(WHO, 'place', { ships });
+    if (r.ok) SB.toast('Flotte validée !');
+  };
+  const board = app.querySelector('.board');
+  board.addEventListener('click', e => { const c = e.target.closest('.cell'); if (c) placeAt(+c.dataset.i); });
+  board.addEventListener('mouseover', e => { const c = e.target.closest('.cell'); preview(c ? +c.dataset.i : null); });
+  board.addEventListener('mouseleave', () => preview(null));
+}
+function renderWaitingFleet(s) {
+  app.innerHTML = `<div class="center">
+    <h1>Flotte en position ✅</h1>
+    <p class="muted">En attente de <strong>${SB.esc(s.names[1 - seat])}</strong>… ${s.online[1 - seat] ? '' : '(pas encore connecté)'}</p>
+    <div style="display:flex;justify-content:center;margin:1rem 0">${SB.board({ cls: 'place', ships: s.mine.ships, shots: s.mine.shots })}</div>
+    <button class="btn" id="undo">Modifier ma flotte</button></div>`;
+  document.getElementById('undo').onclick = () => {
+    draft = {}; s.mine.ships.forEach(sh => { const rc = Fleet.recover(sh.id, sh.cells); if (rc) draft[sh.id] = rc; });
+    sel = null; curRot = 0; SB.api(WHO, 'unready', {});
+  };
+}
+
+// ------------------------------------------------------------ bataille
+function need(s) { const free = s.foe.shots.filter(v => v === 0).length; return s.mode === 'salvo' ? Math.min(s.salvo, free) : 1; }
+function turnBox(s) {
+  const foe = SB.esc(s.names[1 - seat]);
+  if (s.phase === 'over') {
+    const won = s.winner === seat, wait = s.rematch[seat];
+    return `<section class="panel turnbox ${won ? 'win' : 'lose'}">
+      <div class="big">${won ? '🏆 Victoire !' : '💥 Défaite…'}</div>
+      <p>${won ? `Toute la flotte de ${foe} est détruite.` : `Ta flotte a été anéantie par ${foe}.`} · Score ${s.score[seat]} — ${s.score[1 - seat]}</p>
+      <div class="act"><button class="btn go big" id="rematch"${wait ? ' disabled' : ''}>${wait ? `En attente de ${foe}…` : '⚔ Revanche'}</button>
+        ${s.rematch[1 - seat] && !wait ? `<span class="muted small">${foe} veut sa revanche !</span>` : ''}</div></section>`;
+  }
+  if (s.turn === seat) {
+    const n = need(s), hint = s.mode === 'salvo' ? `Choisis ${n} cible${n > 1 ? 's' : ''} sur la zone ennemie, puis lance la salve. Les résultats tombent d'un coup.`
+      : s.mode === 'chain' ? 'Touche une case ennemie. Si tu touches, tu rejoues !' : 'Touche une case de la zone ennemie, puis tire.';
+    const again = s.last && s.last.by === seat && s.last.again;
+    return `<section class="panel turnbox mine">
+      <div class="big">${again ? '🔥 Touché ! Rejoue' : '🎯 À toi de tirer'}</div>
+      <p>${hint}</p>
+      <div class="act"><span class="chip">${targets.length} / ${n} cible${n > 1 ? 's' : ''}</span>
+        <button class="btn fire" id="fire"${targets.length === n ? '' : ' disabled'}>${s.mode === 'salvo' ? 'LANCER LA SALVE' : 'FEU !'}</button></div></section>`;
+  }
+  return `<section class="panel turnbox"><div class="big">⏳ ${SB.esc(s.names[1 - seat])} vise…</div>
+    <p>${s.mode === 'salvo' ? `Il prépare une salve de ${s.salvo} tirs.` : 'Patiente, ton tour arrive.'}</p></section>`;
+}
+function renderBattle(s) {
+  const over = s.phase === 'over', myTurn = s.phase === 'battle' && s.turn === seat;
+  const free = new Set(); s.foe.shots.forEach((v, i) => { if (v === 0) free.add(i); });
+  targets = myTurn ? targets.filter(i => free.has(i)) : [];
+  const tm = new Map(targets.map((i, k) => [i, k + 1]));
+  const L = s.last, fresh = L ? new Set(L.shots.map(v => v.i)) : new Set(), order = L ? new Map(L.shots.map((v, k) => [v.i, k])) : null;
+  const pop = L && L.seq !== animSeq;
+  const mineFresh = L && L.by !== seat, foeFresh = L && L.by === seat;
+  const foeShips = over ? s.foe.ships : s.foe.sunk;
+  app.innerHTML = `
+  <div class="battle">
+    ${turnBox(s)}
+    <div class="main">
+      <div class="zone me">
+        <div class="head"><h3>Ma flotte — ${SB.esc(s.names[seat])}</h3>${SB.pips(s.mine.ships)}</div>
+        ${SB.board({ cls: 'small', id: 'mine', ships: s.mine.ships, shots: s.mine.shots, fresh: mineFresh ? fresh : null, order, pop })}
+      </div>
+      <div class="zone foe">
+        <div class="head"><h3>Zone ennemie — ${SB.esc(s.names[1 - seat])}</h3>${SB.pips(foeFleetPips(s))}</div>
+        ${SB.board({ cls: 'big', id: 'foe', live: myTurn, ships: foeShips, shots: s.foe.shots, targets: tm, fresh: foeFresh ? fresh : null, order, pop, revealFoe: over })}
+      </div>
+    </div>
+    <aside>
+      ${L ? `<section class="panel"><h2>Dernier tir</h2><strong>${SB.esc(s.names[L.by])}</strong>${SB.volleyChips(L)}</section>` : ''}
+      <section class="panel"><h2>Journal</h2><ul class="log" id="log">${s.log.map(l => `<li>${SB.esc(l)}</li>`).join('')}</ul></section>
+    </aside>
+  </div>`;
+  animSeq = L ? L.seq : null;
+  const lg = document.getElementById('log'); if (lg) lg.scrollTop = lg.scrollHeight;
+  const fire = document.getElementById('fire');
+  if (fire) fire.onclick = doFire;
+  const rm = document.getElementById('rematch');
+  if (rm) rm.onclick = () => SB.api(WHO, 'rematch', {});
+  const fb = document.getElementById('foe');
+  if (fb && myTurn) fb.addEventListener('click', e => {
+    const c = e.target.closest('.cell'); if (!c) return;
+    pick(+c.dataset.i);
+  });
+}
+// pastilles de l'adversaire : vaisseaux coulés connus, les autres comme vivants
+function foeFleetPips(s) {
+  const sunk = new Set(s.foe.sunk.map(x => x.id));
+  return s.fleet.map(id => { const t = Fleet.byId(id); return { name: t.name, color: t.color, size: t.cells.length, sunk: sunk.has(id) }; });
+}
+function pick(i) {
+  const n = need(S);
+  if (S.foe.shots[i] !== 0) return;
+  const at = targets.indexOf(i);
+  if (at >= 0) targets.splice(at, 1);
+  else if (n === 1) targets = [i];
+  else if (targets.length >= n) return SB.toast(`Maximum ${n} cibles : retire-en une d'abord`, 'bad');
+  else targets.push(i);
+  render(S);
+}
+async function doFire() {
+  const n = need(S);
+  if (targets.length !== n) return;
+  const cells = targets.map(i => [Math.floor(i / N), i % N]);
+  const r = await SB.api(WHO, 'fire', { cells });
+  if (r.ok) targets = [];
+}
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if ((e.key === 'r' || e.key === 'R') && S && S.phase === 'placement' && !S.ready[seat]) rotateSelected();
+  if (e.key === 'Enter' && S && S.phase === 'battle' && S.turn === seat && targets.length === need(S)) doFire();
+});
+
+// ------------------------------------------------------------ routage
+function render(s) {
+  S = s;
+  const me = document.getElementById('me');
+  me.className = `spacer me p${seat + 1}`;
+  me.innerHTML = `<span class="dot${s.online[1 - seat] ? ' on' : ''}" title="${SB.esc(s.names[1 - seat])} ${s.online[1 - seat] ? 'connecté' : 'absent'}"></span>
+    <span class="muted small">${s.ai[1 - seat] ? '🤖 ' : ''}${SB.esc(s.names[1 - seat])}</span> <span class="nm">${SB.esc(s.names[seat])}</span> <span class="muted small">${s.score[seat]}–${s.score[1 - seat]}</span>`;
+  document.title = `Space-Battle-SLG — ${s.names[seat]} (${SB.room})`;
+  if (s.ai[seat]) {
+    app.innerHTML = `<div class="center panel"><div class="bot" style="font-size:3rem">🤖</div><h1>Ce siège est joué par l'IA</h1>
+      <p class="muted">Niveau ${SB.esc(SB.levels[s.ai[seat]])}. Suis la partie depuis la page du maître, ou utilise l'autre siège.</p>
+      <p><a class="btn" href="/${SB.esc(SB.room)}" style="text-decoration:none;color:inherit">Page du maître</a></p></div>`;
+    return;
+  }
+  if (s.phase === 'setup') {
+    draft = {};
+    app.innerHTML = `<div class="center panel"><h1>Bienvenue, ${SB.esc(s.names[seat])} !</h1>
+      <p class="muted">Le maître du jeu règle la partie…</p>
+      <p><span class="chip">${SB.esc(SB.modeLabel(s.mode, s.salvo))}</span></p>
+      <p class="muted small">${SB.esc(SB.modes[s.mode].desc)}</p></div>`;
+    return;
+  }
+  if (s.phase === 'placement') {
+    const key = 'p' + s.round;
+    if (lastKey !== key) { lastKey = key; resetDraft(); targets = []; }
+    return s.ready[seat] ? renderWaitingFleet(s) : renderPlacement(s);
+  }
+  renderBattle(s);
+}
+SB.connect(WHO, render, () => {
+  app.innerHTML = `<div class="center panel"><h1>Salon ${SB.esc(SB.room)} introuvable</h1>
+    <p class="muted">Vérifie le code avec le maître. Si le serveur vient de redémarrer, le maître doit rouvrir sa page : celle-ci se reconnectera toute seule.</p>
+    <p><a class="btn" href="/" style="text-decoration:none;color:inherit">Accueil</a></p></div>`;
+});
+</script>
+</body>
+</html>

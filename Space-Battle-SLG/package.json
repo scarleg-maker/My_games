@@ -1,0 +1,8 @@
+{
+  "name": "space-battle-slg",
+  "version": "1.0.0",
+  "description": "Bataille navale spatiale à 2 joueurs, avec salons",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "license": "MIT"
+}

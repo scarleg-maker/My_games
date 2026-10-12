@@ -20,3 +20,4 @@ build/
 # Scripts de lancement locaux (inutiles pour Render)
 *.bat
 Triple Triad-SLG/data/cards_ffix.json
+Monopoly-SLG/sauvegarde.json

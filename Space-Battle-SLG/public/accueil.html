@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Space-Battle-SLG</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  main { max-width: 960px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+  .hero { text-align: center; margin: 1rem 0 2rem; }
+  .hero h1 { font-size: clamp(2rem, 7vw, 3.8rem); text-transform: uppercase; letter-spacing: .14em; text-shadow: 0 0 30px rgba(76, 240, 255, .35); }
+  .hero h1 b { color: var(--cyan); } .hero h1 i { font-style: normal; color: var(--amber); }
+  .hero p { color: var(--muted); max-width: 38rem; margin: .8rem auto 0; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+  .card p { color: var(--muted); margin: 0 0 1rem; }
+  #code, #mycode { text-transform: uppercase; letter-spacing: .2em; font-family: var(--display); font-weight: 700; font-size: 1.25rem; }
+  details { margin-top: 1rem; color: var(--muted); }
+  details summary { cursor: pointer; font-size: .9rem; }
+  details .row { margin-top: .6rem; flex-wrap: nowrap; }
+  .seats { display: grid; gap: .5rem; margin-top: 1rem; }
+  .seat { display: flex; align-items: center; gap: .6rem; border: 1px solid var(--line); background: var(--panel-2); border-radius: 12px; padding: .7rem .9rem; color: var(--ink); text-decoration: none; }
+  .seat:hover { border-color: var(--cyan); }
+  .seat .who { flex: 1; }
+  .seat .who small { display: block; color: var(--muted); }
+  .found-head { margin-top: 1rem; display: flex; justify-content: space-between; gap: .6rem; flex-wrap: wrap; align-items: baseline; }
+  .found-head strong { font-family: var(--display); letter-spacing: .15em; color: var(--cyan); font-size: 1.2rem; }
+  .recent { margin-top: 1.6rem; }
+  .recent h2 { font-size: .95rem; }
+  .recent ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+  .recent li { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(5, 10, 30, .6); }
+  .recent li a { padding: .3rem .5rem .3rem .85rem; color: var(--ink); text-decoration: none; }
+  .recent li a strong { font-family: var(--display); letter-spacing: .1em; color: var(--cyan); margin-right: .4rem; }
+  .recent li button { border: 0; background: none; color: var(--muted); padding: 0 .65rem; }
+  .recent li button:hover { color: var(--bad); }
+  @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <h1>Space<b>-</b>Battle<i>-</i>SLG</h1>
+    <p>Bataille navale dans l'espace pour 2 joueurs : placez votre flotte de 5 vaisseaux et détruisez celle de l'adversaire. Chaque partie se joue dans son propre salon.</p>
+  </div>
+
+  <div class="cards">
+    <section class="panel card">
+      <h2>Créer une partie</h2>
+      <p>Tu deviens le maître du jeu : tu règles les noms et le mode de tir, puis tu invites les deux joueurs.</p>
+      <button class="btn primary big" id="create">Créer un salon</button>
+      <details>
+        <summary>Choisir mon propre code</summary>
+        <div class="row"><input type="text" id="mycode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off"><button class="btn" id="createCustom">Créer</button></div>
+        <p class="small" style="margin:.4rem 0 0">3 à 10 lettres ou chiffres.</p>
+      </details>
+    </section>
+
+    <section class="panel card">
+      <h2>Rejoindre une partie</h2>
+      <p>Entre le code du salon donné par le maître, puis choisis ton siège.</p>
+      <div class="row" style="flex-wrap:nowrap"><input type="text" id="code" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn primary" id="join">Rejoindre</button></div>
+      <div id="found"></div>
+    </section>
+  </div>
+
+  <div class="recent" id="recent"></div>
+</main>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/static/common.js"></script>
+<script>
+const found = document.getElementById('found'), codeInput = document.getElementById('code');
+let watching = null, watchTimer = null;
+
+async function createRoom(code) {
+  try {
+    const r = await (await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(code ? { code } : {}) })).json();
+    if (!r.ok) return SB.toast(r.error, 'bad');
+    SB.recent.add(r.code, 'maître');
+    location.href = '/' + r.code;
+  } catch { SB.toast('Serveur injoignable', 'bad'); }
+}
+document.getElementById('create').onclick = () => createRoom();
+document.getElementById('createCustom').onclick = () => {
+  const c = document.getElementById('mycode').value.trim();
+  if (!c) return SB.toast('Indique un code', 'bad');
+  createRoom(c);
+};
+document.getElementById('mycode').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('createCustom').click(); });
+
+async function lookup(code, quiet) {
+  code = code.trim().toUpperCase();
+  if (!code) { if (!quiet) SB.toast('Indique le code du salon', 'bad'); return; }
+  const info = await SB.roomInfo(code);
+  if (!info) { if (!quiet) SB.toast('Serveur injoignable', 'bad'); return; }
+  if (!info.exists) {
+    watching = null; clearInterval(watchTimer);
+    found.innerHTML = `<p class="err" style="margin-top:1rem">Aucun salon « ${SB.esc(code)} ». Vérifie le code avec le maître.</p>`;
+    return;
+  }
+  watching = code;
+  renderSeats(info);
+  clearInterval(watchTimer);
+  watchTimer = setInterval(async () => { if (watching) { const i = await SB.roomInfo(watching); if (i && i.exists) renderSeats(i); } }, 3000);
+}
+function renderSeats(info) {
+  const phases = { setup: 'en préparation', placement: 'placement des flottes', battle: 'bataille en cours', over: 'terminée' };
+  let h = `<div class="found-head"><span>Salon <strong>${info.code}</strong> · ${phases[info.phase] || ''}</span><a class="small" href="/${info.code}" onclick="SB.recent.add('${info.code}','maître')">page maître</a></div>
+    <p class="small muted" style="margin:.6rem 0 0">Touche ton siège :</p><div class="seats">`;
+  h += info.names.map((n, i) => info.ai[i] ? `<div class="seat" style="opacity:.55"><span class="dot on"></span><span class="who">${SB.esc(n)}<small>Joueur ${i + 1} — 🤖 joué par l'IA (${SB.levels[info.ai[i]]})</small></span></div>` : `<a class="seat" href="/${info.code}/joueur${i + 1}" onclick="SB.recent.add('${info.code}','joueur ${i + 1}')">
+      <span class="dot${info.online[i] ? ' on' : ''}"></span><span class="who">${SB.esc(n)}<small>Joueur ${i + 1} — ${info.online[i] ? 'déjà connecté' : 'libre'}</small></span><span>→</span></a>`).join('');
+  found.innerHTML = h + '</div>';
+}
+document.getElementById('join').onclick = () => lookup(codeInput.value);
+codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(codeInput.value); });
+
+function renderRecent() {
+  const box = document.getElementById('recent'), list = SB.recent.list();
+  if (!list.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<h2>Salons récents sur cet appareil</h2><ul>' + list.map(x => {
+    const href = x.role === 'maître' ? '/' + x.code : x.role === 'joueur 2' ? `/${x.code}/joueur2` : `/${x.code}/joueur1`;
+    return `<li><a href="${href}"><strong>${SB.esc(x.code)}</strong><span class="small muted">${SB.esc(x.role)}</span></a>
+      <button data-rm="${SB.esc(x.code)}" aria-label="Retirer ${SB.esc(x.code)}">✕</button></li>`;
+  }).join('') + '</ul>';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rm]');
+  if (b) { SB.recent.remove(b.dataset.rm); renderRecent(); }
+});
+renderRecent();
+
+// lien /CODE/rejoindre : le code est déjà rempli
+const m = location.pathname.match(/^\/([A-Za-z0-9]{3,10})\/rejoindre/);
+if (m) { codeInput.value = m[1].toUpperCase(); lookup(m[1], true); }
+</script>
+</body>
+</html>

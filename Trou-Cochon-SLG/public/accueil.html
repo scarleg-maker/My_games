@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trou-cochon-SLG</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  .hero { text-align: center; margin: 1rem 0 1.8rem; }
+  .hero h1 { font-size: clamp(2.2rem, 7vw, 3.8rem); }
+  .hero .pig { font-size: 1.2em; display: inline-block; animation: wob 3s ease-in-out infinite; }
+  @keyframes wob { 50% { transform: rotate(-8deg) scale(1.05); } }
+  .hero p { color: var(--muted); max-width: 38rem; margin: .8rem auto 0; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+  .card p { color: var(--muted); margin: 0 0 1rem; }
+  #code { text-transform: uppercase; letter-spacing: .15em; font-family: var(--display); font-weight: 800; font-size: 1.3rem; }
+  details { margin-top: 1rem; color: var(--muted); } details summary { cursor: pointer; font-size: .9rem; }
+  details .row { margin-top: .6rem; flex-wrap: nowrap; }
+  .seatlink { display: flex; align-items: center; gap: .6rem; border: 1px solid var(--line); background: var(--panel-2); border-radius: 12px; padding: .65rem .8rem; color: inherit; text-decoration: none; margin-top: .45rem; }
+  .seatlink:hover { border-color: var(--gold); } .seatlink .who { flex: 1; } .seatlink small { display: block; color: var(--muted); }
+  .recent { margin-top: 1.4rem; } .recent ul { list-style: none; padding: 0; margin: .4rem 0 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+  .recent li { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.35); }
+  .recent li a { padding: .35rem .5rem .35rem .85rem; color: var(--ink); text-decoration: none; }
+  .recent li a strong { font-family: var(--display); letter-spacing: .08em; color: var(--gold); margin-right: .35rem; }
+  .recent li button { border: 0; background: none; color: var(--muted); padding: 0 .65rem; }
+  @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="top"><a class="logo" href="/"><span class="pig">🐷</span>Trou-cochon<small>SLG</small></a></header>
+<main>
+  <div class="hero">
+    <h1><span class="pig">🐷</span> Trou-cochon</h1>
+    <p>Le jeu de dé de 2 à 6 joueurs : pose tous tes pions avant les autres, évite les cases occupées et le dernier trou !</p>
+  </div>
+  <div id="auto" class="panel center" hidden><strong>Ouverture de ta salle de maître du jeu…</strong></div>
+  <div class="cards" id="cards">
+    <section class="panel card">
+      <h2>Créer une partie</h2>
+      <p>Tu deviens le maître du jeu : un salon est créé avec un code à donner aux joueurs.</p>
+      <button class="btn primary big" id="create">Créer un salon</button>
+      <details>
+        <summary>Choisir mon propre code</summary>
+        <div class="row"><input type="text" id="mycode" maxlength="10" placeholder="ex. FAMILLE" autocomplete="off"><button class="btn" id="createCustom">Créer</button></div>
+        <p class="small" style="margin:.4rem 0 0">3 à 10 lettres ou chiffres. Retrouve le même salon (et tes joueurs habituels) d'une fois sur l'autre.</p>
+      </details>
+    </section>
+    <section class="panel card">
+      <h2>Rejoindre une partie</h2>
+      <p id="joinhelp">Entre le code donné par le maître du jeu, puis choisis ton siège.</p>
+      <div class="row" style="flex-wrap:nowrap"><input type="text" id="code" maxlength="10" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn primary" id="join">Rejoindre</button></div>
+      <div id="found"></div>
+    </section>
+  </div>
+  <div class="recent" id="recent"></div>
+</main>
+<div id="toasts" aria-live="polite"></div>
+<script src="/static/common.js"></script>
+<script>
+const found = document.getElementById('found'), codeInput = document.getElementById('code');
+const path = location.pathname;
+const wantSeat = (path.match(/^\/joueur([1-6])\/?$/i) || [])[1] || null;
+let watching = null, watchTimer = null;
+const err = t => P.toast(t, 'bad');
+
+async function createRoom(code, reuse) {
+  try {
+    const r = await (await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, reuse: !!reuse }) })).json();
+    if (!r.ok) return err(r.error);
+    P.recent.add(r.code, 'maître');
+    location.href = '/' + r.code + '/maitre';
+  } catch { err('Serveur injoignable'); }
+}
+document.getElementById('create').onclick = () => createRoom();
+document.getElementById('createCustom').onclick = () => {
+  const c = document.getElementById('mycode').value.trim();
+  if (!c) return err('Indique un code');
+  createRoom(c, true);
+};
+document.getElementById('mycode').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('createCustom').click(); });
+
+async function lookup(code, quiet) {
+  code = code.trim().toUpperCase();
+  if (!code) { if (!quiet) err('Indique le code du salon'); return; }
+  const info = await P.roomInfo(code);
+  if (!info) { if (!quiet) err('Serveur injoignable'); return; }
+  if (!info.exists) {
+    watching = null; clearInterval(watchTimer);
+    found.innerHTML = `<p class="err" style="margin-top:1rem">Aucun salon « ${P.esc(code)} ». Vérifie le code avec le maître du jeu.</p>`;
+    return;
+  }
+  if (wantSeat) { P.recent.add(code, 'joueur'); location.href = `/${code}/joueur${wantSeat}`; return; }   // adresse /joueurN : on y va directement
+  watching = code; P.recent.add(code, 'joueur'); renderSeats(info);
+  clearInterval(watchTimer);
+  watchTimer = setInterval(async () => { if (watching) { const i = await P.roomInfo(watching); if (i && i.exists) renderSeats(i); } }, 3000);
+  renderRecent();
+}
+function renderSeats(info) {
+  let h = `<div class="row" style="justify-content:space-between;margin-top:1rem"><span>Salon <strong style="color:var(--gold);letter-spacing:.1em">${info.code}</strong> · ${info.nbActive} joueurs${info.competition ? ' · compétition' : ''}</span><a href="/${info.code}/maitre" class="small">page du maître</a></div>`;
+  if (info.singleScreen) h += `<p style="margin:.8rem 0 0">Cette partie se joue <strong>sur un seul écran</strong>, celui du maître du jeu. Tu peux quand même suivre la partie depuis un siège :</p>`;
+  else h += '<p class="small muted" style="margin:.6rem 0 0">Touche ton siège :</p>';
+  h += info.seats.map((x, i) => {
+    const sub = x.name ? (x.online ? 'déjà connecté' : 'inscrit, pas encore connecté') : 'libre';
+    return `<a class="seatlink" href="/${info.code}/joueur${i + 1}"><span class="dot${x.online ? ' on' : ''}"></span><span class="who">${x.name ? P.esc(x.name) : 'Joueur ' + (i + 1)}<small>Siège ${i + 1} — ${sub}</small></span><span>→</span></a>`;
+  }).join('');
+  found.innerHTML = h;
+}
+document.getElementById('join').onclick = () => lookup(codeInput.value);
+codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(codeInput.value); });
+
+function renderRecent() {
+  const box = document.getElementById('recent'), list = P.recent.list();
+  if (!list.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<h2 style="font-size:1rem">Salons récents sur cet appareil</h2><ul>' + list.map(x =>
+    `<li><a href="/${P.esc(x.code)}/${x.role === 'joueur' ? 'rejoindre' : 'maitre'}"><strong>${P.esc(x.code)}</strong><span class="small muted">${P.esc(x.role)}</span></a>
+     <button data-rm="${P.esc(x.code)}" title="Retirer" aria-label="Retirer ${P.esc(x.code)}">✕</button></li>`).join('') + '</ul>';
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { P.recent.remove(b.dataset.rm); renderRecent(); } });
+renderRecent();
+
+// /CODE/rejoindre : code pré-rempli
+const m = path.match(/^\/([A-Za-z0-9]{3,10})\/rejoindre/);
+if (m) { codeInput.value = m[1].toUpperCase(); lookup(m[1], true); }
+// /joueurN : il faut juste le code
+if (wantSeat) document.getElementById('joinhelp').textContent = `Entre le code du salon pour t'asseoir directement au siège ${wantSeat}.`;
+// /maitre : reprend le dernier salon de maître du jeu de cet appareil, sinon en crée un
+if (/^\/maitre\/?$/i.test(path)) {
+  document.getElementById('cards').hidden = true; document.getElementById('recent').hidden = true;
+  document.getElementById('auto').hidden = false;
+  (async () => {
+    const last = P.recent.list().find(x => x.role === 'maître');
+    if (last) { const i = await P.roomInfo(last.code); if (i && i.exists) { P.recent.add(last.code, 'maître'); location.replace('/' + last.code + '/maitre'); return; } }
+    createRoom();
+  })();
+}
+</script>
+</body>
+</html>

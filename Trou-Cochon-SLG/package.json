@@ -1,0 +1,8 @@
+{
+  "name": "trou-cochon-slg",
+  "version": "1.0.0",
+  "description": "Trou du cochon — jeu de société avec un dé, 2 à 6 joueurs, salons en ligne",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node test/sim.js" },
+  "license": "MIT"
+}
