@@ -11,8 +11,17 @@
   .setup .panel + .panel, .stack > * + * { margin-top: 1.2rem; }
   .fields { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
   .fields label { display: block; font-weight: 700; margin-bottom: .3rem; font-size: .9rem; }
-  .fields label.p1 { color: var(--cyan); } .fields label.p2 { color: var(--magenta); }
+  .seatrow { display: grid; gap: .35rem; padding: .6rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(5, 10, 30, .35); }
+  .seatrow label { margin: 0; }
+  .gamegrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+  .opt { display: flex; align-items: center; gap: .6rem; margin-top: .9rem; font-size: .95rem; }
+  .opt input { width: 1.2rem; height: 1.2rem; accent-color: var(--amber); }
+  .teamsel { display: flex; gap: .3rem; }
+  .teamsel button { flex: 1; border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: .2rem .3rem; font-size: .8rem; font-weight: 700; }
+  .teamsel button[aria-pressed=true] { background: var(--amber); color: #2b1a00; border-color: var(--amber); }
+  .mapinfo { margin-top: .8rem; padding: .5rem .8rem; border: 1px dashed var(--amber); border-radius: 10px; color: var(--amber); font-size: .92rem; }
   .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+  .gamegrid .mode strong, .modes .mode strong { white-space: normal; }
   .mode { text-align: left; border: 2px solid var(--line); background: var(--panel-2); border-radius: 14px; padding: .8rem .9rem; }
   .mode strong { font-family: var(--display); font-size: 1.1rem; display: block; margin-bottom: .2rem; }
   .mode span { color: var(--muted); font-size: .86rem; line-height: 1.35; display: block; }
@@ -32,9 +41,9 @@
   .counter button[aria-pressed=true] { border-color: var(--amber); background: var(--amber); color: #2b1a00; }
   .start-bar { display: flex; align-items: center; gap: 1rem; margin-top: 1.2rem; flex-wrap: wrap; }
   .invites { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+  .invite h3 { color: var(--pc, var(--ink)); }
   .invite { border: 1px dashed var(--line); border-radius: 12px; padding: .8rem; text-align: center; }
   .invite h3 { font-size: 1rem; margin-bottom: .5rem; display: flex; gap: .4rem; align-items: center; justify-content: center; }
-  .invite.p1 h3 { color: var(--cyan); } .invite.p2 h3 { color: var(--magenta); }
   .qr { width: 140px; height: 140px; margin: 0 auto .5rem; background: #f1f4ff; border-radius: 8px; padding: 4px; }
   .qr svg { display: block; width: 100%; height: 100%; }
   .invite code { font-size: .78rem; color: var(--muted); overflow-wrap: anywhere; display: block; }
@@ -45,7 +54,11 @@
   .boards { display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; }
   .side { display: grid; gap: .6rem; justify-items: center; padding: .8rem; border: 1px solid transparent; border-radius: 16px; }
   .side.turn { border-color: var(--amber); box-shadow: 0 0 26px rgba(255, 181, 71, .2); }
-  .side.p1 h3 { color: var(--cyan); } .side.p2 h3 { color: var(--magenta); }
+  .side h3 { color: var(--pc); }
+  .side.dead { opacity: .5; }
+  .boards.many .board.mid { --cs: clamp(11px, calc((100vw - 470px - 60px * var(--cols)) / (var(--cols) * 11.8)), 30px); }
+  @media (max-width: 1000px) { .boards.many .board.mid { --cs: clamp(11px, calc((100vw - 120px) / (var(--cols) * 11.8)), 32px); } }
+  @media (max-width: 700px) { .boards.many .board.mid { --cs: clamp(11px, calc((100vw - 90px) / 11.8), 32px); } }
   .side h3 { font-size: 1.25rem; display: flex; gap: .5rem; align-items: center; }
   .side .wait { min-height: calc(var(--cp) * 5); display: grid; place-items: center; color: var(--muted); }
   .banner { text-align: center; margin-bottom: 1rem; }
@@ -56,7 +69,7 @@
   details.links > summary { cursor: pointer; font-family: var(--display); letter-spacing: .06em; }
   details.links .invites { margin-top: .8rem; }
   details.links .qr { width: 110px; height: 110px; }
-  @media (max-width: 1000px) { .setup, .play { grid-template-columns: 1fr; } .modes { grid-template-columns: 1fr; } }
+  @media (max-width: 1000px) { .setup, .play { grid-template-columns: 1fr; } .modes { grid-template-columns: 1fr; } .gamegrid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 560px) { .fields, .invites { grid-template-columns: 1fr; } header.top .meta { display: none; } }
 </style>
 </head>
@@ -76,8 +89,8 @@
 const app = document.getElementById('app');
 let built = null;            // quelle vue est actuellement construite (setup / game)
 let base = location.origin;  // adresse à donner aux joueurs (IP du réseau local si on est sur localhost)
-let cfg = { names: ['Joueur 1', 'Joueur 2'], mode: 'single', salvo: 3, ai: [null, null], fleet: [...Fleet.DEFAULT_FLEET] };
-let saveTimer = null, lastSeq = null, lastState = null;
+let cfg = { game: 'classic', n: 2, names: Array.from({ length: 6 }, (_, i) => 'Joueur ' + (i + 1)), mode: 'single', salvo: 3, ring: false, count: 5, armada: false, ai: Array(6).fill(null), team: [0, 1, 0, 1, 0, 1], fleet: [...Fleet.DEFAULT_FLEET] };
+let saveTimer = null, lastSeq = null, lastState = null, pending = 0;
 document.title = `Space-Battle-SLG — Salon ${SB.room}`;
 document.getElementById('roomBadge').innerHTML = `Salon <strong>${SB.room}</strong>`;
 SB.recent.add(SB.room, 'maître');
@@ -86,21 +99,23 @@ if (/^(localhost|127\.|\[::1\])/.test(location.hostname)) {
   fetch('/api/lan').then(r => r.json()).then(j => { if (j.urls && j.urls[0]) { base = j.urls[0]; if (lastState) { built = null; render(lastState); } } }).catch(() => { });
 }
 const url = i => `${base}/${SB.room}/joueur${i}`;
+const seatsOf = n => Array.from({ length: n }, (_, i) => i);
+const teamTag = (s, i) => s.game === 'team' ? ` <span class="teamtag" style="color:${SB.TEAMS[s.team[i]].color}">${SB.TEAMS[s.team[i]].name}</span>` : '';
 
 // ------------------------------------------------------------ invitations (QR + liens)
 function invites(s) {
-  return `<div class="invites">` + [1, 2].map(i => s.ai[i - 1] ? `
-    <div class="invite p${i}">
-      <h3><span class="dot on"></span>${SB.esc(s.names[i - 1])}</h3>
+  return `<div class="invites">` + seatsOf(s.n).map(k => { const i = k + 1; return s.ai[k] ? `
+    <div class="invite" style="--pc:${SB.PCOL[k]}">
+      <h3><span class="dot on"></span>${SB.esc(s.names[k])}${teamTag(s, k)}</h3>
       <div class="bot">🤖</div>
-      <code>IA niveau ${SB.levels[s.ai[i - 1]]}<br>joue automatiquement</code>
+      <code>IA niveau ${SB.levels[s.ai[k]]}<br>joue automatiquement</code>
     </div>` : `
-    <div class="invite p${i}">
-      <h3><span class="dot${s.online[i - 1] ? ' on' : ''}" data-presence="${i - 1}"></span>${SB.esc(s.names[i - 1])}</h3>
+    <div class="invite" style="--pc:${SB.PCOL[k]}">
+      <h3><span class="dot${s.online[k] ? ' on' : ''}" data-presence="${k}"></span>${SB.esc(s.names[k])}${teamTag(s, k)}</h3>
       <div class="qr" data-url="${SB.esc(url(i))}"></div>
       <code>${SB.esc(url(i))}</code>
       <a class="btn" href="/${SB.room}/joueur${i}" target="_blank" rel="noopener">Jouer ici ↗</a>
-    </div>`).join('') + `</div>`;
+    </div>`; }).join('') + `</div>`;
 }
 function drawQR() {
   document.querySelectorAll('.qr[data-url]').forEach(box => {
@@ -112,26 +127,51 @@ function drawQR() {
 }
 
 // ------------------------------------------------------------ configuration
+const total = ids => ids.reduce((n, id) => n + Fleet.byId(id).cells.length, 0);
+const push = async () => { pending++; try { return await SB.api('master', 'config', cfg); } finally { pending--; } };
+const pushSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(push, 250); };
+const cellsEst = () => cfg.armada ? Math.min(Fleet.MAX_CELLS, cfg.count * 5) : total(cfg.fleet);
+const mapSide = () => Fleet.mapSize(cfg.n, cellsEst());
+function playersHTML() {
+  const team = cfg.game === 'team';
+  return seatsOf(cfg.n).map(i => `<div class="seatrow">
+      <label for="n${i}" style="color:${SB.PCOL[i]}">Joueur ${i + 1}</label>
+      <div class="kind" data-seat="${i}">
+        <button data-kind="" aria-pressed="${!cfg.ai[i]}">👤 Humain</button>
+        ${Object.entries(SB.levels).map(([k, n]) => `<button data-kind="${k}" aria-pressed="${cfg.ai[i] === k}">🤖 ${n}</button>`).join('')}
+      </div>
+      <input type="text" id="n${i}" data-name="${i}" maxlength="20" autocomplete="off" value="${SB.esc(cfg.names[i])}">
+      ${team ? `<div class="teamsel" data-tseat="${i}">${SB.TEAMS.map((t, k) => `<button data-t="${k}" aria-pressed="${cfg.team[i] === k}" style="${cfg.team[i] === k ? '' : `border-color:${t.color}`}">${t.name.replace('Équipe ', 'Équipe ')}</button>`).join('')}</div>` : ''}
+    </div>`).join('');
+}
 function buildSetup(s) {
+  const multi = cfg.game !== 'classic';
   app.innerHTML = `
   <div class="setup">
     <div class="stack">
       <section class="panel">
-        <h2>Joueurs</h2>
-        <div class="fields">
-          ${[0, 1].map(i => `<div>
-            <label class="p${i + 1}" for="n${i + 1}">Joueur ${i + 1}</label>
-            <div class="kind" data-seat="${i}">
-              <button data-kind="" aria-pressed="${!cfg.ai[i]}">👤 Humain</button>
-              ${Object.entries(SB.levels).map(([k, n]) => `<button data-kind="${k}" aria-pressed="${cfg.ai[i] === k}">🤖 ${n}</button>`).join('')}
-            </div>
-            <input type="text" id="n${i + 1}" maxlength="20" autocomplete="off" value="${SB.esc(cfg.names[i])}"></div>`).join('')}
-        </div>
+        <h2>Type de partie</h2>
+        <div class="gamegrid">${Object.entries(SB.games).map(([k, g]) =>
+          `<button class="mode" data-game="${k}" aria-pressed="${cfg.game === k}"><strong>${g.icon} ${g.name}</strong><span>${g.desc}</span></button>`).join('')}</div>
+        <div class="counter" id="nBox"><span class="muted">Nombre de joueurs :</span>
+          ${[3, 4, 5, 6].map(n => `<button data-n="${n}" aria-pressed="${cfg.n === n}">${n}</button>`).join('')}</div>
+        <label class="opt" id="ringBox"><input type="checkbox" id="ring"${cfg.ring ? ' checked' : ''}> Tirer sur le joueur suivant (au lieu de choisir sa cible)</label>
+        <div class="mapinfo" id="mapInfo"></div>
+        <p class="small muted" id="teamHelp" style="margin:.8rem 0 0">Chaque joueur peut aussi choisir lui-même son équipe depuis son écran. Un joueur seul dans son équipe tire après chaque tir adverse.</p>
       </section>
       <section class="panel">
-        <h2>Flotte (commune aux 2 joueurs)</h2>
+        <h2>Joueurs</h2>
+        <div class="fields" id="players">${playersHTML()}</div>
+      </section>
+      <section class="panel">
+        <h2>Flotte</h2>
+        <div class="counter" id="countBox"><span class="muted">Vaisseaux par joueur :</span>
+          ${[5, 6, 7, 8].map(n => `<button data-count="${n}" aria-pressed="${cfg.count === n}">${n}</button>`).join('')}</div>
+        <label class="opt"><input type="checkbox" id="armada"${cfg.armada ? ' checked' : ''}> Armada perso : chaque joueur choisit lui-même ses types de vaisseaux (ils peuvent différer d'un joueur à l'autre)</label>
+        <div id="fleetPick" style="margin-top:1rem">
         <div class="fleetgrid">${Fleet.CATALOG.map(t => `<button class="ship-card" data-fleet="${t.id}" style="--c:${t.color}" aria-pressed="${cfg.fleet.includes(t.id)}">
           ${SB.mini(t.cells, t.color, 11)}<span><strong>${t.name}</strong><small>${t.cells.length} cases</small></span></button>`).join('')}</div>
+        </div>
         <div class="fleetinfo" id="fleetInfo"></div>
       </section>
       <section class="panel">
@@ -150,38 +190,72 @@ function buildSetup(s) {
       <h2>Inviter les joueurs</h2>
       <div class="code-big">${SB.room}</div>
       <p class="small muted" style="text-align:center;margin:0 0 1rem">Scanner le QR code, ouvrir le lien, ou taper ce code sur la page d'accueil.</p>
-      <div id="invitesBox">${invites(s)}</div>
+      <div id="invitesBox">${invites({ ...s, n: cfg.n, ai: cfg.ai, names: cfg.names, team: cfg.team, game: cfg.game })}</div>
     </section>
   </div>`;
-  const total = ids => ids.reduce((n, id) => n + Fleet.byId(id).cells.length, 0);
   const paintFleet = () => {
     app.querySelectorAll('[data-fleet]').forEach(b => b.setAttribute('aria-pressed', cfg.fleet.includes(b.dataset.fleet)));
-    const n = total(cfg.fleet);
-    document.getElementById('fleetInfo').textContent = `${cfg.fleet.length} vaisseau${cfg.fleet.length > 1 ? 'x' : ''}, ${n} cases au total (maximum ${Fleet.MAX_CELLS}). Les vaisseaux ne pourront pas se toucher : 1 case d'écart obligatoire.`;
-    document.getElementById('startHint').textContent = `Chaque joueur placera ensuite ses ${cfg.fleet.length} vaisseaux.`;
+    app.querySelectorAll('[data-count]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.count === cfg.count));
+    document.getElementById('fleetPick').style.display = cfg.armada ? 'none' : '';
+    const n = total(cfg.fleet), ok = cfg.armada || cfg.fleet.length === cfg.count;
+    document.getElementById('fleetInfo').textContent = cfg.armada
+      ? `Chaque joueur choisira ${cfg.count} types parmi les ${Fleet.CATALOG.length} (maximum ${Fleet.MAX_CELLS} cases) avant de les placer. Vous verrez la composition de chacun une fois la bataille lancée.`
+      : `${cfg.fleet.length} / ${cfg.count} vaisseaux choisis, ${n} cases (maximum ${Fleet.MAX_CELLS}). Les vaisseaux d'un même joueur ne pourront pas se toucher : 1 case d'écart obligatoire.`;
+    document.getElementById('start').disabled = !ok;
+    document.getElementById('startHint').textContent = ok ? `Chaque joueur placera ensuite ses ${cfg.count} vaisseaux.` : `Choisis exactement ${cfg.count} vaisseaux (ou active l'Armada perso).`;
+    paintGame();
   };
+  const paintGame = () => {
+    document.getElementById('nBox').style.display = cfg.game === 'classic' ? 'none' : '';
+    document.getElementById('ringBox').style.display = cfg.game === 'ffa' ? '' : 'none';
+    document.getElementById('teamHelp').style.display = cfg.game === 'team' ? '' : 'none';
+    const mi = document.getElementById('mapInfo');
+    mi.style.display = cfg.game === 'royale' ? '' : 'none';
+    mi.textContent = `👑 Carte commune de ${mapSide()}×${mapSide()} cases (calculée selon ${cfg.n} joueurs et ${cfg.armada ? 'environ ' : ''}${cellsEst()} cases de vaisseaux par joueur). Les vaisseaux peuvent être posés sur ceux des autres.`;
+    app.querySelectorAll('[data-game]').forEach(x => x.setAttribute('aria-pressed', x.dataset.game === cfg.game));
+    app.querySelectorAll('[data-n]').forEach(x => x.setAttribute('aria-pressed', +x.dataset.n === cfg.n));
+    document.getElementById('start').textContent = cfg.game === 'classic' ? 'Lancer la partie →' : `Lancer la partie à ${cfg.n} →`;
+  };
+  const refreshInvites = () => { document.getElementById('invitesBox').innerHTML = invites({ ...lastState, n: cfg.n, ai: cfg.ai, names: cfg.names, team: cfg.team, game: cfg.game }); drawQR(); };
+  const bindPlayers = () => {
+    app.querySelectorAll('[data-name]').forEach(inp => inp.addEventListener('input', () => { cfg.names[+inp.dataset.name] = inp.value; pushSoon(); }));
+    app.querySelectorAll('.kind button').forEach(b => b.onclick = () => {
+      const seat = +b.parentElement.dataset.seat, k = b.dataset.kind || null;
+      cfg.ai[seat] = k;
+      b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+      const inp = document.getElementById('n' + seat);
+      if (/^(Joueur \d|IA .+)$/.test(inp.value.trim())) { inp.value = k ? 'IA ' + SB.levels[k] : 'Joueur ' + (seat + 1); cfg.names[seat] = inp.value; }   // nom par défaut seulement
+      push().then(refreshInvites);
+    });
+    app.querySelectorAll('.teamsel button').forEach(b => b.onclick = () => {
+      const seat = +b.parentElement.dataset.tseat; cfg.team[seat] = +b.dataset.t;
+      b.parentElement.querySelectorAll('button').forEach(x => { const on = x === b; x.setAttribute('aria-pressed', on); x.style.borderColor = on ? '' : SB.TEAMS[+x.dataset.t].color; });
+      push().then(refreshInvites);
+    });
+  };
+  const repaintPlayers = () => { document.getElementById('players').innerHTML = playersHTML(); bindPlayers(); };
   app.querySelectorAll('[data-fleet]').forEach(b => b.onclick = async () => {
     const id = b.dataset.fleet, on = cfg.fleet.includes(id);
-    if (on && cfg.fleet.length === 1) return SB.toast('Garde au moins un vaisseau', 'bad');
     const next = on ? cfg.fleet.filter(x => x !== id) : [...cfg.fleet, id];
+    if (!on && cfg.fleet.length >= cfg.count) return SB.toast(`${cfg.count} vaisseaux maximum : retire-en un d'abord (ou augmente le nombre)`, 'bad');
     if (!on && total(next) > Fleet.MAX_CELLS) return SB.toast(`Trop de cases (${total(next)}) : maximum ${Fleet.MAX_CELLS} pour que tout tienne sans contact`, 'bad');
     cfg.fleet = Fleet.CATALOG.map(t => t.id).filter(x => next.includes(x));
     paintFleet();
     const r = await push();
     if (!r.ok && lastState) { cfg.fleet = [...lastState.fleet]; paintFleet(); }   // refus du serveur : on revient à la flotte connue
   });
-  const sync = () => { document.getElementById('salvoBox').style.display = cfg.mode === 'salvo' ? '' : 'none'; };
-  const push = () => SB.api('master', 'config', cfg);
-  const names = () => { cfg.names = [document.getElementById('n1').value, document.getElementById('n2').value]; clearTimeout(saveTimer); saveTimer = setTimeout(push, 250); };
-  ['n1', 'n2'].forEach(id => document.getElementById(id).addEventListener('input', names));
-  app.querySelectorAll('.kind button').forEach(b => b.onclick = () => {
-    const seat = +b.parentElement.dataset.seat, k = b.dataset.kind || null;
-    cfg.ai[seat] = k;
-    b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
-    const inp = document.getElementById('n' + (seat + 1));
-    if (/^(Joueur \d|IA .+)$/.test(inp.value.trim())) inp.value = k ? 'IA ' + SB.levels[k] : 'Joueur ' + (seat + 1);   // nom par défaut seulement
-    names();
+  app.querySelectorAll('[data-count]').forEach(b => b.onclick = () => {
+    cfg.count = +b.dataset.count; if (cfg.fleet.length > cfg.count) cfg.fleet = cfg.fleet.slice(0, cfg.count);
+    paintFleet(); push();
   });
+  document.getElementById('armada').onchange = e => { cfg.armada = e.target.checked; paintFleet(); push(); };
+  app.querySelectorAll('[data-game]').forEach(b => b.onclick = () => {
+    cfg.game = b.dataset.game; cfg.n = cfg.game === 'classic' ? 2 : Math.max(3, cfg.n);
+    paintGame(); repaintPlayers(); refreshInvites(); push();
+  });
+  app.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { cfg.n = +b.dataset.n; paintGame(); repaintPlayers(); refreshInvites(); push(); });
+  document.getElementById('ring').onchange = e => { cfg.ring = e.target.checked; push(); };
+  const sync = () => { document.getElementById('salvoBox').style.display = cfg.mode === 'salvo' ? '' : 'none'; };
   app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => {
     cfg.mode = b.dataset.mode;
     app.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b));
@@ -193,46 +267,63 @@ function buildSetup(s) {
     push();
   });
   document.getElementById('start').onclick = async () => {
-    names(); clearTimeout(saveTimer);
-    const a = await SB.api('master', 'config', cfg);
+    clearTimeout(saveTimer);
+    const a = await push();
     if (a.ok) SB.api('master', 'start', {});
   };
-  sync(); paintFleet(); drawQR();
+  bindPlayers(); sync(); paintFleet(); drawQR();
 }
-function updateSetup(s) {
+function updateSetup(s) {   // un autre appareil a changé quelque chose (présence, équipes choisies par les joueurs)
   document.getElementById('invitesBox').innerHTML = invites(s); drawQR();
   document.querySelectorAll('[data-presence]').forEach(d => d.classList.toggle('on', !!s.online[+d.dataset.presence]));
+  document.querySelectorAll('.teamsel').forEach(g => g.querySelectorAll('button').forEach(b => {
+    const on = s.team[+g.dataset.tseat] === +b.dataset.t; b.setAttribute('aria-pressed', on); b.style.borderColor = on ? '' : SB.TEAMS[+b.dataset.t].color;
+  }));
 }
 
 // ------------------------------------------------------------ partie en cours (vue spectateur)
 function sideHTML(s, i) {
-  const b = s.boards[i], turn = s.phase === 'battle' && s.turn === i;
-  const fresh = new Set(s.last && s.last.by !== i ? s.last.shots.map(v => v.i) : []);   // tirs reçus à l'instant
+  const b = s.boards[i], turn = s.phase === 'battle' && s.turn === i, st = s.stats[i];
+  const fresh = new Set(s.last && s.last.target === i ? s.last.shots.map(v => v.i) : []);   // tirs reçus à l'instant
   const ships = b.ships || b.sunk;
   const showBoard = s.phase !== 'placement';
-  return `<div class="side p${i + 1}${turn ? ' turn' : ''}">
-    <h3><span class="dot${s.online[i] ? ' on' : ''}"></span>${s.ai[i] ? '🤖 ' : ''}${SB.esc(s.names[i])}<span class="muted small">${s.score[i]} victoire${s.score[i] > 1 ? 's' : ''}</span></h3>
-    ${showBoard ? SB.board({ cls: 'mid', shots: b.shots, ships, fresh, pop: s.last && s.last.seq !== lastSeq, revealFoe: s.phase === 'over' }) :
+  return `<div class="side${turn ? ' turn' : ''}${st && !st.alive ? ' dead' : ''}" style="--pc:${SB.PCOL[i]}">
+    <h3><span class="dot${s.online[i] ? ' on' : ''}"></span>${s.ai[i] ? '🤖 ' : ''}${SB.esc(s.names[i])}${teamTag(s, i)}<span class="muted small">${s.score[i]} v.</span></h3>
+    ${showBoard ? SB.board({ n: s.size, cls: 'mid', shots: b.shots, ships, fresh, pop: s.last && s.last.seq !== lastSeq, revealFoe: s.phase === 'over' }) :
       `<div class="wait">${s.ready[i] ? '✅ Flotte placée' : '⏳ Place sa flotte…'}</div>`}
-    ${showBoard ? `<div class="small muted">Vaisseaux restants : ${b.remaining} / ${b.total}</div>` : ''}
+    ${showBoard ? `<div class="small muted">${st && !st.alive ? '☠️ éliminé' : `Vaisseaux restants : ${b.remaining} / ${b.total}`}</div>` : ''}
   </div>`;
+}
+function mapHTML(s) {
+  const showBoard = s.phase !== 'placement';
+  if (!showBoard) return `<div class="boards">${seatsOf(s.n).map(i => `<div class="side" style="--pc:${SB.PCOL[i]}"><h3><span class="dot${s.online[i] ? ' on' : ''}"></span>${s.ai[i] ? '🤖 ' : ''}${SB.esc(s.names[i])}</h3><div class="wait">${s.ready[i] ? '✅ Flotte placée' : '⏳ Place sa flotte…'}</div></div>`).join('')}</div>`;
+  const known = s.phase === 'over' ? s.map.ships : s.map.sunk;
+  const fresh = new Set(s.last ? s.last.shots.map(v => v.i) : []);
+  return `<div class="boards"><div class="side">
+      <h3>👑 Carte commune ${s.size}×${s.size}</h3>
+      ${SB.board({ n: s.size, cls: 'map', shots: s.map.shots, ships: known, owners: s.map.owners, fresh, pop: s.last && s.last.seq !== lastSeq, revealFoe: s.phase === 'over' })}
+      <div class="chips">${seatsOf(s.n).map(i => `<span class="chip" style="${s.phase === 'battle' && s.turn === i ? 'border-color:var(--amber)' : ''}${s.stats[i] && !s.stats[i].alive ? ';opacity:.45;text-decoration:line-through' : ''}"><span class="sw" style="background:${SB.PCOL[i]}"></span> ${s.ai[i] ? '🤖 ' : ''}${SB.esc(s.names[i])} · ${s.stats[i] ? s.stats[i].left + '/' + s.stats[i].total : ''}</span>`).join('')}</div>
+    </div></div>`;
 }
 function bannerText(s) {
   if (s.phase === 'placement') return [`Manche ${s.round} — placement des flottes`, `Chaque joueur place ses ${s.fleet.length} vaisseaux depuis son écran.`];
-  if (s.phase === 'battle') return [`Au tour de ${SB.esc(s.names[s.turn])}`, `${SB.modeLabel(s.mode, s.salvo)} · manche ${s.round}`];
-  return [`🏆 ${SB.esc(s.names[s.winner])} remporte la bataille !`, `Score : ${SB.esc(s.names[0])} ${s.score[0]} — ${s.score[1]} ${SB.esc(s.names[1])}`];
+  const g = `${SB.games[s.game].icon} ${SB.games[s.game].name}`;
+  if (s.phase === 'battle') return [`Au tour de ${SB.esc(s.names[s.turn])}${teamTag(s, s.turn)}`, `${g} · ${SB.modeLabel(s.mode, s.salvo)} · manche ${s.round}`];
+  const w = s.game === 'team' ? `${SB.TEAMS[s.team[s.winners[0]]].name} (${s.winners.map(i => SB.esc(s.names[i])).join(', ')})` : s.winners.map(i => SB.esc(s.names[i])).join(' et ');
+  return [`🏆 ${w} remporte la bataille !`, `Score : ${seatsOf(s.n).map(i => `${SB.esc(s.names[i])} ${s.score[i]}`).join(' — ')}`];
 }
 function buildGame(s) {
-  const [t, sub] = bannerText(s);
+  const [t, sub] = bannerText(s), cols = Math.min(s.n, 3);
+  const multi = s.game !== 'classic', L = s.last && { ...s.last, n: s.size };
   app.innerHTML = `
   <div class="play">
     <div>
       <div class="banner"><h2>${t}</h2><p>${sub}</p></div>
-      <div class="boards">${sideHTML(s, 0)}${sideHTML(s, 1)}</div>
+      ${s.game === 'royale' ? mapHTML(s) : `<div class="boards${s.n > 2 ? ' many' : ''}" style="--cols:${cols}">${seatsOf(s.n).map(i => sideHTML(s, i)).join('')}</div>`}
     </div>
     <aside>
-      ${s.last ? `<section class="panel"><h2>Dernier tir</h2><strong>${SB.esc(s.names[s.last.by])}</strong>${SB.volleyChips(s.last)}</section>` : ''}
-      <section class="panel"><h2>Journal</h2><ul class="log">${s.log.map(l => `<li>${SB.esc(l)}</li>`).join('')}</ul></section>
+      ${L ? `<section class="panel"><h2>Dernier tir</h2><strong>${SB.who(s.names, L.by, s.ai)}</strong>${multi && s.game !== 'royale' && L.target != null && L.target >= 0 ? ' → ' + SB.who(s.names, L.target, s.ai) : ''}${SB.volleyChips(L, s.names, multi)}</section>` : ''}
+      <section class="panel"><h2>Journal</h2><ul class="log" id="log">${s.log.map(l => `<li>${SB.esc(l)}</li>`).join('')}</ul></section>
       <section class="panel"><h2>Contrôles</h2><div class="btns">
         ${s.phase === 'over' ? `<button class="btn go" id="rematch">⚔ Revanche</button>
           <span class="small muted" style="align-self:center">${s.rematch.map((r, i) => r ? SB.esc(s.names[i]) + ' est prêt' : '').filter(Boolean).join(' · ')}</span>` : ''}
@@ -243,16 +334,20 @@ function buildGame(s) {
   const rm = document.getElementById('rematch');
   if (rm) rm.onclick = () => SB.api('master', 'rematch', {});
   document.getElementById('toSetup').onclick = () => { if (s.phase === 'over' || confirm('Abandonner la partie en cours et revenir aux réglages ?')) SB.api('master', 'setup', {}); };
+  const lg = document.getElementById('log'); if (lg) lg.scrollTop = lg.scrollHeight;
   drawQR();
 }
 
 function render(s) {
   lastState = s;
   const keep = s.phase === 'setup' && built === 'setup';
-  cfg = { names: keep ? cfg.names : s.names, fleet: keep ? cfg.fleet : [...s.fleet], mode: s.mode, salvo: s.salvo, ai: s.ai };
-  document.getElementById('meta').textContent = s.phase === 'setup' ? 'Configuration de la partie' : `${SB.modeLabel(s.mode, s.salvo)} · manche ${s.round}`;
+  const fromServer = () => ({ game: s.game, n: s.n, names: [...s.names, ...cfg.names.slice(s.n)], fleet: [...s.fleet], mode: s.mode, salvo: s.salvo, ring: s.ring, count: s.count, armada: s.armada,
+    ai: [...s.ai, ...cfg.ai.slice(s.n)], team: [...s.team, ...cfg.team.slice(s.n)] });
+  if (!keep) cfg = fromServer();                              // nouvelle vue : on repart de l'état du serveur
+  else if (!pending) cfg.team = [...s.team, ...cfg.team.slice(s.n)];   // en réglages : seules les équipes choisies par les joueurs viennent d'ailleurs
+  document.getElementById('meta').textContent = s.phase === 'setup' ? 'Configuration de la partie' : `${SB.games[s.game].name} · ${SB.modeLabel(s.mode, s.salvo)} · manche ${s.round}`;
   if (s.phase === 'setup') {
-    if (built !== 'setup') { built = 'setup'; buildSetup(s); } else updateSetup(s);
+    if (built !== 'setup') { built = 'setup'; buildSetup(s); } else if (!pending) updateSetup(s);
   } else {
     built = 'game'; buildGame(s);
   }

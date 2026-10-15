@@ -3,7 +3,7 @@
 // et les vaisseaux adverses déjà détruits. Elle ne lit jamais la flotte adverse.
 'use strict';
 const Fleet = require('./public/fleet.js');
-const N = 10;
+let N = 10;   // côté de la grille courante (réglé à chaque appel)
 const LEVELS = ['debutant', 'avance', 'expert'];
 const LEVEL_NAMES = { debutant: 'Débutant', avance: 'Avancé', expert: 'Expert' };
 const rnd = n => (Math.random() * n) | 0;
@@ -12,8 +12,8 @@ const inb = (r, c) => r >= 0 && r < N && c >= 0 && c < N;
 
 // ------------------------------------------------------------ placement de la flotte
 // ids : vaisseaux à placer ; retourne [{id, rot, r, c}]. Les vaisseaux ne se touchent jamais (règle du jeu).
-function placeFleet(level, ids) {
-  const out = Fleet.randomPlacement(ids, 800);
+function placeFleet(level, ids, size = 10) {
+  const out = Fleet.randomPlacement(ids, 800, size);
   if (!out) throw new Error('placement IA impossible');
   return out;
 }
@@ -28,7 +28,7 @@ function unresolved(k) {
   return out;
 }
 const freeCells = k => { const f = []; k.shots.forEach((v, i) => { if (v === 0) f.push(i); }); return f; };
-const deadZone = k => Fleet.halo(k.sunk.flatMap(s => s.cells));          // cases d'un vaisseau coulé + leurs voisines
+const deadZone = k => (k.noHalo ? new Set(k.sunk.flatMap(s => s.cells)) : Fleet.halo(k.sunk.flatMap(s => s.cells), N));          // cases d'un vaisseau coulé + leurs voisines
 const liveCells = k => { const d = deadZone(k); return freeCells(k).filter(i => !d.has(i)); };
 const SHAPES = {};                                                          // rotations distinctes de chaque vaisseau
 function rotations(id) {
@@ -102,7 +102,7 @@ function density(k) {
   for (const id of k.remaining) {
     for (const { rot, h, w: bw } of rotations(id)) {
       for (let r = 0; r <= N - h; r++) for (let c = 0; c <= N - bw; c++) {
-        const cells = Fleet.place(id, rot, r, c);
+        const cells = Fleet.place(id, rot, r, c, N);
         if (!cells || cells.some(i => k.shots[i] === 1 || dead.has(i))) continue;
         const cover = cells.filter(i => hits.has(i)).length;
         const weight = cover ? 1 + 40 * cover * cover : 1;
@@ -132,11 +132,31 @@ function expert(k, n) {
   return out;
 }
 
-function chooseShots(level, k, n) {
+// cible : parmi plusieurs adversaires, choisit lequel viser. infos : [{i, left (vaisseaux restants), hits (touchés non résolus)}]
+function chooseTarget(level, infos) {
+  if (!infos.length) return null;
+  if (infos.length === 1 || level === 'debutant') return infos[rnd(infos.length)].i;
+  const withHits = infos.filter(x => x.hits > 0);
+  if (level === 'avance') return (withHits.length ? withHits : infos)[rnd((withHits.length ? withHits : infos).length)].i;
+  if (withHits.length) return withHits.sort((a, b) => b.hits - a.hits)[0].i;      // expert : finit ce qu'il a commencé
+  const m = Math.min(...infos.map(x => x.left));                                   // sinon l'adversaire le plus affaibli
+  const weak = infos.filter(x => x.left === m);
+  return weak[rnd(weak.length)].i;
+}
+
+function chooseShots(level, k0, n) {
+  N = k0.n || 10;
+  let k = k0;
+  if (k0.forbid && k0.forbid.size) {                  // ses propres cases (Battle Royale) : on ne peut pas y tirer
+    const shots = Array.from(k0.shots);
+    for (const i of k0.forbid) if (shots[i] === 0) shots[i] = 1;
+    k = { ...k0, shots };
+  }
   const f = level === 'expert' ? expert : level === 'avance' ? avance : debutant;
   const picks = f(k, n);
   if (picks.length < n) for (const i of shuffle(freeCells(k))) { if (!picks.includes(i)) picks.push(i); if (picks.length === n) break; }
   return picks;
 }
+function unresolvedN(k) { N = k.n || 10; return unresolved(k); }
 
-module.exports = { LEVELS, LEVEL_NAMES, placeFleet, chooseShots };
+module.exports = { LEVELS, LEVEL_NAMES, placeFleet, chooseShots, chooseTarget, unresolved: unresolvedN };

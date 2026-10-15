@@ -39,13 +39,13 @@
 <main>
   <div class="hero">
     <h1>Space<b>-</b>Battle<i>-</i>SLG</h1>
-    <p>Bataille navale dans l'espace pour 2 joueurs : placez votre flotte de 5 vaisseaux et détruisez celle de l'adversaire. Chaque partie se joue dans son propre salon.</p>
+    <p>Bataille navale dans l'espace pour 2 à 6 joueurs : duel classique, chacun pour soi, par équipes ou Battle Royale. Placez votre flotte et détruisez celle des autres. Chaque partie se joue dans son propre salon.</p>
   </div>
 
   <div class="cards">
     <section class="panel card">
       <h2>Créer une partie</h2>
-      <p>Tu deviens le maître du jeu : tu règles les noms et le mode de tir, puis tu invites les deux joueurs.</p>
+      <p>Tu deviens le maître du jeu : tu choisis le type de partie, les noms et le mode de tir, puis tu invites les joueurs.</p>
       <button class="btn primary big" id="create">Créer un salon</button>
       <details>
         <summary>Choisir mon propre code</summary>
@@ -105,9 +105,9 @@ async function lookup(code, quiet) {
 function renderSeats(info) {
   const phases = { setup: 'en préparation', placement: 'placement des flottes', battle: 'bataille en cours', over: 'terminée' };
   let h = `<div class="found-head"><span>Salon <strong>${info.code}</strong> · ${phases[info.phase] || ''}</span><a class="small" href="/${info.code}" onclick="SB.recent.add('${info.code}','maître')">page maître</a></div>
-    <p class="small muted" style="margin:.6rem 0 0">Touche ton siège :</p><div class="seats">`;
-  h += info.names.map((n, i) => info.ai[i] ? `<div class="seat" style="opacity:.55"><span class="dot on"></span><span class="who">${SB.esc(n)}<small>Joueur ${i + 1} — 🤖 joué par l'IA (${SB.levels[info.ai[i]]})</small></span></div>` : `<a class="seat" href="/${info.code}/joueur${i + 1}" onclick="SB.recent.add('${info.code}','joueur ${i + 1}')">
-      <span class="dot${info.online[i] ? ' on' : ''}"></span><span class="who">${SB.esc(n)}<small>Joueur ${i + 1} — ${info.online[i] ? 'déjà connecté' : 'libre'}</small></span><span>→</span></a>`).join('');
+    <p class="small muted" style="margin:.6rem 0 0">${SB.games[info.game] ? SB.games[info.game].icon + ' ' + SB.games[info.game].name + ' · ' : ''}Touche ton siège :</p><div class="seats">`;
+  h += info.names.slice(0, info.n || 2).map((n, i) => info.ai[i] ? `<div class="seat" style="opacity:.55"><span class="dot on"></span><span class="who">${SB.esc(n)}<small>Joueur ${i + 1} — 🤖 joué par l'IA (${SB.levels[info.ai[i]]})</small></span></div>` : `<a class="seat" href="/${info.code}/joueur${i + 1}" onclick="SB.recent.add('${info.code}','joueur ${i + 1}')">
+      <span class="dot${info.online[i] ? ' on' : ''}"></span><span class="who">${SB.esc(n)}<small>Joueur ${i + 1}${info.game === 'team' ? ' · ' + SB.TEAMS[info.team[i]].name : ''} — ${info.online[i] ? 'déjà connecté' : 'libre'}</small></span><span>→</span></a>`).join('');
   found.innerHTML = h + '</div>';
 }
 document.getElementById('join').onclick = () => lookup(codeInput.value);
@@ -117,7 +117,7 @@ function renderRecent() {
   const box = document.getElementById('recent'), list = SB.recent.list();
   if (!list.length) { box.innerHTML = ''; return; }
   box.innerHTML = '<h2>Salons récents sur cet appareil</h2><ul>' + list.map(x => {
-    const href = x.role === 'maître' ? '/' + x.code : x.role === 'joueur 2' ? `/${x.code}/joueur2` : `/${x.code}/joueur1`;
+    const jm = /joueur (\d)/.exec(x.role), href = jm ? `/${x.code}/joueur${jm[1]}` : '/' + x.code;
     return `<li><a href="${href}"><strong>${SB.esc(x.code)}</strong><span class="small muted">${SB.esc(x.role)}</span></a>
       <button data-rm="${SB.esc(x.code)}" aria-label="Retirer ${SB.esc(x.code)}">✕</button></li>`;
   }).join('') + '</ul>';

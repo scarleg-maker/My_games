@@ -2,10 +2,18 @@
 (function () {
   const SB = window.SB = {};
   SB.N = 10;
-  SB.LET = 'ABCDEFGHIJ';
+  SB.LET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  SB.PCOL = ['#4cf0ff', '#ff5dc8', '#ffb547', '#58f0a6', '#b79bff', '#ff7a59'];   // une couleur par siège
+  SB.TEAMS = [{ name: 'Équipe A', color: '#4cf0ff' }, { name: 'Équipe B', color: '#ff5dc8' }, { name: 'Équipe C', color: '#ffb547' }];
+  SB.games = {
+    classic: { name: 'Classique', icon: '⚔', desc: '2 joueurs, un duel.' },
+    ffa: { name: 'Chacun pour soi', icon: '🎯', desc: '3 à 6 joueurs : on choisit sur qui tirer. Le dernier vivant gagne.' },
+    team: { name: 'Équipes', icon: '🤝', desc: '3 à 6 joueurs en équipes A, B, C. Un joueur seul dans son équipe tire après chaque tir adverse.' },
+    royale: { name: 'Battle Royale', icon: '👑', desc: '3 à 6 joueurs sur une carte commune. Les vaisseaux peuvent se superposer.' },
+  };
   SB.room = (location.pathname.split('/')[1] || '').toUpperCase();
   SB.esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  SB.coord = i => SB.LET[i % 10] + (Math.floor(i / 10) + 1);
+  SB.coord = (i, n = 10) => SB.LET[i % n] + (Math.floor(i / n) + 1);
   SB.modes = {
     single: { name: '1 tir par tour', desc: 'Chaque joueur tire une seule fois, puis passe la main.' },
     chain: { name: 'Tirs consécutifs', desc: 'Touché ? On rejoue ! Le tour ne s\'arrête qu\'au premier tir raté.' },
@@ -70,19 +78,20 @@
   };
 
   // ---------- rendu d'un plateau
-  // o : { cls, id, shots[100], ships[] (affichés, avec .color), fresh:Set, pop, order:Map, targets:Map(idx→n), live, place, halo:Set, revealFoe }
+  // o : { n (côté), cls, id, shots[n*n], ships[] (affichés, avec .color), fresh:Set, pop, order:Map, targets:Map(idx→n), live, place,
+  //       halo:Set, revealFoe, blocked:Set (cases non visables), owners:{idx:[sièges touchés]} (carte du Battle Royale) }
   SB.board = function (o) {
-    const ships = o.ships || [], owner = {};
+    const N = o.n || 10, ships = o.ships || [], owner = {};
     ships.forEach((s, k) => s.cells.forEach(i => { owner[i] = k; }));
-    let h = `<div class="board ${o.cls || ''}${o.live ? ' live' : ''}"${o.id ? ` id="${o.id}"` : ''}><span class="lab"></span>`;
-    for (let c = 0; c < 10; c++) h += `<span class="lab">${SB.LET[c]}</span>`;
-    for (let r = 0; r < 10; r++) {
+    let h = `<div class="board ${o.cls || ''}${o.live ? ' live' : ''}" style="--n:${N}"${o.id ? ` id="${o.id}"` : ''}><span class="lab"></span>`;
+    for (let c = 0; c < N; c++) h += `<span class="lab">${SB.LET[c]}</span>`;
+    for (let r = 0; r < N; r++) {
       h += `<span class="lab">${r + 1}</span>`;
-      for (let c = 0; c < 10; c++) {
-        const i = r * 10 + c, k = owner[i], sh = o.shots ? o.shots[i] : 0;
+      for (let c = 0; c < N; c++) {
+        const i = r * N + c, k = owner[i], sh = o.shots ? o.shots[i] : 0;
         const cl = ['cell'], style = [];
         if (k !== undefined) {
-          const s = ships[k], same = (rr, cc) => rr >= 0 && rr < 10 && cc >= 0 && cc < 10 && owner[rr * 10 + cc] === k;
+          const s = ships[k], same = (rr, cc) => rr >= 0 && rr < N && cc >= 0 && cc < N && owner[rr * N + cc] === k;
           const u = same(r - 1, c), d = same(r + 1, c), l = same(r, c - 1), rt = same(r, c + 1);
           cl.push('ship');
           if (u) cl.push('j-u'); if (d) cl.push('j-d'); if (l) cl.push('j-l'); if (rt) cl.push('j-r');
@@ -90,17 +99,21 @@
           if (s.sunk) cl.push('sunk'); else if (o.revealFoe) cl.push('unsunk');
           style.push(`--ship:${s.color || '#8aa2dd'}`);
         } else if (o.halo && o.halo.has(i)) cl.push('halo');
+        const blocked = o.blocked && o.blocked.has(i);
+        if (blocked) cl.push('blocked');
         if (sh === 1) cl.push('miss'); if (sh === 2) cl.push('hit');
         const fresh = o.fresh && o.fresh.has(i);
         if (fresh) cl.push('fresh'); if (fresh && o.pop) cl.push('pop');
         let inner = '';
         if (sh === 2) inner = '<i class="fx"></i>'; else if (sh === 1) inner = '<i class="dot2"></i>';
+        const ow = o.owners && o.owners[i];
+        if (ow && sh === 2) inner += '<em class="own">' + ow.map(p => `<u style="background:${SB.PCOL[p]}"></u>`).join('') + '</em>';
         const n = o.targets && o.targets.get(i);
         if (n) { cl.push('target'); if (o.targets.size > 1) inner += `<b>${n}</b>`; }
         const ord = o.order && o.order.get(i);
         if (ord != null) style.push(`--d:${ord * 0.18}s`);
-        const tag = o.live || o.place ? 'button' : 'div';
-        h += `<${tag} class="${cl.join(' ')}" data-i="${i}" aria-label="${SB.coord(i)}"${style.length ? ` style="${style.join(';')}"` : ''}${tag === 'button' ? ' type="button"' : ''}>${inner}</${tag}>`;
+        const tag = (o.live && !blocked) || o.place ? 'button' : 'div';
+        h += `<${tag} class="${cl.join(' ')}" data-i="${i}" aria-label="${SB.coord(i, N)}"${style.length ? ` style="${style.join(';')}"` : ''}${tag === 'button' ? ' type="button"' : ''}>${inner}</${tag}>`;
       }
     }
     return h + '</div>';
@@ -114,9 +127,17 @@
   SB.pips = function (ships) {   // pastilles : un vaisseau = une capsule de points, à la couleur du vaisseau
     return '<div class="fleet">' + ships.map(s => `<span class="pip${s.sunk ? ' dead' : ''}" title="${SB.esc(s.name)}${s.sunk ? ' (détruit)' : ''}">${Array.from({ length: s.size }, () => `<i style="background:${s.sunk ? 'var(--hit)' : s.color}"></i>`).join('')}</span>`).join('') + '</div>';
   };
-  SB.volleyChips = function (last) {
+  // résumé d'une volée : names = noms des joueurs ; multi = plusieurs propriétaires possibles (on précise de qui est le vaisseau)
+  SB.volleyChips = function (last, names, multi) {
     if (!last) return '';
-    return '<div class="chips">' + last.shots.map(v =>
-      `<span class="chip ${v.sunk ? 'sunk' : v.hit ? 'hit' : 'miss'}">${SB.coord(v.i)} ${v.sunk ? '· ' + SB.esc(v.sunk) + ' coulé' : v.hit ? '· touché' : '· raté'}</span>`).join('') + '</div>';
+    const n = last.n || 10;
+    return '<div class="chips">' + last.shots.map(v => {
+      const sunk = v.sunk && v.sunk.length;
+      const txt = sunk ? '· ' + v.sunk.map(x => SB.esc(x.name) + (multi ? ' de ' + SB.esc(names[x.owner]) : '')).join(', ') + ' coulé'
+        : v.hit ? '· touché' + (multi && v.owners && v.owners.length ? ' (' + v.owners.map(o => SB.esc(names[o])).join(', ') + ')' : '') : '· raté';
+      return `<span class="chip ${sunk ? 'sunk' : v.hit ? 'hit' : 'miss'}">${SB.coord(v.i, n)} ${txt}</span>`;
+    }).join('') + '</div>';
   };
+  // pastille colorée d'un siège
+  SB.who = (names, i, ai) => `<b class="pn" style="color:${SB.PCOL[i]}">${ai && ai[i] ? '🤖 ' : ''}${SB.esc(names[i])}</b>`;
 })();

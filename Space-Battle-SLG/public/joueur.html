@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="/static/style.css">
 <style>
   header.top .me { display: flex; align-items: center; gap: .6rem; font-family: var(--display); font-weight: 700; }
-  header.top .me.p1 .nm { color: var(--cyan); } header.top .me.p2 .nm { color: var(--magenta); }
+    header.top .me { flex-wrap: wrap; justify-content: flex-end; }
+  .teamtag { white-space: nowrap; }
+  @media (max-width: 560px) { header.top .me .gl { display: none; } header.top .me .muted.small:last-child { display: none; } }
   main { max-width: 1400px; margin: 0 auto; padding: .8rem .8rem 3rem; }
   .center { max-width: 34rem; margin: 2rem auto; text-align: center; }
   .center h1 { font-size: clamp(1.5rem, 5vw, 2.2rem); margin-bottom: .6rem; }
@@ -79,21 +81,23 @@
 <script src="/static/fleet.js"></script>
 <script src="/static/common.js"></script>
 <script>
-const seat = +(location.pathname.match(/joueur(\d)/) || [0, 1])[1] - 1;   // 0 ou 1
+const seat = +(location.pathname.match(/joueur(\d)/) || [0, 1])[1] - 1;   // 0 à 5
 const WHO = 'p' + (seat + 1);
 const app = document.getElementById('app');
-const N = 10;
+let N = 10;                         // côté de la grille (varie en Battle Royale)
 let S = null;                       // dernier état reçu
 let draft = {};                     // placement en cours : id du vaisseau → {rot, r, c}
 let sel = null, curRot = 0;         // vaisseau sélectionné (à poser) et son orientation (0-3, par quarts de tour)
 let targets = [];                   // cases visées avant de tirer
+let tgt = null;                     // adversaire visé (chacun pour soi / équipes)
 let animSeq = null, lastKey = '';
 document.getElementById('roomTag').innerHTML = `Salon <strong>${SB.room}</strong>`;
 SB.recent.add(SB.room, 'joueur ' + (seat + 1));
 
 // ------------------------------------------------------------ placement
 const ids = () => S.fleet;
-const cellsOf = (id, d) => Fleet.place(id, d.rot, d.r, d.c);
+let pickSel = null, lastPick = null;   // armada perso : types choisis
+const cellsOf = (id, d) => Fleet.place(id, d.rot, d.r, d.c, N);
 const othersCells = except => Object.keys(draft).filter(id => id !== except).map(id => cellsOf(id, draft[id]));
 const nextUnplaced = () => ids().find(id => !draft[id]) || null;
 function resetDraft() { draft = {}; curRot = 0; sel = ids()[0] || null; }
@@ -119,8 +123,8 @@ function rotatePlaced(id) {
   for (let dr = -3; dr <= 3; dr++) for (let dc = -3; dc <= 3; dc++) tries.push([dr, dc]);
   tries.sort((x, y) => Math.abs(x[0]) + Math.abs(x[1]) - Math.abs(y[0]) - Math.abs(y[1]));
   for (const [dr, dc] of tries) {
-    const cells = Fleet.place(id, rot, r0 + dr, c0 + dc);
-    if (cells && Fleet.free(cells, others)) { draft[id] = { rot, r: r0 + dr, c: c0 + dc }; return render(S); }
+    const cells = Fleet.place(id, rot, r0 + dr, c0 + dc, N);
+    if (cells && Fleet.free(cells, others, N)) { draft[id] = { rot, r: r0 + dr, c: c0 + dc }; return render(S); }
   }
   SB.toast('Rotation impossible ici : pas assez de place (1 case libre autour de chaque vaisseau)', 'bad');
 }
@@ -128,8 +132,8 @@ function placeAt(i) {
   const owner = ownerAt(i);
   if (owner) return rotatePlaced(owner);
   if (!sel) return SB.toast('Tous les vaisseaux sont posés : valide ta flotte, ou touche un vaisseau pour le pivoter', 'bad');
-  const p = anchorFor(sel, curRot, i), cells = Fleet.place(sel, p.rot, p.r, p.c);
-  if (!Fleet.free(cells, othersCells(sel))) return SB.toast('Emplacement impossible : les vaisseaux ne doivent pas se toucher (1 case d\'écart)', 'bad');
+  const p = anchorFor(sel, curRot, i), cells = Fleet.place(sel, p.rot, p.r, p.c, N);
+  if (!Fleet.free(cells, othersCells(sel), N)) return SB.toast('Emplacement impossible : les vaisseaux ne doivent pas se toucher (1 case d\'écart)', 'bad');
   draft[sel] = p;
   sel = nextUnplaced();
   render(S);
@@ -138,7 +142,7 @@ let pvEls = [];
 function preview(i) {
   pvEls.forEach(e => e.classList.remove('pv-ok', 'pv-bad')); pvEls = [];
   if (i == null || !sel || ownerAt(i)) return;
-  const p = anchorFor(sel, curRot, i), cells = Fleet.place(sel, p.rot, p.r, p.c), ok = Fleet.free(cells, othersCells(sel));
+  const p = anchorFor(sel, curRot, i), cells = Fleet.place(sel, p.rot, p.r, p.c, N), ok = Fleet.free(cells, othersCells(sel), N);
   cells.forEach(x => { const e = app.querySelector(`.board .cell[data-i="${x}"]`); if (e) { e.classList.add(ok ? 'pv-ok' : 'pv-bad'); pvEls.push(e); } });
 }
 function rotateSelected() {
@@ -150,7 +154,7 @@ function rotateSelected() {
 function renderPlacement(s) {
   const me = s.names[seat], list = ids(), placed = list.filter(id => draft[id]).length, all = placed === list.length;
   const used = new Set(); Object.keys(draft).forEach(id => cellsOf(id, draft[id]).forEach(i => used.add(i)));
-  const halo = new Set(); Fleet.halo([...used]).forEach(i => { if (!used.has(i)) halo.add(i); });
+  const halo = new Set(); Fleet.halo([...used], N).forEach(i => { if (!used.has(i)) halo.add(i); });
   app.innerHTML = `
   <div class="place-wrap">
     <section class="panel">
@@ -163,11 +167,13 @@ function renderPlacement(s) {
         <button class="btn" id="rot"${sel ? '' : ' disabled'}>↻ Pivoter</button>
         <button class="btn" id="rnd">🎲 Aléatoire</button>
         <button class="btn" id="clr"${placed ? '' : ' disabled'}>Effacer</button>
+        ${s.armada ? '<button class="btn" id="unfleet">↩ Changer mes types</button>' : ''}
       </div>
       <div class="btns"><button class="btn go big" id="ok"${all ? '' : ' disabled'}>Valider ma flotte ✓</button></div>
-      <p class="muted small" style="margin-bottom:0">Adversaire : ${SB.esc(s.names[1 - seat])} — ${s.ready[1 - seat] ? '✅ prêt' : '⏳ place sa flotte'}</p>
+      ${s.game === 'royale' ? `<p class="hint" style="margin-top:.8rem">👑 <b>Battle Royale</b> : la carte fait ${N}×${N}. Tu peux poser tes vaisseaux <b>sur ceux des autres</b> (tu ne verras jamais où ils sont) ; tes propres vaisseaux, eux, ne doivent pas se toucher.</p>` : ''}
+      <div class="roster" style="margin-bottom:0">${rosterReady(s)}</div>
     </section>
-    <div class="place-board">${SB.board({ cls: 'place', place: true, ships: draftShips(), halo })}</div>
+    <div class="place-board">${SB.board({ n: N, cls: 'place', place: true, ships: draftShips(), halo })}</div>
   </div>`;
   app.querySelectorAll('[data-ship]').forEach(b => b.onclick = () => {
     const id = b.dataset.ship;
@@ -176,10 +182,11 @@ function renderPlacement(s) {
   });
   document.getElementById('rot').onclick = rotateSelected;
   document.getElementById('rnd').onclick = () => {
-    const r = Fleet.randomPlacement(list, 400);
+    const r = Fleet.randomPlacement(list, 400, N);
     if (!r) return SB.toast('Placement aléatoire impossible, réessaie', 'bad');
     draft = {}; r.forEach(x => { draft[x.id] = { rot: x.rot, r: x.r, c: x.c }; }); sel = null; render(s);
   };
+  const uf = document.getElementById('unfleet'); if (uf) uf.onclick = () => { lastPick = [...list]; pickSel = null; SB.api(WHO, 'unfleet', {}); };
   document.getElementById('clr').onclick = () => { resetDraft(); render(s); };
   document.getElementById('ok').onclick = async () => {
     const ships = list.map(id => ({ id, ...draft[id] }));
@@ -194,64 +201,154 @@ function renderPlacement(s) {
 function renderWaitingFleet(s) {
   app.innerHTML = `<div class="center">
     <h1>Flotte en position ✅</h1>
-    <p class="muted">En attente de <strong>${SB.esc(s.names[1 - seat])}</strong>… ${s.online[1 - seat] ? '' : '(pas encore connecté)'}</p>
-    <div style="display:flex;justify-content:center;margin:1rem 0">${SB.board({ cls: 'place', ships: s.mine.ships, shots: s.mine.shots })}</div>
+    <p class="muted">En attente des autres joueurs…</p>
+    <div class="roster">${rosterReady(s)}</div>
+    <div style="display:flex;justify-content:center;margin:1rem 0">${SB.board({ n: N, cls: 'place', ships: s.mine.ships, shots: s.mine.shots })}</div>
     <button class="btn" id="undo">Modifier ma flotte</button></div>`;
   document.getElementById('undo').onclick = () => {
-    draft = {}; s.mine.ships.forEach(sh => { const rc = Fleet.recover(sh.id, sh.cells); if (rc) draft[sh.id] = rc; });
+    draft = {}; s.mine.ships.forEach(sh => { const rc = Fleet.recover(sh.id, sh.cells, N); if (rc) draft[sh.id] = rc; });
     sel = null; curRot = 0; SB.api(WHO, 'unready', {});
   };
 }
 
+function renderFleetPick(s) {
+  if (!pickSel) pickSel = new Set((lastPick || []).filter(id => Fleet.byId(id)));
+  const sel = [...pickSel], cells = sel.reduce((n, id) => n + Fleet.byId(id).cells.length, 0), ok = sel.length === s.count && cells <= Fleet.MAX_CELLS;
+  app.innerHTML = `<div class="center panel" style="max-width:46rem"><h1>Armada perso</h1>
+    <p class="muted">Choisis les <b>${s.count}</b> types de vaisseaux de ta flotte, ${SB.esc(s.names[seat])}. Les autres joueurs peuvent choisir des types différents.</p>
+    <div class="fleetgrid" style="text-align:left">${Fleet.CATALOG.map(t => `<button class="ship-card" data-pick="${t.id}" style="--c:${t.color}" aria-pressed="${pickSel.has(t.id)}">
+      ${SB.mini(t.cells, t.color, 11)}<span><strong>${t.name}</strong><small>${t.cells.length} cases</small></span></button>`).join('')}</div>
+    <p class="${ok ? '' : 'muted'}" style="margin:.8rem 0"><b>${sel.length} / ${s.count}</b> vaisseaux · ${cells} cases (maximum ${Fleet.MAX_CELLS})${cells > Fleet.MAX_CELLS ? ' <span class="err">trop grand</span>' : ''}</p>
+    <button class="btn go big" id="pickok"${ok ? '' : ' disabled'}>Valider mes types →</button>
+    <div class="roster">${rosterReady(s)}</div></div>`;
+  app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => {
+    const id = b.dataset.pick;
+    if (pickSel.has(id)) pickSel.delete(id);
+    else if (pickSel.size >= s.count) return SB.toast(`${s.count} vaisseaux maximum : retire-en un d'abord`, 'bad');
+    else pickSel.add(id);
+    renderFleetPick(s);
+  });
+  document.getElementById('pickok').onclick = async () => { lastPick = [...pickSel]; const r = await SB.api(WHO, 'fleet', { ids: lastPick }); if (r.ok) pickSel = null; };
+}
+function rosterReady(s) {
+  return Array.from({ length: s.n }, (_, i) => i).filter(i => i !== seat).map(i =>
+    `<div>${s.ready[i] ? '✅' : '⏳'} ${SB.who(s.names, i, s.ai)}${s.game === 'team' ? ` <span class="teamtag" style="color:${SB.TEAMS[s.team[i]].color}">${SB.TEAMS[s.team[i]].name}</span>` : ''}
+      <span class="muted small" style="margin-left:auto">${s.ready[i] ? 'prêt' : s.online[i] ? (s.armada && !s.fleetReady[i] ? 'choisit ses vaisseaux' : 'place sa flotte') : 'pas encore connecté'}</span></div>`).join('');
+}
+
 // ------------------------------------------------------------ bataille
-function need(s) { const free = s.foe.shots.filter(v => v === 0).length; return s.mode === 'salvo' ? Math.min(s.salvo, free) : 1; }
+const royale = s => s.game === 'royale';
+const isAlly = (s, i) => s.game === 'team' && i !== seat && s.team[i] === s.team[seat];
+const myAlive = s => !s.stats.length || s.stats[seat].alive;
+// adversaires que je peux viser
+function enemies(s) { return Array.from({ length: s.n }, (_, i) => i).filter(i => i !== seat && !isAlly(s, i)); }
+function ringTarget(s) { for (let k = 1; k <= s.n; k++) { const i = (seat + k) % s.n; if (s.stats[i].alive) return i; } return seat; }
+function curTarget(s) {
+  if (royale(s)) return null;
+  if (s.game === 'classic') return 1 - seat;
+  if (s.game === 'ffa' && s.ring) return ringTarget(s);
+  const ok = enemies(s).filter(i => s.stats[i].alive);
+  if (tgt == null || !ok.includes(tgt)) {
+    // par défaut : celui qui vient de me tirer dessus s'il est encore là, sinon le premier vivant
+    const L = s.last; tgt = L && L.target === seat && ok.includes(L.by) ? L.by : (ok[0] ?? enemies(s)[0]);
+  }
+  return tgt;
+}
+const shotsOnBoard = (s, t) => royale(s) ? s.map.shots : s.foes[t].shots;
+const blockedSet = s => royale(s) && !s.fallback ? new Set(s.mine.ships.flatMap(x => x.cells)) : null;   // dernier recours : plus aucune autre case, on peut viser les siennes (tir fratricide)
+function need(s) {
+  const sh = shotsOnBoard(s, curTarget(s)), bl = blockedSet(s);
+  const free = sh.filter((v, i) => v === 0 && !(bl && bl.has(i))).length;
+  return s.mode === 'salvo' ? Math.min(s.salvo, free) : 1;
+}
+function winnerText(s) {
+  if (s.game === 'team') { const t = SB.TEAMS[s.team[s.winners[0]]]; return `<span style="color:${t.color}">${t.name}</span> (${s.winners.map(i => SB.esc(s.names[i])).join(', ')})`; }
+  return s.winners.map(i => SB.who(s.names, i, s.ai)).join(' et ');
+}
 function turnBox(s) {
-  const foe = SB.esc(s.names[1 - seat]);
   if (s.phase === 'over') {
-    const won = s.winner === seat, wait = s.rematch[seat];
+    const won = s.winners.includes(seat), wait = s.rematch[seat];
+    const others = Array.from({ length: s.n }, (_, i) => i).filter(i => i !== seat && !s.ai[i]);
+    const waiting = others.filter(i => !s.rematch[i]);
     return `<section class="panel turnbox ${won ? 'win' : 'lose'}">
       <div class="big">${won ? '🏆 Victoire !' : '💥 Défaite…'}</div>
-      <p>${won ? `Toute la flotte de ${foe} est détruite.` : `Ta flotte a été anéantie par ${foe}.`} · Score ${s.score[seat]} — ${s.score[1 - seat]}</p>
-      <div class="act"><button class="btn go big" id="rematch"${wait ? ' disabled' : ''}>${wait ? `En attente de ${foe}…` : '⚔ Revanche'}</button>
-        ${s.rematch[1 - seat] && !wait ? `<span class="muted small">${foe} veut sa revanche !</span>` : ''}</div></section>`;
+      <p>${s.game === 'classic' ? '' : `${winnerText(s)} remporte la bataille. `}Score : ${Array.from({ length: s.n }, (_, i) => `${SB.esc(s.names[i])} ${s.score[i]}`).join(' · ')}</p>
+      <div class="act"><button class="btn go big" id="rematch"${wait ? ' disabled' : ''}>${wait ? 'En attente des autres…' : '⚔ Revanche'}</button>
+        ${wait && waiting.length ? `<span class="muted small">Il manque : ${waiting.map(i => SB.esc(s.names[i])).join(', ')}</span>` : ''}
+        ${!wait && others.some(i => s.rematch[i]) ? `<span class="muted small">${others.filter(i => s.rematch[i]).map(i => SB.esc(s.names[i])).join(', ')} veu${others.filter(i => s.rematch[i]).length > 1 ? 'lent' : 't'} sa revanche !</span>` : ''}</div></section>`;
   }
-  if (s.turn === seat) {
-    const n = need(s), hint = s.mode === 'salvo' ? `Choisis ${n} cible${n > 1 ? 's' : ''} sur la zone ennemie, puis lance la salve. Les résultats tombent d'un coup.`
-      : s.mode === 'chain' ? 'Touche une case ennemie. Si tu touches, tu rejoues !' : 'Touche une case de la zone ennemie, puis tire.';
+  const dead = !myAlive(s);
+  if (s.turn === seat && !dead) {
+    const n = need(s), t = curTarget(s), onWho = s.game === 'classic' || royale(s) ? 'la zone ennemie' : `<b style="color:${SB.PCOL[t]}">${SB.esc(s.names[t])}</b>`;
+    const hint = s.mode === 'salvo' ? `Choisis ${n} cible${n > 1 ? 's' : ''} sur ${onWho}, puis lance la salve. Les résultats tombent d'un coup.`
+      : s.mode === 'chain' ? `Touche une case de ${onWho}. Si tu touches, tu rejoues !` : `Touche une case de ${onWho}, puis tire.`;
     const again = s.last && s.last.by === seat && s.last.again;
+    const choose = s.game === 'ffa' && s.ring ? '<br>Tu tires sur le joueur suivant.' : (s.game === 'ffa' || s.game === 'team') && enemies(s).length > 1 ? '<br>Change d\'adversaire avec les onglets.' : '';
     return `<section class="panel turnbox mine">
       <div class="big">${again ? '🔥 Touché ! Rejoue' : '🎯 À toi de tirer'}</div>
-      <p>${hint}</p>
+      <p>${hint}${choose}</p>
       <div class="act"><span class="chip">${targets.length} / ${n} cible${n > 1 ? 's' : ''}</span>
         <button class="btn fire" id="fire"${targets.length === n ? '' : ' disabled'}>${s.mode === 'salvo' ? 'LANCER LA SALVE' : 'FEU !'}</button></div></section>`;
   }
-  return `<section class="panel turnbox"><div class="big">⏳ ${SB.esc(s.names[1 - seat])} vise…</div>
-    <p>${s.mode === 'salvo' ? `Il prépare une salve de ${s.salvo} tirs.` : 'Patiente, ton tour arrive.'}</p></section>`;
+  const who = SB.who(s.names, s.turn, s.ai), tm = s.game === 'team' ? ` <span class="teamtag" style="color:${SB.TEAMS[s.team[s.turn]].color}">${SB.TEAMS[s.team[s.turn]].name}</span>` : '';
+  return `<section class="panel turnbox${dead ? ' lose' : ''}"><div class="big">${dead ? '☠️ Éliminé' : '⏳'} ${dead ? '' : who + tm + ' vise…'}</div>
+    <p>${dead ? `Ta flotte est détruite. Tu suis la bataille : ${who}${tm} tire.` : s.mode === 'salvo' ? `Salve de ${s.salvo} tirs en préparation.` : 'Patiente, ton tour arrive.'}</p></section>`;
+}
+function playersPanel(s) {
+  return `<section class="panel"><h2>Joueurs</h2><ul class="plist">${Array.from({ length: s.n }, (_, i) => {
+    const st = s.stats[i], tm = s.game === 'team' ? `<span class="teamtag" style="color:${SB.TEAMS[s.team[i]].color}">${SB.TEAMS[s.team[i]].name.replace('Équipe ', '')}</span>` : '';
+    return `<li class="${s.phase === 'battle' && s.turn === i ? 'turn' : ''}${st && !st.alive ? ' dead' : ''}" style="border-left-color:${s.phase === 'battle' && s.turn === i ? 'var(--amber)' : SB.PCOL[i]}">
+      <span class="dot${s.online[i] ? ' on' : ''}"></span>${SB.who(s.names, i, s.ai)}${i === seat ? ' <span class="muted small">(toi)</span>' : ''} ${tm}
+      <span class="meta">${st && !st.alive ? '☠️ éliminé' : st ? `${st.left}/${st.total} vaisseaux` : ''}${s.phase === 'battle' && s.turn === i ? ' · 🎯' : ''}</span></li>`; }).join('')}</ul></section>`;
 }
 function renderBattle(s) {
-  const over = s.phase === 'over', myTurn = s.phase === 'battle' && s.turn === seat;
-  const free = new Set(); s.foe.shots.forEach((v, i) => { if (v === 0) free.add(i); });
+  N = s.size;
+  const over = s.phase === 'over', dead = !myAlive(s), myTurn = s.phase === 'battle' && s.turn === seat && !dead;
+  const t = curTarget(s), sh = shotsOnBoard(s, t), bl = blockedSet(s);
+  const free = new Set(); sh.forEach((v, i) => { if (v === 0 && !(bl && bl.has(i))) free.add(i); });
   targets = myTurn ? targets.filter(i => free.has(i)) : [];
   const tm = new Map(targets.map((i, k) => [i, k + 1]));
-  const L = s.last, fresh = L ? new Set(L.shots.map(v => v.i)) : new Set(), order = L ? new Map(L.shots.map((v, k) => [v.i, k])) : null;
+  const L = s.last && { ...s.last, n: N }, fresh = L ? new Set(L.shots.map(v => v.i)) : new Set(), order = L ? new Map(L.shots.map((v, k) => [v.i, k])) : null;
   const pop = L && L.seq !== animSeq;
-  const mineFresh = L && L.by !== seat, foeFresh = L && L.by === seat;
-  const foeShips = over ? s.foe.ships : s.foe.sunk;
+  const multi = s.game !== 'classic';
+  const lastBox = L ? `<section class="panel"><h2>Dernier tir</h2><strong>${SB.who(s.names, L.by, s.ai)}</strong>${L.target != null && L.target >= 0 && multi && !royale(s) ? ` → ${SB.who(s.names, L.target, s.ai)}` : ''}${SB.volleyChips(L, s.names, multi)}</section>` : '';
+  let zones;
+  if (royale(s)) {
+    const mineShips = s.mine.ships.map(x => ({ ...x, sunk: false }));
+    const known = over ? s.map.ships : s.map.sunk;
+    zones = `<div class="zone foe">
+      <div class="head"><h3>👑 Carte commune ${N}×${N}</h3>${SB.pips(s.mine.ships.map(x => ({ ...x, sunk: s.map.sunk.some(y => y.owner === seat && y.id === x.id) })))}</div>
+      <div class="muted small">Tes vaisseaux sont colorés (zone hachurée = non visable tant qu'il reste d'autres cases).${s.fallback ? ' <b style="color:var(--amber)">Plus aucune autre case : tu peux viser les tiennes, mais tu touches alors ton propre vaisseau !</b>' : ''} Les pastilles sous un touché indiquent les joueurs touchés.</div>
+      ${SB.board({ n: N, cls: 'map', id: 'foe', live: myTurn, blocked: bl, ships: [...known.filter(x => !(x.owner === seat)), ...mineShips], shots: s.map.shots, owners: s.map.owners, targets: tm, fresh: fresh, order, pop, revealFoe: over })}
+      <div class="chips">${Array.from({ length: s.n }, (_, i) => `<span class="chip"><span class="sw" style="background:${SB.PCOL[i]}"></span> ${SB.esc(s.names[i])}</span>`).join('')}</div>
+    </div>`;
+  } else {
+    const fo = s.foes[t], allies = Array.from({ length: s.n }, (_, i) => i).filter(i => isAlly(s, i));
+    const mineFresh = L && L.target === seat, foeFresh = L && L.by === seat && L.target === t;
+    const showTabs = s.game !== 'classic';
+    const foeShips = over || isAlly(s, t) ? fo.ships : fo.sunk;
+    const tabs = showTabs ? `<div class="tabs" role="group" aria-label="Adversaire visé">${enemies(s).map(i => {
+      const st = s.stats[i], ally = isAlly(s, i), locked = (s.game === 'ffa' && s.ring) || ally;
+      return `<button class="tab${st && !st.alive ? ' dead' : ''}" data-tab="${i}" aria-pressed="${i === t}"${locked && i !== t ? ' disabled' : ''}${st && !st.alive && !over ? ' disabled' : ''}>
+        <span class="sw" style="background:${SB.PCOL[i]}"></span>${s.ai[i] ? '🤖 ' : ''}${SB.esc(s.names[i])}${ally ? ' 🤝' : ''}<small>${st.alive ? st.left + '/' + st.total : '☠'}</small></button>`; }).join('')}</div>` : '';
+    const allyView = isAlly(s, t);
+    zones = `<div class="zone me">
+        <div class="head"><h3>Ma flotte — ${SB.esc(s.names[seat])}</h3>${SB.pips(s.mine.ships)}</div>
+        ${SB.board({ n: N, cls: 'small', id: 'mine', ships: s.mine.ships, shots: s.mine.shots, fresh: mineFresh ? fresh : null, order, pop })}
+      </div>
+      <div class="zone foe">
+        ${tabs}
+        <div class="head"><h3>${allyView ? 'Flotte de ton équipier' : 'Zone ennemie'} — ${SB.esc(s.names[t])}</h3>${SB.pips(foeFleetPips(s, t))}</div>
+        ${SB.board({ n: N, cls: 'big', id: 'foe', live: myTurn && !allyView, ships: foeShips, shots: fo.shots, targets: tm, fresh: foeFresh ? fresh : null, order, pop, revealFoe: over || allyView })}
+      </div>`;
+  }
   app.innerHTML = `
   <div class="battle">
     ${turnBox(s)}
-    <div class="main">
-      <div class="zone me">
-        <div class="head"><h3>Ma flotte — ${SB.esc(s.names[seat])}</h3>${SB.pips(s.mine.ships)}</div>
-        ${SB.board({ cls: 'small', id: 'mine', ships: s.mine.ships, shots: s.mine.shots, fresh: mineFresh ? fresh : null, order, pop })}
-      </div>
-      <div class="zone foe">
-        <div class="head"><h3>Zone ennemie — ${SB.esc(s.names[1 - seat])}</h3>${SB.pips(foeFleetPips(s))}</div>
-        ${SB.board({ cls: 'big', id: 'foe', live: myTurn, ships: foeShips, shots: s.foe.shots, targets: tm, fresh: foeFresh ? fresh : null, order, pop, revealFoe: over })}
-      </div>
-    </div>
+    <div class="main">${zones}</div>
     <aside>
-      ${L ? `<section class="panel"><h2>Dernier tir</h2><strong>${SB.esc(s.names[L.by])}</strong>${SB.volleyChips(L)}</section>` : ''}
+      ${playersPanel(s)}
+      ${lastBox}
       <section class="panel"><h2>Journal</h2><ul class="log" id="log">${s.log.map(l => `<li>${SB.esc(l)}</li>`).join('')}</ul></section>
     </aside>
   </div>`;
@@ -261,20 +358,21 @@ function renderBattle(s) {
   if (fire) fire.onclick = doFire;
   const rm = document.getElementById('rematch');
   if (rm) rm.onclick = () => SB.api(WHO, 'rematch', {});
+  app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tgt = +b.dataset.tab; targets = []; render(s); });
   const fb = document.getElementById('foe');
   if (fb && myTurn) fb.addEventListener('click', e => {
-    const c = e.target.closest('.cell'); if (!c) return;
+    const c = e.target.closest('.cell'); if (!c || c.classList.contains('blocked')) return;
     pick(+c.dataset.i);
   });
 }
-// pastilles de l'adversaire : vaisseaux coulés connus, les autres comme vivants
-function foeFleetPips(s) {
-  const sunk = new Set(s.foe.sunk.map(x => x.id));
-  return s.fleet.map(id => { const t = Fleet.byId(id); return { name: t.name, color: t.color, size: t.cells.length, sunk: sunk.has(id) }; });
+// pastilles d'un adversaire : vaisseaux coulés connus, les autres comme vivants
+function foeFleetPips(s, t) {
+  const known = s.foes[t].sunk.map(x => x.id);
+  return (s.armada && s.fleets ? s.fleets[t] : s.fleet).map(id => { const x = Fleet.byId(id); return { name: x.name, color: x.color, size: x.cells.length, sunk: known.includes(id) }; });
 }
 function pick(i) {
   const n = need(S);
-  if (S.foe.shots[i] !== 0) return;
+  if (shotsOnBoard(S, curTarget(S))[i] !== 0) return;
   const at = targets.indexOf(i);
   if (at >= 0) targets.splice(at, 1);
   else if (n === 1) targets = [i];
@@ -286,7 +384,7 @@ async function doFire() {
   const n = need(S);
   if (targets.length !== n) return;
   const cells = targets.map(i => [Math.floor(i / N), i % N]);
-  const r = await SB.api(WHO, 'fire', { cells });
+  const r = await SB.api(WHO, 'fire', { cells, target: curTarget(S) ?? undefined });
   if (r.ok) targets = [];
 }
 document.addEventListener('keydown', e => {
@@ -297,29 +395,42 @@ document.addEventListener('keydown', e => {
 
 // ------------------------------------------------------------ routage
 function render(s) {
-  S = s;
+  S = s; N = s.size;
   const me = document.getElementById('me');
-  me.className = `spacer me p${seat + 1}`;
-  me.innerHTML = `<span class="dot${s.online[1 - seat] ? ' on' : ''}" title="${SB.esc(s.names[1 - seat])} ${s.online[1 - seat] ? 'connecté' : 'absent'}"></span>
-    <span class="muted small">${s.ai[1 - seat] ? '🤖 ' : ''}${SB.esc(s.names[1 - seat])}</span> <span class="nm">${SB.esc(s.names[seat])}</span> <span class="muted small">${s.score[seat]}–${s.score[1 - seat]}</span>`;
+  if (s.you < 0) {
+    me.innerHTML = '';
+    app.innerHTML = `<div class="center panel"><h1>Siège ${seat + 1} non utilisé</h1>
+      <p class="muted">Cette partie compte ${s.n} joueur${s.n > 1 ? 's' : ''}. Demande au maître le bon lien, ou rejoins une autre place.</p>
+      <p><a class="btn" href="/${SB.esc(SB.room)}" style="text-decoration:none;color:inherit">Page du salon</a></p></div>`;
+    return;
+  }
+  const tm = s.game === 'team' ? `<span class="teamtag" style="color:${SB.TEAMS[s.team[seat]].color}">${SB.TEAMS[s.team[seat]].name}</span>` : '';
+  me.innerHTML = `<span class="small muted gl">${SB.games[s.game].icon} ${SB.games[s.game].name} · ${s.n} joueurs</span> ${tm} <span class="nm" style="color:${SB.PCOL[seat]}">${SB.esc(s.names[seat])}</span> <span class="muted small">${s.score[seat]} victoire${s.score[seat] > 1 ? 's' : ''}</span>`;
   document.title = `Space-Battle-SLG — ${s.names[seat]} (${SB.room})`;
   if (s.ai[seat]) {
     app.innerHTML = `<div class="center panel"><div class="bot" style="font-size:3rem">🤖</div><h1>Ce siège est joué par l'IA</h1>
-      <p class="muted">Niveau ${SB.esc(SB.levels[s.ai[seat]])}. Suis la partie depuis la page du maître, ou utilise l'autre siège.</p>
-      <p><a class="btn" href="/${SB.esc(SB.room)}" style="text-decoration:none;color:inherit">Page du maître</a></p></div>`;
+      <p class="muted">Niveau ${SB.esc(SB.levels[s.ai[seat]])}. Suis la partie depuis la page du maître, ou utilise un autre siège.</p>
+      <p><a class="btn" href="/${SB.esc(SB.room)}" style="text-decoration:none;color:inherit">Page du salon</a></p></div>`;
     return;
   }
   if (s.phase === 'setup') {
     draft = {};
+    const mates = s.game === 'team' ? SB.TEAMS.map((t, k) => ({ ...t, k, who: Array.from({ length: s.n }, (_, i) => i).filter(i => s.team[i] === k) })) : null;
     app.innerHTML = `<div class="center panel"><h1>Bienvenue, ${SB.esc(s.names[seat])} !</h1>
       <p class="muted">Le maître du jeu règle la partie…</p>
-      <p><span class="chip">${SB.esc(SB.modeLabel(s.mode, s.salvo))}</span></p>
-      <p class="muted small">${SB.esc(SB.modes[s.mode].desc)}</p></div>`;
+      <p><span class="chip">${SB.games[s.game].icon} ${SB.games[s.game].name}</span> <span class="chip">${SB.esc(SB.modeLabel(s.mode, s.salvo))}</span>${s.game === 'ffa' && s.ring ? ' <span class="chip">Joueur suivant</span>' : ''}${s.armada ? ' <span class="chip">Armada perso</span>' : ''} <span class="chip">${s.count} vaisseaux</span>${s.game === 'royale' ? ` <span class="chip">Carte ${s.size}×${s.size}</span>` : ''}</p>
+      <p class="muted small">${SB.esc(SB.games[s.game].desc)}<br>${SB.esc(SB.modes[s.mode].desc)}</p>
+      ${mates ? `<h2 style="margin-top:1rem">Choisis ton équipe</h2>
+        <div class="teampick">${mates.map(t => `<button data-team="${t.k}" aria-pressed="${s.team[seat] === t.k}" style="${s.team[seat] === t.k ? '' : `border-color:${t.color}`}">${t.name}${t.who.length ? ` (${t.who.length})` : ''}</button>`).join('')}</div>
+        <div class="roster">${mates.filter(t => t.who.length).map(t => `<div><span class="teamtag" style="color:${t.color}">${t.name}</span> ${t.who.map(i => SB.esc(s.names[i])).join(', ')}${t.who.length === 1 ? ' <span class="muted small">— seul : tire après chaque tir adverse</span>' : ''}</div>`).join('')}</div>` : ''}
+      <div class="roster">${Array.from({ length: s.n }, (_, i) => `<div><span class="dot${s.online[i] ? ' on' : ''}"></span>${SB.who(s.names, i, s.ai)}${i === seat ? ' <span class="muted small">(toi)</span>' : ''}</div>`).join('')}</div></div>`;
+    app.querySelectorAll('[data-team]').forEach(b => b.onclick = () => SB.api(WHO, 'team', { team: +b.dataset.team }));
     return;
   }
   if (s.phase === 'placement') {
-    const key = 'p' + s.round;
-    if (lastKey !== key) { lastKey = key; resetDraft(); targets = []; }
+    const key = 'p' + s.round + ':' + s.fleet.join();
+    if (lastKey !== key) { lastKey = key; resetDraft(); targets = []; tgt = null; }
+    if (s.armada && !s.fleet.length) return renderFleetPick(s);
     return s.ready[seat] ? renderWaitingFleet(s) : renderPlacement(s);
   }
   renderBattle(s);
