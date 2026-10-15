@@ -23,7 +23,7 @@
       .container {
         display: flex;
         justify-content: center;
-        gap: 160px;
+        gap: 40px; /* ~10mm à l'échelle d'écran standard (96dpi) */
         margin-top: 150px;
         align-items: flex-start;
       }
@@ -82,13 +82,24 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 550px;
-        height: 550px;
+        /* Remplit automatiquement tout l'espace disponible entre les
+           deux minuteurs (flex-grow), jusqu'à 900px sur très grand
+           écran - bien plus large qu'avant, sans jamais déborder de
+           l'écran puisque la taille s'ajuste à l'espace réellement
+           restant. La hauteur, elle, reste plafonnée séparément : une
+           image haute et étroite (une fusée, par exemple) ne prend
+           donc plus toute la hauteur disponible - object-fit:contain
+           (ci-dessous) la réduit proprement pour tenir dans ce cadre,
+           dans les deux dimensions. */
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 900px;
+        height: min(450px, 55vh);
         overflow: hidden;
       }
       .random-image img {
-        width: 550px;
-        height: 550px;
+        width: 100%;
+        height: 100%;
         object-fit: contain;
         display: none;
         border: 0px solid black;
@@ -377,9 +388,9 @@
   <body> <a id="arbitreButton" href="arbitre.html">📋
       Mode Arbitre</a>
     <div class="connection-status" id="connectionStatus">🔴 Connexion...</div>
-    <h1 style="text-align: center; height: 79px; margin-top: -10px;"> <span style="font-family: Elephant; font-size: 68px; color: #0F665F;">
+    <h1 style="text-align: center; min-height: 79px; margin-top: -10px;"> <span style="font-family: Elephant; font-size: clamp(28px, 5vw, 68px); color: #0F665F;">
         <u>Thématique tirée</u> </span> </h1>
-    <p id="themeDescription" style="text-align: center; margin-top: -15px; margin-bottom: 10px; font-family: Elephant, sans-serif; font-size: 50px; color: #464EE3; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); min-height: 24px; font-style: italic;"></p>    <div class="container">
+    <p id="themeDescription" style="text-align: center; margin-top: -15px; margin-bottom: 10px; font-family: Elephant, sans-serif; font-size: clamp(22px, 3.6vw, 50px); color: #464EE3; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); min-height: 24px; font-style: italic;"></p>    <div class="container">
       <div class="player" id="playerAssaillant">
         <div class="label assaillant">
           <h1><span style="font-family: Berlin Sans FB;">Assaillant</span></h1>
@@ -407,6 +418,17 @@
     <div id="compteARebours"></div>
     <div id="vainqueur"></div>
     <a id="retourPlateauBtn" href="Plateau.html?resume=1">🎲 Retour au plateau</a>
+    <script>
+      // Ajoute la classe en cours au lien "Retour au plateau" (posé ici en
+      // HTML classique, avant le <script type="module"> ci-dessous, pour
+      // que le lien soit correct même si le module met du temps à charger).
+      (function() {
+        const c = new URLSearchParams(window.location.search).get('classe');
+        if (c) {
+          document.getElementById('retourPlateauBtn').href = 'Plateau.html?resume=1&classe=' + encodeURIComponent(c);
+        }
+      })();
+    </script>
     <div id="pauseOverlay"><span>⏸ EN PAUSE</span></div>
     <div id="audioUnlockOverlay">
       <button id="audioUnlockBtn">🔊 Cliquer pour activer le son</button>
@@ -415,6 +437,12 @@
     <audio id="bipSound" preload="auto"> <source src="bip.mp3" type="audio/mpeg">
     </audio>
     <script type="module">
+      // Classe en cours (ex: "3B"), transmise depuis Plateau.html puis
+      // theme.html via ?classe=. Reprise ici pour que les liens de retour
+      // (vers le plateau ou vers le thème) gardent la bonne classe.
+      const classeActuelleJoueur = new URLSearchParams(window.location.search).get('classe') || '';
+      const classeQueryJoueur = classeActuelleJoueur ? `&classe=${encodeURIComponent(classeActuelleJoueur)}` : '';
+
       class TimerApp {
         // === LOGIQUE UNIVERSELLE POUR LES THEMES ===
 
@@ -839,7 +867,29 @@
             gameStarted: false,
             lastCountdownValue: null
           };
-          
+
+          // ------------------------------------------------------------
+          // Fenêtre de stabilisation au chargement de la page : pendant
+          // les STARTUP_GRACE_MS premières millisecondes après le
+          // chargement, toute donnée reçue du serveur (y compris une
+          // action/countdown/reset laissé par la manche précédente,
+          // jamais nettoyé côté serveur) est uniquement mémorisée comme
+          // "déjà connue", jamais rejouée. Nécessaire car la toute
+          // première donnée reçue peut être un instantané LOCAL partiel
+          // (écriture optimiste de l'annonce du thème, avant même que
+          // l'état réel complet du serveur n'arrive) : un simple
+          // drapeau "premier instantané vu" se fait donc piéger par ce
+          // partiel et considère à tort l'état réel (arrivant juste
+          // après) comme nouveau. Ici, la référence est réactualisée en
+          // continu tant que la fenêtre n'est pas écoulée, ce qui
+          // neutralise cette course quelle que soit la séquence exacte
+          // des instantanés reçus. Accepté comme délai volontaire
+          // (voir demande utilisateur) : laisse aussi à l'arbitre le
+          // temps de voir le thème s'actualiser avant de pouvoir
+          // démarrer (bouton bloqué pendant ce temps côté Arbitre).
+          this._pageLoadTime = Date.now();
+          this.STARTUP_GRACE_MS = 2000;
+
           this.init();
         }
 
@@ -957,6 +1007,37 @@
 
             this.lastSyncTime = Date.now();
             this.updateConnectionStatus('connected');
+
+            // Tant que la fenêtre de stabilisation n'est pas écoulée
+            // (voir constructeur), on se contente de mémoriser l'état
+            // reçu comme référence - sans jamais le traiter comme un
+            // événement "nouveau" à rejouer. On continue de réactualiser
+            // cette référence à CHAQUE instantané reçu pendant la
+            // fenêtre (et pas une seule fois), pour neutraliser la
+            // course même si plusieurs instantanés partiels/complets se
+            // succèdent avant qu'elle ne soit écoulée.
+            const enStabilisation = (Date.now() - this._pageLoadTime) < this.STARTUP_GRACE_MS;
+            if (enStabilisation) {
+              if (gameData.action && gameData.action.timestamp) {
+                this.gameState.lastActionTimestamp = gameData.action.timestamp;
+              }
+              if (gameData.gameReset !== undefined) {
+                this.gameState.gameReset = gameData.gameReset;
+              }
+              this.gameState.isPaused = !!gameData.isPaused;
+              // On absorbe aussi un éventuel décompte déjà "actif" en
+              // mémoire (countdown.active=true périmé) pour ne pas
+              // déclencher la séquence de bips/démarrage ci-dessous.
+              if (gameData.countdown) {
+                this.gameState.lastCountdownValue = gameData.countdown.value;
+                this.gameState.bipSequencePlayed = !!gameData.countdown.active;
+              }
+              // Idem pour l'image/le son : on les considère déjà connus,
+              // pour ne pas déclencher un changement de média ici (le
+              // _hasConnectedOnce ci-dessous les efface de toute façon).
+              this.gameState.currentImage = gameData.currentImage;
+              this.gameState.mediaTimestamp = gameData.mediaTimestamp;
+            }
 
             // Handle countdown
             if (gameData.countdown && gameData.countdown.active) {
@@ -1339,7 +1420,7 @@
           }
 
           vainqueurDiv.innerHTML = `
-            <a href="theme.html" title="Retour au thème" style="text-decoration: none; color: inherit;">
+            <a href="theme.html${classeQueryJoueur ? '?' + classeQueryJoueur.slice(1) : ''}" title="Retour au thème" style="text-decoration: none; color: inherit;">
               <span id="vainqueurTexte">${message}</span>
             </a>
           `;

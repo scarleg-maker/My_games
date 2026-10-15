@@ -197,6 +197,7 @@
     }
 
     .plateau {
+      position: relative; /* repère des étiquettes de zone et des contours de halo (SVG) */
       display: grid;
       gap: 0;
       padding: 20px;
@@ -449,16 +450,32 @@
       border-color: #ffd700 !important;
     }
 
+    /* Roulette sur une zone de plusieurs cases : toute la zone s'illumine
+       d'un seul bloc doré (pas d'agrandissement case par case, qui ferait
+       se chevaucher les cases voisines). */
+    .case.case-fusionnee.highlight {
+      transform: none;
+      border-color: transparent !important;
+      box-shadow: inset 0 0 0 100px rgba(255, 215, 0, 0.6);
+    }
+
+    /* Pendant la roulette : pas de fondu, pour qu'une seule zone soit
+       illuminée à la fois (sinon la zone précédente s'éteint lentement et
+       plusieurs zones paraissent allumées en même temps). */
+    .plateau.roulette-active .case { transition: none !important; }
+
     /* Case finale sélectionnée : surbrillance blanche à 70% */
     /* Case finale sélectionnée : blanc lumineux + halo, visible sur tout fond */
     /* Case finale sélectionnée : halo blanc marqué, remplissage discret pour rester lisible */
     .selected-final {
       cursor: default;
-      border-color: #ffffff !important;
-      border-width: 4px !important;
       position: relative;
       z-index: 900;
-      box-shadow: 0 0 0 3px #ffffff, 0 0 0 6px rgba(0, 0, 0, 0.35), 0 0 26px 10px rgba(255, 255, 255, 0.95), 0 0 46px 18px rgba(255, 255, 255, 0.55);
+      /* Plus de cadre ni de halo propre à chaque case : le contour blanc
+         est tracé UNE fois autour de la zone entière (voir
+         mettreAJourZonesVisuelles). Il ne reste ici que le halo du texte
+         (utile pour une case isolée). */
+      text-shadow: 0 0 6px #ffffff, 0 0 12px #ffffff, 0 0 18px rgba(255, 255, 255, 0.9);
     }
 
     .selected-final::after {
@@ -476,26 +493,64 @@
 
     .case-cible {
       cursor: pointer;
-      border-color: #ff1fb0 !important;
-      border-width: 4px !important;
       position: relative;
       z-index: 950;
-      box-shadow: 0 0 0 3px #ff1fb0, 0 0 0 6px rgba(0, 0, 0, 0.35), 0 0 26px 10px rgba(255, 31, 176, 0.95), 0 0 46px 18px rgba(255, 31, 176, 0.55);
+      /* Zones attaquables : gris anthracite (#303030). L'assombrissement
+         est un voile #303030 à 65 % posé sous le texte (inset box-shadow) :
+         la case ne garde que 35 % de sa luminosité d'origine, mais le "Jx"
+         reste parfaitement lisible. Le contour anthracite est tracé UNE
+         fois autour de la zone entière (voir STYLE_CONTOUR_CIBLE). */
+      color: #ffe600 !important;
+      text-shadow: 0 0 3px #303030, 0 0 6px #303030, 0 0 10px #303030;
     }
 
-    .case-cible:hover {
-      box-shadow: 0 0 0 3px #ff1fb0, 0 0 0 6px rgba(0, 0, 0, 0.35), 0 0 32px 13px rgba(255, 31, 176, 1), 0 0 55px 22px rgba(255, 31, 176, 0.7);
+    .case.case-cible,
+    .case.case-cible:hover {
+      box-shadow: inset 0 0 0 100px rgba(48, 48, 48, 0.35);
     }
 
-    .case-cible:hover::after {
-      background: rgba(255, 31, 176, 0.55);
+    /* Survol : toute la zone s'éclaircit légèrement, ensemble */
+    .case.case-cible[data-zone-hover],
+    .case.case-cible[data-zone-hover]:hover {
+      box-shadow: inset 0 0 0 100px rgba(48, 48, 48, 0.4);
     }
 
-    .case-cible::after {
-      content: '';
+    /* ---- Zones fusionnées : un seul "Jx" centré par zone ---- */
+    /* Le texte propre à chaque case d'une zone de plusieurs cases est
+       masqué (font-size 0) : l'étiquette unique est dessinée par-dessus. */
+    .case.case-fusionnee { font-size: 0 !important; }
+    .case.case-fusionnee:hover { transform: none; box-shadow: none; }
+
+    /* Zones non concernées par le tirage (ni la zone tirée, ni une zone
+       attaquable) : grisées à 50 % pour faire ressortir les autres. */
+    .case.case-grisee {
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+    .zone-label.zl-grisee {
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+
+    .zone-label {
       position: absolute;
-      inset: 0;
-      background: rgba(255, 31, 176, 0.45);
+      transform: translate(-50%, -50%);
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      line-height: 1;
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1000;
+    }
+    .zone-label.zl-attaquant { text-shadow: 0 0 6px #ffffff, 0 0 12px #ffffff, 0 0 20px #ffffff, 0 0 30px rgba(255, 255, 255, 0.9); }
+    .zone-label.zl-cible { color: #ffe600 !important; text-shadow: 0 0 3px #303030, 0 0 6px #303030, 0 0 10px #303030; }
+
+    .zone-halo {
+      position: absolute;
+      left: 0;
+      top: 0;
+      overflow: visible;
       pointer-events: none;
     }
 
@@ -670,7 +725,7 @@
   </head>
   <body>
     <h1><u><span style="font-family: Cascadia Code; font-size: 50px">Plateau
-          de jeu</span></u></h1>
+          de jeu<span id="classe-label"></span></span></u></h1>
     <div class="menu-buttons"> <button id="start-btn">Nouvelle partie</button>
       <button id="load-btn">Importer un plateau</button>
       <button id="resume-btn" style="display: none;">Reprendre le plateau en cours</button> </div>
@@ -930,7 +985,24 @@
     // système d'export/import fichier ci-dessous.
     // ------------------------------------------------------------------
 
-    const SAVE_KEY = 'plateauSauvegarde';
+    // ------------------------------------------------------------------
+    // Classe en cours (ex: "3B"), passée par Menu.html via
+    // Plateau.html?classe=3B. Sert à séparer la sauvegarde de chaque
+    // classe : sans ça, toutes les classes partageraient la même
+    // partie enregistrée dans le navigateur.
+    // ------------------------------------------------------------------
+    const classeActuelle = new URLSearchParams(window.location.search).get('classe') || 'defaut';
+
+    (function afficherClasseDansTitre() {
+      const label = document.getElementById('classe-label');
+      if (label && classeActuelle !== 'defaut') {
+        label.textContent = ' — Classe de ' + classeActuelle;
+      }
+      document.title = classeActuelle !== 'defaut' ? `Plateau - ${classeActuelle}` : 'Plateau';
+    })();
+
+    const SAVE_KEY = 'plateauSauvegarde_' + classeActuelle;
+    const COMBAT_CONTEXTE_KEY = 'combatContexte_' + classeActuelle;
     let selectedFinalPosition = null; // position de la case désignée par la roulette (ou null)
 
     function savePlateauState() {
@@ -1265,7 +1337,288 @@ rouletteAudio.preload = 'auto';
           }
         }
       });
+
+      // Les zones (étiquette unique + contour) dépendent des mêmes
+      // adjacences : on les recalcule à chaque fusion de bordures.
+      planifierMajZones();
     }
+
+    // ==================================================================
+    // ZONES FUSIONNÉES : un seul "Jx" centré (un peu plus gros) par zone
+    // de plusieurs cases, et un seul contour de halo autour de la zone
+    // entière (blanc = zone de l'attaquant, violet = zones attaquables).
+    // Les cases restent des éléments distincts (clics, positions, combats
+    // inchangés) : seul l'affichage est regroupé. Tout est recalculé à
+    // partir de l'état réel du plateau, donc à jour après chaque gain ou
+    // perte de case (voir l'observateur en bas de ce bloc).
+    // ==================================================================
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    let _zonesRafId = null;
+    let _zonesObserver = null;
+    let _zoneHaloId = 0;
+    const ZONES_OBSERVER_OPTIONS = {
+      attributes: true,
+      attributeFilter: ['class', 'data-couleur'],
+      subtree: true,
+      childList: true
+    };
+
+    // Regroupe les mises à jour demandées dans la même image (évite de
+    // tout recalculer plusieurs fois de suite).
+    function planifierMajZones() {
+      if (_zonesRafId !== null) return;
+      _zonesRafId = requestAnimationFrame(() => {
+        _zonesRafId = null;
+        mettreAJourZonesVisuelles();
+      });
+    }
+
+    // Zones = groupes de cases adjacentes (haut/bas/gauche/droite) de même
+    // couleur. Les cases pas encore révélées (animation de génération) ou en
+    // plein fondu de couleur (après un combat) sont ignorées : elles
+    // gardent leur propre texte jusqu'à la reconstruction du plateau.
+    function calculerZonesVisuelles(plateau) {
+      const parPos = new Map();
+      Array.from(plateau.children).forEach(c => {
+        if (!c.classList.contains('case')) return;
+        const pos = parseInt(c.dataset.position, 10);
+        const couleur = c.dataset.couleur;
+        const prete = couleur
+          && c.classList.contains(couleur)
+          && !c.classList.contains('flip')
+          && !c.classList.contains('case-fondu');
+        if (!isNaN(pos) && prete) parPos.set(pos, c);
+      });
+
+      const vus = new Set();
+      const zones = [];
+      parPos.forEach((c, pos) => {
+        if (vus.has(pos)) return;
+        const couleur = c.dataset.couleur;
+        const positions = [];
+        const pile = [pos];
+        vus.add(pos);
+        while (pile.length) {
+          const p = pile.pop();
+          positions.push(p);
+          const r = Math.floor(p / taille);
+          const col = p % taille;
+          const voisins = [];
+          if (r > 0) voisins.push(p - taille);
+          if (r < taille - 1) voisins.push(p + taille);
+          if (col > 0) voisins.push(p - 1);
+          if (col < taille - 1) voisins.push(p + 1);
+          voisins.forEach(v => {
+            if (vus.has(v)) return;
+            const vc = parPos.get(v);
+            if (vc && vc.dataset.couleur === couleur) { vus.add(v); pile.push(v); }
+          });
+        }
+        zones.push({ couleur, positions, cases: positions.map(q => parPos.get(q)) });
+      });
+      return zones;
+    }
+
+    // Contour SVG d'une zone : seuls les côtés qui touchent une case
+    // n'appartenant pas à la zone sont tracés (donc aucun trait à
+    // l'intérieur), avec un halo lumineux autour.
+    function creerContourZone(plateau, zone, style) {
+      const enZone = new Set(zone.positions);
+      let d = '';
+      zone.cases.forEach((c, i) => {
+        const pos = zone.positions[i];
+        const r = Math.floor(pos / taille);
+        const col = pos % taille;
+        const x = c.offsetLeft, y = c.offsetTop, w = c.offsetWidth, h = c.offsetHeight;
+        if (!(r > 0 && enZone.has(pos - taille)))            d += `M${x} ${y}L${x + w} ${y}`;
+        if (!(r < taille - 1 && enZone.has(pos + taille)))   d += `M${x} ${y + h}L${x + w} ${y + h}`;
+        if (!(col > 0 && enZone.has(pos - 1)))               d += `M${x} ${y}L${x} ${y + h}`;
+        if (!(col < taille - 1 && enZone.has(pos + 1)))      d += `M${x + w} ${y}L${x + w} ${y + h}`;
+      });
+
+      const W = plateau.clientWidth, H = plateau.clientHeight;
+      const id = 'zh' + (++_zoneHaloId);
+      const svg = document.createElementNS(SVG_NS, 'svg');
+      svg.setAttribute('class', 'zone-halo');
+      svg.setAttribute('width', W);
+      svg.setAttribute('height', H);
+      svg.style.zIndex = style.z;
+
+      const defs = document.createElementNS(SVG_NS, 'defs');
+      style.couches.forEach((couche, k) => {
+        if (!couche.flou) return;
+        const f = document.createElementNS(SVG_NS, 'filter');
+        f.setAttribute('id', `${id}f${k}`);
+        f.setAttribute('filterUnits', 'userSpaceOnUse');
+        f.setAttribute('x', -100); f.setAttribute('y', -100);
+        f.setAttribute('width', W + 200); f.setAttribute('height', H + 200);
+        const b = document.createElementNS(SVG_NS, 'feGaussianBlur');
+        b.setAttribute('stdDeviation', couche.flou);
+        f.appendChild(b);
+        defs.appendChild(f);
+      });
+
+      // Masque "extérieur seulement" : tout est visible (blanc) sauf les cases
+      // de la zone (noir). Appliqué au halo flou et au liseré sombre pour
+      // qu'ils restent AUTOUR de la zone (comme un box-shadow) sans délaver
+      // son intérieur.
+      const masque = document.createElementNS(SVG_NS, 'mask');
+      masque.setAttribute('id', `${id}m`);
+      masque.setAttribute('maskUnits', 'userSpaceOnUse');
+      masque.setAttribute('x', -100); masque.setAttribute('y', -100);
+      masque.setAttribute('width', W + 200); masque.setAttribute('height', H + 200);
+      const fond = document.createElementNS(SVG_NS, 'rect');
+      fond.setAttribute('x', -100); fond.setAttribute('y', -100);
+      fond.setAttribute('width', W + 200); fond.setAttribute('height', H + 200);
+      fond.setAttribute('fill', '#fff');
+      masque.appendChild(fond);
+      zone.cases.forEach(c => {
+        const trou = document.createElementNS(SVG_NS, 'rect');
+        // +0.5px de chaque côté pour éviter tout liseré entre deux cases
+        trou.setAttribute('x', c.offsetLeft - 0.5);
+        trou.setAttribute('y', c.offsetTop - 0.5);
+        trou.setAttribute('width', c.offsetWidth + 1);
+        trou.setAttribute('height', c.offsetHeight + 1);
+        trou.setAttribute('fill', '#000');
+        masque.appendChild(trou);
+      });
+      defs.appendChild(masque);
+      svg.appendChild(defs);
+
+      const groupeExterieur = document.createElementNS(SVG_NS, 'g');
+      groupeExterieur.setAttribute('mask', `url(#${id}m)`);
+      svg.appendChild(groupeExterieur);
+
+      style.couches.forEach((couche, k) => {
+        const path = document.createElementNS(SVG_NS, 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', couche.couleur);
+        path.setAttribute('stroke-width', couche.epaisseur);
+        path.setAttribute('stroke-opacity', couche.opacite);
+        path.setAttribute('stroke-linecap', 'square');
+        if (couche.flou) path.setAttribute('filter', `url(#${id}f${k})`);
+        (couche.exterieur ? groupeExterieur : svg).appendChild(path);
+      });
+      return svg;
+    }
+
+    // Zone tirée : halo blanc très lumineux (plusieurs couches de plus en plus
+    // larges et floues, à pleine intensité) + liseré blanc franc.
+    // Le halo passe SOUS les zones attaquables (z 940 < 950) afin de ne pas
+    // les délaver ; le liseré, lui, passe AU-DESSUS de tout (z 965) pour que
+    // la zone tirée reste toujours cernée de blanc, même entourée d'adversaires.
+    const STYLE_CONTOUR_ATTAQUANT = {
+      z: 940,
+      couches: [
+        { couleur: '#ffffff', epaisseur: 80, opacite: 0.75, flou: 26, exterieur: true },
+        { couleur: '#ffffff', epaisseur: 48, opacite: 1,    flou: 14, exterieur: true },
+        { couleur: '#ffffff', epaisseur: 26, opacite: 1,    flou: 6,  exterieur: true }
+      ]
+    };
+    const STYLE_TRAIT_ATTAQUANT = {
+      z: 965,
+      couches: [
+        { couleur: '#000000', epaisseur: 12, opacite: 0.3, flou: 0, exterieur: true },
+        { couleur: '#ffffff', epaisseur: 8,  opacite: 1,   flou: 0 }
+      ]
+    };
+    // Zones attaquables : gris anthracite #303030, halo discret à 35 %.
+    const STYLE_CONTOUR_CIBLE = {
+      z: 960,
+      couches: [
+        { couleur: '#303030', epaisseur: 26, opacite: 0.35, flou: 7, exterieur: true },
+        { couleur: '#303030', epaisseur: 12, opacite: 0.35, flou: 3, exterieur: true },
+        { couleur: '#303030', epaisseur: 4,  opacite: 1,    flou: 0 }
+      ]
+    };
+
+    function mettreAJourZonesVisuelles() {
+      const plateau = document.getElementById('plateau');
+      if (!plateau) return;
+
+      // On suspend l'observateur pendant nos propres modifications
+      // (sinon elles le redéclencheraient en boucle).
+      if (_zonesObserver) _zonesObserver.disconnect();
+      try {
+        plateau.querySelectorAll('.zone-label, .zone-halo').forEach(e => e.remove());
+        plateau.querySelectorAll('.case-fusionnee').forEach(c => c.classList.remove('case-fusionnee'));
+        plateau.querySelectorAll('.case-grisee').forEach(c => c.classList.remove('case-grisee'));
+        if (plateau.offsetWidth === 0) return; // plateau masqué : rien à placer
+
+        const zones = calculerZonesVisuelles(plateau);
+        const policeBase = calculerTailleCase(taille).font;
+        const contours = [];
+        // Le grisage n'a lieu que lorsqu'une zone a été tirée au sort.
+        const tirageEnCours = !!plateau.querySelector('.selected-final');
+
+        zones.forEach(zone => {
+          const n = zone.cases.length;
+          const attaquant = zone.cases.some(c => c.classList.contains('selected-final'));
+          const cible = !attaquant && zone.cases.some(c => c.classList.contains('case-cible'));
+          const grisee = tirageEnCours && !attaquant && !cible;
+          if (grisee) zone.cases.forEach(c => c.classList.add('case-grisee'));
+
+          if (n > 1) {
+            zone.cases.forEach(c => c.classList.add('case-fusionnee'));
+
+            // Centre de la zone (moyenne des centres de cases). Si ce point
+            // tombe hors de la zone (forme en U, en L...), on prend le centre
+            // de la case la plus proche.
+            const rects = zone.cases.map(c => ({
+              x: c.offsetLeft, y: c.offsetTop, w: c.offsetWidth, h: c.offsetHeight
+            }));
+            let cx = rects.reduce((a, r) => a + r.x + r.w / 2, 0) / n;
+            let cy = rects.reduce((a, r) => a + r.y + r.h / 2, 0) / n;
+            const dedans = rects.some(r => cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h);
+            if (!dedans) {
+              let meilleur = null, dMin = Infinity;
+              rects.forEach(r => {
+                const dx = r.x + r.w / 2 - cx, dy = r.y + r.h / 2 - cy;
+                const dist = dx * dx + dy * dy;
+                if (dist < dMin) { dMin = dist; meilleur = r; }
+              });
+              cx = meilleur.x + meilleur.w / 2;
+              cy = meilleur.y + meilleur.h / 2;
+            }
+
+            const etiquette = document.createElement('div');
+            etiquette.className = 'zone-label' + (attaquant ? ' zl-attaquant' : cible ? ' zl-cible' : grisee ? ' zl-grisee' : '');
+            etiquette.textContent = joueursDisponibles[zone.couleur] || zone.cases[0].textContent;
+            // "Un peu plus gros" : +40 % pour 4 cases, +80 % pour 9, plafonné à x2,2
+            const facteur = Math.min(2.2, 1 + 0.4 * (Math.sqrt(n) - 1));
+            etiquette.style.fontSize = Math.round(policeBase * facteur) + 'px';
+            etiquette.style.left = cx + 'px';
+            etiquette.style.top = cy + 'px';
+            etiquette.style.color = getComputedStyle(zone.cases[0]).color;
+            plateau.appendChild(etiquette);
+          }
+
+          if (attaquant) {
+            contours.push({ zone, style: STYLE_CONTOUR_ATTAQUANT });
+            contours.push({ zone, style: STYLE_TRAIT_ATTAQUANT });
+          }
+          else if (cible) contours.push({ zone, style: STYLE_CONTOUR_CIBLE });
+        });
+
+        contours.forEach(({ zone, style }) => {
+          plateau.appendChild(creerContourZone(plateau, zone, style));
+        });
+      } finally {
+        if (_zonesObserver) _zonesObserver.observe(plateau, ZONES_OBSERVER_OPTIONS);
+      }
+    }
+
+    // Recalcul automatique dès qu'une case change de couleur / de classe
+    // (gain ou perte après un combat, édition, halos...) ou que le plateau
+    // est reconstruit, ainsi qu'au redimensionnement de la fenêtre.
+    (function initZonesVisuelles() {
+      const plateau = document.getElementById('plateau');
+      if (!plateau) return;
+      _zonesObserver = new MutationObserver(() => planifierMajZones());
+      _zonesObserver.observe(plateau, ZONES_OBSERVER_OPTIONS);
+      window.addEventListener('resize', planifierMajZones);
+    })();
 
     function enableEditMode() {
       editMode = true;
@@ -1405,6 +1758,27 @@ function genererPlateau(configData = null) {
   wrap.style.display = 'block';
 }
 
+    // Regroupe toutes les cases du plateau en zones (cases adjacentes de même
+    // couleur) à partir de plateauData. Retourne un tableau de zones, chacune
+    // étant la liste des positions qui la composent.
+    function calculerToutesLesZones() {
+      const vues = new Set();
+      const zones = [];
+      for (let pos = 0; pos < plateauData.length; pos++) {
+        if (vues.has(pos)) continue;
+        const groupe = calculerGroupeConnecte(pos);
+        groupe.forEach(q => vues.add(q));
+        zones.push(groupe);
+      }
+      return zones;
+    }
+
+    // Tirage au sort : UNE chance par zone, quelle que soit sa taille (une
+    // zone de 4 cases n'a pas plus de chances qu'une case isolée).
+    function choisirZoneAuHasard(zones) {
+      return zones[Math.floor(Math.random() * zones.length)];
+    }
+
     function lancerRoulette() {
       const cases = Array.from(document.querySelectorAll('.case'));
       if (cases.length === 0 || rouletteEnCours) return;
@@ -1433,9 +1807,16 @@ function genererPlateau(configData = null) {
         c.parentNode.replaceChild(newElement, c);
       });
 
+      document.getElementById('plateau').classList.add('roulette-active');
+
       // Mettre à jour la référence après le remplacement des éléments
       const newCases = Array.from(document.querySelectorAll('.case'));
-      let derniereCaseChoisie = null;
+      const caseParPosition = new Map(newCases.map(c => [parseInt(c.dataset.position, 10), c]));
+
+      // Une chance par ZONE (et non par case) : la roulette fait défiler
+      // des zones entières, et la zone retenue est celle de l'attaquant.
+      const toutesLesZones = calculerToutesLesZones();
+      let derniereZone = null;
 
       // Démarrer la roulette avec une vitesse variable
       let compteur = 0;
@@ -1443,14 +1824,17 @@ function genererPlateau(configData = null) {
       let intervalTime = 80; // Commencer plus lentement
 
       const interval = setInterval(() => {
-        const rand = newCases[Math.floor(Math.random() * newCases.length)];
+        const zone = choisirZoneAuHasard(toutesLesZones);
 
         // Retirer la surbrillance de toutes les cases
         newCases.forEach(c => c.classList.remove('highlight'));
 
-        // Ajouter la surbrillance à la case aléatoire
-        rand.classList.add('highlight');
-        derniereCaseChoisie = rand;
+        // Illuminer toute la zone tirée
+        zone.forEach(pos => {
+          const c = caseParPosition.get(pos);
+          if (c) c.classList.add('highlight');
+        });
+        derniereZone = zone;
 
         compteur += intervalTime;
 
@@ -1464,7 +1848,10 @@ function genererPlateau(configData = null) {
         // Arrêter la roulette après 2 secondes
         if (compteur >= dureeTotal) {
           clearInterval(interval);
-          finaliserSelection(derniereCaseChoisie, newCases);
+          // La case de référence est une case quelconque de la zone retenue :
+          // le halo et les combats portent sur la zone entière.
+          const posRef = derniereZone[Math.floor(Math.random() * derniereZone.length)];
+          finaliserSelection(caseParPosition.get(posRef), newCases);
         }
       }, intervalTime);
     }
@@ -1530,14 +1917,30 @@ function genererPlateau(configData = null) {
       return zones;
     }
 
+    // Applique le halo blanc (.selected-final) à TOUTE la zone connectée
+    // de l'attaquant (pas seulement à la case tirée au sort elle-même),
+    // pour que le territoire entier en jeu soit visible d'un coup d'œil.
+    // Recalculée à chaque appel à partir de plateauData : reste donc
+    // correcte même après un changement de couleur (gain/perte de case).
+    function appliquerHaloAttaquant(position) {
+      if (position === null || position === undefined) return;
+      const groupe = calculerGroupeConnecte(position);
+      groupe.forEach(pos => {
+        const case_ = document.querySelector(`.case[data-position="${pos}"]`);
+        if (case_) case_.classList.add('selected-final');
+      });
+      planifierMajZones();
+    }
+
     // Zones actuellement en surbrillance (mémorisées pour retrouver, au clic
-    // sur une case d'entrée, l'ensemble du groupe auquel elle appartient)
+    // sur une case de la zone, l'ensemble du groupe auquel elle appartient)
     let zonesAdjacentesActuelles = [];
 
-    // Applique (et réinitialise) la surbrillance bleue sur la PREMIÈRE case
-    // de chaque zone adjacente attaquable depuis la case désignée par la
-    // roulette (pas toute la zone, pour rester lisible), et la rend
-    // cliquable pour lancer le duel sur l'ensemble du groupe correspondant.
+    // Applique (et réinitialise) la surbrillance violette sur TOUTES les
+    // cases de chaque zone adjacente attaquable depuis la case désignée
+    // par la roulette (la zone entière, pas juste une case d'entrée), et
+    // les rend cliquables pour lancer le duel sur l'ensemble du groupe
+    // correspondant.
     function mettreEnSurbrillanceZonesAdjacentes(position) {
       document.querySelectorAll('.case-cible').forEach(c => c.classList.remove('case-cible'));
       zonesAdjacentesActuelles = [];
@@ -1548,11 +1951,22 @@ function genererPlateau(configData = null) {
       zonesAdjacentesActuelles = zones;
 
       zones.forEach(({ entree, groupe }) => {
-        const case_ = document.querySelector(`.case[data-position="${entree}"]`);
-        if (!case_) return;
-        case_.classList.add('case-cible');
-        case_.addEventListener('click', () => attaquerZone(groupeAttaquant, groupe), { once: true });
+        const casesZone = [];
+        groupe.forEach(pos => {
+          const case_ = document.querySelector(`.case[data-position="${pos}"]`);
+          if (!case_) return;
+          case_.classList.add('case-cible');
+          case_.addEventListener('click', () => attaquerZone(groupeAttaquant, groupe), { once: true });
+          casesZone.push(case_);
+        });
+        // Survol : toute la zone réagit ensemble (data-attribute plutôt que
+        // classe, pour ne pas redéclencher le recalcul des zones à chaque survol).
+        casesZone.forEach(c => {
+          c.addEventListener('mouseenter', () => casesZone.forEach(x => x.setAttribute('data-zone-hover', '')));
+          c.addEventListener('mouseleave', () => casesZone.forEach(x => x.removeAttribute('data-zone-hover')));
+        });
       });
+      planifierMajZones();
     }
 
     // Lance le duel pour la zone ciblée choisie par le joueur : mémorise le
@@ -1571,7 +1985,8 @@ function genererPlateau(configData = null) {
       } catch (e) {
         console.warn('Impossible de mémoriser le contexte du combat :', e);
       }
-      window.location.href = 'theme.html';
+      const suffixeClasse = classeActuelle !== 'defaut' ? '?classe=' + encodeURIComponent(classeActuelle) : '';
+      window.location.href = 'theme.html' + suffixeClasse;
     }
 
     // ------------------------------------------------------------------
@@ -1814,17 +2229,17 @@ function genererPlateau(configData = null) {
     }
 
     function finaliserSelection(caseFinale, allCases) {
+      document.getElementById('plateau').classList.remove('roulette-active');
       // Retirer la surbrillance temporaire de toutes les cases
       allCases.forEach(c => c.classList.remove('highlight'));
 
       // Appliquer le style final à la case sélectionnée
       if (caseFinale) {
-        caseFinale.classList.add('selected-final');
-
         // Mémoriser la case désignée par la roulette et sauvegarder
         // immédiatement l'état complet du plateau, pour pouvoir le
         // retrouver tel quel si on revient sur cette page plus tard.
         selectedFinalPosition = parseInt(caseFinale.dataset.position);
+        appliquerHaloAttaquant(selectedFinalPosition);
         savePlateauState();
 
         // Mettre en surbrillance les zones adjacentes attaquables : c'est
@@ -1899,11 +2314,8 @@ function genererPlateau(configData = null) {
         // La roulette avait déjà désigné une case : on l'affiche directement,
         // prête à être cliquée pour continuer vers la page suivante.
         if (btnParti) btnParti.style.display = 'none';
-        const caseFinale = plateau.querySelector(`[data-position="${selectedFinalPosition}"]`);
-        if (caseFinale) {
-          caseFinale.classList.add('selected-final');
-          mettreEnSurbrillanceZonesAdjacentes(selectedFinalPosition);
-        }
+        appliquerHaloAttaquant(selectedFinalPosition);
+        mettreEnSurbrillanceZonesAdjacentes(selectedFinalPosition);
       } else {
         // Pas encore de résultat de roulette : on repropose "C'est parti",
         // et les cases restent modifiables via le bouton "Modifier".

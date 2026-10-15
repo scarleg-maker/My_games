@@ -211,35 +211,35 @@
       // ⚠️ Pour retirer temporairement un thème du tirage (sans le supprimer),
       // passez son "actif" à false. Repassez-le à true pour le réactiver.
       const textes = [
-        { texte: "Langues étrangères", themeKey: "langues-etrangeres", image: "Themes/langues.png", actif: true },
+        { texte: "Langues étrangères", themeKey: "langues-etrangeres", image: "Themes/langues.png", actif: false },
         { texte: "Génériques de séries", themeKey: "series", image: "Themes/generiques.png", actif: true },
         { texte: "Desserts", themeKey: "desserts", image: "Themes/desserts.png", actif: true },
         { texte: "Drapeaux", themeKey: "drapeaux", image: "Themes/drapeaux.png", actif: true },
         { texte: "Sports", themeKey: "sports", image: "Themes/sports.png", actif: true },
-        { texte: "Personnages", themeKey: "personnages", image: "Themes/personnages.png", actif: true },
+        { texte: "Personnages", themeKey: "personnages", image: "Themes/personnages.png", actif: false },
         { texte: "Mammiferes", themeKey: "mammiferes", image: "Themes/mammiferes.png", actif: true },
 		{ texte: "Insectes", themeKey: "insectes", image: "Themes/insectes.png", actif: true },
 		{ texte: "Oiseaux", themeKey: "oiseaux", image: "Themes/oiseaux.png", actif: true },
         { texte: "Moyens de transport", themeKey: "transport", image: "Themes/transport.png", actif: true },
-        { texte: "Monnaies du monde", themeKey: "monnaies", image: "Themes/monnaies.png", actif: true },
+        { texte: "Monnaies du monde", themeKey: "monnaies", image: "Themes/monnaies.png", actif: false },
         { texte: "Instruments de musique", themeKey: "instruments", image: "Themes/instruments.png", actif: true },
         { texte: "Fruits", themeKey: "fruits", image: "Themes/fruits.png", actif: true },
         { texte: "Logos de marques", themeKey: "logos", image: "Themes/logos.png", actif: true },
-        { texte: "Géographie", themeKey: "geographie", image: "Themes/geographie.png", actif: true },
+        { texte: "Géographie", themeKey: "geographie", image: "Themes/geographie.png", actif: false },
         { texte: "Cinéma", themeKey: "cinema", image: "Themes/cinema.png", actif: true },
         { texte: "Légumes", themeKey: "legumes", image: "Themes/legumes.png", actif: true },
         { texte: "Poissons et animaux marins", themeKey: "poissons-marins", image: "Themes/poissons-marins.png", actif: true },
-        { texte: "Arbres et feuilles", themeKey: "arbres-feuilles", image: "Themes/arbres-feuilles.png", actif: true },
+        { texte: "Arbres et feuilles", themeKey: "arbres-feuilles", image: "Themes/arbres-feuilles.png", actif: false },
         { texte: "Cris d'animaux", themeKey: "cris-animaux", image: "Themes/cris-animaux.png", actif: true },
         { texte: "Personnages Pokémon", themeKey: "pokemon", image: "Themes/pokemon.png", actif: true },
         { texte: "Personnages Pixar", themeKey: "pixar", image: "Themes/pixar.png", actif: true },
         { texte: "Personnages de jeux vidéo", themeKey: "jeux-video", image: "Themes/jeux-video.png", actif: true },
         { texte: "Personnages mythologiques", themeKey: "mythologie", image: "Themes/mythologie.png", actif: true },
-        { texte: "Génériques de dessins animés", themeKey: "dessins-animes", image: "Themes/dessins-animes.png", actif: true },
-        { texte: "Accents et langues parlées", themeKey: "accents-langues", image: "Themes/accents-langues.png", actif: true },
+        { texte: "Génériques de dessins animés", themeKey: "dessins-animes", image: "Themes/dessins-animes.png", actif: false },
+        { texte: "Accents et langues parlées", themeKey: "accents-langues", image: "Themes/accents-langues.png", actif: false },
         { texte: "Marques de voiture", themeKey: "marques-voiture", image: "Themes/marques-voiture.png", actif: true },
         { texte: "Outils de bricolage", themeKey: "bricolage", image: "Themes/bricolage.png", actif: true },
-        { texte: "Jeux de société", themeKey: "jeux-societe", image: "Themes/jeux-societe.png", actif: true },
+        { texte: "Jeux de société", themeKey: "jeux-societe", image: "Themes/jeux-societe.png", actif: false },
         { texte: "Métiers", themeKey: "metiers", image: "Themes/metiers.png", actif: true }
       ];
 
@@ -268,6 +268,12 @@
       let tirageEffectue = false;
       let selectedTheme = null;
 
+      // Classe en cours, transmise depuis Plateau.html (Plateau.html?classe=3B)
+      // et à retransmettre à joueur.html pour que le retour au plateau
+      // ramène bien vers le bon plateau sauvegardé.
+      const classeActuelle = new URLSearchParams(window.location.search).get('classe') || '';
+      const classeQuery = classeActuelle ? `&classe=${encodeURIComponent(classeActuelle)}` : '';
+
       function texteAleatoire() {
         const pool = themesActifs();
         const choix = pool[Math.floor(Math.random() * pool.length)];
@@ -275,18 +281,23 @@
       }
 
       // ---------- Compteur d'utilisation par thème (anti-répétition) ----------
-      // Stocké dans localStorage, invisible pour le joueur, persiste entre les pages.
+      // Stocké dans localStorage, invisible pour le joueur, persiste entre les
+      // pages. Séparé par classe (clé suffixée) pour que l'historique de la
+      // 3B n'influence pas les tirages de la 3C, etc.
+
+      const USAGE_KEY = classeActuelle ? `themeUsageCounts_${classeActuelle}` : 'themeUsageCounts';
+      const LAST_THEME_KEY = classeActuelle ? `lastThemeKey_${classeActuelle}` : 'lastThemeKey';
 
       function getUsageCounts() {
         try {
-          return JSON.parse(localStorage.getItem('themeUsageCounts')) || {};
+          return JSON.parse(localStorage.getItem(USAGE_KEY)) || {};
         } catch (e) {
           return {};
         }
       }
 
       function saveUsageCounts(counts) {
-        localStorage.setItem('themeUsageCounts', JSON.stringify(counts));
+        localStorage.setItem(USAGE_KEY, JSON.stringify(counts));
       }
 
       // Tirage final pondéré : les thèmes les moins souvent validés ont plus
@@ -294,7 +305,7 @@
       // (s'il reste au moins un autre thème disponible).
       function tirageFinalPondere() {
         const counts = getUsageCounts();
-        const dernierTheme = localStorage.getItem('lastThemeKey');
+        const dernierTheme = localStorage.getItem(LAST_THEME_KEY);
 
         let pool = themesActifs();
         if (dernierTheme && pool.length > 1) {
@@ -331,9 +342,9 @@
         const counts = getUsageCounts();
         counts[selectedTheme] = (counts[selectedTheme] || 0) + 1;
         saveUsageCounts(counts);
-        localStorage.setItem('lastThemeKey', selectedTheme);
+        localStorage.setItem(LAST_THEME_KEY, selectedTheme);
 
-        window.location.href = `joueur.html?theme=${selectedTheme}`;
+        window.location.href = `joueur.html?theme=${selectedTheme}${classeQuery}`;
       }
 
       // Ajuste dynamiquement la taille de police pour que le texte

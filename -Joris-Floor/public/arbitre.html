@@ -67,27 +67,27 @@
       .control-section {
         background: rgba(255, 255, 255, 0.1);
         border-radius: 15px;
-        padding: 25px;
+        padding: 16px;
         border: 1px solid rgba(255, 255, 255, 0.2);
       }
       .control-section h2 {
-        margin: 0 0 20px 0;
+        margin: 0 0 12px 0;
         color: #FFD700;
-        font-size: 24px;
+        font-size: 18px;
       }
       .btn-arbitre {
-        padding: 15px 30px;
-        font-size: 18px;
+        padding: 10px 18px;
+        font-size: 14px;
         border: none;
-        border-radius: 12px;
+        border-radius: 10px;
         cursor: pointer;
         font-weight: bold;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.3);
         width: 100%;
-        margin: 10px 0;
+        margin: 6px 0;
         position: relative;
         overflow: hidden;
       }
@@ -240,14 +240,16 @@
         color: #FFD700;
       }
       .current-image {
-        max-width: 200px;
-        max-height: 200px;
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* garde les proportions sans jamais déborder du cadre fixe */
         border-radius: 10px;
         border: 2px solid #FFD700;
+        box-sizing: border-box;
       }
       .image-placeholder {
-        width: 200px;
-        height: 150px;
+        width: 100%;
+        height: 100%;
         background: rgba(255, 255, 255, 0.1);
         border: 2px dashed #FFD700;
         display: flex;
@@ -256,6 +258,9 @@
         border-radius: 10px;
         color: #FFD700;
         font-style: italic;
+        box-sizing: border-box;
+        text-align: center;
+        padding: 10px;
       }
       .log-section {
         background: rgba(255, 255, 255, 0.05);
@@ -296,6 +301,8 @@
 }
 #imageContainer {
   flex-shrink: 0;
+  width: 200px;
+  height: 150px;
 }
       
     </style>
@@ -845,6 +852,18 @@ updateRemainingMediaDisplay() {
           this.bipSound = null;
           this.currentThemeName = 'desserts';
           this.currentMediaType = 'image';
+
+          // Passe à true dès qu'un vainqueur est déclaré (temps écoulé
+          // pour l'un des deux joueurs) ; interdit alors le bouton
+          // "Reset Général" tant qu'une nouvelle manche n'est pas
+          // relancée, pour éviter d'effacer accidentellement le
+          // résultat avant que le professeur ne l'ait noté.
+          this.roundEnded = false;
+
+          // Voir showWinner() : bloque "Démarrer Manche" après une
+          // victoire tant que le thème du combat suivant n'a pas été
+          // réellement actualisé ici.
+          this.awaitingThemeRefresh = false;
           
           this.init();
         }
@@ -926,6 +945,24 @@ updateRemainingMediaDisplay() {
           
           // Mise à jour des boutons
           this.updateButtonStates(gameData);
+
+          // Actualisation automatique du thème : dès que la page Joueur
+          // annonce un thème différent de celui actuellement chargé ici
+          // (nouvelle partie, thème changé, page Arbitre rouverte après
+          // la page Joueur...), on va rechercher les images/sons
+          // correspondants sans attendre un clic sur "Actualiser le
+          // thème". Protégé par _actualisationAutoEnCours pour éviter
+          // un déclenchement en boucle pendant que la requête est en vol.
+          if (
+            gameData.theme &&
+            gameData.theme !== this.currentThemeName &&
+            !this._actualisationAutoEnCours
+          ) {
+            this._actualisationAutoEnCours = true;
+            this.actualiserTheme(true).finally(() => {
+              this._actualisationAutoEnCours = false;
+            });
+          }
           
           this.gameState = { ...gameData };
         }
@@ -937,7 +974,7 @@ updateRemainingMediaDisplay() {
           const btnPasser = document.getElementById('btnPasser');
           const btnPasserAutre = document.getElementById('btnPasserAutre');
           
-          btnStart.disabled = gameData.isRunning && !gameData.isPaused;
+          btnStart.disabled = (gameData.isRunning && !gameData.isPaused) || this.awaitingThemeRefresh;
           btnPause.disabled = !gameData.isRunning || gameData.isPaused;
 
           // Pendant la transition de 1,5s (Bonne réponse/Passer en
@@ -1037,6 +1074,57 @@ updateRemainingMediaDisplay() {
           document.getElementById('btnBonneReponse').style.display = "none";
           document.getElementById('btnPasser').style.display = "none";
           document.getElementById('btnPasserAutre').style.display = "none";
+
+          // La manche est terminée : repasser isRunning à false pour
+          // que le bouton "Démarrer Manche" redevienne cliquable
+          // (sinon il reste bloqué indéfiniment, comme Reset Général
+          // ci-dessous - plus aucun bouton ne serait alors utilisable).
+          this.firebaseSet(this.firebaseRef(this.database, 'game/isRunning'), false)
+            .catch(err => console.warn('Impossible de mettre isRunning à false :', err));
+
+          // Mais on garde "Démarrer Manche" bloqué tant que le NOUVEAU
+          // thème (celui du prochain combat) n'a pas été réellement
+          // actualisé ici. Sans ça, isRunning=false rend le bouton
+          // cliquable dès la victoire, bien avant que le joueur ait
+          // choisi le thème suivant sur le plateau : un clic prématuré
+          // démarrerait la manche avec les images de l'ANCIEN thème,
+          // qui ne seraient remplacées qu'en cours de manche par
+          // l'actualisation automatique - donnant l'impression trompeuse
+          // que la manche démarre toute seule pile au clic sur le thème.
+          this.awaitingThemeRefresh = true;
+          const btnStart = document.getElementById('btnStart');
+          if (btnStart) {
+            btnStart.disabled = true;
+            btnStart.title = 'En attente du prochain thème (choisi sur le plateau) avant de pouvoir démarrer.';
+          }
+
+          // Filet de sécurité : si le thème suivant n'est jamais
+          // détecté comme "différent" (ex. le même thème est retiré
+          // deux fois de suite), le blocage ci-dessus se lève quand
+          // même après 20s, pour ne jamais laisser le bouton bloqué
+          // indéfiniment.
+          clearTimeout(this._awaitingThemeRefreshTimeout);
+          this._awaitingThemeRefreshTimeout = setTimeout(() => {
+            if (this.awaitingThemeRefresh) {
+              this.awaitingThemeRefresh = false;
+              const btn = document.getElementById('btnStart');
+              if (btn) {
+                btn.title = '';
+                btn.disabled = this.gameState.isRunning && !this.gameState.isPaused;
+              }
+              this.addLog('ℹ️ Déblocage automatique de "Démarrer Manche" (aucun nouveau thème détecté après 20s).');
+            }
+          }, 20000);
+
+          // Interdire le Reset Général tant que la manche suivante
+          // n'a pas été relancée (voir startNewRound / resetGame pour
+          // la réactivation).
+          this.roundEnded = true;
+          const btnReset = document.getElementById('btnReset');
+          if (btnReset) {
+            btnReset.disabled = true;
+            btnReset.title = 'Indisponible après une victoire : démarrez une nouvelle manche pour le réactiver.';
+          }
         }
 
         // **NOUVELLE MÉTHODE** : Gestion centralisée des images par l'arbitre
@@ -1072,7 +1160,26 @@ updateRemainingMediaDisplay() {
 
         async startNewRound() {
           if (this.countdownActive) return;
-          
+
+          // Une nouvelle manche démarre : la précédente (si elle
+          // était terminée) ne bloque plus le Reset Général.
+          this.roundEnded = false;
+          const btnReset = document.getElementById('btnReset');
+          if (btnReset) {
+            btnReset.disabled = false;
+            btnReset.title = '';
+          }
+          this.awaitingThemeRefresh = false;
+          clearTimeout(this._awaitingThemeRefreshTimeout);
+
+          // Réafficher les boutons d'action, masqués par showWinner() à
+          // la fin de la manche précédente (ils ne réapparaissaient
+          // auparavant qu'au clic sur Reset Général, qui n'est plus
+          // systématique entre deux manches).
+          document.getElementById('btnBonneReponse').style.display = 'block';
+          document.getElementById('btnPasser').style.display = 'block';
+          document.getElementById('btnPasserAutre').style.display = 'block';
+
           try {
             this.addLog('Démarrage d\'une nouvelle manche...');
             
@@ -1095,9 +1202,6 @@ updateRemainingMediaDisplay() {
           this.setButtonsEnabled(false);
           
           try {
-            // **MODIFICATION** : Jouer le bip au début du décompte
-            this.playBip();
-            
             for (let i = 3; i >= 1; i--) {
               countdownEl.textContent = i.toString();
               countdownEl.style.opacity = '1';
@@ -1234,7 +1338,13 @@ updateRemainingMediaDisplay() {
             document.getElementById('btnBonneReponse').style.display = 'block';
             document.getElementById('btnPasser').style.display = 'block';
             document.getElementById('btnPasserAutre').style.display = 'block';
-            
+
+            // Une manche remise à zéro n'est plus "terminée"
+            this.roundEnded = false;
+            this.awaitingThemeRefresh = false;
+            clearTimeout(this._awaitingThemeRefreshTimeout);
+            document.getElementById('btnStart').title = '';
+
             this.addLog('Jeu remis à zéro - Toutes les images sont à nouveau disponibles');
           }
         }
@@ -1252,7 +1362,7 @@ updateRemainingMediaDisplay() {
           return data.images || [];
         }
 
-        async actualiserTheme() {
+        async actualiserTheme(auto = false) {
           try {
             // Lecture directe depuis le serveur (et non depuis la copie
             // locale du navigateur), pour éviter toute valeur périmée
@@ -1312,7 +1422,24 @@ updateRemainingMediaDisplay() {
               themeDisplayEl.textContent = `${typeIcon} ${themeConfig.displayName || themeName} (${this.images.length})`;
             }
 
-            this.addLog(`🎨 Thème actualisé : ${themeConfig.displayName || themeName} (${this.images.length} ${mediaType === 'audio' ? 'fichiers audio' : 'images'} chargés)`);
+            const origine = auto ? ' (détecté automatiquement depuis la page Joueur)' : '';
+            this.addLog(`🎨 Thème actualisé : ${themeConfig.displayName || themeName} (${this.images.length} ${mediaType === 'audio' ? 'fichiers audio' : 'images'} chargés)${origine}`);
+
+            // Le thème est à jour : "Démarrer Manche" peut redevenir
+            // disponible si une victoire précédente l'avait bloqué.
+            if (this.awaitingThemeRefresh) {
+              this.awaitingThemeRefresh = false;
+              clearTimeout(this._awaitingThemeRefreshTimeout);
+              const btnStart = document.getElementById('btnStart');
+              if (btnStart) {
+                btnStart.title = '';
+                // updateButtonStates() (déclenché par la prochaine
+                // synchro) recalculera le bon état ; on lève aussi
+                // immédiatement le disabled pour un retour visuel
+                // instantané côté arbitre.
+                btnStart.disabled = this.gameState.isRunning && !this.gameState.isPaused;
+              }
+            }
           } catch (error) {
             this.handleError('Erreur lors de l\'actualisation du thème', error);
           }
@@ -1498,11 +1625,13 @@ updateRemainingMediaDisplay() {
         setButtonsEnabled(enabled) {
           const buttons = document.querySelectorAll('.btn-arbitre');
           buttons.forEach(btn => {
-            if (enabled) {
-              btn.disabled = false;
-            } else {
-              btn.disabled = true;
+            // Le bouton Reset reste géré séparément : s'il est
+            // interdit suite à une victoire (this.roundEnded), on ne
+            // le réactive pas ici même quand enabled=true.
+            if (btn.id === 'btnReset' && enabled && this.roundEnded) {
+              return;
             }
+            btn.disabled = !enabled;
           });
         }
 
